@@ -5,16 +5,19 @@ namespace Explorer.Models
 {
     public class ExploreParams
     {
-        [JsonPropertyName("api_key")]
         [Required]
+        [Display(Name = "api_key")]
+        [JsonPropertyName("api_key")]
         public string ApiKey { get; set; }
 
-        [JsonPropertyName("table_name")]
         [Required]
+        [Display(Name = "table_name")]
+        [JsonPropertyName("table_name")]
         public string TableName {get; set; }
 
-        [JsonPropertyName("column_name")]
         [Required]
+        [Display(Name = "column_name")]
+        [JsonPropertyName("column_name")]
         public string ColumnName {get; set; }
     }
 }
