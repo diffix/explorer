@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace Explorer
+namespace Explorer.Api
 {
     public class Program
     {
