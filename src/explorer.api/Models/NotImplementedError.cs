@@ -1,4 +1,4 @@
-namespace Explorer.Models
+namespace Explorer.Api.Models
 {
     public class NotImplementedError
     {

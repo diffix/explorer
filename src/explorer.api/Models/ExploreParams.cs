@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 
-namespace Explorer.Models
+namespace Explorer.Api.Models
 {
     public class ExploreParams
     {
