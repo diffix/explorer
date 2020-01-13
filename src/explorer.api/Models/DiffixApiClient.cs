@@ -1,9 +1,9 @@
 using System;
-using Explorer.Api.Models;
 using System.Net.Http;
 using System.Net;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 
@@ -12,7 +12,7 @@ namespace Explorer.Api.DiffixApi
     interface IDiffixApi
     {
         Task<DataSources> GetDataSources();
-        Task<QueryId> Query(string statement);
+        Task<QueryResponse> Query(string dataSource, string queryStatement);
         Task<T> QueryResult<T>(string queryId);
         Task<CancelSuccess> CancelQuery(string queryId);
     }
@@ -50,15 +50,19 @@ namespace Explorer.Api.DiffixApi
             string Id { get; set; }
             IEnumerable<Column> columns { get; set; }
         }
+
         string Name { get; set; }
         string Description { get; set; }
 
         IEnumerable<Table> tables { get; set; }
     }
 
-    struct QueryId
+    struct QueryResponse
     {
-        string Id { get; set; }
+        [JsonPropertyName("success")]
+        bool Success { get; set; }
+        [JsonPropertyName("query_id")]
+        string QueryId { get; set; }
     }
 
     struct CancelSuccess
@@ -72,7 +76,10 @@ namespace Explorer.Api.DiffixApi
         private readonly Uri ApiRootUrl;
         private readonly string ApiKey;
 
-        public DiffixApiSession(DiffixApiClient apiClient, string apiRootUrl, string apiKey)
+        public DiffixApiSession(
+            DiffixApiClient apiClient,
+            string apiRootUrl,
+            string apiKey)
         {
             ApiClient = apiClient;
             ApiKey = apiKey;
@@ -81,21 +88,28 @@ namespace Explorer.Api.DiffixApi
 
         async public Task<DataSources> GetDataSources()
         {
-            var responseJson = await ApiClient.ApiGetRequest(
+            return await ApiClient.ApiGetRequest<DataSources>(
                 new Uri(ApiRootUrl, "data_source"),
                 ApiKey);
-
-            // Parse JSON
-            return await Task.FromException<DataSources>(new NotImplementedException());
         }
-        async public Task<QueryId> Query(string statement)
+        async public Task<QueryResponse> Query(
+            string dataSource,
+            string queryStatement)
         {
-            var responseJson = await ApiClient.ApiPostRequest(
+            var queryBody = new
+            {
+                query = new
+                {
+                    query = queryStatement,
+                    data_source_name = dataSource
+                }
+            };
+
+            return await ApiClient.ApiPostRequest<QueryResponse>(
                 new Uri(ApiRootUrl, "query"),
                 ApiKey,
+                JsonSerializer.Serialize(queryBody)
                 );
-
-
         }
         async public Task<T> QueryResult<T>(string queryId)
         {
@@ -103,52 +117,53 @@ namespace Explorer.Api.DiffixApi
         }
         async public Task<CancelSuccess> CancelQuery(string queryId)
         {
-            return await Task.FromException(new NotImplementedException());
+            return await Task.FromException<CancelSuccess>(new NotImplementedException());
         }
     }
 
     class DiffixApiClient : HttpClient
     {
-        async public Task<JsonDocument> ApiGetRequest(
+        async public Task<T> ApiGetRequest<T>(
             Uri apiEndpoint,
             string apiKey)
         {
-            using var requestMessage =
-                new HttpRequestMessage(HttpMethod.Get, apiEndpoint);
+            return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, apiKey);
+        }
 
-            requestMessage.Headers.Authorization =
-                new AuthenticationHeaderValue(apiKey);
+        async public Task<T> ApiPostRequest<T>(
+            Uri apiEndpoint,
+            string apiKey,
+            string requestContent = default)
+        {
+            return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, apiKey, requestContent);
+        }
+
+        async private Task<T> ApiRequest<T>(
+            HttpMethod requestMethod,
+            Uri apiEndpoint,
+            string apiKey,
+            string requestContent = default)
+        {
+
+            using var requestMessage =
+                new HttpRequestMessage(requestMethod, apiEndpoint);
+
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(apiKey);
+
+            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            requestMessage.Content = new StringContent(requestContent);
 
             using var response = await SendAsync(requestMessage);
 
             if (response.StatusCode == HttpStatusCode.Accepted)
             {
                 using var contentStream = await response.Content.ReadAsStreamAsync();
-                return await JsonDocument.ParseAsync(contentStream);
+                return await JsonSerializer.DeserializeAsync<T>(contentStream);
             }
             else
             {
-                throw new Exception($"GET Request Error: {serviceError(response)}");
+                throw new Exception($"{requestMethod} Request Error: {serviceError(response)}");
             }
-        }
-
-        async public Task<JsonDocument> ApiPostRequest(
-            Uri apiEndpoint,
-            string apiToken,
-            string requestContent = default)
-        {
-            using var requestMessage =
-                new HttpRequestMessage(HttpMethod.Post, apiEndpoint);
-
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(apiToken);
-
-            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            requestMessage.Content = new StringContent(requestContent);
-
-            using var response = await SendAsync(requestMessage);
-            using var contentStream = await response.Content.ReadAsStreamAsync();
-
-            return await JsonDocument.ParseAsync(contentStream);
         }
 
         private string serviceError(HttpResponseMessage response)
