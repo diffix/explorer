@@ -21,7 +21,8 @@ namespace Explorer.Api.DiffixApi
     {
         static private readonly DiffixApiClient ApiClient = new DiffixApiClient();
 
-        static DiffixApiSession NewSession(string apiRootUrl, string apiKey) {
+        static DiffixApiSession NewSession(string apiRootUrl, string apiKey)
+        {
             return new DiffixApiSession(ApiClient, apiRootUrl, apiKey);
         }
     }
@@ -42,7 +43,7 @@ namespace Explorer.Api.DiffixApi
 
         public Task<DataSources> GetDataSources()
         {
-            throw new NotImplementedException();
+            return await ApiGetRequest("data_source", apiToken);
         }
         public Task<QueryId> Query(string statement)
         {
@@ -64,17 +65,17 @@ namespace Explorer.Api.DiffixApi
             string apiEndpoint,
             string apiKey)
         {
-            var requestMessage =
+            using var requestMessage =
                 new HttpRequestMessage(HttpMethod.Get, apiEndpoint);
 
             requestMessage.Headers.Authorization =
                 new AuthenticationHeaderValue(apiKey);
 
-            var response = await SendAsync(requestMessage);
+            using var response = await SendAsync(requestMessage);
 
             if (response.StatusCode == HttpStatusCode.Accepted)
             {
-                var contentStream = await response.Content.ReadAsStreamAsync();
+                using var contentStream = await response.Content.ReadAsStreamAsync();
                 return await JsonDocument.ParseAsync(contentStream);
             }
             else
@@ -88,7 +89,7 @@ namespace Explorer.Api.DiffixApi
             string apiToken,
             string requestContent = default)
         {
-            var requestMessage =
+            using var requestMessage =
                 new HttpRequestMessage(HttpMethod.Post, apiEndpoint);
 
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(apiToken);
@@ -96,8 +97,8 @@ namespace Explorer.Api.DiffixApi
             requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             requestMessage.Content = new StringContent(requestContent.ToString());
 
-            var response = await SendAsync(requestMessage);
-            var contentStream = await response.Content.ReadAsStreamAsync();
+            using var response = await SendAsync(requestMessage);
+            using var contentStream = await response.Content.ReadAsStreamAsync();
 
             return await JsonDocument.ParseAsync(contentStream);
         }
