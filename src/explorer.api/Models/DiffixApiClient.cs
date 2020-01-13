@@ -27,42 +27,90 @@ namespace Explorer.Api.DiffixApi
         }
     }
 
+    struct DataSources
+    {
+        struct Table
+        {
+            struct Column
+            {
+                enum DiffixType
+                {
+                    Integer,
+                    Real,
+                    Text,
+                    Timestamp,
+                    Date,
+                    Datetime,
+                    Bool,
+
+                }
+                string Name { get; set; }
+                DiffixType DType { get; set; }
+            }
+            string Id { get; set; }
+            IEnumerable<Column> columns { get; set; }
+        }
+        string Name { get; set; }
+        string Description { get; set; }
+
+        IEnumerable<Table> tables { get; set; }
+    }
+
+    struct QueryId
+    {
+        string Id { get; set; }
+    }
+
+    struct CancelSuccess
+    {
+        bool IsSuccess { get; set; }
+    }
 
     class DiffixApiSession : IDiffixApi
     {
         private static DiffixApiClient ApiClient;
-        private readonly string ApiRootUrl;
+        private readonly Uri ApiRootUrl;
         private readonly string ApiKey;
 
         public DiffixApiSession(DiffixApiClient apiClient, string apiRootUrl, string apiKey)
         {
             ApiClient = apiClient;
             ApiKey = apiKey;
-            ApiRootUrl = apiRootUrl;
+            ApiRootUrl = new Uri(apiRootUrl);
         }
 
-        public Task<DataSources> GetDataSources()
+        async public Task<DataSources> GetDataSources()
         {
-            return await ApiGetRequest("data_source", apiToken);
+            var responseJson = await ApiClient.ApiGetRequest(
+                new Uri(ApiRootUrl, "data_source"),
+                ApiKey);
+
+            // Parse JSON
+            return await Task.FromException<DataSources>(new NotImplementedException());
         }
-        public Task<QueryId> Query(string statement)
+        async public Task<QueryId> Query(string statement)
         {
-            throw new NotImplementedException();
+            var responseJson = await ApiClient.ApiPostRequest(
+                new Uri(ApiRootUrl, "query"),
+                ApiKey,
+                );
+
+
         }
-        public Task<T> QueryResult<T>(string queryId)
+        async public Task<T> QueryResult<T>(string queryId)
         {
-            throw new NotImplementedException();
+            return await Task.FromException<T>(new NotImplementedException());
         }
-        public Task<CancelSuccess> CancelQuery(string queryId)
+        async public Task<CancelSuccess> CancelQuery(string queryId)
         {
-            throw new NotImplementedException();
+            return await Task.FromException(new NotImplementedException());
         }
     }
 
     class DiffixApiClient : HttpClient
     {
-        async private Task<JsonDocument> ApiGetRequest(
-            string apiEndpoint,
+        async public Task<JsonDocument> ApiGetRequest(
+            Uri apiEndpoint,
             string apiKey)
         {
             using var requestMessage =
@@ -84,8 +132,8 @@ namespace Explorer.Api.DiffixApi
             }
         }
 
-        async private Task<JsonDocument> ApiPostRequest(
-            string apiEndpoint,
+        async public Task<JsonDocument> ApiPostRequest(
+            Uri apiEndpoint,
             string apiToken,
             string requestContent = default)
         {
@@ -95,7 +143,7 @@ namespace Explorer.Api.DiffixApi
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue(apiToken);
 
             requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            requestMessage.Content = new StringContent(requestContent.ToString());
+            requestMessage.Content = new StringContent(requestContent);
 
             using var response = await SendAsync(requestMessage);
             using var contentStream = await response.Content.ReadAsStreamAsync();
