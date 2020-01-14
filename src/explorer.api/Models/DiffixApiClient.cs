@@ -15,7 +15,7 @@ namespace Explorer.Api.DiffixApi
     {
         Task<DataSources> GetDataSources();
         Task<QueryResponse> Query(string dataSource, string queryStatement);
-        Task<T> QueryResult<T>(string queryId);
+        Task<QueryResult<T>> PollQueryResult<T>(string queryId);
         Task<CancelSuccess> CancelQuery(string queryId);
     }
 
@@ -187,6 +187,8 @@ namespace Explorer.Api.DiffixApi
             };
 
             ct.ThrowIfCancellationRequested();
+
+            throw new Exception("Should never reach here.");
         }
 
         async public Task<QueryResult<RowType>> PollQueryUntilCompleteOrTimeout<RowType>(
