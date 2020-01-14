@@ -6,6 +6,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Explorer.Api.DiffixApi
 {
@@ -27,7 +30,17 @@ namespace Explorer.Api.DiffixApi
         }
     }
 
-    struct DataSources
+    public class SnakeCaseNamingPolicy : JsonNamingPolicy
+    {
+        public override string ConvertName(string pascalCase)
+        {
+            var fragments = Regex.Matches(pascalCase, "[A-Z]+[a-z]+")
+                .Select(match => match.Value.ToLower());
+            return String.Join("_", fragments);
+        }
+    }
+
+    public class DataSources
     {
         struct Table
         {
@@ -44,29 +57,60 @@ namespace Explorer.Api.DiffixApi
                     Bool,
                 }
                 string Name { get; set; }
-                DiffixType DType { get; set; }
+                DiffixType Type { get; set; }
             }
             string Id { get; set; }
-            IEnumerable<Column> columns { get; set; }
+            IEnumerable<Column> Columns { get; set; }
         }
 
         string Name { get; set; }
         string Description { get; set; }
+        IEnumerable<Table> Tables { get; set; }
+    }
 
-        IEnumerable<Table> tables { get; set; }
+    public class QueryResult<RowType>
+    {
+        public struct RowWithCount
+        {
+            public List<RowType> Row { get; set; }
+            public int Occurrences { get; set; }
+        }
+        public bool Completed { get; set; }
+
+        // "query_state": "<the execution phase of the query>",
+        public string QueryState { get; set; }
+
+        // "id": "<query-id>",
+        public string Id { get; set; }
+
+        // "statement": "<query-statement>",
+        public string Statement { get; set; }
+
+        // "error": "<error-message>",
+        public string Error { get; set; }
+
+        // "columns": ["<column-name>", ...],
+        public List<string> Columns { get; set; }
+
+        // "row_count": <row-count>,
+        public int RowCount { get; set; }
+
+        // "rows": [
+        // {"row": [<value-1>, ...], "occurrences": <number-of-occurrences>},
+        // ...
+        // ]
+        public List<RowWithCount> Rows { get; set; }
     }
 
     struct QueryResponse
     {
-        [JsonPropertyName("success")]
         bool Success { get; set; }
-        [JsonPropertyName("query_id")]
         string QueryId { get; set; }
     }
 
     struct CancelSuccess
     {
-        bool IsSuccess { get; set; }
+        bool Success { get; set; }
     }
 
     class DiffixApiSession : IDiffixApi
@@ -91,6 +135,7 @@ namespace Explorer.Api.DiffixApi
                 new Uri(ApiRootUrl, "data_source"),
                 ApiKey);
         }
+        
         async public Task<QueryResponse> Query(
             string dataSource,
             string queryStatement)
@@ -99,24 +144,37 @@ namespace Explorer.Api.DiffixApi
             {
                 query = new
                 {
-                    query = queryStatement,
+                    statement = queryStatement,
                     data_source_name = dataSource
                 }
             };
 
             return await ApiClient.ApiPostRequest<QueryResponse>(
-                new Uri(ApiRootUrl, "query"),
+                EndPointUrl("query"),
                 ApiKey,
                 JsonSerializer.Serialize(queryBody)
                 );
         }
-        async public Task<T> QueryResult<T>(string queryId)
+
+        async public Task<QueryResult<RowType>> PollQueryResult<RowType>(string queryId)
         {
-            return await Task.FromException<T>(new NotImplementedException());
+            return await ApiClient.ApiGetRequest<QueryResult<RowType>>(
+                EndPointUrl($"query/{queryId}"),
+                ApiKey
+                );
         }
+
         async public Task<CancelSuccess> CancelQuery(string queryId)
         {
-            return await Task.FromException<CancelSuccess>(new NotImplementedException());
+            return await ApiClient.ApiPostRequest<CancelSuccess>(
+                EndPointUrl($"{queryId}/cancel"),
+                ApiKey
+            );
+        }
+
+        private Uri EndPointUrl(string path)
+        {
+            return new Uri(ApiRootUrl, path);
         }
     }
 
@@ -160,7 +218,11 @@ namespace Explorer.Api.DiffixApi
             if (response.StatusCode == HttpStatusCode.Accepted)
             {
                 using var contentStream = await response.Content.ReadAsStreamAsync();
-                return await JsonSerializer.DeserializeAsync<T>(contentStream);
+                var opts = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = new SnakeCaseNamingPolicy()
+                };
+                return await JsonSerializer.DeserializeAsync<T>(contentStream, opts);
             }
             else
             {
