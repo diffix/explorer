@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
@@ -11,7 +12,9 @@ using System.Linq;
 
 namespace Explorer.Api.DiffixApi
 {
-    interface IDiffixApi
+    using DataSources = List<DataSource>;
+
+    public interface IDiffixApi
     {
         Task<DataSources> GetDataSources();
         Task<QueryResponse> Query(string dataSource, string queryStatement);
@@ -19,11 +22,11 @@ namespace Explorer.Api.DiffixApi
         Task<CancelSuccess> CancelQuery(string queryId);
     }
 
-    static class DiffixApi
+    public static class DiffixApi
     {
         static private readonly DiffixApiClient ApiClient = new DiffixApiClient();
 
-        static DiffixApiSession NewSession(string apiRootUrl, string apiKey)
+        public static DiffixApiSession NewSession(string apiRootUrl, string apiKey)
         {
             return new DiffixApiSession(ApiClient, apiRootUrl, apiKey);
         }
@@ -39,13 +42,13 @@ namespace Explorer.Api.DiffixApi
         }
     }
 
-    public class DataSources
+    public class DataSource
     {
-        struct Table
+        public struct Table
         {
-            struct Column
+            public struct Column
             {
-                enum DiffixType
+                public enum DiffixType
                 {
                     Integer,
                     Real,
@@ -62,8 +65,8 @@ namespace Explorer.Api.DiffixApi
             IEnumerable<Column> Columns { get; set; }
         }
 
-        string Name { get; set; }
-        string Description { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
         IEnumerable<Table> Tables { get; set; }
     }
 
@@ -101,20 +104,20 @@ namespace Explorer.Api.DiffixApi
         public List<RowWithCount> Rows { get; set; }
     }
 
-    struct QueryResponse
+    public struct QueryResponse
     {
         bool Success { get; set; }
         string QueryId { get; set; }
     }
 
-    struct CancelSuccess
+    public struct CancelSuccess
     {
         bool Success { get; set; }
     }
 
-    class DiffixApiSession : IDiffixApi
+    public class DiffixApiSession : IDiffixApi
     {
-        private static DiffixApiClient ApiClient;
+        private DiffixApiClient ApiClient;
         private readonly Uri ApiRootUrl;
         private readonly string ApiKey;
 
@@ -131,7 +134,7 @@ namespace Explorer.Api.DiffixApi
         async public Task<DataSources> GetDataSources()
         {
             return await ApiClient.ApiGetRequest<DataSources>(
-                new Uri(ApiRootUrl, "data_source"),
+                new Uri(ApiRootUrl, "data_sources"),
                 ApiKey);
         }
 
@@ -232,7 +235,7 @@ namespace Explorer.Api.DiffixApi
         }
     }
 
-    class DiffixApiClient : HttpClient
+    public class DiffixApiClient : HttpClient
     {
         async public Task<T> ApiGetRequest<T>(
             Uri apiEndpoint,
@@ -264,16 +267,20 @@ namespace Explorer.Api.DiffixApi
                 throw new Exception($"Failed to add Http header 'auth-token: {apiKey}'");
             }
 
-            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            requestMessage.Content = new StringContent(requestContent);
+            if (!(requestContent is null))
+            {
+                requestMessage.Content = new StringContent(requestContent);
+                requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            }
 
             using var response = await SendAsync(requestMessage);
 
-            if (response.StatusCode == HttpStatusCode.Accepted)
+            if (response.StatusCode == HttpStatusCode.OK)
             {
                 using var contentStream = await response.Content.ReadAsStreamAsync();
                 var opts = new JsonSerializerOptions
                 {
+                    Converters = { new JsonStringEnumConverter(new SnakeCaseNamingPolicy()) },
                     PropertyNamingPolicy = new SnakeCaseNamingPolicy()
                 };
                 return await JsonSerializer.DeserializeAsync<T>(contentStream, opts);
