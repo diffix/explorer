@@ -42,7 +42,6 @@ namespace Explorer.Api.DiffixApi
                     Date,
                     Datetime,
                     Bool,
-
                 }
                 string Name { get; set; }
                 DiffixType DType { get; set; }
@@ -148,7 +147,10 @@ namespace Explorer.Api.DiffixApi
             using var requestMessage =
                 new HttpRequestMessage(requestMethod, apiEndpoint);
 
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(apiKey);
+            if (!requestMessage.Headers.TryAddWithoutValidation("auth-token", apiKey))
+            {
+                throw new Exception($"Failed to add Http header 'auth-token: {apiKey}'");
+            }
 
             requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             requestMessage.Content = new StringContent(requestContent);
