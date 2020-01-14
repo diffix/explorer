@@ -3,12 +3,11 @@ using System.Net.Http;
 using System.Net;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Linq;
-using System.Collections.Generic;
 
 namespace Explorer.Api.DiffixApi
 {
@@ -135,7 +134,7 @@ namespace Explorer.Api.DiffixApi
                 new Uri(ApiRootUrl, "data_source"),
                 ApiKey);
         }
-        
+
         async public Task<QueryResponse> Query(
             string dataSource,
             string queryStatement)
@@ -162,6 +161,59 @@ namespace Explorer.Api.DiffixApi
                 EndPointUrl($"query/{queryId}"),
                 ApiKey
                 );
+        }
+
+        async public Task<QueryResult<RowType>> PollQueryUntilComplete<RowType>(
+            string queryId,
+            CancellationToken ct,
+            TimeSpan? pollFrequency)
+        {
+            if (pollFrequency is null)
+            {
+                pollFrequency = TimeSpan.FromMilliseconds(500);
+            }
+
+            while (!ct.IsCancellationRequested)
+            {
+                var queryResult = await PollQueryResult<RowType>(queryId);
+                if (queryResult.Completed)
+                {
+                    return queryResult;
+                }
+                else
+                {
+                    await Task.Delay(pollFrequency.Value, ct);
+                }
+            };
+
+            ct.ThrowIfCancellationRequested();
+        }
+
+        async public Task<QueryResult<RowType>> PollQueryUntilCompleteOrTimeout<RowType>(
+            string queryId,
+            TimeSpan? pollFrequency,
+            TimeSpan? timeout = null)
+        {
+            if (timeout is null)
+            {
+                timeout = TimeSpan.FromMinutes(10);
+            }
+
+            using var tokenSource = new CancellationTokenSource();
+
+            try
+            {
+                return await PollQueryUntilComplete<RowType>(queryId, tokenSource.Token, pollFrequency);
+            }
+            catch (OperationCanceledException e)
+            {
+                if (e.CancellationToken == tokenSource.Token)
+                {
+                    throw new TimeoutException($"Timed out while waiting for query results for {queryId}");
+                }
+
+                throw;
+            }
         }
 
         async public Task<CancelSuccess> CancelQuery(string queryId)
