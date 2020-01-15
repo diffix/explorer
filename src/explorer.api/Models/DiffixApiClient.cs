@@ -237,6 +237,18 @@ namespace Explorer.Api.DiffixApi
 
     public class DiffixApiClient : HttpClient
     {
+        /// <summary>
+        /// Send a GET request to the Diffix API. Handles authentication.
+        /// </summary>
+        /// <param name="apiEndpoint">The API endpoint to target.</param>
+        /// <param name="apiKey">The API key for the service.</param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns>A <code>Task&lt;T&gt;<code> which, upon completion, contains the API response deserialized
+        /// to the provided return type.</returns>
+        /// <exception cref="HttpRequestException"></exception>
+        /// <exception cref="JsonException">The JSON is invalid. 
+        /// -or- <code>T<code> is not compatible with the JSON. 
+        /// -or- There is remaining data in the stream.</exception>
         async public Task<T> ApiGetRequest<T>(
             Uri apiEndpoint,
             string apiKey)
@@ -244,6 +256,19 @@ namespace Explorer.Api.DiffixApi
             return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, apiKey);
         }
 
+        /// <summary>
+        /// Send a POST request to the Diffix API. Handles authentication.
+        /// </summary>
+        /// <param name="apiEndpoint">The API endpoint to target</param>
+        /// <param name="apiKey">The API key for the service</param>
+        /// <param name="requestContent">JSON-encoded request message (optional)</param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns>A <code>Task&lt;T&gt;<code> which, upon completion, contains the API response deserialized
+        /// to the provided return type</returns>
+        /// <exception cref="HttpRequestException"></exception>
+        /// <exception cref="JsonException">The JSON is invalid. 
+        /// -or- <code>T<code> is not compatible with the JSON. 
+        /// -or- There is remaining data in the stream.</exception>
         async public Task<T> ApiPostRequest<T>(
             Uri apiEndpoint,
             string apiKey,
@@ -252,6 +277,20 @@ namespace Explorer.Api.DiffixApi
             return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, apiKey, requestContent);
         }
 
+        /// <summary>
+        /// Send a request to the Diffix API. Handles authentication 
+        /// </summary>
+        /// <param name="requestMethod">The HTTP method to use in the request</param>
+        /// <param name="apiEndpoint">The API endpoint to target</param>
+        /// <param name="apiKey">The API key for the service</param>
+        /// <param name="requestContent">JSON-encoded request message (optional)</param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns>A <code>Task&lt;T&gt;<code> which, upon completion, contains the API response deserialized
+        /// to the provided return type</returns>
+        /// <exception cref="HttpRequestException"></exception>
+        /// <exception cref="JsonException">The JSON is invalid. 
+        /// -or- <code>T<code> is not compatible with the JSON. 
+        /// -or- There is remaining data in the stream.</exception>
         async private Task<T> ApiRequest<T>(
             HttpMethod requestMethod,
             Uri apiEndpoint,
@@ -287,10 +326,15 @@ namespace Explorer.Api.DiffixApi
             }
             else
             {
-                throw new Exception($"{requestMethod} Request Error: {serviceError(response)}");
+                throw new HttpRequestException($"{requestMethod} Request Error: {serviceError(response)}");
             }
         }
 
+        /// <summary>
+        /// Turns the HTTP response into a custom error string
+        /// </summary>
+        /// <param name="response">The HTTP response code</param>
+        /// <returns>A string containing a custom error message</returns>
         private string serviceError(HttpResponseMessage response)
         {
             return response.StatusCode switch
@@ -306,7 +350,7 @@ namespace Explorer.Api.DiffixApi
                 HttpStatusCode.GatewayTimeout =>
                     "Gateway Timeout -- A timeout occured while contacting the data source. " +
                     "The system might be overloaded. Try again later.",
-                _ => throw new NotImplementedException(),
+                _ => response.StatusCode.ToString(),
             };
         }
     }
