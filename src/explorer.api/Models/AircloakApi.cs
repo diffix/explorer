@@ -70,13 +70,27 @@ namespace Explorer.Api.AircloakApi
                 ApiKey);
         }
 
+        async public Task<QueryResult<RowType>> Query<RowType>(
+            string dataSource,
+            string queryStatement,
+            TimeSpan timeout)
+        {
+            var queryResponse = await SubmitQuery(dataSource, queryStatement);
+            if (!queryResponse.Success)
+            {
+                throw new Exception($"Unhandled Aircloak error returned for query to {dataSource}. Query Statement:" +
+                                    $" {queryStatement}.");
+            }
+
+            return await PollQueryUntilCompleteOrTimeout<RowType>(queryResponse.QueryId, timeout);
+        }
         /// <summary>
         /// Sends a Http POST request to the Aircloak server's /api/queries endpoint.
         /// </summary>
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="queryStatement">The query statement as a string</param>
         /// <returns>A QueryResonse instance containing the success status and query Id</returns>
-        async public Task<QueryResponse> Query(
+        async public Task<QueryResponse> SubmitQuery(
             string dataSource,
             string queryStatement)
         {
@@ -137,6 +151,11 @@ namespace Explorer.Api.AircloakApi
 
             while (!ct.IsCancellationRequested)
             {
+                // Note: the cancellation token is not currently passed through to the PollQueryResult call. The 
+                // assumption here is that polling should return a result immediately. In practice, this may not be the
+                // case due to network delay. In this case, cancellation requests may take longer to take effect than 
+                // expected. In future we could thread the cancellation token right down through to the raw SyncSend
+                // call in the HttpClient.
                 var queryResult = await PollQueryResult<RowType>(queryId);
                 if (queryResult.Query.Completed)
                 {
