@@ -32,6 +32,9 @@ namespace Explorer.Api.DiffixApi
         }
     }
 
+    /// <summary>
+    /// Helper class for converting Json keys from the .NET standard PascalCase to snake_case
+    /// </summary>
     public class SnakeCaseNamingPolicy : JsonNamingPolicy
     {
         public override string ConvertName(string pascalCase)
@@ -43,6 +46,10 @@ namespace Explorer.Api.DiffixApi
     }
 
 
+
+    /// <summary>
+    /// Helper type representing the JSON response from a request to /api/data_sources.
+    /// </summary>
     public class DataSource
     {
         public struct Table
@@ -72,9 +79,9 @@ namespace Explorer.Api.DiffixApi
     }
 
     /** <summary>
-         Helper type representing the JSON response from a request to /api/queries/{query_id}.
-     
-         Example response: 
+        Helper type representing the JSON response from a request to /api/queries/{query_id}.
+
+        Example response: 
         <code>
         {
             &quot;query&quot;: {
@@ -127,24 +134,24 @@ namespace Explorer.Api.DiffixApi
     */
     public struct QueryResult<RowType>
     {
-        public struct _RowsWithCount
+        public struct QueryRowsWithCount
         {
             public RowType Row { get; set; }
             public bool Unreliable { get; set; }
             public int Occurrences { get; set; }
         }
-        public struct _User
+        public struct QueryUser
         {
             public string Name { get; set; }
         }
 
-        public struct _DataSource
+        public struct QueryDataSource
         {
             public string Name { get; set; }
         }
         public string BucketsLink { get; set; }
         public bool Completed { get; set; }
-        public _DataSource DataSource { get; set; }
+        public QueryDataSource DataSource { get; set; }
         public string DataSourceId { get; set; }
         public string Id { get; set; }
         public System.DateTime InsertedAt { get; set; }
@@ -154,22 +161,28 @@ namespace Explorer.Api.DiffixApi
         public string QueryState { get; set; }
         public string SessionId { get; set; }
         public string Statement { get; set; }
-        public _User User { get; set; }
+        public QueryUser User { get; set; }
         public List<string> Columns { get; set; }
         public string Error { get; set; }
         public List<string> Info { get; set; }
         public string Log { get; set; }
         public int RowCount { get; set; }
         public List<string> Types { get; set; }
-        public List<_RowsWithCount> Rows { get; set; }
+        public List<QueryRowsWithCount> Rows { get; set; }
     }
 
+    /// <summary>
+    /// Helper type representing the JSON response from a POST request to /api/query.
+    /// </summary>
     public struct QueryResponse
     {
         public bool Success { get; set; }
         public string QueryId { get; set; }
     }
 
+    /// <summary>
+    /// Helper type representing the JSON response from a request to /api/queries/{query_id}/cancel.
+    /// </summary>
     public struct CancelSuccess
     {
         public bool Success { get; set; }
@@ -191,6 +204,11 @@ namespace Explorer.Api.DiffixApi
             ApiRootUrl = new Uri(apiRootUrl);
         }
 
+        /// <summary>
+        /// Sends a Http GET request to the Aircloak server's /api/data_sources endpoint. 
+        /// </summary>
+        /// <returns>A DataSources instance containing the return list of data sources provided by this 
+        /// Aircloak instance.</returns>
         async public Task<DataSources> GetDataSources()
         {
             return await ApiClient.ApiGetRequest<DataSources>(
@@ -198,6 +216,12 @@ namespace Explorer.Api.DiffixApi
                 ApiKey);
         }
 
+        /// <summary>
+        /// Sends a Http POST request to the Aircloak server's /api/queries endpoint.
+        /// </summary>
+        /// <param name="dataSource">The data source to run the query against.</param>
+        /// <param name="queryStatement">The query statement as a string</param>
+        /// <returns>A QueryResonse instance containing the success status and query Id</returns>
         async public Task<QueryResponse> Query(
             string dataSource,
             string queryStatement)
@@ -218,6 +242,13 @@ namespace Explorer.Api.DiffixApi
                 );
         }
 
+        /// <summary>
+        /// Sends a Http POST request to the Aircloak server's /api/queries/{query_id} endpoint. 
+        /// </summary>
+        /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
+        /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
+        /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
+        /// row seralised to type <code>RowType</code></returns>
         async public Task<QueryResult<RowType>> PollQueryResult<RowType>(string queryId)
         {
             return await ApiClient.ApiGetRequest<QueryResult<RowType>>(
@@ -226,10 +257,23 @@ namespace Explorer.Api.DiffixApi
                 );
         }
 
+        /// <summary>
+        /// Calls <code>PollQueryResult</code> in a loop until the query completes. Can be canceled.
+        /// </summary>
+        /// <remarks>
+        /// Canceling via the <code>CancellationToken</code> cancels the returned <code>Task</code> but does not
+        /// cancel query execution. To do this, a call to <code>/api/queries/{query_id}/cancel</code> must be made.  
+        /// </remarks>
+        /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
+        /// <param name="ct">A <code>CancellationToken</code> that cancels the returned <code>Task</code>.</param>
+        /// <param name="pollFrequency">How often to poll the api endpoint. Default is 500 milliseconds</param>
+        /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
+        /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
+        /// row seralised to type <code>RowType</code></returns>
         async public Task<QueryResult<RowType>> PollQueryUntilComplete<RowType>(
             string queryId,
             CancellationToken ct,
-            TimeSpan? pollFrequency)
+            TimeSpan? pollFrequency=null)
         {
             if (pollFrequency is null)
             {
@@ -254,16 +298,20 @@ namespace Explorer.Api.DiffixApi
             throw new Exception("Should never reach here.");
         }
 
+        /// <summary>
+        /// Polls for a query's results until query resolution is complete, or until a specified timeout.
+        /// </summary>
+        /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
+        /// <param name="timeout">How long to wait for the query to complete.</param>
+        /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to 500 ms.</param>
+        /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
+        /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
+        /// row seralised to type <code>RowType</code></returns>
         async public Task<QueryResult<RowType>> PollQueryUntilCompleteOrTimeout<RowType>(
             string queryId,
-            TimeSpan? pollFrequency = null,
-            TimeSpan? timeout = null)
+            TimeSpan timeout,
+            TimeSpan? pollFrequency = null)
         {
-            if (timeout is null)
-            {
-                timeout = TimeSpan.FromMinutes(10);
-            }
-
             using var tokenSource = new CancellationTokenSource();
 
             try
@@ -281,6 +329,13 @@ namespace Explorer.Api.DiffixApi
             }
         }
 
+        /// <summary>
+        /// Sends a Http GET request to the /api/queries/{query_id}/cancel. Cancels a running query on the Aircloak 
+        /// server. 
+        /// </summary>
+        /// <param name="queryId">The id of the query to cancel</param>
+        /// <returns>A <code>CancelSuccess</code> instance indicating whether or not the query was indeed canceled.
+        /// </returns>
         async public Task<CancelSuccess> CancelQuery(string queryId)
         {
             return await ApiClient.ApiPostRequest<CancelSuccess>(
