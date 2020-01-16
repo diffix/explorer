@@ -10,11 +10,11 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Linq;
 
-namespace Explorer.Api.DiffixApi
+namespace Explorer.Api.AircloakApi
 {
     using DataSources = List<DataSource>;
 
-    public interface IDiffixApi
+    public interface IAircloakApi
     {
         Task<DataSources> GetDataSources();
         Task<QueryResponse> Query(string dataSource, string queryStatement);
@@ -22,13 +22,16 @@ namespace Explorer.Api.DiffixApi
         Task<CancelSuccess> CancelQuery(string queryId);
     }
 
-    public static class DiffixApi
+    /// <summary>
+    /// Contains the HttpClient instance and doles out ApiSession objects.
+    /// </summary>
+    public static class SessionManager
     {
-        static private readonly DiffixApiClient ApiClient = new DiffixApiClient();
+        static private readonly AircloakApiClient ApiClient = new AircloakApiClient();
 
-        public static DiffixApiSession NewSession(string apiRootUrl, string apiKey)
+        public static AircloakApiSession NewSession(string apiRootUrl, string apiKey)
         {
-            return new DiffixApiSession(ApiClient, apiRootUrl, apiKey);
+            return new AircloakApiSession(ApiClient, apiRootUrl, apiKey);
         }
     }
 
@@ -56,7 +59,7 @@ namespace Explorer.Api.DiffixApi
         {
             public struct Column
             {
-                public enum DiffixType
+                public enum AircloakType
                 {
                     Integer,
                     Real,
@@ -67,7 +70,7 @@ namespace Explorer.Api.DiffixApi
                     Bool,
                 }
                 string Name { get; set; }
-                DiffixType Type { get; set; }
+                AircloakType Type { get; set; }
             }
             string Id { get; set; }
             IEnumerable<Column> Columns { get; set; }
@@ -188,15 +191,25 @@ namespace Explorer.Api.DiffixApi
         public bool Success { get; set; }
     }
 
-    public class DiffixApiSession : IDiffixApi
+    /// <summary>
+    /// Provides higher-level access to the Aircloak Http Api. The session uses the same Url root and Api Key 
+    /// throughout its lifetime
+    /// </summary>
+    public class AircloakApiSession : IAircloakApi
     {
-        private DiffixApiClient ApiClient;
+        private readonly AircloakApiClient ApiClient;
         private readonly Uri ApiRootUrl;
         private readonly string ApiKey;
         private const int DEFAULT_POLLING_FREQUENCY_MS = 2000;
 
-        public DiffixApiSession(
-            DiffixApiClient apiClient,
+        /// <summary>
+        /// Create a new <code>AircloakApiSession</code> instance.
+        /// </summary>
+        /// <param name="apiClient">The <code>AircloakApiClient</code> instance.</param>
+        /// <param name="apiRootUrl">The root Url for the Aircloak Api, eg. "https://attack.aircloak.com/api/".</param>
+        /// <param name="apiKey">The Api key to use for this session.</param>
+        public AircloakApiSession(
+            AircloakApiClient apiClient,
             string apiRootUrl,
             string apiKey)
         {
@@ -353,10 +366,25 @@ namespace Explorer.Api.DiffixApi
         }
     }
 
-    public class DiffixApiClient : HttpClient
+    /// <summary>
+    /// Convenience class derived from <code>HttpClient</code> provides GET and POST methods adapted to the 
+    /// Aircloak API: 
+    /// <list type=bullet>
+    /// <item>
+    /// <description>Sets the provided Api Key on all outgoing requests.</description>
+    /// </item>
+    /// <item>
+    /// <description>Augments unsuccessful requests with custom error messages. </description>
+    /// </item>
+    /// <item>
+    /// <description>Deserializes Json responses.</description>
+    /// </item>
+    /// </list>
+    /// </summary>
+    public class AircloakApiClient : HttpClient
     {
         /// <summary>
-        /// Send a GET request to the Diffix API. Handles authentication.
+        /// Send a GET request to the Aircloak API. Handles authentication.
         /// </summary>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="apiKey">The API key for the service.</param>
@@ -375,7 +403,7 @@ namespace Explorer.Api.DiffixApi
         }
 
         /// <summary>
-        /// Send a POST request to the Diffix API. Handles authentication.
+        /// Send a POST request to the Aircloak API. Handles authentication.
         /// </summary>
         /// <param name="apiEndpoint">The API endpoint to target</param>
         /// <param name="apiKey">The API key for the service</param>
@@ -396,7 +424,7 @@ namespace Explorer.Api.DiffixApi
         }
 
         /// <summary>
-        /// Send a request to the Diffix API. Handles authentication 
+        /// Send a request to the Aircloak API. Handles authentication 
         /// </summary>
         /// <param name="requestMethod">The HTTP method to use in the request</param>
         /// <param name="apiEndpoint">The API endpoint to target</param>
