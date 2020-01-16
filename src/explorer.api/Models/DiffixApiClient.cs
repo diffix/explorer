@@ -93,8 +93,8 @@ namespace Explorer.Api.DiffixApi
                 &quot;data_source_id&quot;: 9,
                 &quot;id&quot;: &quot;9c08137a-b69f-450c-a13c-383340ddda2c&quot;,
                 &quot;inserted_at&quot;: &quot;2020-01-15T13:42:09.255580&quot;,
-                &quot;private_permalink&quot;: &quot;/permalink/private/query/SFMyNTY.g3QAAAACZAAEZGF0YWgDZAAHcHJpdmF0ZWQABXF1ZXJ5bQAAACQ5YzA4MTM3YS1iNjlmLTQ1MGMtYTEzYy0zODMzNDBkZGRhMmNkAAZzaWduZWRuBgD7xoKpbwE.0_mfHQieoAH-FB9uIFsGu07rW5TmT-jQAG-Td-zkU6o&quot;,
-                &quot;public_permalink&quot;: &quot;/permalink/public/query/SFMyNTY.g3QAAAACZAAEZGF0YWgDZAAGcHVibGljZAAFcXVlcnltAAAAJDljMDgxMzdhLWI2OWYtNDUwYy1hMTNjLTM4MzM0MGRkZGEyY2QABnNpZ25lZG4GAPvGgqlvAQ.x4d5dUF8NytoMWU-kJWwYtI3OhrwUIxMuMnzKLM0uYA&quot;,
+                &quot;private_permalink&quot;: &quot;/permalink/private/query/[...],
+                &quot;public_permalink&quot;: &quot;/permalink/public/query/[...],
                 &quot;query_state&quot;: &quot;completed&quot;,
                 &quot;session_id&quot;: null,
                 &quot;statement&quot;: &quot;select count(*), count_noise(*) from loans&quot;,
@@ -193,6 +193,7 @@ namespace Explorer.Api.DiffixApi
         private DiffixApiClient ApiClient;
         private readonly Uri ApiRootUrl;
         private readonly string ApiKey;
+        private const int DEFAULT_POLLING_FREQUENCY_MS = 2000;
 
         public DiffixApiSession(
             DiffixApiClient apiClient,
@@ -266,18 +267,19 @@ namespace Explorer.Api.DiffixApi
         /// </remarks>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="ct">A <code>CancellationToken</code> that cancels the returned <code>Task</code>.</param>
-        /// <param name="pollFrequency">How often to poll the api endpoint. Default is 500 milliseconds</param>
+        /// <param name="pollFrequency">How often to poll the api endpoint. Default is DEFAULT_POLLING_FREQUENCY_MS
+        /// </param>
         /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
         /// row seralised to type <code>RowType</code></returns>
         async public Task<QueryResult<RowType>> PollQueryUntilComplete<RowType>(
             string queryId,
             CancellationToken ct,
-            TimeSpan? pollFrequency=null)
+            TimeSpan? pollFrequency = null)
         {
             if (pollFrequency is null)
             {
-                pollFrequency = TimeSpan.FromMilliseconds(500);
+                pollFrequency = TimeSpan.FromMilliseconds(DEFAULT_POLLING_FREQUENCY_MS);
             }
 
             while (!ct.IsCancellationRequested)
@@ -303,7 +305,8 @@ namespace Explorer.Api.DiffixApi
         /// </summary>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="timeout">How long to wait for the query to complete.</param>
-        /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to 500 ms.</param>
+        /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to 
+        /// DEFAULT_POLLING_FREQUENCY_MS.</param>
         /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
         /// row seralised to type <code>RowType</code></returns>
