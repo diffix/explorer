@@ -3,24 +3,16 @@ using System.Net.Http;
 using System.Net;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
-using System.Linq;
+
+using Explorer.Api.AircloakApi.ReponseTypes;
+using Explorer.Api.AircloakApi.Helpers;
 
 namespace Explorer.Api.AircloakApi
 {
     using DataSources = List<DataSource>;
-
-    public interface IAircloakApi
-    {
-        Task<DataSources> GetDataSources();
-        Task<QueryResponse> Query(string dataSource, string queryStatement);
-        Task<QueryResult<T>> PollQueryResult<T>(string queryId);
-        Task<CancelSuccess> CancelQuery(string queryId);
-    }
 
     /// <summary>
     /// Contains the HttpClient instance and doles out ApiSession objects.
@@ -36,166 +28,11 @@ namespace Explorer.Api.AircloakApi
     }
 
     /// <summary>
-    /// Helper class for converting Json keys from the .NET standard PascalCase to snake_case
-    /// </summary>
-    public class SnakeCaseNamingPolicy : JsonNamingPolicy
-    {
-        public override string ConvertName(string pascalCase)
-        {
-            var fragments = Regex.Matches(pascalCase, "[A-Z]+[a-z]+")
-                .Select(match => match.Value.ToLower());
-            return String.Join("_", fragments);
-        }
-    }
-
-
-
-    /// <summary>
-    /// Helper type representing the JSON response from a request to /api/data_sources.
-    /// </summary>
-    public class DataSource
-    {
-        public struct Table
-        {
-            public struct Column
-            {
-                public enum AircloakType
-                {
-                    Integer,
-                    Real,
-                    Text,
-                    Timestamp,
-                    Date,
-                    Datetime,
-                    Bool,
-                }
-                string Name { get; set; }
-                AircloakType Type { get; set; }
-            }
-            string Id { get; set; }
-            IEnumerable<Column> Columns { get; set; }
-        }
-
-        public string Name { get; set; }
-        public string Description { get; set; }
-        IEnumerable<Table> Tables { get; set; }
-    }
-
-    /** <summary>
-        Helper type representing the JSON response from a request to /api/queries/{query_id}.
-
-        Example response: 
-        <code>
-        {
-            &quot;query&quot;: {
-                &quot;buckets_link&quot;: &quot;/queries/9c08137a-b69f-450c-a13c-383340ddda2c/buckets&quot;,
-                &quot;completed&quot;: true,
-                &quot;data_source&quot;: {
-                    &quot;name&quot;: &quot;gda_banking&quot;
-                },
-                &quot;data_source_id&quot;: 9,
-                &quot;id&quot;: &quot;9c08137a-b69f-450c-a13c-383340ddda2c&quot;,
-                &quot;inserted_at&quot;: &quot;2020-01-15T13:42:09.255580&quot;,
-                &quot;private_permalink&quot;: &quot;/permalink/private/query/[...],
-                &quot;public_permalink&quot;: &quot;/permalink/public/query/[...],
-                &quot;query_state&quot;: &quot;completed&quot;,
-                &quot;session_id&quot;: null,
-                &quot;statement&quot;: &quot;select count(*), count_noise(*) from loans&quot;,
-                &quot;user&quot;: {
-                    &quot;name&quot;: &quot;Daniel Lennon&quot;
-                },
-                &quot;columns&quot;: [
-                    &quot;count&quot;,
-                    &quot;count_noise&quot;
-                ],
-                &quot;error&quot;: null,
-                &quot;info&quot;: [
-                    &quot;[Debug] Using statistics-based anonymization.&quot;,
-                    &quot;[Debug] Query executed in 0.255 seconds.&quot;
-                ],
-                &quot;log&quot;: &quot;2020-01-15 [...] [info] query finished\n&quot;,
-                &quot;row_count&quot;: 1,
-                &quot;types&quot;: [
-                    &quot;integer&quot;,
-                    &quot;real&quot;
-                ],
-                &quot;rows&quot;: [
-                {
-                    &quot;unreliable&quot;: false,
-                    &quot;row&quot;: [
-                    825,
-                    1
-                    ],
-                    &quot;occurrences&quot;: 1
-                }
-                ]
-            }
-        }
-        </code>
-        </summary>
-        <typeparam name="RowType"></typeparam>
-    */
-    public struct QueryResult<RowType>
-    {
-        public struct QueryRowsWithCount
-        {
-            public RowType Row { get; set; }
-            public bool Unreliable { get; set; }
-            public int Occurrences { get; set; }
-        }
-        public struct QueryUser
-        {
-            public string Name { get; set; }
-        }
-
-        public struct QueryDataSource
-        {
-            public string Name { get; set; }
-        }
-        public string BucketsLink { get; set; }
-        public bool Completed { get; set; }
-        public QueryDataSource DataSource { get; set; }
-        public string DataSourceId { get; set; }
-        public string Id { get; set; }
-        public System.DateTime InsertedAt { get; set; }
-
-        public string PrivatePermalink { get; set; }
-        public string PublicPermalink { get; set; }
-        public string QueryState { get; set; }
-        public string SessionId { get; set; }
-        public string Statement { get; set; }
-        public QueryUser User { get; set; }
-        public List<string> Columns { get; set; }
-        public string Error { get; set; }
-        public List<string> Info { get; set; }
-        public string Log { get; set; }
-        public int RowCount { get; set; }
-        public List<string> Types { get; set; }
-        public List<QueryRowsWithCount> Rows { get; set; }
-    }
-
-    /// <summary>
-    /// Helper type representing the JSON response from a POST request to /api/query.
-    /// </summary>
-    public struct QueryResponse
-    {
-        public bool Success { get; set; }
-        public string QueryId { get; set; }
-    }
-
-    /// <summary>
-    /// Helper type representing the JSON response from a request to /api/queries/{query_id}/cancel.
-    /// </summary>
-    public struct CancelSuccess
-    {
-        public bool Success { get; set; }
-    }
-
-    /// <summary>
     /// Provides higher-level access to the Aircloak Http Api. The session uses the same Url root and Api Key 
-    /// throughout its lifetime
+    /// throughout its lifetime. 
     /// </summary>
-    public class AircloakApiSession : IAircloakApi
+    /// <see cref=AircloakApiClient/>
+    public class AircloakApiSession
     {
         private readonly AircloakApiClient ApiClient;
         private readonly Uri ApiRootUrl;
@@ -203,11 +40,14 @@ namespace Explorer.Api.AircloakApi
         private const int DEFAULT_POLLING_FREQUENCY_MS = 2000;
 
         /// <summary>
-        /// Create a new <code>AircloakApiSession</code> instance.
+        /// Create a new <c>AircloakApiSession</c> instance.
         /// </summary>
-        /// <param name="apiClient">The <code>AircloakApiClient</code> instance.</param>
+        /// <param name="apiClient">An <c>AircloakApiClient</c> instance. The <paramref name="apiClient"/> is based on 
+        /// the .NET <c>HttpClient</c> class and should be reused, ie. the <paramref name="apiClient"/> should be a
+        /// reference to singleton instance.</param>
         /// <param name="apiRootUrl">The root Url for the Aircloak Api, eg. "https://attack.aircloak.com/api/".</param>
         /// <param name="apiKey">The Api key to use for this session.</param>
+        /// <see cref=AircloakApiClient/>
         public AircloakApiSession(
             AircloakApiClient apiClient,
             string apiRootUrl,
@@ -221,7 +61,7 @@ namespace Explorer.Api.AircloakApi
         /// <summary>
         /// Sends a Http GET request to the Aircloak server's /api/data_sources endpoint. 
         /// </summary>
-        /// <returns>A DataSources instance containing the return list of data sources provided by this 
+        /// <returns>A <c>List&lt;DataSource&gt;</c> containing the data sources provided by this 
         /// Aircloak instance.</returns>
         async public Task<DataSources> GetDataSources()
         {
@@ -262,7 +102,7 @@ namespace Explorer.Api.AircloakApi
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
-        /// row seralised to type <code>RowType</code></returns>
+        /// row seralised to type <c>RowType</c></returns>
         async public Task<QueryResult<RowType>> PollQueryResult<RowType>(string queryId)
         {
             return await ApiClient.ApiGetRequest<QueryResult<RowType>>(
@@ -272,19 +112,19 @@ namespace Explorer.Api.AircloakApi
         }
 
         /// <summary>
-        /// Calls <code>PollQueryResult</code> in a loop until the query completes. Can be canceled.
+        /// Calls <c>PollQueryResult</c> in a loop until the query completes. Can be canceled.
         /// </summary>
         /// <remarks>
-        /// Canceling via the <code>CancellationToken</code> cancels the returned <code>Task</code> but does not
-        /// cancel query execution. To do this, a call to <code>/api/queries/{query_id}/cancel</code> must be made.  
+        /// Canceling via the <c>CancellationToken</c> cancels the returned <c>Task</c> but does not
+        /// cancel query execution. To do this, a call to <c>/api/queries/{query_id}/cancel</c> must be made.  
         /// </remarks>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
-        /// <param name="ct">A <code>CancellationToken</code> that cancels the returned <code>Task</code>.</param>
+        /// <param name="ct">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. Default is DEFAULT_POLLING_FREQUENCY_MS
         /// </param>
         /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
-        /// row seralised to type <code>RowType</code></returns>
+        /// row seralised to type <c>RowType</c></returns>
         async public Task<QueryResult<RowType>> PollQueryUntilComplete<RowType>(
             string queryId,
             CancellationToken ct,
@@ -298,7 +138,7 @@ namespace Explorer.Api.AircloakApi
             while (!ct.IsCancellationRequested)
             {
                 var queryResult = await PollQueryResult<RowType>(queryId);
-                if (queryResult.Completed)
+                if (queryResult.Query.Completed)
                 {
                     return queryResult;
                 }
@@ -322,7 +162,7 @@ namespace Explorer.Api.AircloakApi
         /// DEFAULT_POLLING_FREQUENCY_MS.</param>
         /// <typeparam name="RowType">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each 
-        /// row seralised to type <code>RowType</code></returns>
+        /// row seralised to type <c>RowType</c></returns>
         async public Task<QueryResult<RowType>> PollQueryUntilCompleteOrTimeout<RowType>(
             string queryId,
             TimeSpan timeout,
@@ -350,7 +190,7 @@ namespace Explorer.Api.AircloakApi
         /// server. 
         /// </summary>
         /// <param name="queryId">The id of the query to cancel</param>
-        /// <returns>A <code>CancelSuccess</code> instance indicating whether or not the query was indeed canceled.
+        /// <returns>A <c>CancelSuccess</c> instance indicating whether or not the query was indeed canceled.
         /// </returns>
         async public Task<CancelSuccess> CancelQuery(string queryId)
         {
@@ -367,7 +207,7 @@ namespace Explorer.Api.AircloakApi
     }
 
     /// <summary>
-    /// Convenience class derived from <code>HttpClient</code> provides GET and POST methods adapted to the 
+    /// Convenience class derived from <c>HttpClient</c> provides GET and POST methods adapted to the 
     /// Aircloak API: 
     /// <list type=bullet>
     /// <item>
@@ -389,11 +229,11 @@ namespace Explorer.Api.AircloakApi
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="apiKey">The API key for the service.</param>
         /// <typeparam name="T"></typeparam>
-        /// <returns>A <code>Task&lt;T&gt;<code> which, upon completion, contains the API response deserialized
+        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type.</returns>
         /// <exception cref="HttpRequestException"></exception>
         /// <exception cref="JsonException">The JSON is invalid. 
-        /// -or- <code>T<code> is not compatible with the JSON. 
+        /// -or- <c>T</c> is not compatible with the JSON. 
         /// -or- There is remaining data in the stream.</exception>
         async public Task<T> ApiGetRequest<T>(
             Uri apiEndpoint,
@@ -409,11 +249,11 @@ namespace Explorer.Api.AircloakApi
         /// <param name="apiKey">The API key for the service</param>
         /// <param name="requestContent">JSON-encoded request message (optional)</param>
         /// <typeparam name="T"></typeparam>
-        /// <returns>A <code>Task&lt;T&gt;<code> which, upon completion, contains the API response deserialized
+        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type</returns>
         /// <exception cref="HttpRequestException"></exception>
         /// <exception cref="JsonException">The JSON is invalid. 
-        /// -or- <code>T<code> is not compatible with the JSON. 
+        /// -or- <c>T</c> is not compatible with the JSON. 
         /// -or- There is remaining data in the stream.</exception>
         async public Task<T> ApiPostRequest<T>(
             Uri apiEndpoint,
@@ -431,11 +271,11 @@ namespace Explorer.Api.AircloakApi
         /// <param name="apiKey">The API key for the service</param>
         /// <param name="requestContent">JSON-encoded request message (optional)</param>
         /// <typeparam name="T"></typeparam>
-        /// <returns>A <code>Task&lt;T&gt;<code> which, upon completion, contains the API response deserialized
+        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type</returns>
         /// <exception cref="HttpRequestException"></exception>
         /// <exception cref="JsonException">The JSON is invalid. 
-        /// -or- <code>T<code> is not compatible with the JSON. 
+        /// -or- <c>T</c> is not compatible with the JSON. 
         /// -or- There is remaining data in the stream.</exception>
         async private Task<T> ApiRequest<T>(
             HttpMethod requestMethod,
@@ -458,14 +298,15 @@ namespace Explorer.Api.AircloakApi
                 requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             }
 
-            using var response = await SendAsync(requestMessage);
+            using var response = await SendAsync(
+                requestMessage,
+                HttpCompletionOption.ResponseHeadersRead);
 
             if (response.IsSuccessStatusCode)
             {
                 using var contentStream = await response.Content.ReadAsStreamAsync();
                 var opts = new JsonSerializerOptions
                 {
-                    Converters = { new JsonStringEnumConverter(new SnakeCaseNamingPolicy()) },
                     PropertyNamingPolicy = new SnakeCaseNamingPolicy()
                 };
                 return await JsonSerializer.DeserializeAsync<T>(contentStream, opts);
@@ -479,7 +320,7 @@ namespace Explorer.Api.AircloakApi
         /// <summary>
         /// Turns the HTTP response into a custom error string
         /// </summary>
-        /// <param name="response">The HTTP response code</param>
+        /// <param name="response">The HTTP response c</param>
         /// <returns>A string containing a custom error message</returns>
         private string serviceError(HttpResponseMessage response)
         {
