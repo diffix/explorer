@@ -42,6 +42,7 @@ namespace Explorer.Api.DiffixApi
         }
     }
 
+
     public class DataSource
     {
         public struct Table
@@ -70,49 +71,108 @@ namespace Explorer.Api.DiffixApi
         IEnumerable<Table> Tables { get; set; }
     }
 
-    public class QueryResult<RowType>
-    {
-        public struct RowWithCount
+    /** <summary>
+         Helper type representing the JSON response from a request to /api/queries/{query_id}.
+     
+         Example response: 
+        <code>
         {
-            public List<RowType> Row { get; set; }
+            &quot;query&quot;: {
+                &quot;buckets_link&quot;: &quot;/queries/9c08137a-b69f-450c-a13c-383340ddda2c/buckets&quot;,
+                &quot;completed&quot;: true,
+                &quot;data_source&quot;: {
+                    &quot;name&quot;: &quot;gda_banking&quot;
+                },
+                &quot;data_source_id&quot;: 9,
+                &quot;id&quot;: &quot;9c08137a-b69f-450c-a13c-383340ddda2c&quot;,
+                &quot;inserted_at&quot;: &quot;2020-01-15T13:42:09.255580&quot;,
+                &quot;private_permalink&quot;: &quot;/permalink/private/query/SFMyNTY.g3QAAAACZAAEZGF0YWgDZAAHcHJpdmF0ZWQABXF1ZXJ5bQAAACQ5YzA4MTM3YS1iNjlmLTQ1MGMtYTEzYy0zODMzNDBkZGRhMmNkAAZzaWduZWRuBgD7xoKpbwE.0_mfHQieoAH-FB9uIFsGu07rW5TmT-jQAG-Td-zkU6o&quot;,
+                &quot;public_permalink&quot;: &quot;/permalink/public/query/SFMyNTY.g3QAAAACZAAEZGF0YWgDZAAGcHVibGljZAAFcXVlcnltAAAAJDljMDgxMzdhLWI2OWYtNDUwYy1hMTNjLTM4MzM0MGRkZGEyY2QABnNpZ25lZG4GAPvGgqlvAQ.x4d5dUF8NytoMWU-kJWwYtI3OhrwUIxMuMnzKLM0uYA&quot;,
+                &quot;query_state&quot;: &quot;completed&quot;,
+                &quot;session_id&quot;: null,
+                &quot;statement&quot;: &quot;select count(*), count_noise(*) from loans&quot;,
+                &quot;user&quot;: {
+                    &quot;name&quot;: &quot;Daniel Lennon&quot;
+                },
+                &quot;columns&quot;: [
+                    &quot;count&quot;,
+                    &quot;count_noise&quot;
+                ],
+                &quot;error&quot;: null,
+                &quot;info&quot;: [
+                    &quot;[Debug] Using statistics-based anonymization.&quot;,
+                    &quot;[Debug] Query executed in 0.255 seconds.&quot;
+                ],
+                &quot;log&quot;: &quot;2020-01-15 [...] [info] query finished\n&quot;,
+                &quot;row_count&quot;: 1,
+                &quot;types&quot;: [
+                    &quot;integer&quot;,
+                    &quot;real&quot;
+                ],
+                &quot;rows&quot;: [
+                {
+                    &quot;unreliable&quot;: false,
+                    &quot;row&quot;: [
+                    825,
+                    1
+                    ],
+                    &quot;occurrences&quot;: 1
+                }
+                ]
+            }
+        }
+        </code>
+        </summary>
+        <typeparam name="RowType"></typeparam>
+    */
+    public struct QueryResult<RowType>
+    {
+        public struct _RowsWithCount
+        {
+            public RowType Row { get; set; }
+            public bool Unreliable { get; set; }
             public int Occurrences { get; set; }
         }
+        public struct _User
+        {
+            public string Name { get; set; }
+        }
+
+        public struct _DataSource
+        {
+            public string Name { get; set; }
+        }
+        public string BucketsLink { get; set; }
         public bool Completed { get; set; }
-
-        // "query_state": "<the execution phase of the query>",
-        public string QueryState { get; set; }
-
-        // "id": "<query-id>",
+        public _DataSource DataSource { get; set; }
+        public string DataSourceId { get; set; }
         public string Id { get; set; }
+        public System.DateTime InsertedAt { get; set; }
 
-        // "statement": "<query-statement>",
+        public string PrivatePermalink { get; set; }
+        public string PublicPermalink { get; set; }
+        public string QueryState { get; set; }
+        public string SessionId { get; set; }
         public string Statement { get; set; }
-
-        // "error": "<error-message>",
-        public string Error { get; set; }
-
-        // "columns": ["<column-name>", ...],
+        public _User User { get; set; }
         public List<string> Columns { get; set; }
-
-        // "row_count": <row-count>,
+        public string Error { get; set; }
+        public List<string> Info { get; set; }
+        public string Log { get; set; }
         public int RowCount { get; set; }
-
-        // "rows": [
-        // {"row": [<value-1>, ...], "occurrences": <number-of-occurrences>},
-        // ...
-        // ]
-        public List<RowWithCount> Rows { get; set; }
+        public List<string> Types { get; set; }
+        public List<_RowsWithCount> Rows { get; set; }
     }
 
     public struct QueryResponse
     {
-        bool Success { get; set; }
-        string QueryId { get; set; }
+        public bool Success { get; set; }
+        public string QueryId { get; set; }
     }
 
     public struct CancelSuccess
     {
-        bool Success { get; set; }
+        public bool Success { get; set; }
     }
 
     public class DiffixApiSession : IDiffixApi
@@ -152,7 +212,7 @@ namespace Explorer.Api.DiffixApi
             };
 
             return await ApiClient.ApiPostRequest<QueryResponse>(
-                EndPointUrl("query"),
+                EndPointUrl("queries"),
                 ApiKey,
                 JsonSerializer.Serialize(queryBody)
                 );
@@ -161,7 +221,7 @@ namespace Explorer.Api.DiffixApi
         async public Task<QueryResult<RowType>> PollQueryResult<RowType>(string queryId)
         {
             return await ApiClient.ApiGetRequest<QueryResult<RowType>>(
-                EndPointUrl($"query/{queryId}"),
+                EndPointUrl($"queries/{queryId}"),
                 ApiKey
                 );
         }
@@ -196,7 +256,7 @@ namespace Explorer.Api.DiffixApi
 
         async public Task<QueryResult<RowType>> PollQueryUntilCompleteOrTimeout<RowType>(
             string queryId,
-            TimeSpan? pollFrequency,
+            TimeSpan? pollFrequency = null,
             TimeSpan? timeout = null)
         {
             if (timeout is null)
@@ -224,7 +284,7 @@ namespace Explorer.Api.DiffixApi
         async public Task<CancelSuccess> CancelQuery(string queryId)
         {
             return await ApiClient.ApiPostRequest<CancelSuccess>(
-                EndPointUrl($"{queryId}/cancel"),
+                EndPointUrl($"queries/{queryId}/cancel"),
                 ApiKey
             );
         }
@@ -314,7 +374,7 @@ namespace Explorer.Api.DiffixApi
 
             using var response = await SendAsync(requestMessage);
 
-            if (response.StatusCode == HttpStatusCode.OK)
+            if (response.IsSuccessStatusCode)
             {
                 using var contentStream = await response.Content.ReadAsStreamAsync();
                 var opts = new JsonSerializerOptions
