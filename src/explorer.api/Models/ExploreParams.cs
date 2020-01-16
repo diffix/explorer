@@ -1,17 +1,16 @@
-using System.Text.Json.Serialization;
-using System.ComponentModel.DataAnnotations;
-
 namespace Explorer.Api.Models
 {
+    using System.ComponentModel.DataAnnotations;
+
     public class ExploreParams
     {
         [Required]
         public string ApiKey { get; set; }
 
         [Required]
-        public string TableName {get; set; }
+        public string TableName { get; set; }
 
         [Required]
-        public string ColumnName {get; set; }
+        public string ColumnName { get; set; }
     }
 }

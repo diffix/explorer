@@ -1,19 +1,19 @@
-﻿using System.Net.Mime;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-
-namespace Explorer.Api.Controllers
+﻿namespace Explorer.Api.Controllers
 {
+    using System.Net.Mime;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging;
+
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     public class ExploreController : ControllerBase
     {
-        private readonly ILogger<ExploreController> _logger;
+        private readonly ILogger<ExploreController> logger;
 
         public ExploreController(ILogger<ExploreController> logger)
         {
-            _logger = logger;
+            this.logger = logger;
         }
 
         [HttpPost]
@@ -26,7 +26,7 @@ namespace Explorer.Api.Controllers
             {
                 return BadRequest(ModelState);
             }
-            return Ok(new Models.NotImplementedError());
+            return Ok(new Models.NotImplementedError() { Data = data });
         }
 
         [Route("/{**catchall}")]
