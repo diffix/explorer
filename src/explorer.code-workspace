@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "explorer.api"
+		},
+		{
+			"path": "aircloak"
 		}
 	],
 	"settings": {
