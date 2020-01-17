@@ -1,11 +1,10 @@
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
-using System.Text.Json;
-using Explorer.Api.AircloakApi.Helpers;
-using System;
-
 namespace Explorer.Api.AircloakApi.ReponseTypes
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+
     public class AircloakTypeEnumConverter : JsonConverter<AircloakType>
     {
         public override AircloakType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -65,16 +64,16 @@ namespace Explorer.Api.AircloakApi.ReponseTypes
         {
             public struct Column
             {
-                string Name { get; set; }
-                AircloakType Type { get; set; }
+                public string Name { get; set; }
+                public AircloakType Type { get; set; }
             }
-            string Id { get; set; }
-            IEnumerable<Column> Columns { get; set; }
+            public string Id { get; set; }
+            public IEnumerable<Column> Columns { get; set; }
         }
 
         public string Name { get; set; }
         public string Description { get; set; }
-        IEnumerable<Table> Tables { get; set; }
+        public IEnumerable<Table> Tables { get; set; }
     }
 
     /** <summary>
