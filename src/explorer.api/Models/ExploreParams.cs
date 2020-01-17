@@ -12,5 +12,8 @@ namespace Explorer.Api.Models
 
         [Required]
         public string ColumnName { get; set; }
+
+        [Required]
+        public string DataSourceName { get; set; }
     }
 }
