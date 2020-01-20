@@ -5,7 +5,7 @@ namespace Explorer.Api.AircloakApi.ReponseTypes
     using System.Text.Json;
     using System.Text.Json.Serialization;
 
-    public class AircloakTypeEnumConverter : JsonConverter<AircloakType>
+    class AircloakTypeEnumConverter : JsonConverter<AircloakType>
     {
         public override AircloakType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
@@ -184,7 +184,7 @@ namespace Explorer.Api.AircloakApi.ReponseTypes
     /// <summary>
     /// Helper type representing the JSON response from a request to /api/queries/{query_id}/cancel.
     /// </summary>
-    public struct CancelSuccess
+    public struct CancelResponse
     {
         public bool Success { get; set; }
     }

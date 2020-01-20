@@ -31,7 +31,7 @@ namespace Explorer.Api.AircloakApi
     /// Provides higher-level access to the Aircloak Http Api. The session uses the same Url root and Api Key 
     /// throughout its lifetime. 
     /// </summary>
-    /// <see cref=AircloakApiClient/>
+    /// <see cref="AircloakApiClient"/>
     public class AircloakApiSession
     {
         private readonly AircloakApiClient ApiClient;
@@ -47,7 +47,7 @@ namespace Explorer.Api.AircloakApi
         /// reference to singleton instance.</param>
         /// <param name="apiRootUrl">The root Url for the Aircloak Api, eg. "https://attack.aircloak.com/api/".</param>
         /// <param name="apiKey">The Api key to use for this session.</param>
-        /// <see cref=AircloakApiClient/>
+        /// <see cref="AircloakApiClient"/>
         public AircloakApiSession(
             AircloakApiClient apiClient,
             string apiRootUrl,
@@ -209,11 +209,11 @@ namespace Explorer.Api.AircloakApi
         /// server. 
         /// </summary>
         /// <param name="queryId">The id of the query to cancel</param>
-        /// <returns>A <c>CancelSuccess</c> instance indicating whether or not the query was indeed canceled.
+        /// <returns>A <c>CancelResponse</c> instance indicating whether or not the query was indeed canceled.
         /// </returns>
-        async public Task<CancelSuccess> CancelQuery(string queryId)
+        async public Task<CancelResponse> CancelQuery(string queryId)
         {
-            return await ApiClient.ApiPostRequest<CancelSuccess>(
+            return await ApiClient.ApiPostRequest<CancelResponse>(
                 EndPointUrl($"queries/{queryId}/cancel"),
                 ApiKey
             );
@@ -228,7 +228,7 @@ namespace Explorer.Api.AircloakApi
     /// <summary>
     /// Convenience class derived from <c>HttpClient</c> provides GET and POST methods adapted to the 
     /// Aircloak API: 
-    /// <list type=bullet>
+    /// <list type="bullet">
     /// <item>
     /// <description>Sets the provided Api Key on all outgoing requests.</description>
     /// </item>
