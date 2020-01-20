@@ -170,6 +170,17 @@ namespace Explorer.Api.AircloakApi.ReponseTypes
     public struct QueryResult<RowType>
     {
         public QueryResultInner<RowType> Query { get; set; }
+
+        /// <summary>
+        /// Extract the rows from the innards of the result type. 
+        /// </summary>
+        public IEnumerable<RowType> ResultRows()
+        {
+            foreach (var row_with_count in Query.Rows)
+            {
+                yield return row_with_count.Row;
+            }
+        }
     }
 
     /// <summary>
