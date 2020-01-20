@@ -7,10 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 
-using Explorer.Api.AircloakApi.ReponseTypes;
-using Explorer.Api.AircloakApi.Helpers;
+using Aircloak.ReponseTypes;
+using Aircloak.Helpers;
 
-namespace Explorer.Api.AircloakApi
+namespace Aircloak
 {
     using DataSources = List<DataSource>;
 

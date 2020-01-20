@@ -1,4 +1,4 @@
-namespace Explorer.Api.AircloakApi.ReponseTypes
+namespace Aircloak.ReponseTypes
 {
     using System;
     using System.Collections.Generic;

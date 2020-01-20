@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace Explorer.Api.AircloakApi.Helpers
+namespace Aircloak.SnakeCaseNamingPolicy
 {
     /// <summary>
     /// Helper class for converting Json keys from the .NET standard PascalCase to snake_case
