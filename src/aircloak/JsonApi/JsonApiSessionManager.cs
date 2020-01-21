@@ -1,13 +1,11 @@
-﻿namespace Aircloak
+﻿namespace Aircloak.JsonApi
 {
     using System;
-
-    using Aircloak.JsonApi;
 
     /// <summary>
     /// Contains the HttpClient instance and doles out ApiSession objects.
     /// </summary>
-    public static class Api
+    public static class JsonApiSessionManager
     {
         private static readonly JsonApiClient ApiClient = new JsonApiClient();
 
