@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/explorer.api/bin/Debug/netcoreapp3.1/explorer.api.dll",
+            "program": "${workspaceFolder}/src/explorer.api/bin/Debug/netcoreapp3.1/explorer.api.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -27,7 +27,7 @@
             "request": "launch",
             "preLaunchTask": "docker-run: debug",
             "netCore": {
-                "appProject": "${workspaceFolder}/explorer.api/explorer.api.csproj"
+                "appProject": "${workspaceFolder}/src/explorer.api/explorer.api.csproj"
             }
         }
     ]

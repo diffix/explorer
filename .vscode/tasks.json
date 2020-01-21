@@ -22,6 +22,38 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "build explorer.api",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/explorer.api/explorer.api.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build aircloak",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/aircloak/aircloak.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
             "type": "docker-build",
             "label": "docker-build",
             "dependsOn": [
@@ -33,7 +65,7 @@
                 "context": "${workspaceFolder}"
             },
             "netCore": {
-                "appProject": "${workspaceFolder}/explorer.api/explorer.api.csproj"
+                "appProject": "${workspaceFolder}/src/explorer.api/explorer.api.csproj"
             }
         },
         {
@@ -53,7 +85,7 @@
                 ]
             },
             "netCore": {
-                "appProject": "${workspaceFolder}/explorer.api/explorer.api.csproj"
+                "appProject": "${workspaceFolder}/src/explorer.api/explorer.api.csproj"
             }
         }
     ]
