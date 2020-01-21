@@ -1,5 +1,6 @@
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 #pragma warning disable SA1004 // Documentation line should begin with a space.
+#pragma warning disable CA2227 // Change 'ExtensionData' to be read-only by removing the property setter. 
 
 namespace Aircloak.JsonApi.ResponseTypes
 {
@@ -19,11 +20,15 @@ namespace Aircloak.JsonApi.ResponseTypes
         /// Extract the rows from the innards of the result type. 
         /// </summary>
         /// <returns>An <c>IEnumerable</c> that can be used to iterate over the rows.</returns>
-        public IEnumerable<TRow> ResultRows()
+        [JsonIgnore]
+        public IEnumerable<TRow> ResultRows
         {
-            foreach (var row_with_count in Query.Rows)
+            get
             {
-                yield return row_with_count.Row;
+                foreach (var row_with_count in Query.Rows)
+                {
+                    yield return row_with_count.Row;
+                }
             }
         }
     }
@@ -106,14 +111,14 @@ namespace Aircloak.JsonApi.ResponseTypes
 
 
         [JsonExtensionData]
-        public Dictionary<string, JsonElement> ExtensionData { get; }
+        public Dictionary<string, JsonElement> ExtensionData { get; set; }
 
         public struct QueryRowsWithCount
         {
             public TRow Row { get; set; }
 
             [JsonExtensionData]
-            public Dictionary<string, JsonElement> ExtensionData { get; }
+            public Dictionary<string, JsonElement> ExtensionData { get; set; }
         }
 
         public struct QueryUser
@@ -128,5 +133,6 @@ namespace Aircloak.JsonApi.ResponseTypes
     }
 }
 
+#pragma warning restore CA2227 // Change 'ExtensionData' to be read-only by removing the property setter. 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 #pragma warning restore SA1004 // Documentation line should begin with a space.
