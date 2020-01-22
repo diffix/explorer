@@ -5,6 +5,8 @@
 namespace Aircloak.JsonApi.ResponseTypes
 {
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Text.Json.Serialization;
 
     /// <summary>
     /// Represents the JSON response from a request to /api/data_sources.
@@ -15,6 +17,15 @@ namespace Aircloak.JsonApi.ResponseTypes
 
         public string Description { get; set; }
 
+        [JsonIgnore]
+        public IDictionary<string, Table> TableDict
+        {
+            get
+            {
+                return Tables.ToDictionary(table => table.Id);
+            }
+        }
+
         public IEnumerable<Table> Tables { get; set; }
 
         public struct Table
@@ -22,6 +33,15 @@ namespace Aircloak.JsonApi.ResponseTypes
             public string Id { get; set; }
 
             public IEnumerable<Column> Columns { get; set; }
+
+            [JsonIgnore]
+            public IDictionary<string, Column> ColumnDict
+            {
+                get
+                {
+                    return Columns.ToDictionary(column => column.Name);
+                }
+            }
 
             public struct Column
             {
