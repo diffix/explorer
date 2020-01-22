@@ -33,7 +33,12 @@ If you want to use an editor other than VS Code, you will need [.NET Core 3.1](h
 
 ### Running
 
-> **TODO:** Describe the commands needed to get the system running
+Building and runing can be simply done using Docker:
+
+```
+docker build -t explorer .
+docker run -it --rm -p 5000:80 explorer
+```
 
 ## Additional reading
 

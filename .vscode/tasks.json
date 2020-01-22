@@ -1,0 +1,92 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build explorer.api",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/explorer.api/explorer.api.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build aircloak",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/aircloak/aircloak.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "type": "docker-build",
+            "label": "docker-build",
+            "dependsOn": [
+                "build"
+            ],
+            "dockerBuild": {
+                "tag": "explorer.api:latest",
+                "dockerfile": "${workspaceFolder}/Dockerfile",
+                "context": "${workspaceFolder}"
+            },
+            "netCore": {
+                "appProject": "${workspaceFolder}/src/explorer.api/explorer.api.csproj"
+            }
+        },
+        {
+            "type": "docker-run",
+            "label": "docker-run",
+            "dependsOn": [
+                "docker-build"
+            ],
+            "dockerRun": {
+                "containerName": "explorer.api",
+                "ports": [
+                    {
+                        "containerPort": 80,
+                        "hostPort": 5000,
+                        "protocol": "tcp"
+                    }
+                ]
+            },
+            "netCore": {
+                "appProject": "${workspaceFolder}/src/explorer.api/explorer.api.csproj"
+            }
+        }
+    ]
+}
