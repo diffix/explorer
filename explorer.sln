@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "explorer.api", "src\explore
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aircloak", "src\aircloak\aircloak.csproj", "{8DD2FC8C-7109-419A-8212-ECA382323A0D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0F81AD12-C659-4419-840D-CFC194A74F18}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "explorer.api.tests", "tests\explorer.api.tests\explorer.api.tests.csproj", "{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,8 +50,21 @@ Global
 		{8DD2FC8C-7109-419A-8212-ECA382323A0D}.Release|x64.Build.0 = Release|Any CPU
 		{8DD2FC8C-7109-419A-8212-ECA382323A0D}.Release|x86.ActiveCfg = Release|Any CPU
 		{8DD2FC8C-7109-419A-8212-ECA382323A0D}.Release|x86.Build.0 = Release|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Release|x64.Build.0 = Release|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8DD2FC8C-7109-419A-8212-ECA382323A0D} = {7B7A9598-0FFA-40FC-8B2C-D5C5B900E46D}
+		{A1C00DE0-8BDB-4E8C-AE21-D25592FFCF60} = {0F81AD12-C659-4419-840D-CFC194A74F18}
 	EndGlobalSection
 EndGlobal
