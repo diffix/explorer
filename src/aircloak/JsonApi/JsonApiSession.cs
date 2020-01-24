@@ -1,7 +1,6 @@
 ﻿namespace Aircloak.JsonApi
 {
     using System;
-    using System.Collections.Generic;
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
@@ -63,6 +62,7 @@
             string dataSource,
             string queryStatement,
             TimeSpan timeout)
+            where TRow : IJsonArrayConvertible, new()
         {
             var queryResponse = await SubmitQuery(dataSource, queryStatement);
             if (!queryResponse.Success)
@@ -107,10 +107,19 @@
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each
         /// row seralised to type <c>TRow</c>.</returns>
         public async Task<QueryResult<TRow>> PollQueryResult<TRow>(string queryId)
+            where TRow : IJsonArrayConvertible, new()
         {
+            // Register the JsonArrayConverter so the TRow can be deserialized correctly
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
+                Converters = { new JsonArrayConverter<TRow>() },
+            };
+
             return await apiClient.ApiGetRequest<QueryResult<TRow>>(
                 EndPointUrl($"queries/{queryId}"),
-                apiKey);
+                apiKey,
+                jsonOptions);
         }
 
         /// <summary>
@@ -132,6 +141,7 @@
             string queryId,
             CancellationToken ct,
             TimeSpan? pollFrequency = null)
+            where TRow : IJsonArrayConvertible, new()
         {
             if (pollFrequency is null)
             {
@@ -177,6 +187,7 @@
             string queryId,
             TimeSpan timeout,
             TimeSpan? pollFrequency = null)
+            where TRow : IJsonArrayConvertible, new()
         {
             using var tokenSource = new CancellationTokenSource();
             tokenSource.CancelAfter(timeout);

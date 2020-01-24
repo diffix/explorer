@@ -24,11 +24,17 @@
     /// </summary>
     public class JsonApiClient : HttpClient
     {
+        private readonly JsonSerializerOptions defaultJsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
+        };
+
         /// <summary>
         /// Send a GET request to the Aircloak API. Handles authentication.
         /// </summary>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="apiKey">The API key for the service.</param>
+        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type.</returns>
@@ -37,12 +43,14 @@
         /// </exception>
         /// <exception cref="JsonException">The JSON is invalid.
         /// -or- <c>T</c> is not compatible with the JSON.
-        /// -or- There is remaining data in the stream.</exception>
+        /// -or- There is remaining data in the stream.
+        /// </exception>
         public async Task<T> ApiGetRequest<T>(
             Uri apiEndpoint,
-            string apiKey)
+            string apiKey,
+            JsonSerializerOptions options = null)
         {
-            return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, apiKey);
+            return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, apiKey, options: options);
         }
 
         /// <summary>
@@ -51,6 +59,7 @@
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="apiKey">The API key for the service.</param>
         /// <param name="requestContent">JSON-encoded request message (optional).</param>
+        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type.</returns>
@@ -59,13 +68,15 @@
         /// </exception>
         /// <exception cref="JsonException">The JSON is invalid.
         /// -or- <c>T</c> is not compatible with the JSON.
-        /// -or- There is remaining data in the stream.</exception>
+        /// -or- There is remaining data in the stream.
+        /// </exception>
         public async Task<T> ApiPostRequest<T>(
             Uri apiEndpoint,
             string apiKey,
-            string? requestContent = default)
+            string? requestContent = default,
+            JsonSerializerOptions options = null)
         {
-            return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, apiKey, requestContent);
+            return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, apiKey, requestContent, options);
         }
 
         /// <summary>
@@ -99,6 +110,7 @@
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="apiKey">The API key for the service.</param>
         /// <param name="requestContent">JSON-encoded request message (optional).</param>
+        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type.</returns>
@@ -107,12 +119,14 @@
         /// </exception>
         /// <exception cref="JsonException">The JSON is invalid.
         /// -or- <c>T</c> is not compatible with the JSON.
-        /// -or- There is remaining data in the stream.</exception>
+        /// -or- There is remaining data in the stream.
+        /// </exception>
         private async Task<T> ApiRequest<T>(
             HttpMethod requestMethod,
             Uri apiEndpoint,
             string apiKey,
-            string? requestContent = default)
+            string? requestContent = default,
+            JsonSerializerOptions options = null)
         {
             using var requestMessage =
                 new HttpRequestMessage(requestMethod, apiEndpoint);
@@ -135,11 +149,9 @@
             if (response.IsSuccessStatusCode)
             {
                 using var contentStream = await response.Content.ReadAsStreamAsync();
-                var opts = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
-                };
-                return await JsonSerializer.DeserializeAsync<T>(contentStream, opts);
+                return await JsonSerializer.DeserializeAsync<T>(
+                    contentStream,
+                    options ?? defaultJsonOptions);
             }
             else
             {
