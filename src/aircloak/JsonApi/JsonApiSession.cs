@@ -155,7 +155,11 @@
                 }
             }
 
-            ct.ThrowIfCancellationRequested();
+            if (ct.IsCancellationRequested)
+            {
+                await CancelQuery(queryId);
+                ct.ThrowIfCancellationRequested();
+            }
 
             throw new Exception("Should never reach here.");
         }
