@@ -44,9 +44,9 @@
         /// </summary>
         /// <returns>A <c>List&lt;DataSource&gt;</c> containing the data sources provided by this
         /// Aircloak instance.</returns>
-        public async Task<List<DataSource>> GetDataSources()
+        public async Task<DataSourceCollection> GetDataSources()
         {
-            return await apiClient.ApiGetRequest<List<DataSource>>(
+            return await apiClient.ApiGetRequest<DataSourceCollection>(
                 new Uri(apiRootUrl, "data_sources"),
                 apiKey);
         }

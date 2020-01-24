@@ -9,7 +9,7 @@ namespace Aircloak.JsonApi.ResponseTypes
     using System.Text.Json.Serialization;
 
     /// <summary>
-    /// Represents the JSON response from a request to /api/data_sources.
+    /// Represents an individual data_source item in the JSON response from a request to /api/data_sources.
     /// </summary>
     public struct DataSource
     {
@@ -17,6 +17,9 @@ namespace Aircloak.JsonApi.ResponseTypes
 
         public string Description { get; set; }
 
+        /// <summary>
+        /// Gets the tables as a Dict indexed by table name.
+        /// </summary>
         [JsonIgnore]
         public IDictionary<string, Table> TableDict
         {
@@ -34,6 +37,9 @@ namespace Aircloak.JsonApi.ResponseTypes
 
             public IEnumerable<Column> Columns { get; set; }
 
+            /// <summary>
+            /// Gets the columns as a Dict indexed by column name.
+            /// </summary>
             [JsonIgnore]
             public IDictionary<string, Column> ColumnDict
             {
