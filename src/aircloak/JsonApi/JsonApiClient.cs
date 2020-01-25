@@ -1,14 +1,11 @@
 ﻿namespace Aircloak.JsonApi
 {
     using System;
-    using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Text.Json;
     using System.Threading.Tasks;
-
-    using Aircloak.JsonApi.ResponseTypes;
 
     /// <summary>
     /// Convenience class derived from <c>HttpClient</c> provides GET and POST methods adapted to the
@@ -35,7 +32,9 @@
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type.</returns>
-        /// <exception cref="HttpRequestException"></exception>
+        /// <exception cref="HttpRequestException">The request failed due to an underlying issue
+        /// such as network connectivity, DNS failure, server certificate validation or timeout.
+        /// </exception>
         /// <exception cref="JsonException">The JSON is invalid.
         /// -or- <c>T</c> is not compatible with the JSON.
         /// -or- There is remaining data in the stream.</exception>
@@ -55,7 +54,9 @@
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type.</returns>
-        /// <exception cref="HttpRequestException"></exception>
+        /// <exception cref="HttpRequestException">The request failed due to an underlying issue
+        /// such as network connectivity, DNS failure, server certificate validation or timeout.
+        /// </exception>
         /// <exception cref="JsonException">The JSON is invalid.
         /// -or- <c>T</c> is not compatible with the JSON.
         /// -or- There is remaining data in the stream.</exception>
@@ -68,6 +69,30 @@
         }
 
         /// <summary>
+        /// Turns the HTTP response into a custom error string.
+        /// </summary>
+        /// <param name="response">The HTTP response.</param>
+        /// <returns>A string containing a custom error message.</returns>
+        private static string ServiceError(HttpResponseMessage response)
+        {
+            return response.StatusCode switch
+            {
+                HttpStatusCode.Unauthorized =>
+                    "Unauthorized -- Your API token is wrong",
+                HttpStatusCode.NotFound =>
+                    "Not Found -- Invalid URL",
+                HttpStatusCode.InternalServerError =>
+                    "Internal Server Error -- We had a problem with our server. Try again later.",
+                HttpStatusCode.ServiceUnavailable =>
+                    "Service Unavailable -- We're temporarily offline for maintenance. Please try again later.",
+                HttpStatusCode.GatewayTimeout =>
+                    "Gateway Timeout -- A timeout occured while contacting the data source. " +
+                    "The system might be overloaded. Try again later.",
+                _ => response.StatusCode.ToString(),
+            };
+        }
+
+        /// <summary>
         /// Send a request to the Aircloak API. Handles authentication.
         /// </summary>
         /// <param name="requestMethod">The HTTP method to use in the request.</param>
@@ -77,7 +102,9 @@
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
         /// to the provided return type.</returns>
-        /// <exception cref="HttpRequestException"></exception>
+        /// <exception cref="HttpRequestException">The request failed due to an underlying issue
+        /// such as network connectivity, DNS failure, server certificate validation or timeout.
+        /// </exception>
         /// <exception cref="JsonException">The JSON is invalid.
         /// -or- <c>T</c> is not compatible with the JSON.
         /// -or- There is remaining data in the stream.</exception>
@@ -118,30 +145,6 @@
             {
                 throw new HttpRequestException($"{requestMethod} Request Error: {ServiceError(response)}");
             }
-        }
-
-        /// <summary>
-        /// Turns the HTTP response into a custom error string.
-        /// </summary>
-        /// <param name="response">The HTTP response.</param>
-        /// <returns>A string containing a custom error message.</returns>
-        private string ServiceError(HttpResponseMessage response)
-        {
-            return response.StatusCode switch
-            {
-                HttpStatusCode.Unauthorized =>
-                    "Unauthorized -- Your API token is wrong",
-                HttpStatusCode.NotFound =>
-                    "Not Found -- Invalid URL",
-                HttpStatusCode.InternalServerError =>
-                    "Internal Server Error -- We had a problem with our server. Try again later.",
-                HttpStatusCode.ServiceUnavailable =>
-                    "Service Unavailable -- We're temporarily offline for maintenance. Please try again later.",
-                HttpStatusCode.GatewayTimeout =>
-                    "Gateway Timeout -- A timeout occured while contacting the data source. " +
-                    "The system might be overloaded. Try again later.",
-                _ => response.StatusCode.ToString(),
-            };
         }
     }
 }

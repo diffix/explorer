@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-	<CodeAnalysisRuleSet>../../explorer.ruleset</CodeAnalysisRuleSet>
+  	<CodeAnalysisRuleSet>../../explorer.ruleset</CodeAnalysisRuleSet>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 

@@ -1,6 +1,8 @@
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 #pragma warning disable SA1004 // Documentation line should begin with a space.
-#pragma warning disable CA2227 // Change 'ExtensionData' to be read-only by removing the property setter. 
+#pragma warning disable CA2227 // Change collection property to be read-only by removing the property setter
+#pragma warning disable CA1815 // Struct type should override Equals
+#pragma warning disable CA1034 // Do not nest types
 
 namespace Aircloak.JsonApi.ResponseTypes
 {
@@ -17,7 +19,7 @@ namespace Aircloak.JsonApi.ResponseTypes
         public QueryResultInner<TRow> Query { get; set; }
 
         /// <summary>
-        /// Extract the rows from the innards of the result type. 
+        /// Gets the rows from the innards of the result type.
         /// </summary>
         /// <returns>An <c>IEnumerable</c> that can be used to iterate over the rows.</returns>
         [JsonIgnore]
@@ -85,7 +87,7 @@ namespace Aircloak.JsonApi.ResponseTypes
         }
         </code>
         </summary>
-        <typeparam name="TRow"></typeparam>
+        <typeparam name="TRow">The type of contained rows.</typeparam>
     */
     public struct QueryResultInner<TRow>
     {
@@ -133,6 +135,8 @@ namespace Aircloak.JsonApi.ResponseTypes
     }
 }
 
-#pragma warning restore CA2227 // Change 'ExtensionData' to be read-only by removing the property setter. 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 #pragma warning restore SA1004 // Documentation line should begin with a space.
+#pragma warning restore CA2227 // Change collection property to be read-only by removing the property setter
+#pragma warning restore CA1815 // Struct type should override Equals
+#pragma warning restore CA1034 // Do not nest types

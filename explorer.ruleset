@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<RuleSet Name="Roslyn analyzers rules for Aircloak Explorer" Description="Custom Rosly Analyzers Rules" ToolsVersion="14.0">
+<RuleSet Name="Roslyn analyzers rules for Aircloak Explorer" Description="Custom Roslyn Analyzers Rules" ToolsVersion="14.0">
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.FxCopAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.FxCopAnalyzers">
+    <Rule Id="CA2007" Action="None"/> <!-- Consider using ConfigureAwait(false) -->
+    <Rule Id="IDE1006" Action="None"/> <!--  Naming rule violation: Missing prefix: 's_' -->
+  </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1600" Action="None"/> <!-- Elements should be documented -->
     <Rule Id="SA1101" Action="None" /> <!-- Prefix local calls with this-->
@@ -8,5 +12,6 @@
   </Rules>
   <Rules AnalyzerId="Roslynator.Analyzers" RuleNamespace="Roslynator.Analyzers">
     <Rule Id="RCS1163" Action="Warning"/> <!-- Unused parameter -->
+    <Rule Id="RCS1090" Action="None"/> <!-- Consider using ConfigureAwait(false) -->
   </Rules>
 </RuleSet>

@@ -1,4 +1,6 @@
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+#pragma warning disable CA1815 // Struct type should override Equals
+#pragma warning disable CA1034 // Do not nest types
 
 namespace Aircloak.JsonApi.ResponseTypes
 {
@@ -24,11 +26,13 @@ namespace Aircloak.JsonApi.ResponseTypes
             public struct Column
             {
                 public string Name { get; set; }
+
                 public AircloakType Type { get; set; }
             }
-
         }
     }
 }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+#pragma warning restore CA1815 // Struct type should override Equals
+#pragma warning restore CA1034 // Do not nest types

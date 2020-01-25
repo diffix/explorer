@@ -46,9 +46,9 @@
         /// Aircloak instance.</returns>
         public async Task<List<DataSource>> GetDataSources()
         {
-            return await this.apiClient.ApiGetRequest<List<DataSource>>(
-                new Uri(this.apiRootUrl, "data_sources"),
-                this.apiKey);
+            return await apiClient.ApiGetRequest<List<DataSource>>(
+                new Uri(apiRootUrl, "data_sources"),
+                apiKey);
         }
 
         /// <summary>
@@ -57,7 +57,8 @@
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="queryStatement">The query statement as a string.</param>
         /// <param name="timeout">How long to wait for the query to complete.</param>
-        /// <returns>A <see cref="QueryResult"/> instance containing the success status and query Id.</returns>
+        /// <returns>A <see cref="QueryResult{TRow}"/> instance containing the success status and query Id.</returns>
+        /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
         public async Task<QueryResult<TRow>> Query<TRow>(
             string dataSource,
             string queryStatement,
@@ -92,9 +93,9 @@
                 },
             };
 
-            return await this.apiClient.ApiPostRequest<QueryResponse>(
+            return await apiClient.ApiPostRequest<QueryResponse>(
                 EndPointUrl("queries"),
-                this.apiKey,
+                apiKey,
                 JsonSerializer.Serialize(queryBody));
         }
 
@@ -107,9 +108,9 @@
         /// row seralised to type <c>TRow</c>.</returns>
         public async Task<QueryResult<TRow>> PollQueryResult<TRow>(string queryId)
         {
-            return await this.apiClient.ApiGetRequest<QueryResult<TRow>>(
+            return await apiClient.ApiGetRequest<QueryResult<TRow>>(
                 EndPointUrl($"queries/{queryId}"),
-                this.apiKey);
+                apiKey);
         }
 
         /// <summary>
@@ -160,8 +161,6 @@
                 await CancelQuery(queryId);
                 ct.ThrowIfCancellationRequested();
             }
-
-            throw new Exception("Should never reach here.");
         }
 
         /// <summary>
@@ -206,14 +205,14 @@
         /// </returns>
         public async Task<CancelResponse> CancelQuery(string queryId)
         {
-            return await this.apiClient.ApiPostRequest<CancelResponse>(
+            return await apiClient.ApiPostRequest<CancelResponse>(
                 EndPointUrl($"queries/{queryId}/cancel"),
-                this.apiKey);
+                apiKey);
         }
 
         private Uri EndPointUrl(string path)
         {
-            return new Uri(this.apiRootUrl, path);
+            return new Uri(apiRootUrl, path);
         }
     }
 }
