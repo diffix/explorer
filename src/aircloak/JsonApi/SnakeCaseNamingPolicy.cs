@@ -9,7 +9,7 @@ namespace Aircloak.JsonApi
     /// <summary>
     /// Helper class for converting Json keys from the .NET standard PascalCase to snake_case.
     /// </summary>
-    public class SnakeCaseNamingPolicy : JsonNamingPolicy
+    internal class SnakeCaseNamingPolicy : JsonNamingPolicy
     {
         public override string ConvertName(string pascalCase)
         {

@@ -9,7 +9,7 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// <summary>
     /// Represents the JSON response from a request to /api/data_sources.
     /// </summary>
-    public class DataSource
+    public struct DataSource
     {
         public string Name { get; set; }
 

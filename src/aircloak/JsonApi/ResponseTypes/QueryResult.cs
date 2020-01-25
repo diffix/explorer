@@ -101,26 +101,25 @@ namespace Aircloak.JsonApi.ResponseTypes
 
         public string Statement { get; set; }
 
-        public List<string> Columns { get; set; }
+        public IList<string> Columns { get; set; }
 
         public string Error { get; set; }
 
         public int RowCount { get; set; }
 
-        public List<AircloakType> Types { get; set; }
+        public IList<AircloakType> Types { get; set; }
 
-        public List<QueryRowsWithCount> Rows { get; set; }
-
+        public IList<QueryRowsWithCount> Rows { get; set; }
 
         [JsonExtensionData]
-        public Dictionary<string, JsonElement> ExtensionData { get; set; }
+        public IDictionary<string, JsonElement> ExtensionData { get; set; }
 
         public struct QueryRowsWithCount
         {
             public TRow Row { get; set; }
 
             [JsonExtensionData]
-            public Dictionary<string, JsonElement> ExtensionData { get; set; }
+            public IDictionary<string, JsonElement> ExtensionData { get; set; }
         }
 
         public struct QueryUser

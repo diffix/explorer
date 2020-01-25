@@ -138,8 +138,14 @@
                 pollFrequency = TimeSpan.FromMilliseconds(DefaultPollingFrequencyMillis);
             }
 
-            while (!ct.IsCancellationRequested)
+            while (true)
             {
+                if (ct.IsCancellationRequested)
+                {
+                    await CancelQuery(queryId);
+                    ct.ThrowIfCancellationRequested();
+                }
+
                 // Note: the cancellation token is not currently passed through to the PollQueryResult call. The
                 // assumption here is that polling should return a result immediately. In practice, this may not be the
                 // case due to network delay. In this case, cancellation requests may take longer to take effect than
@@ -154,12 +160,6 @@
                 {
                     await Task.Delay(pollFrequency.Value, ct);
                 }
-            }
-
-            if (ct.IsCancellationRequested)
-            {
-                await CancelQuery(queryId);
-                ct.ThrowIfCancellationRequested();
             }
         }
 
