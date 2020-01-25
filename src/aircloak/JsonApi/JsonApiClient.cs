@@ -63,7 +63,7 @@
         public async Task<T> ApiPostRequest<T>(
             Uri apiEndpoint,
             string apiKey,
-            string requestContent = default)
+            string? requestContent = default)
         {
             return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, apiKey, requestContent);
         }
@@ -112,7 +112,7 @@
             HttpMethod requestMethod,
             Uri apiEndpoint,
             string apiKey,
-            string requestContent = default)
+            string? requestContent = default)
         {
             using var requestMessage =
                 new HttpRequestMessage(requestMethod, apiEndpoint);
