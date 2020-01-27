@@ -11,13 +11,23 @@ namespace Explorer.Api.Tests
 
     public sealed class ExploreTest
     {
+        private const string apiKey = "SFMyNTY.g3QAAAACZAAEZGF0YW0AAAAkMTUxNjJiZWYtNWE2MS00NGNhLWFiZmUtOWU1MGFiNGIxM2M4ZAAGc2lnbmVkbgYAlH8NpW8B.byOGmraal0gWNKa_g6aXgArfff2nl34Tm-hJL43sOIw";
+
+        private static Models.ExploreParams validData = new Models.ExploreParams
+        {
+            ApiKey = apiKey,
+            DataSourceName = "gda_banking",
+            TableName = "loans",
+            ColumnName = "amount"
+        };
+
+
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
 
         [Fact]
         public void Success()
         {
-            var data = new Models.ExploreParams { ApiKey = "apikey", DataSourceName = "ds", TableName = "tn", ColumnName = "cn" };
-            TestApi(HttpMethod.Post, "/explore", data, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", validData, (response, content) =>
                 Assert.True(response.IsSuccessStatusCode, content));
         }
 
@@ -27,8 +37,7 @@ namespace Explorer.Api.Tests
         [InlineData("/invalid endpoint test")]
         public void FailWithBadEndPoint(string endpoint)
         {
-            var data = new Models.ExploreParams { ApiKey = "apikey", DataSourceName = "ds", TableName = "tn", ColumnName = "cn" };
-            TestApi(HttpMethod.Post, endpoint, data, (response, content) =>
+            TestApi(HttpMethod.Post, endpoint, validData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -39,8 +48,7 @@ namespace Explorer.Api.Tests
         [InlineData("PUT")]
         public void FailWithBadMethod(string method)
         {
-            var data = new Models.ExploreParams { ApiKey = "apikey", DataSourceName = "ds", TableName = "tn", ColumnName = "cn" };
-            TestApi(new HttpMethod(method), "/explore", data, (response, content) =>
+            TestApi(new HttpMethod(method), "/explore", validData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
