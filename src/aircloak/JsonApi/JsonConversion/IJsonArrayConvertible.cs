@@ -1,12 +1,13 @@
 namespace Aircloak.JsonApi
 {
     using System.Text.Json;
+    using System.Text.Json.Serialization;
 
     /// <summary>
     /// An interface for (de)serializing to and from an array of JSON values.
     /// </summary>
     /// <remarks>
-    /// This interface is used by <see cref="JsonArrayConverter"/> to derive the
+    /// This interface is used by <see cref="JsonArrayConverter{T}"/> to derive the
     /// <see cref="JsonConverter"/> for the rows of query results returned from
     /// the Aircloak API.
     /// </remarks>

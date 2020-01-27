@@ -20,13 +20,9 @@
 
         internal async Task<ExploreResult> Explore()
         {
-            var queryParams = new QuerySpec
-            {
-                TableName = exploreParams.TableName,
-                ColumnName = exploreParams.ColumnName,
-            };
+            var queryParams = new QuerySpec(exploreParams);
 
-            var queryResult = await apiSession.Query<QuerySpec.RowType>(
+            var queryResult = await apiSession.Query<ResultRow>(
                 exploreParams.DataSourceName,
                 queryParams.QueryStatement,
                 TimeSpan.FromMinutes(2))
@@ -81,8 +77,14 @@
             };
         }
 
-        internal class QuerySpec : IQuerySpec<QuerySpec.RowType>
+        internal class QuerySpec : IQuerySpec<ResultRow>
         {
+            public QuerySpec(ExploreParams exploreParams)
+            {
+                TableName = exploreParams.TableName;
+                ColumnName = exploreParams.ColumnName;
+            }
+
             public string QueryStatement => $@"
                         select
                             min({ColumnName}),
@@ -91,59 +93,59 @@
                             count_noise(*)
                         from {TableName}";
 
-            internal string TableName { get; set; }
+            public string TableName { get; }
 
-            internal string ColumnName { get; set; }
+            public string ColumnName { get; }
+        }
 
-            internal class RowType : IJsonArrayConvertible
-            {
+        internal class ResultRow : IJsonArrayConvertible
+        {
 #pragma warning disable RCS1074 // Remove redundant constructor
-                // Need this for JsonArrayConverter constraint
-                public RowType()
-                {
-                }
+            // Need this for JsonArrayConverter constraint
+            public ResultRow()
+            {
+            }
 #pragma warning restore RCS1074 // Remove redundant constructor
 
-                internal double? Min { get; set; }
+            internal double? Min { get; set; }
 
-                internal double? Max { get; set; }
+            internal double? Max { get; set; }
 
-                internal int? Count { get; set; }
+            internal int? Count { get; set; }
 
-                internal double? CountNoise { get; set; }
+            internal double? CountNoise { get; set; }
 
-                void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            {
+                reader.Read();
+                Min = reader.GetDouble();
+                reader.Read();
+                Max = reader.GetDouble();
+                reader.Read();
+                Count = reader.GetInt32();
+                reader.Read();
+                CountNoise = reader.GetDouble();
+            }
+
+            void IJsonArrayConvertible.ToArrayValues(Utf8JsonWriter writer)
+            {
+                WriteNullableNumberValue(writer, Min);
+                WriteNullableNumberValue(writer, Max);
+                WriteNullableNumberValue(writer, Count);
+                WriteNullableNumberValue(writer, CountNoise);
+            }
+
+            private void WriteNullableNumberValue<T>(Utf8JsonWriter writer, T? value)
+                where T : unmanaged
+            {
+                if (value.HasValue)
                 {
-                    reader.Read();
-                    Min = reader.GetDouble();
-                    reader.Read();
-                    Max = reader.GetDouble();
-                    reader.Read();
-                    Count = reader.GetInt32();
-                    reader.Read();
-                    CountNoise = reader.GetDouble();
+                    dynamic number = value.Value;
+                    writer.WriteNumberValue(number);
                 }
-
-                void IJsonArrayConvertible.ToArrayValues(Utf8JsonWriter writer)
+                else
                 {
-                    WriteNullableNumberValue(writer, Min);
-                    WriteNullableNumberValue(writer, Max);
-                    WriteNullableNumberValue(writer, Count);
-                    WriteNullableNumberValue(writer, CountNoise);
-                }
-
-                private void WriteNullableNumberValue<T>(Utf8JsonWriter writer, T? value)
-                    where T : unmanaged
-                {
-                    if (value.HasValue)
-                    {
-                        dynamic number = value.Value;
-                        writer.WriteNumberValue(number);
-                    }
-                    else
-                    {
-                        writer.WriteNullValue();
-                    }
+                    writer.WriteNullValue();
                 }
             }
         }

@@ -48,7 +48,7 @@
         public async Task<T> ApiGetRequest<T>(
             Uri apiEndpoint,
             string apiKey,
-            JsonSerializerOptions options = null)
+            JsonSerializerOptions? options = null)
         {
             return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, apiKey, options: options);
         }
@@ -74,7 +74,7 @@
             Uri apiEndpoint,
             string apiKey,
             string? requestContent = default,
-            JsonSerializerOptions options = null)
+            JsonSerializerOptions? options = null)
         {
             return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, apiKey, requestContent, options);
         }
@@ -126,7 +126,7 @@
             Uri apiEndpoint,
             string apiKey,
             string? requestContent = default,
-            JsonSerializerOptions options = null)
+            JsonSerializerOptions? options = null)
         {
             using var requestMessage =
                 new HttpRequestMessage(requestMethod, apiEndpoint);
