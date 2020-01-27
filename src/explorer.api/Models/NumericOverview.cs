@@ -18,15 +18,16 @@
         {
         }
 
-        internal async Task<ExploreResult> Explore()
+        internal async IAsyncEnumerable<ExploreResult> Explore()
         {
-            var queryParams = new QuerySpec(exploreParams);
+            var queryParams = new QuerySpec(ExploreParams);
 
-            var queryResult = await apiSession.Query<ResultRow>(
-                exploreParams.DataSourceName,
+            yield return new ExploreResult(ExplorationGuid, status: "waiting");
+
+            var queryResult = await ApiSession.Query<ResultRow>(
+                ExploreParams.DataSourceName,
                 queryParams.QueryStatement,
-                TimeSpan.FromMinutes(2))
-                .ConfigureAwait(false);
+                TimeSpan.FromMinutes(2));
 
             var rows = queryResult.ResultRows;
             Debug.Assert(
@@ -35,49 +36,32 @@
 
             var stats = rows.First();
 
-            return new ExploreResult
+            yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: new List<ExploreResult.Metric>
             {
-                Status = "complete",
-                Id = ExplorationGuid,
-                Metrics = new List<ExploreResult.Metric>
+                new ExploreResult.Metric("Min")
                 {
-                    {
-                        new ExploreResult.Metric
-                        {
-                            MetricName = "Min",
-                            MetricType = AircloakType.Real,
-                            MetricValue = stats.Min,
-                        }
-                    },
-                    {
-                        new ExploreResult.Metric
-                        {
-                            MetricName = "Max",
-                            MetricType = AircloakType.Real,
-                            MetricValue = stats.Max,
-                        }
-                    },
-                    {
-                        new ExploreResult.Metric
-                        {
-                            MetricName = "Count",
-                            MetricType = AircloakType.Integer,
-                            MetricValue = stats.Count,
-                        }
-                    },
-                    {
-                        new ExploreResult.Metric
-                        {
-                            MetricName = "CountNoise",
-                            MetricType = AircloakType.Real,
-                            MetricValue = stats.CountNoise,
-                        }
-                    },
+                    MetricType = AircloakType.Real,
+                    MetricValue = stats.Min,
                 },
-            };
+                new ExploreResult.Metric("Max")
+                {
+                    MetricType = AircloakType.Real,
+                    MetricValue = stats.Max,
+                },
+                new ExploreResult.Metric("Count")
+                {
+                    MetricType = AircloakType.Integer,
+                    MetricValue = stats.Count,
+                },
+                new ExploreResult.Metric("CountNoise")
+                {
+                    MetricType = AircloakType.Real,
+                    MetricValue = stats.CountNoise,
+                },
+            });
         }
 
-        internal class QuerySpec : IQuerySpec<ResultRow>
+        private class QuerySpec : IQuerySpec<ResultRow>
         {
             public QuerySpec(ExploreParams exploreParams)
             {
@@ -98,7 +82,7 @@
             public string ColumnName { get; }
         }
 
-        internal class ResultRow : IJsonArrayConvertible
+        private class ResultRow : IJsonArrayConvertible
         {
 #pragma warning disable RCS1074 // Remove redundant constructor
             // Need this for JsonArrayConverter constraint

@@ -7,16 +7,25 @@ namespace Explorer
 
     internal class ExploreResult
     {
-        public ExploreResult(string status)
+        public ExploreResult(Guid explorationId, string status)
         {
+            Id = explorationId;
             Status = status;
+            Metrics = new List<Metric>();
         }
 
-        public string Status { get; set; }
+        public ExploreResult(Guid explorationId, string status, IEnumerable<Metric> metrics)
+        {
+            Id = explorationId;
+            Status = status;
+            Metrics = metrics;
+        }
 
-        public List<Metric>? Metrics { get; }
+        public string Status { get; }
 
-        public Guid Id { get; set; }
+        public IEnumerable<Metric> Metrics { get; }
+
+        public Guid Id { get; }
 
         internal class Metric
         {
