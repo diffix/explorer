@@ -24,7 +24,7 @@
     /// </summary>
     public class JsonApiClient : HttpClient
     {
-        private readonly JsonSerializerOptions defaultJsonOptions = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions defaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
         };
