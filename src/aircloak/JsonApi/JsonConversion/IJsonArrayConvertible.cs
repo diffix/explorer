@@ -4,7 +4,7 @@ namespace Aircloak.JsonApi
     using System.Text.Json.Serialization;
 
     /// <summary>
-    /// An interface for (de)serializing to and from an array of JSON values.
+    /// An interface for deserializing a type from an array of JSON values.
     /// </summary>
     /// <remarks>
     /// This interface is used by <see cref="JsonArrayConverter{T}"/> to derive the
@@ -29,20 +29,5 @@ namespace Aircloak.JsonApi
         /// </code>
         /// </example>
         public void FromArrayValues(ref Utf8JsonReader reader);
-
-        /// <summary>
-        /// Writes values to a JSON array.
-        /// </summary>
-        /// <param name="writer">The writer to the JSON buffer.</param>
-        /// <example>
-        /// Write the properties MyDouble and MyString to the buffer:
-        /// <code>
-        /// public void FromArrayValues(ref Utf8JsonReader reader) {
-        ///     writer.WriteNumberValue(MyDouble)
-        ///     writer.WriteStringValue(MyString)
-        /// }
-        /// </code>
-        /// </example>
-        public void ToArrayValues(Utf8JsonWriter writer);
     }
 }

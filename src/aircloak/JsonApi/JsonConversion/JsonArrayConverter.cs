@@ -1,5 +1,6 @@
 namespace Aircloak.JsonApi
 {
+    using System;
     using System.Text.Json;
     using System.Text.Json.Serialization;
 
@@ -7,6 +8,8 @@ namespace Aircloak.JsonApi
     /// Implements <see cref="JsonConverter"/> in terms of <see cref="IJsonArrayConvertible"/>.
     /// </summary>
     /// <typeparam name="T">A type that implements <see cref="IJsonArrayConvertible"/>.</typeparam>
+    /// <remarks>Note that this is meant for reading JSON only: the Write method is intentionally
+    /// left unimplemented.</remarks>
     internal class JsonArrayConverter<T> : JsonConverter<T>
         where T : IJsonArrayConvertible, new()
     {
@@ -38,9 +41,7 @@ namespace Aircloak.JsonApi
             T value,
             JsonSerializerOptions options)
         {
-            writer.WriteStartArray();
-            value.ToArrayValues(writer);
-            writer.WriteEndArray();
+            throw new InvalidOperationException("This Type is for deserializing only!");
         }
     }
 }

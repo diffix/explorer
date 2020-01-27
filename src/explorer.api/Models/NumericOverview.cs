@@ -110,28 +110,6 @@
                 reader.Read();
                 CountNoise = reader.GetDouble();
             }
-
-            void IJsonArrayConvertible.ToArrayValues(Utf8JsonWriter writer)
-            {
-                WriteNullableNumberValue(writer, Min);
-                WriteNullableNumberValue(writer, Max);
-                WriteNullableNumberValue(writer, Count);
-                WriteNullableNumberValue(writer, CountNoise);
-            }
-
-            private void WriteNullableNumberValue<T>(Utf8JsonWriter writer, T? value)
-                where T : unmanaged
-            {
-                if (value.HasValue)
-                {
-                    dynamic number = value.Value;
-                    writer.WriteNumberValue(number);
-                }
-                else
-                {
-                    writer.WriteNullValue();
-                }
-            }
         }
     }
 }
