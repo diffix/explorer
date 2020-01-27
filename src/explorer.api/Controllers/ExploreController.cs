@@ -2,6 +2,7 @@
 {
     using System;
     using System.Net.Mime;
+    using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
@@ -26,7 +27,7 @@
         [Route("explore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Explore(Models.ExploreParams data)
+        public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
             if (!ModelState.IsValid)
             {
@@ -71,9 +72,14 @@
                 });
             }
 
-            var result = explorer.Explore().Result;
+            var results = new System.Collections.Generic.List<ExploreResult>();
+            await foreach (var result in explorer.Explore())
+            {
+                logger.LogInformation($"-------> Explorer status: {result.Status}");
+                results.Add(result);
+            }
 
-            return Ok(result);
+            return Ok(results.FindLast(_ => true));
         }
 
         [Route("/{**catchall}")]
