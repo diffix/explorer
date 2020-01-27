@@ -5,15 +5,15 @@ namespace Explorer.Api.Models
     public class ExploreParams
     {
         [Required]
-        public string ApiKey { get; set; }
+        public string ApiKey { get; set; } = string.Empty;
 
         [Required]
-        public string TableName { get; set; }
+        public string TableName { get; set; } = string.Empty;
 
         [Required]
-        public string ColumnName { get; set; }
+        public string ColumnName { get; set; } = string.Empty;
 
         [Required]
-        public string DataSourceName { get; set; }
+        public string DataSourceName { get; set; } = string.Empty;
     }
 }

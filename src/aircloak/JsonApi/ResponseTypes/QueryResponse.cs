@@ -1,3 +1,6 @@
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+#pragma warning disable CA1815 // Struct type should override Equals
+
 namespace Aircloak.JsonApi.ResponseTypes
 {
     /// <summary>
@@ -6,6 +9,7 @@ namespace Aircloak.JsonApi.ResponseTypes
     public struct QueryResponse
     {
         public bool Success { get; set; }
+
         public string QueryId { get; set; }
 
         public override string ToString()
@@ -16,3 +20,6 @@ namespace Aircloak.JsonApi.ResponseTypes
         }
     }
 }
+
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+#pragma warning restore CA1815 // Struct type should override Equals
