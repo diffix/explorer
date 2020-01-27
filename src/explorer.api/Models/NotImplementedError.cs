@@ -6,6 +6,6 @@ namespace Explorer.Api.Models
 
         public string Description { get; set; } = "Not implemented";
 
-        public object Data { get; set; }
+        public object Data { get; set; } = string.Empty;
     }
 }
