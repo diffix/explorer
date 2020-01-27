@@ -6,20 +6,20 @@ namespace Explorer
 
     internal class ColumnExplorer
     {
-        protected readonly ExploreParams exploreParams;
-
-        protected readonly JsonApiSession apiSession;
-
-        internal ColumnExplorer(
+        public ColumnExplorer(
             JsonApiSession apiSession,
             ExploreParams exploreParams)
         {
-            this.apiSession = apiSession;
-            this.exploreParams = exploreParams;
+            ApiSession = apiSession;
+            ExploreParams = exploreParams;
 
             ExplorationGuid = Guid.NewGuid();
         }
 
-        internal Guid ExplorationGuid { get; }
+        public Guid ExplorationGuid { get; }
+
+        protected ExploreParams ExploreParams { get; }
+
+        protected JsonApiSession ApiSession { get; }
     }
 }
