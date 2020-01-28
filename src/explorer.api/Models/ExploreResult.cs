@@ -11,7 +11,7 @@ namespace Explorer
         {
             Id = explorationId;
             Status = status;
-            Metrics = new List<Metric>();
+            Metrics = Array.Empty<Metric>();
         }
 
         public ExploreResult(Guid explorationId, string status, IEnumerable<Metric> metrics)
