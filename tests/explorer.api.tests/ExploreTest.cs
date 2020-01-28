@@ -12,32 +12,27 @@ namespace Explorer.Api.Tests
 
     public sealed class ExploreTest
     {
-        private const string apiKey =
-            "SFMyNTY.g3QAAAACZAAEZGF0YW0AAAAkMTUxNjJiZWYtNWE2MS00NGNhLWFiZmUtOWU1MGFiNGIxM2M4ZAAGc2lnbmVkbgYAlH8NpW8B" +
-            ".byOGmraal0gWNKa_g6aXgArfff2nl34Tm-hJL43sOIw";
-
-        private readonly static Models.ExploreParams validData = new Models.ExploreParams
+        private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
         {
-            ApiKey = apiKey,
+            ApiKey = Environment.GetEnvironmentVariable("AIRCLOAK_API_KEY") ?? "API_KEY_NOT_SET",
             DataSourceName = "gda_banking",
             TableName = "loans",
-            ColumnName = "amount"
+            ColumnName = "amount",
         };
-
 
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
 
         [Fact]
         public void Success()
         {
-            TestApi(HttpMethod.Post, "/explore", validData, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
                 Assert.True(response.IsSuccessStatusCode, content));
         }
 
         [Fact]
         public void SuccessWithContents()
         {
-            TestApi(HttpMethod.Post, "/explore", validData, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
             {
                 using var jsonContent = JsonDocument.Parse(content);
                 var rootEl = jsonContent.RootElement;
@@ -67,7 +62,7 @@ namespace Explorer.Api.Tests
         [InlineData("/invalid endpoint test")]
         public void FailWithBadEndPoint(string endpoint)
         {
-            TestApi(HttpMethod.Post, endpoint, validData, (response, content) =>
+            TestApi(HttpMethod.Post, endpoint, ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -78,7 +73,7 @@ namespace Explorer.Api.Tests
         [InlineData("PUT")]
         public void FailWithBadMethod(string method)
         {
-            TestApi(new HttpMethod(method), "/explore", validData, (response, content) =>
+            TestApi(new HttpMethod(method), "/explore", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 

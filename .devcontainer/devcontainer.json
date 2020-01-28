@@ -28,12 +28,12 @@
 	"mounts": [
 		// "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind"
 	],
+	"containerEnv": {
+		"AIRCLOAK_API_KEY": "${localEnv:AIRCLOAK_API_KEY}"
+	},
 	"remoteEnv": {
 		// [Optional] Override the default HTTP endpoints - need to listen to '*' for appPort to work
 		"ASPNETCORE_Kestrel__Endpoints__Http__Url": "http://*:5000"
-		// "ASPNETCORE_Kestrel__Endpoints__Https__Url": "https://*:5001",
-		// "ASPNETCORE_Kestrel__Certificates__Default__Password": "SecurePwdGoesHere",
-		// "ASPNETCORE_Kestrel__Certificates__Default__Path": "/home/vscode/.aspnet/https/aspnetapp.pfx",
 	},
 	// Add the IDs of extensions you want installed when the container is created in the array below.
 	"extensions": [
