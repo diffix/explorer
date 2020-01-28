@@ -12,7 +12,9 @@ namespace Explorer.Api.Tests
 
     public sealed class ExploreTest
     {
-        private const string apiKey = "SFMyNTY.g3QAAAACZAAEZGF0YW0AAAAkMTUxNjJiZWYtNWE2MS00NGNhLWFiZmUtOWU1MGFiNGIxM2M4ZAAGc2lnbmVkbgYAlH8NpW8B.byOGmraal0gWNKa_g6aXgArfff2nl34Tm-hJL43sOIw";
+        private const string apiKey =
+            "SFMyNTY.g3QAAAACZAAEZGF0YW0AAAAkMTUxNjJiZWYtNWE2MS00NGNhLWFiZmUtOWU1MGFiNGIxM2M4ZAAGc2lnbmVkbgYAlH8NpW8B" +
+            ".byOGmraal0gWNKa_g6aXgArfff2nl34Tm-hJL43sOIw";
 
         private readonly static Models.ExploreParams validData = new Models.ExploreParams
         {
