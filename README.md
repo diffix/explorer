@@ -4,6 +4,7 @@
 - [Getting started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Running](#running)
+  - [Development](#development)
 - [Additional reading](#additional-reading)
 
 ----------------------
@@ -15,6 +16,22 @@ Anonymized data from the Diffix-protected datasets is inherently restricted. The
 ## Getting started
 
 ### Prerequisites
+
+#### Aircloak API Key
+
+You will need an authorization key for the Aircloak API. This should be assigned to the `AIRCLOAK_API_KEY`
+variable in your environment. 
+
+### Running
+
+Building and running can be simply done using Docker:
+
+```
+docker build -t explorer .
+docker run -it --rm  -e AIRCLOAK_API_KEY -p 5000:80 explorer
+```
+
+### Development
 
 The simplest way to get started is with VS Code's remote containers feature.
 
@@ -30,15 +47,6 @@ The short version:
 5. Start VS Code and from the command palette (`F1`) run _Remote-Containers: Open Workspace in Container_ and select the `src/explorer.code-workspace` file.
 
 If you want to use an editor other than VS Code, you will need [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1) to compile the source files on your local machine.
-
-### Running
-
-Building and runing can be simply done using Docker:
-
-```
-docker build -t explorer .
-docker run -it --rm -p 5000:80 explorer
-```
 
 ## Additional reading
 
