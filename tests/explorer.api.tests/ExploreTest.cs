@@ -1,6 +1,7 @@
 namespace Explorer.Api.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -13,7 +14,7 @@ namespace Explorer.Api.Tests
     {
         private const string apiKey = "SFMyNTY.g3QAAAACZAAEZGF0YW0AAAAkMTUxNjJiZWYtNWE2MS00NGNhLWFiZmUtOWU1MGFiNGIxM2M4ZAAGc2lnbmVkbgYAlH8NpW8B.byOGmraal0gWNKa_g6aXgArfff2nl34Tm-hJL43sOIw";
 
-        private static Models.ExploreParams validData = new Models.ExploreParams
+        private readonly static Models.ExploreParams validData = new Models.ExploreParams
         {
             ApiKey = apiKey,
             DataSourceName = "gda_banking",
@@ -29,6 +30,33 @@ namespace Explorer.Api.Tests
         {
             TestApi(HttpMethod.Post, "/explore", validData, (response, content) =>
                 Assert.True(response.IsSuccessStatusCode, content));
+        }
+
+        [Fact]
+        public void SuccessWithContents()
+        {
+            TestApi(HttpMethod.Post, "/explore", validData, (response, content) =>
+            {
+                using var jsonContent = JsonDocument.Parse(content);
+                var rootEl = jsonContent.RootElement;
+                Assert.True(rootEl.ValueKind == JsonValueKind.Object,
+                    "Expected a JSON object in the response:\n{content}");
+                Assert.True(rootEl.TryGetProperty("id", out var id),
+                    $"Expected an 'id' property in:\n{content}");
+                Assert.True(rootEl.TryGetProperty("status", out var status),
+                    $"Expected a 'status' property in:\n{content}");
+                Assert.True(rootEl.TryGetProperty("metrics", out var metrics),
+                    $"Expected a 'metrics' property in:\n{content}");
+                Assert.True(metrics.ValueKind == JsonValueKind.Array,
+                    $"Expected 'metrics' property to contain an array:\n{content}");
+                Assert.All<JsonElement>(metrics.EnumerateArray(), el =>
+                    Assert.All<string>(new List<string> { "Name", "Type", "Value" }, propName =>
+                          Assert.True(el.TryGetProperty(propName, out var _),
+                              $"Expected a '{propName}' property in {el}."
+                          )
+                    )
+                );
+            });
         }
 
         [Theory]
