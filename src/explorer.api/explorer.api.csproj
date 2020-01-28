@@ -29,5 +29,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../aircloak/aircloak.csproj"/>
+  </ItemGroup>
+
 
 </Project>

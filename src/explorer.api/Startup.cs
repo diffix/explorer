@@ -18,6 +18,8 @@ namespace Explorer.Api
         public static void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services
+                .AddSingleton<Aircloak.JsonApi.JsonApiClient, Aircloak.JsonApi.JsonApiClient>();
         }
 
         public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)

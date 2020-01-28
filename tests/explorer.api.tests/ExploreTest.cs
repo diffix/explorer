@@ -1,6 +1,7 @@
 namespace Explorer.Api.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -11,14 +12,54 @@ namespace Explorer.Api.Tests
 
     public sealed class ExploreTest
     {
+        private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
+        {
+            ApiKey = Environment.GetEnvironmentVariable("AIRCLOAK_API_KEY") ?? "API_KEY_NOT_SET",
+            DataSourceName = "gda_banking",
+            TableName = "loans",
+            ColumnName = "amount",
+        };
+
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
 
         [Fact]
         public void Success()
         {
-            var data = new Models.ExploreParams { ApiKey = "apikey", DataSourceName = "ds", TableName = "tn", ColumnName = "cn" };
-            TestApi(HttpMethod.Post, "/explore", data, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
                 Assert.True(response.IsSuccessStatusCode, content));
+        }
+
+        [Fact]
+        public void SuccessWithContents()
+        {
+            TestApi(HttpMethod.Post, "/explore", ValidData, (_, content) =>
+            {
+                using var jsonContent = JsonDocument.Parse(content);
+                var rootEl = jsonContent.RootElement;
+                Assert.True(
+                    rootEl.ValueKind == JsonValueKind.Object,
+                    "Expected a JSON object in the response:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("id", out var id),
+                    $"Expected an 'id' property in:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("status", out var status),
+                    $"Expected a 'status' property in:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("metrics", out var metrics),
+                    $"Expected a 'metrics' property in:\n{content}");
+                Assert.True(
+                    metrics.ValueKind == JsonValueKind.Array,
+                    $"Expected 'metrics' property to contain an array:\n{content}");
+                Assert.All<JsonElement>(metrics.EnumerateArray(), el =>
+                    Assert.All<string>(new List<string> { "Name", "Type", "Value" }, propName =>
+                          Assert.True(
+                              el.TryGetProperty(propName, out var _),
+                              $"Expected a '{propName}' property in {el}."
+                          )
+                    )
+                );
+            });
         }
 
         [Theory]
@@ -27,8 +68,7 @@ namespace Explorer.Api.Tests
         [InlineData("/invalid endpoint test")]
         public void FailWithBadEndPoint(string endpoint)
         {
-            var data = new Models.ExploreParams { ApiKey = "apikey", DataSourceName = "ds", TableName = "tn", ColumnName = "cn" };
-            TestApi(HttpMethod.Post, endpoint, data, (response, content) =>
+            TestApi(HttpMethod.Post, endpoint, ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -39,8 +79,7 @@ namespace Explorer.Api.Tests
         [InlineData("PUT")]
         public void FailWithBadMethod(string method)
         {
-            var data = new Models.ExploreParams { ApiKey = "apikey", DataSourceName = "ds", TableName = "tn", ColumnName = "cn" };
-            TestApi(new HttpMethod(method), "/explore", data, (response, content) =>
+            TestApi(new HttpMethod(method), "/explore", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
