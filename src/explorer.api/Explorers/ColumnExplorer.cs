@@ -8,13 +8,10 @@ namespace Explorer
 
     internal abstract class ColumnExplorer
     {
-        public ColumnExplorer(
-            JsonApiSession apiSession,
-            ExploreParams exploreParams)
+        protected ColumnExplorer(JsonApiSession apiSession, ExploreParams exploreParams)
         {
             ApiSession = apiSession;
             ExploreParams = exploreParams;
-
             ExplorationGuid = Guid.NewGuid();
         }
 
