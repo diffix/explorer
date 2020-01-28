@@ -5,11 +5,11 @@ namespace Explorer.Queries
     using Aircloak.JsonApi;
     using Explorer.Api.Models;
 
-    internal class NumericColumnAnonStatsQS :
-        IQuerySpec<NumericColumnAnonStatsQS.IntegerResult>,
-        IQuerySpec<NumericColumnAnonStatsQS.RealResult>
+    internal class NumericColumnStats :
+        IQuerySpec<NumericColumnStats.IntegerResult>,
+        IQuerySpec<NumericColumnStats.RealResult>
     {
-        public NumericColumnAnonStatsQS(ExploreParams exploreParams)
+        public NumericColumnStats(ExploreParams exploreParams)
         {
             TableName = exploreParams.TableName;
             ColumnName = exploreParams.ColumnName;

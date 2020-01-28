@@ -19,11 +19,11 @@
 
         public override async IAsyncEnumerable<ExploreResult> Explore()
         {
-            var queryParams = new NumericColumnAnonStatsQS(ExploreParams);
+            var queryParams = new NumericColumnStats(ExploreParams);
 
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 
-            var queryResult = await ApiSession.Query<NumericColumnAnonStatsQS.IntegerResult>(
+            var queryResult = await ApiSession.Query<NumericColumnStats.IntegerResult>(
                 ExploreParams.DataSourceName,
                 queryParams.QueryStatement,
                 TimeSpan.FromMinutes(2));

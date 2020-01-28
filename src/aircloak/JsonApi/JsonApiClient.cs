@@ -24,7 +24,7 @@
     /// </summary>
     public class JsonApiClient : HttpClient
     {
-        private static readonly JsonSerializerOptions defaultJsonOptions = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
         };
@@ -151,7 +151,7 @@
                 using var contentStream = await response.Content.ReadAsStreamAsync();
                 return await JsonSerializer.DeserializeAsync<T>(
                     contentStream,
-                    options ?? defaultJsonOptions);
+                    options ?? DefaultJsonOptions);
             }
             else
             {
