@@ -1,4 +1,4 @@
-namespace Explorer
+namespace Explorer.Queries
 {
     using Aircloak.JsonApi;
 

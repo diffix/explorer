@@ -8,6 +8,7 @@
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api.Models;
+    using Explorer.Queries;
 
     internal class IntegerColumnExplorer : ColumnExplorer
     {
