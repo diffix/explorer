@@ -4,6 +4,7 @@
     <Rule Id="CA2007" Action="None" /> <!-- Consider using ConfigureAwait(false) -->
     <Rule Id="IDE1006" Action="None" /> <!--  Naming rule violation: Missing prefix: 's_' -->
     <Rule Id="CA1062" Action="None" /> <!-- Validate that parameter is not null in public methods (disabled since nullable reference types are enabled) -->
+    <Rule Id="CA1303" Action="None" /> <!-- Validate that parameter is not null in public methods (disabled since nullable reference types are enabled) -->
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1600" Action="None"/> <!-- Elements should be documented -->
