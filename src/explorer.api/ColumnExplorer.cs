@@ -1,10 +1,12 @@
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
+
     using Aircloak.JsonApi;
     using Explorer.Api.Models;
 
-    internal class ColumnExplorer
+    internal abstract class ColumnExplorer
     {
         public ColumnExplorer(
             JsonApiSession apiSession,
@@ -21,5 +23,7 @@ namespace Explorer
         protected ExploreParams ExploreParams { get; }
 
         protected JsonApiSession ApiSession { get; }
+
+        public abstract IAsyncEnumerable<ExploreResult> Explore();
     }
 }

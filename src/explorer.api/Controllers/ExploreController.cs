@@ -56,10 +56,10 @@
                 return BadRequest(); // TODO Return something more descriptive
             }
 
-            var explorer = explorerColumnMeta.Type switch
+            ColumnExplorer? explorer = explorerColumnMeta.Type switch
             {
-                AircloakType.Integer => new Explorer.NumericOverview(apiSession, data),
-                AircloakType.Real => new Explorer.NumericOverview(apiSession, data),
+                AircloakType.Integer => new IntegerColumnExplorer(apiSession, data),
+                AircloakType.Real => new RealColumnExplorer(apiSession, data),
                 _ => null,
             };
 
