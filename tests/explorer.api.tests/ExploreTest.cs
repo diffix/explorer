@@ -32,23 +32,29 @@ namespace Explorer.Api.Tests
         [Fact]
         public void SuccessWithContents()
         {
-            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", ValidData, (_, content) =>
             {
                 using var jsonContent = JsonDocument.Parse(content);
                 var rootEl = jsonContent.RootElement;
-                Assert.True(rootEl.ValueKind == JsonValueKind.Object,
+                Assert.True(
+                    rootEl.ValueKind == JsonValueKind.Object,
                     "Expected a JSON object in the response:\n{content}");
-                Assert.True(rootEl.TryGetProperty("id", out var id),
+                Assert.True(
+                    rootEl.TryGetProperty("id", out var id),
                     $"Expected an 'id' property in:\n{content}");
-                Assert.True(rootEl.TryGetProperty("status", out var status),
+                Assert.True(
+                    rootEl.TryGetProperty("status", out var status),
                     $"Expected a 'status' property in:\n{content}");
-                Assert.True(rootEl.TryGetProperty("metrics", out var metrics),
+                Assert.True(
+                    rootEl.TryGetProperty("metrics", out var metrics),
                     $"Expected a 'metrics' property in:\n{content}");
-                Assert.True(metrics.ValueKind == JsonValueKind.Array,
+                Assert.True(
+                    metrics.ValueKind == JsonValueKind.Array,
                     $"Expected 'metrics' property to contain an array:\n{content}");
                 Assert.All<JsonElement>(metrics.EnumerateArray(), el =>
                     Assert.All<string>(new List<string> { "Name", "Type", "Value" }, propName =>
-                          Assert.True(el.TryGetProperty(propName, out var _),
+                          Assert.True(
+                              el.TryGetProperty(propName, out var _),
                               $"Expected a '{propName}' property in {el}."
                           )
                     )
