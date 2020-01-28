@@ -84,13 +84,6 @@
 
         private class ResultRow : IJsonArrayConvertible
         {
-#pragma warning disable RCS1074 // Remove redundant constructor
-            // Need this for JsonArrayConverter constraint
-            public ResultRow()
-            {
-            }
-#pragma warning restore RCS1074 // Remove redundant constructor
-
             internal double? Min { get; set; }
 
             internal double? Max { get; set; }
