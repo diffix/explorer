@@ -1,3 +1,7 @@
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("explorer.api.tests")]
+
 namespace Explorer.Queries
 {
     using System.Text.Json;
@@ -39,11 +43,19 @@ namespace Explorer.Queries
             void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
-                ColumnValue = reader.GetInt64();
+                ColumnValue = reader.TokenType switch
+                {
+                    JsonTokenType.Number => reader.GetInt64(),
+                    JsonTokenType.String when reader.GetString() == "*" => null,
+                    _ => throw new System.Exception("Unexpected Json token.")
+                };
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
-                CountNoise = reader.GetDouble();
+                if (reader.TokenType != JsonTokenType.Null)
+                {
+                    CountNoise = reader.GetDouble();
+                }
             }
         }
 
@@ -58,11 +70,19 @@ namespace Explorer.Queries
             void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
-                ColumnValue = reader.GetDouble();
+                ColumnValue = reader.TokenType switch
+                {
+                    JsonTokenType.Number => reader.GetDouble(),
+                    JsonTokenType.String when reader.GetString() == "*" => null,
+                    _ => throw new System.Exception("Unexpected Json token.")
+                };
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
-                CountNoise = reader.GetDouble();
+                if (reader.TokenType != JsonTokenType.Null)
+                {
+                    CountNoise = reader.GetDouble();
+                }
             }
         }
 
@@ -77,11 +97,20 @@ namespace Explorer.Queries
             void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
-                ColumnValue = reader.GetBoolean();
+                ColumnValue = reader.TokenType switch
+                {
+                    JsonTokenType.True => true,
+                    JsonTokenType.False => false,
+                    JsonTokenType.String => null,
+                    _ => throw new System.Exception("Unexpected Json token.")
+                };
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
-                CountNoise = reader.GetDouble();
+                if (reader.TokenType != JsonTokenType.Null)
+                {
+                    CountNoise = reader.GetDouble();
+                }
             }
         }
 
@@ -100,7 +129,10 @@ namespace Explorer.Queries
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
-                CountNoise = reader.GetDouble();
+                if (reader.TokenType != JsonTokenType.Null)
+                {
+                    CountNoise = reader.GetDouble();
+                }
             }
         }
     }
