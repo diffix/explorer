@@ -26,15 +26,6 @@ namespace Explorer.Queries.Tests
             this.jsonApiSession = JsonApiSessionManager.NewJsonApiSession(AircloakTestServerUrl, apiKey);
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(DistinctColumnValues query)
-            where TResult : IJsonArrayConvertible, new()
-        {
-            return await jsonApiSession.Query<TResult>(
-                TestDataSource,
-                query.QueryStatement,
-                TimeSpan.FromSeconds(30));
-        }
-
         [Fact]
         public async void TestDistinctValueQuery()
         {
@@ -73,6 +64,15 @@ namespace Explorer.Queries.Tests
             });
 
             Assert.True(textResult.ResultRows.Count() == 2);
+        }
+
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(DistinctColumnValues query)
+            where TResult : IJsonArrayConvertible, new()
+        {
+            return await jsonApiSession.Query<TResult>(
+                TestDataSource,
+                query.QueryStatement,
+                TimeSpan.FromSeconds(30));
         }
     }
 }
