@@ -55,10 +55,7 @@ namespace Explorer.Api.Tests
                     Assert.All<string>(new List<string> { "Name", "Type", "Value" }, propName =>
                           Assert.True(
                               el.TryGetProperty(propName, out var _),
-                              $"Expected a '{propName}' property in {el}."
-                          )
-                    )
-                );
+                              $"Expected a '{propName}' property in {el}.")));
             });
         }
 

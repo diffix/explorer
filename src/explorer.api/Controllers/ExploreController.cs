@@ -29,11 +29,6 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var apiSession = new JsonApiSession(
                 aircloakApiClient,
                 new Uri("https://attack.aircloak.com/api/"),
@@ -56,16 +51,11 @@
                 return BadRequest(); // TODO Return something more descriptive
             }
 
-            ColumnExplorer? explorer = explorerColumnMeta.Type switch
-            {
-                AircloakType.Integer => new IntegerColumnExplorer(apiSession, data),
-                AircloakType.Real => new RealColumnExplorer(apiSession, data),
-                _ => null,
-            };
+            var explorer = CreateNumericColumnExplorer(explorerColumnMeta.Type, apiSession, data);
 
             if (explorer == null)
             {
-                return Ok(new Models.NotImplementedError()
+                return Ok(new Models.NotImplementedError
                 {
                     Description = $"No exploration strategy implemented for {explorerColumnMeta.Type} columns.",
                     Data = data,
@@ -85,5 +75,15 @@
         [Route("/{**catchall}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
+
+        private static ColumnExplorer? CreateNumericColumnExplorer(AircloakType type, JsonApiSession apiSession, Models.ExploreParams data)
+        {
+            return type switch
+            {
+                AircloakType.Integer => new IntegerColumnExplorer(apiSession, data),
+                AircloakType.Real => new RealColumnExplorer(apiSession, data),
+                _ => null,
+            };
+        }
     }
 }

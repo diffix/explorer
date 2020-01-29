@@ -2,12 +2,13 @@
 <RuleSet Name="Roslyn analyzers rules for Aircloak Explorer" Description="Custom Roslyn Analyzers Rules" ToolsVersion="14.0">
   <Rules AnalyzerId="Microsoft.CodeAnalysis.FxCopAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.FxCopAnalyzers">
     <Rule Id="CA2007" Action="None" /> <!-- Consider using ConfigureAwait(false) -->
-    <Rule Id="IDE1006" Action="None" /> <!--  Naming rule violation: Missing prefix: 's_' -->
+    <Rule Id="IDE1006" Action="None" /> <!-- Naming rule violation: Missing prefix: 's_' -->
     <Rule Id="CA1062" Action="None" /> <!-- Validate that parameter is not null in public methods (disabled since nullable reference types are enabled) -->
+    <Rule Id="CA1303" Action="None" /> <!-- Use a resource string for exception message instead of literal  -->
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1600" Action="None"/> <!-- Elements should be documented -->
-    <Rule Id="SA1101" Action="None" /> <!-- Prefix local calls with this-->
+    <Rule Id="SA1101" Action="None" /> <!-- Prefix local calls with this -->
     <Rule Id="SA1633" Action="None" /> <!-- The file header is missing or not located at the top of the file (about comments at the beginning of the file including license/copyright) -->
     <Rule Id="SA1513" Action="None" /> <!-- Closing brace should be followed by a blank line -->
   </Rules>
