@@ -3,7 +3,6 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Aircloak.JsonApi;
-    using Explorer.Api.Models;
 
     internal class DistinctColumnValues :
         IQuerySpec<DistinctColumnValues.IntegerResult>,
@@ -11,10 +10,10 @@ namespace Explorer.Queries
         IQuerySpec<DistinctColumnValues.BoolResult>,
         IQuerySpec<DistinctColumnValues.TextResult>
     {
-        public DistinctColumnValues(ExploreParams exploreParams)
+        public DistinctColumnValues(string tableName, string columnName)
         {
-            TableName = exploreParams.TableName;
-            ColumnName = exploreParams.ColumnName;
+            TableName = tableName;
+            ColumnName = columnName;
         }
 
         public string QueryStatement => $@"
@@ -22,7 +21,8 @@ namespace Explorer.Queries
                             {ColumnName},
                             count(*),
                             count_noise(*)
-                        from {TableName}";
+                        from {TableName}
+                        group by {ColumnName}";
 
         public string TableName { get; }
 
