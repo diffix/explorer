@@ -29,11 +29,6 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var apiSession = new JsonApiSession(
                 aircloakApiClient,
                 new Uri("https://attack.aircloak.com/api/"),
