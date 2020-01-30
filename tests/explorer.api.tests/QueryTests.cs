@@ -1,6 +1,7 @@
 namespace Explorer.Queries.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
@@ -46,10 +47,7 @@ namespace Explorer.Queries.Tests
                     tableName: "loans",
                     columnName: "payments"));
 
-            Assert.All(realResult.ResultRows, row =>
-            {
-                Assert.True(row.Count.HasValue && row.Count > 0);
-            });
+            Assert.All(realResult.ResultRows, row => Assert.True(row.Count.HasValue && row.Count > 0));
 
             var textResult = await QueryResult<DistinctColumnValues.TextResult>(
                 new DistinctColumnValues(
@@ -66,7 +64,28 @@ namespace Explorer.Queries.Tests
             Assert.True(textResult.ResultRows.Count() == 2);
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(DistinctColumnValues query)
+        [Fact]
+        public async void TestHistogramQuery()
+        {
+            var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
+            var result = await QueryResult<SingleColumnHistogram.Result>(
+                new SingleColumnHistogram(
+                    "loans",
+                    "amount",
+                    bucketSizes));
+
+            Assert.All(result.ResultRows, row =>
+            {
+                Assert.True(bucketSizes.Exists(v => row.BucketSize?.Equals(v) ?? false));
+                Assert.True(row.LowerBound.IsNull ||
+                            row.LowerBound.IsSuppressed ||
+                            ((ValueColumn<decimal>)row.LowerBound).ColumnValue >= 0);
+                Assert.True(row.Count.HasValue && row.Count > 0);
+                Assert.True(row.CountNoise.HasValue);
+            });
+        }
+
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query)
             where TResult : IJsonArrayConvertible, new()
         {
             return await jsonApiSession.Query<TResult>(
