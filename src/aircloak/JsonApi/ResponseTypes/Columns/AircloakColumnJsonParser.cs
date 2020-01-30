@@ -91,15 +91,16 @@
         /// Throws a <see cref="System.Exception"/> if the Json value cannot be parsed as any of the following:
         /// <list type="bullet">
         /// <item>
-        /// <description>A string indicating a suppressed value (Json String "*").<description/>
-        /// <item/>
+        /// <description>A string indicating a suppressed value (Json String "*").</description>
+        /// </item>
         /// <item>
-        /// <description>A null value (Json null token).<description/>
-        /// <item/>
+        /// <description>A null value (Json null token).</description>
+        /// </item>
         /// <item>
-        /// <description>A value of the expected return type.<description/>
-        /// <item/>
-        /// <exception/>
+        /// <description>A value of the expected return type.</description>
+        /// </item>
+        /// </list>
+        /// </exception>
         private static AircloakColumn<T> ParseColumn<T>(
             ref Utf8JsonReader reader,
             JsonTokenType expectedToken,
