@@ -37,7 +37,8 @@ namespace Explorer.Queries.Tests
 
             Assert.All(intResult.ResultRows, row =>
             {
-                Assert.True(row.ColumnValue.HasValue);
+                Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
+                    ((ValueColumn<long>)row.ColumnValue).ColumnValue >= 0);
                 Assert.True(row.Count.HasValue && row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -47,7 +48,12 @@ namespace Explorer.Queries.Tests
                     tableName: "loans",
                     columnName: "payments"));
 
-            Assert.All(realResult.ResultRows, row => Assert.True(row.Count.HasValue && row.Count > 0));
+            Assert.All(realResult.ResultRows, row =>
+            {
+                Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
+                    ((ValueColumn<double>)row.ColumnValue).ColumnValue >= 0);
+                Assert.True(row.Count.HasValue && row.Count > 0);
+            });
 
             var textResult = await QueryResult<DistinctColumnValues.TextResult>(
                 new DistinctColumnValues(
@@ -56,7 +62,8 @@ namespace Explorer.Queries.Tests
 
             Assert.All(textResult.ResultRows, row =>
             {
-                Assert.True(row.ColumnValue == "Male" || row.ColumnValue == "Female");
+                Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
+                            ((ValueColumn<string>)row.ColumnValue).ColumnValue == "Female");
                 Assert.True(row.Count.HasValue && row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
