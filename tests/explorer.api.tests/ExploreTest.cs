@@ -108,37 +108,6 @@ namespace Explorer.Api.Tests
             });
         }
 
-        // private IWebHostBuilder CreateWebHostBuilder()
-        // {
-        //     var builder = new WebHostBuilder();
-        //     builder.UseEnvironment("Development");
-        //     builder.UseTestServer();
-        //     builder.ConfigureExplorer(() => vcr.GetVcrHandler());
-        //     return builder;
-        // }
-
-        // private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test)
-        // {
-        //     // while (!System.Diagnostics.Debugger.IsAttached) { System.Threading.Thread.Sleep(100); }
-        //     var configRoot = new ConfigurationBuilder().AddJsonFile("appsettings.Development.json").Build();
-        //     var config = configRoot.GetSection("Explorer").Get<ExplorerConfig>();
-        //     var vcrMode = Enum.Parse<Vcr.RecordMode>(config.VcrMode ?? "NewEpisodes");
-        //     var webHostBuilder = CreateWebHostBuilder().UseConfiguration(configRoot);
-        //     using var server = new TestServer(webHostBuilder);
-        //     // using var client = server.CreateClient();
-        //     using var client = CreateClient();
-        //     using var request = new HttpRequestMessage(method, endpoint);
-        //     using var vcrCassette = vcr.UseCassette("ExploreTests", ExplorerConfig.VcrMode);
-        //     if (data != null)
-        //     {
-        //         request.Content = new StringContent(JsonSerializer.Serialize(data));
-        //         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        //     }
-        //     using var response = await client.SendAsync(request).ConfigureAwait(false);
-        //     var responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        //     test(response, responseString);
-        // }
-
         private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test)
         {
             // TestUtils.WaitDebugger();
