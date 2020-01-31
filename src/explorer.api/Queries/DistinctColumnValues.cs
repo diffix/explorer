@@ -7,6 +7,7 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Aircloak.JsonApi;
+    using Aircloak.JsonApi.ResponseTypes;
 
     internal class DistinctColumnValues :
         IQuerySpec<DistinctColumnValues.IntegerResult>,
@@ -34,7 +35,12 @@ namespace Explorer.Queries
 
         public class IntegerResult : IJsonArrayConvertible
         {
-            public long? ColumnValue { get; set; }
+            public IntegerResult()
+            {
+                ColumnValue = new NullColumn<long>();
+            }
+
+            public AircloakColumn<long> ColumnValue { get; set; }
 
             public long? Count { get; set; }
 
@@ -43,12 +49,7 @@ namespace Explorer.Queries
             void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
-                ColumnValue = reader.TokenType switch
-                {
-                    JsonTokenType.Number => reader.GetInt64(),
-                    JsonTokenType.String when reader.GetString() == "*" => null,
-                    _ => throw new System.Exception("Unexpected Json token.")
-                };
+                ColumnValue = AircloakColumnJsonParser.ParseLong(ref reader);
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
@@ -61,7 +62,12 @@ namespace Explorer.Queries
 
         public class RealResult : IJsonArrayConvertible
         {
-            public double? ColumnValue { get; set; }
+            public RealResult()
+            {
+                ColumnValue = new NullColumn<double>();
+            }
+
+            public AircloakColumn<double> ColumnValue { get; set; }
 
             public long? Count { get; set; }
 
@@ -70,12 +76,7 @@ namespace Explorer.Queries
             void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
-                ColumnValue = reader.TokenType switch
-                {
-                    JsonTokenType.Number => reader.GetDouble(),
-                    JsonTokenType.String when reader.GetString() == "*" => null,
-                    _ => throw new System.Exception("Unexpected Json token.")
-                };
+                ColumnValue = AircloakColumnJsonParser.ParseDouble(ref reader);
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
@@ -88,7 +89,12 @@ namespace Explorer.Queries
 
         public class BoolResult : IJsonArrayConvertible
         {
-            public bool? ColumnValue { get; set; }
+            public BoolResult()
+            {
+                ColumnValue = new NullColumn<bool>();
+            }
+
+            public AircloakColumn<bool> ColumnValue { get; set; }
 
             public long? Count { get; set; }
 
@@ -97,13 +103,7 @@ namespace Explorer.Queries
             void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
-                ColumnValue = reader.TokenType switch
-                {
-                    JsonTokenType.True => true,
-                    JsonTokenType.False => false,
-                    JsonTokenType.String => null,
-                    _ => throw new System.Exception("Unexpected Json token.")
-                };
+                ColumnValue = AircloakColumnJsonParser.ParseBool(ref reader);
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
@@ -116,7 +116,12 @@ namespace Explorer.Queries
 
         public class TextResult : IJsonArrayConvertible
         {
-            public string? ColumnValue { get; set; }
+            public TextResult()
+            {
+                ColumnValue = new NullColumn<string>();
+            }
+
+            public AircloakColumn<string> ColumnValue { get; set; }
 
             public long? Count { get; set; }
 
@@ -125,7 +130,7 @@ namespace Explorer.Queries
             void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
-                ColumnValue = reader.GetString();
+                ColumnValue = AircloakColumnJsonParser.ParseString(ref reader);
                 reader.Read();
                 Count = reader.GetInt64();
                 reader.Read();
