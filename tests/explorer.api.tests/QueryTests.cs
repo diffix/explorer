@@ -3,7 +3,11 @@ namespace Explorer.Api.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
+<<<<<<< HEAD
     using System.Runtime.CompilerServices;
+=======
+    using System.Text.Json;
+>>>>>>> Take account of 'occurences' in QueryResult Row
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
@@ -92,6 +96,20 @@ namespace Explorer.Api.Tests
             });
         }
 
+        [Fact]
+        public async void TestRepeatingRows()
+        {
+            var queryResult = await QueryResult<RepeatingRowsQuery.Result>(new RepeatingRowsQuery());
+
+            Assert.True(queryResult.ResultRows.Count() == 5);
+            Assert.All(queryResult.ResultRows, row =>
+            {
+                Assert.True(row.one == 1);
+                Assert.True(row.two == 2);
+                Assert.True(row.three == 3);
+            });
+        }
+
         private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
             where TResult : IJsonArrayConvertible, new()
         {
@@ -106,6 +124,32 @@ namespace Explorer.Api.Tests
                 query.QueryStatement,
                 TimeSpan.FromSeconds(30),
                 pollingFrequency);
+        }
+
+        private class RepeatingRowsQuery : IQuerySpec<RepeatingRowsQuery.Result>
+        {
+            public string QueryStatement =>
+                @"select 1, 2, 3
+                    from loans
+                    GROUP BY duration
+                    having count_noise(*) > 0";
+
+            public struct Result : IJsonArrayConvertible
+            {
+                public int one;
+                public int two;
+                public int three;
+
+                public void FromArrayValues(ref Utf8JsonReader reader)
+                {
+                    reader.Read();
+                    one = reader.GetInt32();
+                    reader.Read();
+                    two = reader.GetInt32();
+                    reader.Read();
+                    three = reader.GetInt32();
+                }
+            }
         }
     }
 }

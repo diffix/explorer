@@ -33,7 +33,10 @@ namespace Aircloak.JsonApi.ResponseTypes
             {
                 foreach (var row_with_count in Query.Rows)
                 {
-                    yield return row_with_count.Row;
+                    for (var i = 0; i < row_with_count.Occurrences; i++)
+                    {
+                        yield return row_with_count.Row;
+                    }
                 }
             }
         }
@@ -122,6 +125,8 @@ namespace Aircloak.JsonApi.ResponseTypes
         public struct QueryRowsWithCount
         {
             public TRow Row { get; set; }
+
+            public int Occurrences { get; set; }
 
             [JsonExtensionData]
             public IDictionary<string, JsonElement> ExtensionData { get; set; }
