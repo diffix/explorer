@@ -19,7 +19,7 @@
 
         public override async IAsyncEnumerable<ExploreResult> Explore()
         {
-            var queryParams = new NumericColumnStats(ExploreParams);
+            var queryParams = new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName);
 
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 

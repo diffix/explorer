@@ -9,10 +9,10 @@ namespace Explorer.Queries
         IQuerySpec<NumericColumnStats.IntegerResult>,
         IQuerySpec<NumericColumnStats.RealResult>
     {
-        public NumericColumnStats(ExploreParams exploreParams)
+        public NumericColumnStats(string tableName, string columnName)
         {
-            TableName = exploreParams.TableName;
-            ColumnName = exploreParams.ColumnName;
+            TableName = tableName;
+            ColumnName = columnName;
         }
 
         public string QueryStatement => $@"
