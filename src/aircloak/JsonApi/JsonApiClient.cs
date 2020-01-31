@@ -22,12 +22,23 @@
     /// </item>
     /// </list>
     /// </summary>
-    public class JsonApiClient : HttpClient
+    public class JsonApiClient
     {
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
         };
+
+        private readonly HttpClient httpClient;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonApiClient" /> class.
+        /// </summary>
+        /// <param name="httpClient">A HttpClient object injected into this instance.</param>
+        public JsonApiClient(HttpClient httpClient)
+        {
+            this.httpClient = httpClient;
+        }
 
         /// <summary>
         /// Send a GET request to the Aircloak API. Handles authentication.
@@ -46,7 +57,7 @@
         /// -or- There is remaining data in the stream.
         /// </exception>
         public async Task<T> ApiGetRequest<T>(
-            Uri apiEndpoint,
+            string apiEndpoint,
             string apiKey,
             JsonSerializerOptions? options = null)
         {
@@ -71,7 +82,7 @@
         /// -or- There is remaining data in the stream.
         /// </exception>
         public async Task<T> ApiPostRequest<T>(
-            Uri apiEndpoint,
+            string apiEndpoint,
             string apiKey,
             string? requestContent = default,
             JsonSerializerOptions? options = null)
@@ -123,7 +134,7 @@
         /// </exception>
         private async Task<T> ApiRequest<T>(
             HttpMethod requestMethod,
-            Uri apiEndpoint,
+            string apiEndpoint,
             string apiKey,
             string? requestContent = default,
             JsonSerializerOptions? options = null)
@@ -142,7 +153,7 @@
                 requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             }
 
-            using var response = await SendAsync(
+            using var response = await httpClient.SendAsync(
                 requestMessage,
                 HttpCompletionOption.ResponseHeadersRead);
 

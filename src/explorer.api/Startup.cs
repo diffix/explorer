@@ -1,39 +1,59 @@
 namespace Explorer.Api
 {
+    using System;
+    using System.Net.Http;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
 
-    public class Startup
+    public static class Startup
     {
-        public Startup(IConfiguration configuration)
+        public static void ConfigureExplorer(this IWebHostBuilder builder)
         {
-            Configuration = configuration;
+            ConfigureExplorer(builder, null);
         }
 
-        public IConfiguration Configuration { get; }
-
-        public static void ConfigureServices(IServiceCollection services)
+        public static void ConfigureExplorer(this IWebHostBuilder builder, Func<DelegatingHandler>? configureHandler)
         {
-            services.AddControllers();
-            services
-                .AddSingleton<Aircloak.JsonApi.JsonApiClient, Aircloak.JsonApi.JsonApiClient>();
+            var eb = new ExplorerWebHostBuilderConfig { ConfigureHandler = configureHandler };
+            builder.ConfigureServices(eb.ConfigureServices)
+                .ConfigureServices(eb.ConfigureHttpClient)
+                .Configure(eb.Configure);
         }
 
-        public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        internal class ExplorerWebHostBuilderConfig
         {
-            if (env.IsDevelopment())
+            public Func<DelegatingHandler>? ConfigureHandler { get; set; }
+
+            public void ConfigureServices(WebHostBuilderContext ctx, IServiceCollection services)
             {
-                app.UseDeveloperExceptionPage();
+                _ = ctx;
+                services.AddControllers();
             }
 
-            app.UseRouting();
+            public void Configure(WebHostBuilderContext ctx, IApplicationBuilder app)
+            {
+                if (ctx.HostingEnvironment.IsDevelopment())
+                {
+                    app.UseDeveloperExceptionPage();
+                }
+                app.UseRouting();
+                app.UseAuthorization();
+                app.UseEndpoints(endpoints => endpoints.MapControllers());
+            }
 
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => endpoints.MapControllers());
+            public void ConfigureHttpClient(WebHostBuilderContext ctx, IServiceCollection services)
+            {
+                var config = ctx.Configuration.GetSection("Explorer").Get<ExplorerConfig>();
+                var clientBuilder = services.AddHttpClient<Aircloak.JsonApi.JsonApiClient>(client =>
+                    client.BaseAddress = config.AircloakApiUrl);
+                if (ConfigureHandler != null)
+                {
+                    clientBuilder.AddHttpMessageHandler(ConfigureHandler);
+                }
+            }
         }
     }
 }

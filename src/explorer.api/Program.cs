@@ -1,3 +1,5 @@
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("explorer.api.tests")]
+
 namespace Explorer.Api
 {
     using Microsoft.AspNetCore.Hosting;
@@ -12,6 +14,6 @@ namespace Explorer.Api
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
+                .ConfigureWebHostDefaults(Startup.ConfigureExplorer);
     }
 }

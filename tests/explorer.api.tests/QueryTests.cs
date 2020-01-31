@@ -5,26 +5,14 @@ namespace Explorer.Queries.Tests
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
+    using Explorer.Api.Tests;
     using Xunit;
 
     public sealed class QueryTests
     {
-        private const string AircloakApiKeyEnvVariable = "AIRCLOAK_API_KEY";
-
         private const string TestDataSource = "gda_banking";
 
-        private static readonly Uri AircloakTestServerUrl = new Uri("https://attack.aircloak.com/api/");
-
-        private readonly JsonApiSession jsonApiSession;
-
-        public QueryTests()
-        {
-            var apiKey = Environment.GetEnvironmentVariable(AircloakApiKeyEnvVariable) ??
-                    throw new System.InvalidOperationException(
-                        $"Environment variable {AircloakApiKeyEnvVariable} must be set");
-
-            this.jsonApiSession = JsonApiSessionManager.NewJsonApiSession(AircloakTestServerUrl, apiKey);
-        }
+        private readonly JsonApiSession jsonApiSession = TestUtils.CreateAircloakApiSession();
 
         [Fact]
         public async void TestDistinctValueQuery()

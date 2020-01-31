@@ -29,10 +29,7 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            var apiSession = new JsonApiSession(
-                aircloakApiClient,
-                new Uri("https://attack.aircloak.com/api/"),
-                data.ApiKey);
+            var apiSession = new JsonApiSession(aircloakApiClient, data.ApiKey);
 
             var dataSources = apiSession.GetDataSources().Result;
 

@@ -16,7 +16,6 @@
     {
         private const int DefaultPollingFrequencyMillis = 2000;
         private readonly JsonApiClient apiClient;
-        private readonly Uri apiRootUrl;
         private readonly string apiKey;
 
         /// <summary>
@@ -25,17 +24,14 @@
         /// <param name="apiClient">An <c>JsonApiClient</c> instance. The <paramref name="apiClient"/> is based on
         /// the .NET <c>HttpClient</c> class and should be reused, ie. the <paramref name="apiClient"/> should be a
         /// reference to singleton instance.</param>
-        /// <param name="apiRootUrl">The root Url for the Aircloak Api, eg. "https://attack.aircloak.com/api/".</param>
         /// <param name="apiKey">The Api key to use for this session.</param>
         /// <see cref="JsonApiClient"/>
         public JsonApiSession(
             JsonApiClient apiClient,
-            Uri apiRootUrl,
             string apiKey)
         {
             this.apiClient = apiClient;
             this.apiKey = apiKey;
-            this.apiRootUrl = apiRootUrl;
         }
 
         /// <summary>
@@ -46,7 +42,7 @@
         public async Task<DataSourceCollection> GetDataSources()
         {
             return await apiClient.ApiGetRequest<DataSourceCollection>(
-                new Uri(apiRootUrl, "data_sources"),
+                "data_sources",
                 apiKey);
         }
 
@@ -94,7 +90,7 @@
             };
 
             return await apiClient.ApiPostRequest<QueryResponse>(
-                EndPointUrl("queries"),
+                "queries",
                 apiKey,
                 JsonSerializer.Serialize(queryBody));
         }
@@ -117,7 +113,7 @@
             };
 
             return await apiClient.ApiGetRequest<QueryResult<TRow>>(
-                EndPointUrl($"queries/{queryId}"),
+                $"queries/{queryId}",
                 apiKey,
                 jsonOptions);
         }
@@ -217,13 +213,8 @@
         public async Task<CancelResponse> CancelQuery(string queryId)
         {
             return await apiClient.ApiPostRequest<CancelResponse>(
-                EndPointUrl($"queries/{queryId}/cancel"),
+                $"queries/{queryId}/cancel",
                 apiKey);
-        }
-
-        private Uri EndPointUrl(string path)
-        {
-            return new Uri(apiRootUrl, path);
         }
     }
 }
