@@ -106,10 +106,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestMinMaxExplorer()
         {
-            var vcrCassettePath = factory.GetVcrCasettePath(nameof(QueryTests), nameof(RuntimeMethodHandle));
-            var vcrCassetteFile = new System.IO.FileInfo(vcrCassettePath);
-            var pollingFrequency = (vcrCassetteFile.Exists && vcrCassetteFile.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassettePath);
+            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), nameof(TestMinMaxExplorer));
+            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var jsonApiClient = new JsonApiClient(client);
 
             var explorer = new MinMaxExplorer(
