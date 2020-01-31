@@ -12,6 +12,8 @@
 
     internal class IntegerColumnExplorer : ColumnExplorer
     {
+        const double SuppressedRatioThreshold = 0.1;
+
         public IntegerColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
             : base(apiClient, exploreParams)
         {
@@ -19,45 +21,53 @@
 
         public override async IAsyncEnumerable<ExploreResult> Explore()
         {
-            var queryParams = new NumericColumnStats(ExploreParams);
-
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 
-            var queryResult = await ApiClient.Query<NumericColumnStats.IntegerResult>(
-                ExploreParams.DataSourceName,
-                queryParams.QueryStatement,
-                TimeSpan.FromMinutes(2));
+            var stats = await ResolveQuery<NumericColumnStats.IntegerResult>(
+                new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
+                timeout: TimeSpan.FromMinutes(2));
 
-            var rows = queryResult.ResultRows;
+            var distinctValues = await ResolveQuery<DistinctColumnValues.IntegerResult>(
+                new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
+                timeout: TimeSpan.FromMinutes(2));
+
             Debug.Assert(
-                rows.Count() == 1,
-                $"Expected query {queryParams.QueryStatement} to return exactly one row.");
+                stats.ResultRows.Count() == 1,
+                $"Expected query NumericColumnStats query to return exactly one row.");
 
-            var stats = rows.First();
+            var suppressedValueCount = distinctValues.ResultRows.Count(row => row.ColumnValue.IsSuppressed);
+            var totalValueCount = stats.ResultRows.First().Count;
 
-            yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: new List<ExploreResult.Metric>
+            if (!totalValueCount.HasValue || totalValueCount.Value == 0)
             {
-                new ExploreResult.Metric("Min")
-                {
-                    MetricType = AircloakType.Integer,
-                    MetricValue = stats.Min,
-                },
-                new ExploreResult.Metric("Max")
-                {
-                    MetricType = AircloakType.Integer,
-                    MetricValue = stats.Max,
-                },
-                new ExploreResult.Metric("Count")
-                {
-                    MetricType = AircloakType.Integer,
-                    MetricValue = stats.Count,
-                },
-                new ExploreResult.Metric("CountNoise")
-                {
-                    MetricType = AircloakType.Real,
-                    MetricValue = stats.CountNoise,
-                },
-            });
+                yield return new ExploreError(ExplorationGuid,
+                    $"Cannot explore table/column with value count {totalValueCount}.");
+                yield break;
+            }
+
+            var suppressedValueRatio = (double)suppressedValueCount / totalValueCount.Value;
+
+            if (suppressedValueRatio < SuppressedRatioThreshold)
+            {
+                // Only few of the values are suppressed. This means the data is already well-segmented and quite 
+                // possibly categorical or quasi-categorical.
+                var distinctMetrics = (from row in distinctValues.ResultRows
+                                       where !row.ColumnValue.IsSuppressed
+                                       let distinctValue = ((ValueColumn<long>)row.ColumnValue).ColumnValue
+                                       let distinctCount = row.Count
+                                       select new ExploreResult.Metric("distinctValue")
+                                       {
+                                           MetricValue = new { Value = distinctValue, Count = distinctCount }
+                                       });
+                yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: distinctMetrics);
+                yield break;
+            }
+
+            // var stats = rows.First();
+
+            var obj = new { Hello = "hello", Num = 2 };
+
+            yield return new ExploreResult(ExplorationGuid, status: "complete");
         }
     }
 }
