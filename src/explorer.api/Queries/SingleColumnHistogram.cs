@@ -54,6 +54,11 @@ namespace Explorer.Queries
 
         public class Result : IJsonArrayConvertible
         {
+            public Result()
+            {
+                LowerBound = new NullColumn<decimal>();
+            }
+
             public decimal? BucketSize { get; set; }
 
             public AircloakColumn<decimal> LowerBound { get; set; }

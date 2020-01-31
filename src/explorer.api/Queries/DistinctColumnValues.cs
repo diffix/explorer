@@ -35,6 +35,11 @@ namespace Explorer.Queries
 
         public class IntegerResult : IJsonArrayConvertible
         {
+            public IntegerResult()
+            {
+                ColumnValue = new NullColumn<long>();
+            }
+
             public AircloakColumn<long> ColumnValue { get; set; }
 
             public long? Count { get; set; }
@@ -57,6 +62,11 @@ namespace Explorer.Queries
 
         public class RealResult : IJsonArrayConvertible
         {
+            public RealResult()
+            {
+                ColumnValue = new NullColumn<double>();
+            }
+
             public AircloakColumn<double> ColumnValue { get; set; }
 
             public long? Count { get; set; }
@@ -79,6 +89,11 @@ namespace Explorer.Queries
 
         public class BoolResult : IJsonArrayConvertible
         {
+            public BoolResult()
+            {
+                ColumnValue = new NullColumn<bool>();
+            }
+
             public AircloakColumn<bool> ColumnValue { get; set; }
 
             public long? Count { get; set; }
@@ -101,6 +116,11 @@ namespace Explorer.Queries
 
         public class TextResult : IJsonArrayConvertible
         {
+            public TextResult()
+            {
+                ColumnValue = new NullColumn<string>();
+            }
+
             public AircloakColumn<string> ColumnValue { get; set; }
 
             public long? Count { get; set; }
