@@ -3,7 +3,6 @@ namespace Explorer
     using System;
     using System.Collections.Generic;
     using System.Text.Json.Serialization;
-    using Aircloak.JsonApi.ResponseTypes;
 
     internal class ExploreResult
     {
@@ -29,19 +28,20 @@ namespace Explorer
 
         internal class Metric
         {
-            public Metric(string name)
+            public Metric(string name, object value)
             {
                 MetricName = name;
+                MetricValue = value;
             }
 
-            [JsonPropertyName("Name")]
+            [JsonPropertyName("name")]
             public string MetricName { get; set; }
 
-            [JsonPropertyName("Type")]
-            public AircloakType MetricType { get; set; }
+            // [JsonPropertyName("type")]
+            // public AircloakType MetricType { get; set; }
 
-            [JsonPropertyName("Value")]
-            public object? MetricValue { get; set; }
+            [JsonPropertyName("value")]
+            public object MetricValue { get; set; }
         }
     }
 }

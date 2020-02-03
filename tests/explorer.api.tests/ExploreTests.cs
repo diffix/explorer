@@ -57,7 +57,7 @@ namespace Explorer.Api.Tests
                     metrics.ValueKind == JsonValueKind.Array,
                     $"Expected 'metrics' property to contain an array:\n{content}");
                 Assert.All<JsonElement>(metrics.EnumerateArray(), el =>
-                    Assert.All<string>(new List<string> { "Name", "Type", "Value" }, propName =>
+                    Assert.All<string>(new List<string> { "name", "value" }, propName =>
                           Assert.True(
                               el.TryGetProperty(propName, out var _),
                               $"Expected a '{propName}' property in {el}.")));
