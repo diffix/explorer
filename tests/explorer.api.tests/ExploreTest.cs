@@ -4,18 +4,14 @@ namespace Explorer.Api.Tests
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
-    using System.Net.Http.Headers;
     using System.Text.Json;
-    using Microsoft.AspNetCore.Hosting;
-    using Microsoft.AspNetCore.TestHost;
-    using Microsoft.Extensions.Configuration;
     using Xunit;
 
     public sealed class ExploreTest
     {
         private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
         {
-            ApiKey = Environment.GetEnvironmentVariable("AIRCLOAK_API_KEY") ?? "API_KEY_NOT_SET",
+            ApiKey = TestUtils.AircloakApiKey,
             DataSourceName = "gda_banking",
             TableName = "loans",
             ColumnName = "amount",
@@ -111,16 +107,10 @@ namespace Explorer.Api.Tests
         private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test)
         {
             // TestUtils.WaitDebugger();
-            using var vcrCassette = TestUtils.UseVcrCassette("Explore");
-            using var client = TestUtils.CreateHttpClient();
-            using var request = new HttpRequestMessage(method, endpoint);
-            if (data != null)
-            {
-                request.Content = new StringContent(JsonSerializer.Serialize(data));
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            }
-            using var response = await client.SendAsync(request).ConfigureAwait(false);
-            var responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            // using var vcrCassette = TestUtils.UseVcrCassette("Explore");
+            using var request = TestUtils.CreateHttpRequest(method, endpoint, data);
+            using var response = await TestUtils.HttpClient.SendAsync(request);
+            var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
         }
     }

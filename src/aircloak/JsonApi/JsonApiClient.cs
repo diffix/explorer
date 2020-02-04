@@ -150,7 +150,7 @@
             if (!(requestContent is null))
             {
                 requestMessage.Content = new StringContent(requestContent);
-                requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(System.Net.Mime.MediaTypeNames.Application.Json);
             }
 
             using var response = await httpClient.SendAsync(
@@ -166,7 +166,8 @@
             }
             else
             {
-                throw new HttpRequestException($"{requestMethod} Request Error: {ServiceError(response)}");
+                var responseContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request Error: {ServiceError(response)}.\n{requestMessage}\n{requestContent}\n{responseContent}");
             }
         }
     }

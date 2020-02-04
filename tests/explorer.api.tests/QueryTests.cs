@@ -13,8 +13,6 @@ namespace Explorer.Queries.Tests
     {
         private const string TestDataSource = "gda_banking";
 
-        private readonly JsonApiSession jsonApiSession = TestUtils.CreateAircloakApiSession();
-
         [Fact]
         public async void TestDistinctValueQuery()
         {
@@ -83,7 +81,9 @@ namespace Explorer.Queries.Tests
         private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query)
             where TResult : IJsonArrayConvertible, new()
         {
-            return await jsonApiSession.Query<TResult>(
+            // using var vcrCassette = TestUtils.UseVcrCassette("Query");
+            // TestUtils.WaitDebugger();
+            return await TestUtils.JsonApiSession.Query<TResult>(
                 TestDataSource,
                 query.QueryStatement,
                 TimeSpan.FromSeconds(30));
