@@ -30,19 +30,23 @@ namespace Explorer.Queries
             {
                 var bucketsFragment = string.Join(
                     ",",
+                    from bucket in Buckets select $"bucket({ColumnName} by {bucket}) as bucket_{(int)bucket}");
+
+                var groupingIdArgs = string.Join(
+                    ",",
                     from bucket in Buckets select $"bucket({ColumnName} by {bucket})");
 
                 return $@"
                         select
                             grouping_id(
-                                {bucketsFragment}
+                                {groupingIdArgs}
                             ),
                             {Buckets.Count} as num_buckets,
                             {bucketsFragment},
                             count(*),
                             count_noise(*)
                         from {TableName}
-                        group by grouping sets ({Enumerable.Range(3, Buckets.Count)})";
+                        group by grouping sets ({string.Join(",", Enumerable.Range(3, Buckets.Count))})";
             }
         }
 
@@ -59,7 +63,7 @@ namespace Explorer.Queries
                 LowerBound = new NullColumn<decimal>();
             }
 
-            public decimal? BucketSize { get; set; }
+            public int? BucketIndex { get; set; }
 
             public AircloakColumn<decimal> LowerBound { get; set; }
 
@@ -74,11 +78,12 @@ namespace Explorer.Queries
                 reader.Read();
                 var numBuckets = reader.GetInt32();
 
-                for (var i = 0; i < numBuckets; i++)
+                for (var i = numBuckets - 1; i >= 0; i--)
                 {
                     reader.Read();
                     if (((groupingFlags >> i) & 1) == 0)
                     {
+                        BucketIndex = (numBuckets - 1) - i;
                         LowerBound = AircloakColumnJsonParser.ParseDecimal(ref reader);
                     }
                 }
@@ -86,7 +91,8 @@ namespace Explorer.Queries
                 reader.Read();
                 Count = reader.GetInt32();
                 reader.Read();
-                CountNoise = reader.GetInt32();
+                CountNoise = reader.TokenType == JsonTokenType.Null ? 1.0
+                                                                    : reader.GetDouble();
             }
         }
     }

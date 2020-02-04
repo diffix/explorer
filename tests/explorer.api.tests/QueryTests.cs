@@ -33,6 +33,8 @@ namespace Explorer.Api.Tests
                     tableName: "loans",
                     columnName: "duration"));
 
+            Assert.True(intResult.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(intResult.Query.Error));
             Assert.All(intResult.ResultRows, row =>
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
@@ -49,6 +51,12 @@ namespace Explorer.Api.Tests
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
+<<<<<<< HEAD
+=======
+
+            Assert.True(realResult.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(realResult.Query.Error));
+>>>>>>> Fix broken histogram query and associated tests.
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
@@ -64,6 +72,12 @@ namespace Explorer.Api.Tests
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
+<<<<<<< HEAD
+=======
+
+            Assert.True(textResult.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(textResult.Query.Error));
+>>>>>>> Fix broken histogram query and associated tests.
             Assert.All(textResult.ResultRows, row =>
             {
                 Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
@@ -85,9 +99,11 @@ namespace Explorer.Api.Tests
                     "amount",
                     bucketSizes));
 
+            Assert.True(result.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error));
             Assert.All(result.ResultRows, row =>
             {
-                Assert.True(bucketSizes.Exists(v => row.BucketSize?.Equals(v) ?? false));
+                Assert.True(row.BucketIndex.HasValue && row.BucketIndex.Value < bucketSizes.Count);
                 Assert.True(row.LowerBound.IsNull ||
                             row.LowerBound.IsSuppressed ||
                             ((ValueColumn<decimal>)row.LowerBound).ColumnValue >= 0);
@@ -101,6 +117,9 @@ namespace Explorer.Api.Tests
         {
             var queryResult = await QueryResult<RepeatingRowsQuery.Result>(new RepeatingRowsQuery());
 
+
+            Assert.True(queryResult.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(queryResult.Query.Error));
             Assert.True(queryResult.ResultRows.Count() == 5);
             Assert.All(queryResult.ResultRows, row =>
             {
