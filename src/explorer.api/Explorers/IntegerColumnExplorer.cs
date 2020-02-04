@@ -49,18 +49,20 @@
                 yield break;
             }
 
+            // Note: suppressedValueCount should never be null for this query.
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount.Value;
 
             if (suppressedValueRatio < SuppressedRatioThreshold)
             {
                 // Only few of the values are suppressed. This means the data is already well-segmented and can be
                 // considered categorical or quasi-categorical.
-                var distinctMetrics = from row in distinctValues.ResultRows
-                                      select new
-                                      {
-                                          Value = row.ColumnValue,
-                                          row.Count,
-                                      };
+                var distinctMetrics =
+                    from row in distinctValues.ResultRows
+                    select new
+                    {
+                        Value = row.ColumnValue,
+                        row.Count,
+                    };
 
                 ExploreMetrics = ExploreMetrics.Append(
                     new ExploreResult.Metric(name: "distinct_values", value: distinctMetrics));
@@ -82,11 +84,15 @@
             Debug.Assert(valueDensity > 0, "Column Count should always be greater than zero.");
 
             const double ValuesPerBucketTarget = 20; // TODO: should be a configuration item (?)
-            var bucketSizeEstimate = ValuesPerBucketTarget / valueDensity;
-            var bucketSizeEstimateDec = decimal.Round((decimal)bucketSizeEstimate, 4);
+            var bucketSizeEstimate = new BucketSize(ValuesPerBucketTarget / valueDensity);
 
-            var bucketsToSample =
-                new List<decimal> { bucketSizeEstimateDec / 5, bucketSizeEstimateDec, bucketSizeEstimateDec * 5 };
+            var bucketsToSample = (
+                from bucketSize in new List<BucketSize> {
+                    bucketSizeEstimate.Smaller(steps: 2),
+                    bucketSizeEstimate,
+                    bucketSizeEstimate.Larger(steps: 2) }
+                select bucketSize.SnappedSize)
+                .ToList();
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
                 new SingleColumnHistogram(
@@ -100,18 +106,21 @@
                 where row.LowerBound.IsSuppressed
                 select new
                 {
+                    // Note: row.BucketIndex should never be null for this query type.
                     BucketSize = bucketsToSample[row.BucketIndex.Value],
                     row.Count,
                 };
 
-            var histogramMetrics = from row in histogramQ.ResultRows
-                                   where row.BucketIndex.HasValue
-                                   select new
-                                   {
-                                       BucketSize = bucketsToSample[row.BucketIndex.Value],
-                                       row.LowerBound,
-                                       row.Count,
-                                   };
+            var histogramMetrics =
+                from row in histogramQ.ResultRows
+                where row.BucketIndex.HasValue
+                select new
+                {
+                    // Note: row.BucketIndex should never be null for this query type.
+                    BucketSize = bucketsToSample[row.BucketIndex.Value],
+                    row.LowerBound,
+                    row.Count,
+                };
 
             ExploreMetrics = ExploreMetrics
                     .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramMetrics))
