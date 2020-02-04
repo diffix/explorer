@@ -6,7 +6,6 @@
     using System.Linq;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api.Models;
     using Explorer.Queries;
 
@@ -37,26 +36,10 @@
 
             yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: new List<ExploreResult.Metric>
             {
-                new ExploreResult.Metric("Min")
-                {
-                    MetricType = AircloakType.Real,
-                    MetricValue = stats.Min,
-                },
-                new ExploreResult.Metric("Max")
-                {
-                    MetricType = AircloakType.Real,
-                    MetricValue = stats.Max,
-                },
-                new ExploreResult.Metric("Count")
-                {
-                    MetricType = AircloakType.Integer,
-                    MetricValue = stats.Count,
-                },
-                new ExploreResult.Metric("CountNoise")
-                {
-                    MetricType = AircloakType.Real,
-                    MetricValue = stats.CountNoise,
-                },
+                new ExploreResult.Metric("Min", stats.Min),
+                new ExploreResult.Metric("Max", stats.Max),
+                new ExploreResult.Metric("Count", stats.Count),
+                new ExploreResult.Metric("CountNoise", stats.CountNoise),
             });
         }
     }
