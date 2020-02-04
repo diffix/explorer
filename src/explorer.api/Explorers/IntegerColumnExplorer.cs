@@ -6,7 +6,6 @@
     using System.Linq;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api.Models;
     using Explorer.Queries;
 
@@ -14,9 +13,12 @@
     {
         const double SuppressedRatioThreshold = 0.1;
 
+        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
+
         public IntegerColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
             : base(apiClient, exploreParams)
         {
+            ExploreMetrics = Array.Empty<ExploreResult.Metric>();
         }
 
         public override async IAsyncEnumerable<ExploreResult> Explore()
@@ -35,12 +37,14 @@
                 stats.ResultRows.Count() == 1,
                 $"Expected query NumericColumnStats query to return exactly one row.");
 
-            var suppressedValueCount = distinctValues.ResultRows.Count(row => row.ColumnValue.IsSuppressed);
+            var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
+                    row.ColumnValue.IsSuppressed ? row.Count : 0);
             var totalValueCount = stats.ResultRows.First().Count;
 
             if (!totalValueCount.HasValue || totalValueCount.Value == 0)
             {
-                yield return new ExploreError(ExplorationGuid,
+                yield return new ExploreError(
+                    ExplorationGuid,
                     $"Cannot explore table/column with value count {totalValueCount}.");
                 yield break;
             }
@@ -49,25 +53,71 @@
 
             if (suppressedValueRatio < SuppressedRatioThreshold)
             {
-                // Only few of the values are suppressed. This means the data is already well-segmented and quite 
-                // possibly categorical or quasi-categorical.
-                var distinctMetrics = (from row in distinctValues.ResultRows
-                                       where !row.ColumnValue.IsSuppressed
-                                       let distinctValue = ((ValueColumn<long>)row.ColumnValue).ColumnValue
-                                       let distinctCount = row.Count
-                                       select new ExploreResult.Metric("distinctValue")
-                                       {
-                                           MetricValue = new { Value = distinctValue, Count = distinctCount }
-                                       });
-                yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: distinctMetrics);
+                // Only few of the values are suppressed. This means the data is already well-segmented and can be
+                // considered categorical or quasi-categorical.
+                var distinctMetrics = from row in distinctValues.ResultRows
+                                      select new
+                                      {
+                                          Value = row.ColumnValue,
+                                          row.Count,
+                                      };
+
+                ExploreMetrics = ExploreMetrics.Append(
+                    new ExploreResult.Metric(name: "distinct_values", value: distinctMetrics));
+
+                yield return new ExploreResult(
+                    ExplorationGuid,
+                    status: "complete",
+                    metrics: ExploreMetrics);
+
                 yield break;
             }
 
-            // var stats = rows.First();
+            // determine approximate bucket size from min/max bounds
+            var columnStats = stats.ResultRows.First();
+            var valueDensity = (double)(columnStats.Count ?? 0) / (columnStats.Max - columnStats.Min)
+                ?? throw new Exception($"Unable to calculate value density from column stats {columnStats}");
 
-            var obj = new { Hello = "hello", Num = 2 };
 
-            yield return new ExploreResult(ExplorationGuid, status: "complete");
+            Debug.Assert(valueDensity > 0, "Column Count should always be greater than zero.");
+
+            const double ValuesPerBucketTarget = 20; // TODO: should be a configuration item (?)
+            var bucketSizeEstimate = ValuesPerBucketTarget / valueDensity;
+            var bucketSizeEstimateDec = decimal.Round((decimal)bucketSizeEstimate, 4);
+
+            var bucketsToSample =
+                new List<decimal> { bucketSizeEstimateDec / 5, bucketSizeEstimateDec, bucketSizeEstimateDec * 5 };
+
+            var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
+                new SingleColumnHistogram(
+                    ExploreParams.TableName,
+                    ExploreParams.ColumnName,
+                    bucketsToSample),
+                timeout: TimeSpan.FromMinutes(10));
+
+            var suppressedCountByBucketSize =
+                from row in histogramQ.ResultRows
+                where row.LowerBound.IsSuppressed
+                select new
+                {
+                    BucketSize = bucketsToSample[row.BucketIndex.Value],
+                    row.Count,
+                };
+
+            var histogramMetrics = from row in histogramQ.ResultRows
+                                   where row.BucketIndex.HasValue
+                                   select new
+                                   {
+                                       BucketSize = bucketsToSample[row.BucketIndex.Value],
+                                       row.LowerBound,
+                                       row.Count,
+                                   };
+
+            ExploreMetrics = ExploreMetrics
+                    .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramMetrics))
+                    .Append(new ExploreResult.Metric(name: "suppressed_count", value: suppressedCountByBucketSize));
+
+            yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
         }
     }
 }
