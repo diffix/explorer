@@ -83,7 +83,7 @@ namespace Explorer.Queries.Tests
         {
             // using var vcrCassette = TestUtils.UseVcrCassette("Query");
             // TestUtils.WaitDebugger();
-            return await TestUtils.JsonApiSession.Query<TResult>(
+            return await TestUtils.JsonApiClient.Query<TResult>(
                 TestDataSource,
                 query.QueryStatement,
                 TimeSpan.FromSeconds(30));

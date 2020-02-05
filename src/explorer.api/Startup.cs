@@ -48,7 +48,7 @@ namespace Explorer.Api
             {
                 var config = ctx.Configuration.GetSection("Explorer").Get<ExplorerConfig>();
 
-                var clientBuilder = services.AddHttpClient<Aircloak.JsonApi.JsonApiSession>(client =>
+                var clientBuilder = services.AddHttpClient<Aircloak.JsonApi.JsonApiClient>(client =>
                 {
                     client.BaseAddress = config.AircloakApiUrl;
                     if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", config.AircloakApiKey))

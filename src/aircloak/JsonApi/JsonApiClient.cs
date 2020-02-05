@@ -25,7 +25,7 @@
     /// </item>
     /// </list>
     /// </summary>
-    public class JsonApiSession
+    public class JsonApiClient
     {
         private const int DefaultPollingFrequencyMillis = 2000;
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
@@ -39,7 +39,7 @@
         /// Initializes a new instance of the <see cref="JsonApiClient" /> class.
         /// </summary>
         /// <param name="httpClient">A HttpClient object injected into this instance.</param>
-        public JsonApiSession(HttpClient httpClient)
+        public JsonApiClient(HttpClient httpClient)
         {
             this.httpClient = httpClient;
         }
