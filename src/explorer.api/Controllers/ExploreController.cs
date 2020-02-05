@@ -15,12 +15,12 @@
     public class ExploreController : ControllerBase
     {
         private readonly ILogger<ExploreController> logger;
-        private readonly JsonApiClient aircloakApiClient;
+        private readonly JsonApiSession apiSession;
 
-        public ExploreController(ILogger<ExploreController> logger, JsonApiClient aircloakApiClient)
+        public ExploreController(ILogger<ExploreController> logger, JsonApiSession apiSession)
         {
             this.logger = logger;
-            this.aircloakApiClient = aircloakApiClient;
+            this.apiSession = apiSession;
         }
 
         [HttpPost]
@@ -29,8 +29,6 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            var apiSession = new JsonApiSession(aircloakApiClient, data.ApiKey);
-
             var dataSources = apiSession.GetDataSources().Result;
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))

@@ -49,9 +49,10 @@ namespace Explorer.Api.Tests
 
             HttpClient = TestServer.CreateClient();
 
-            JsonApiHttpClient = TestServer.CreateClient();
+            JsonApiHttpClient = new HttpClient();
             JsonApiHttpClient.BaseAddress = config.AircloakApiUrl;
-            JsonApiSession = new JsonApiSession(new JsonApiClient(JsonApiHttpClient), AircloakApiKey);
+            JsonApiHttpClient.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", AircloakApiKey);
+            JsonApiSession = new JsonApiSession(JsonApiHttpClient);
         }
 #pragma warning restore CA1810 // remove explicit static constructor
 #pragma warning restore CA1065 // do not raise exception in static constructor

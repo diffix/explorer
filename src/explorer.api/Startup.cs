@@ -47,8 +47,15 @@ namespace Explorer.Api
             public void ConfigureHttpClient(WebHostBuilderContext ctx, IServiceCollection services)
             {
                 var config = ctx.Configuration.GetSection("Explorer").Get<ExplorerConfig>();
-                var clientBuilder = services.AddHttpClient<Aircloak.JsonApi.JsonApiClient>(client =>
-                    client.BaseAddress = config.AircloakApiUrl);
+
+                var clientBuilder = services.AddHttpClient<Aircloak.JsonApi.JsonApiSession>(client =>
+                {
+                    client.BaseAddress = config.AircloakApiUrl;
+                    if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", config.AircloakApiKey))
+                    {
+                        throw new Exception($"Failed to add Http header 'auth-token'");
+                    }
+                });
                 if (ConfigureHandler != null)
                 {
                     clientBuilder.AddHttpMessageHandler(ConfigureHandler);
