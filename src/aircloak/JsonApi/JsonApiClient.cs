@@ -28,6 +28,7 @@
     public class JsonApiClient
     {
         private const int DefaultPollingFrequencyMillis = 2000;
+
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
@@ -97,8 +98,7 @@
                 },
             };
 
-            return await ApiPostRequest<QueryResponse>("queries",
-                JsonSerializer.Serialize(queryBody));
+            return await ApiPostRequest<QueryResponse>("queries", JsonSerializer.Serialize(queryBody));
         }
 
         /// <summary>
@@ -118,8 +118,7 @@
                 Converters = { new JsonArrayConverter<TRow>() },
             };
 
-            return await ApiGetRequest<QueryResult<TRow>>($"queries/{queryId}",
-                jsonOptions);
+            return await ApiGetRequest<QueryResult<TRow>>($"queries/{queryId}", jsonOptions);
         }
 
         /// <summary>
