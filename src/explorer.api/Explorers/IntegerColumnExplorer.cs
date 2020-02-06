@@ -6,6 +6,7 @@
     using System.Linq;
 
     using Aircloak.JsonApi;
+    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api.Models;
     using Explorer.Queries;
 
@@ -20,6 +21,8 @@
         {
             ExploreMetrics = Array.Empty<ExploreResult.Metric>();
         }
+
+        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
 
         public override async IAsyncEnumerable<ExploreResult> Explore()
         {
@@ -39,7 +42,7 @@
 
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
                     row.ColumnValue.IsSuppressed ? row.Count : 0);
-            var totalValueCount = stats.ResultRows.First().Count;
+            var totalValueCount = stats.ResultRows.Single().Count;
 
             if (!totalValueCount.HasValue || totalValueCount.Value == 0)
             {
@@ -80,7 +83,6 @@
             var valueDensity = (double)(columnStats.Count ?? 0) / (columnStats.Max - columnStats.Min)
                 ?? throw new Exception($"Unable to calculate value density from column stats {columnStats}");
 
-
             Debug.Assert(valueDensity > 0, "Column Count should always be greater than zero.");
 
             const double ValuesPerBucketTarget = 20; // TODO: should be a configuration item (?)
@@ -101,30 +103,65 @@
                     bucketsToSample),
                 timeout: TimeSpan.FromMinutes(10));
 
-            var suppressedCountByBucketSize =
+            // Note: row.BucketIndex and row.Count should never be null for this query type.
+            var optimumBucket = (
                 from row in histogramQ.ResultRows
+                let suppressedRatio = (double)row.Count.Value / totalValueCount.Value
+                let suppressedBucketSize = bucketsToSample[row.BucketIndex.Value]
                 where row.LowerBound.IsSuppressed
+                    && suppressedRatio < SuppressedRatioThreshold
+                orderby suppressedBucketSize
                 select new
                 {
-                    // Note: row.BucketIndex should never be null for this query type.
-                    BucketSize = bucketsToSample[row.BucketIndex.Value],
-                    row.Count,
-                };
+                    Index = row.BucketIndex.Value,
+                    Size = suppressedBucketSize,
+                    SuppressedCount = row.Count.Value,
+                    Ratio = suppressedRatio,
+                }).First();
 
-            var histogramMetrics =
+            // Note: row.BucketIndex should never be null for this query type.
+            var histogramBuckets =
                 from row in histogramQ.ResultRows
                 where row.BucketIndex.HasValue
+                    && row.BucketIndex == optimumBucket.Index
+                    && !row.LowerBound.IsSuppressed
+                let lowerBound = ((ValueColumn<decimal>)row.LowerBound).ColumnValue
+                orderby lowerBound
                 select new
                 {
-                    // Note: row.BucketIndex should never be null for this query type.
                     BucketSize = bucketsToSample[row.BucketIndex.Value],
-                    row.LowerBound,
-                    row.Count,
+                    LowerBound = lowerBound,
+                    Count = row.Count.Value,
                 };
 
+            // Estimate Median
+            var processed = 0;
+            var target = (double)totalValueCount.Value / 2;
+            var medianEstimate = 0.0;
+            foreach (var bucket in histogramBuckets)
+            {
+                if (processed + bucket.Count < target)
+                {
+                    processed += bucket.Count;
+                }
+                else
+                {
+                    var ratio = (target - processed) / bucket.Count;
+                    medianEstimate =
+                        (double)bucket.LowerBound + (ratio * (double)bucket.BucketSize);
+                    break;
+                }
+            }
+
+            // Estimate Average
+            var averageEstimate = histogramBuckets
+                .Sum(bucket => bucket.Count * (bucket.LowerBound + (bucket.BucketSize / 2)))
+                / totalValueCount;
+
             ExploreMetrics = ExploreMetrics
-                    .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramMetrics))
-                    .Append(new ExploreResult.Metric(name: "suppressed_count", value: suppressedCountByBucketSize));
+                    .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramBuckets))
+                    .Append(new ExploreResult.Metric(name: "median_estimate", value: (long)medianEstimate))
+                    .Append(new ExploreResult.Metric(name: "avg_estimate", value: (long)averageEstimate));
 
             yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
         }
