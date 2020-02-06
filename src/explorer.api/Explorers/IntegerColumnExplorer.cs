@@ -40,6 +40,8 @@
                 timeout: TimeSpan.FromMinutes(2));
 
             var totalValueCount = stats.Count ?? 0;
+            var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
+                    row.ColumnValue.IsSuppressed ? row.Count : 0);
 
             if (totalValueCount == 0)
             {
