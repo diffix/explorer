@@ -28,47 +28,49 @@
         {
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 
-            var stats = await ResolveQuery<NumericColumnStats.IntegerResult>(
+            var statsQ = await ResolveQuery<NumericColumnStats.IntegerResult>(
                 new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
-            var distinctValues = await ResolveQuery<DistinctColumnValues.IntegerResult>(
+            var distinctValueQ = await ResolveQuery<DistinctColumnValues.IntegerResult>(
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
             Debug.Assert(
-                stats.ResultRows.Count() == 1,
+                statsQ.ResultRows.Count() == 1,
                 $"Expected query NumericColumnStats query to return exactly one row.");
 
-            var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
-                    row.ColumnValue.IsSuppressed ? row.Count : 0);
-            var totalValueCount = stats.ResultRows.Single().Count;
+            var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
+                    row.ColumnValue.IsSuppressed
+                        ? row.Count ?? 0
+                        : 0);
 
-            if (!totalValueCount.HasValue || totalValueCount.Value == 0)
+            var totalValueCount = statsQ.ResultRows.Single().Count ?? 0;
+
+            if (totalValueCount == 0)
             {
                 yield return new ExploreError(
                     ExplorationGuid,
-                    $"Cannot explore table/column with value count {totalValueCount}.");
+                    $"Cannot explore table/column: Invalid value count.");
                 yield break;
             }
 
-            // Note: suppressedValueCount should never be null for this query.
-            var suppressedValueRatio = (double)suppressedValueCount / totalValueCount.Value;
+            var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
 
             if (suppressedValueRatio < SuppressedRatioThreshold)
             {
                 // Only few of the values are suppressed. This means the data is already well-segmented and can be
                 // considered categorical or quasi-categorical.
-                var distinctMetrics =
-                    from row in distinctValues.ResultRows
+                var distinctValues =
+                    from row in distinctValueQ.ResultRows
                     select new
                     {
-                        Value = row.ColumnValue,
+                        Value = ((ValueColumn<long>)row.ColumnValue).ColumnValue,
                         row.Count,
                     };
 
                 ExploreMetrics = ExploreMetrics.Append(
-                    new ExploreResult.Metric(name: "distinct_values", value: distinctMetrics));
+                    new ExploreResult.Metric(name: "distinct_values", value: distinctValues));
 
                 yield return new ExploreResult(
                     ExplorationGuid,
@@ -79,7 +81,7 @@
             }
 
             // determine approximate bucket size from min/max bounds
-            var columnStats = stats.ResultRows.First();
+            var columnStats = statsQ.ResultRows.Single();
             var valueDensity = (double)(columnStats.Count ?? 0) / (columnStats.Max - columnStats.Min)
                 ?? throw new Exception($"Unable to calculate value density from column stats {columnStats}");
 
@@ -89,10 +91,12 @@
             var bucketSizeEstimate = new BucketSize(ValuesPerBucketTarget / valueDensity);
 
             var bucketsToSample = (
-                from bucketSize in new List<BucketSize> {
+                from bucketSize in new List<BucketSize>
+                {
                     bucketSizeEstimate.Smaller(steps: 2),
                     bucketSizeEstimate,
-                    bucketSizeEstimate.Larger(steps: 2) }
+                    bucketSizeEstimate.Larger(steps: 2),
+                }
                 select bucketSize.SnappedSize)
                 .ToList();
 
@@ -103,10 +107,10 @@
                     bucketsToSample),
                 timeout: TimeSpan.FromMinutes(10));
 
-            // Note: row.BucketIndex and row.Count should never be null for this query type.
+            // Note: row.BucketIndex and row.Count should never be null in this context.
             var optimumBucket = (
                 from row in histogramQ.ResultRows
-                let suppressedRatio = (double)row.Count.Value / totalValueCount.Value
+                let suppressedRatio = (double)row.Count.Value / totalValueCount
                 let suppressedBucketSize = bucketsToSample[row.BucketIndex.Value]
                 where row.LowerBound.IsSuppressed
                     && suppressedRatio < SuppressedRatioThreshold
@@ -115,7 +119,7 @@
                 {
                     Index = row.BucketIndex.Value,
                     Size = suppressedBucketSize,
-                    SuppressedCount = row.Count.Value,
+                    SuppressedCount = row.Count ?? 0,
                     Ratio = suppressedRatio,
                 }).First();
 
@@ -131,12 +135,12 @@
                 {
                     BucketSize = bucketsToSample[row.BucketIndex.Value],
                     LowerBound = lowerBound,
-                    Count = row.Count.Value,
+                    Count = row.Count ?? 0,
                 };
 
             // Estimate Median
             var processed = 0;
-            var target = (double)totalValueCount.Value / 2;
+            var target = (double)totalValueCount / 2;
             var medianEstimate = 0.0;
             foreach (var bucket in histogramBuckets)
             {
