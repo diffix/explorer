@@ -12,7 +12,10 @@
 
     internal class IntegerColumnExplorer : ColumnExplorer
     {
-        const double SuppressedRatioThreshold = 0.1;
+        // TODO: The following should be configuration items (?)
+        private const double ValuesPerBucketTarget = 20;
+
+        private const double SuppressedRatioThreshold = 0.1;
 
         public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
 
@@ -28,24 +31,17 @@
         {
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 
-            var statsQ = await ResolveQuery<NumericColumnStats.IntegerResult>(
+            var stats = (await ResolveQuery<NumericColumnStats.IntegerResult>(
                 new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
-                timeout: TimeSpan.FromMinutes(2));
+                timeout: TimeSpan.FromMinutes(2)))
+                .ResultRows
+                .Single();
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.IntegerResult>(
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
-            Debug.Assert(
-                statsQ.ResultRows.Count() == 1,
-                $"Expected query NumericColumnStats query to return exactly one row.");
-
-            var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
-                    row.ColumnValue.IsSuppressed
-                        ? row.Count ?? 0
-                        : 0);
-
-            var totalValueCount = statsQ.ResultRows.Single().Count ?? 0;
+            var totalValueCount = stats.Count ?? 0;
 
             if (totalValueCount == 0)
             {
@@ -63,14 +59,16 @@
                 // considered categorical or quasi-categorical.
                 var distinctValues =
                     from row in distinctValueQ.ResultRows
+                    where !row.ColumnValue.IsSuppressed
                     select new
                     {
                         Value = ((ValueColumn<long>)row.ColumnValue).ColumnValue,
                         row.Count,
                     };
 
-                ExploreMetrics = ExploreMetrics.Append(
-                    new ExploreResult.Metric(name: "distinct_values", value: distinctValues));
+                ExploreMetrics = ExploreMetrics
+                    .Append(new ExploreResult.Metric(name: "distinct_values", value: distinctValues))
+                    .Append(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
 
                 yield return new ExploreResult(
                     ExplorationGuid,
@@ -81,13 +79,11 @@
             }
 
             // determine approximate bucket size from min/max bounds
-            var columnStats = statsQ.ResultRows.Single();
-            var valueDensity = (double)(columnStats.Count ?? 0) / (columnStats.Max - columnStats.Min)
-                ?? throw new Exception($"Unable to calculate value density from column stats {columnStats}");
+            var valueDensity = (double)(stats.Count ?? 0) / (stats.Max - stats.Min)
+                ?? throw new Exception($"Unable to calculate value density from column stats {stats}");
 
             Debug.Assert(valueDensity > 0, "Column Count should always be greater than zero.");
 
-            const double ValuesPerBucketTarget = 20; // TODO: should be a configuration item (?)
             var bucketSizeEstimate = new BucketSize(ValuesPerBucketTarget / valueDensity);
 
             var bucketsToSample = (
@@ -130,10 +126,11 @@
                     && row.BucketIndex == optimumBucket.Index
                     && !row.LowerBound.IsSuppressed
                 let lowerBound = ((ValueColumn<decimal>)row.LowerBound).ColumnValue
+                let bucketSize = bucketsToSample[row.BucketIndex.Value]
                 orderby lowerBound
                 select new
                 {
-                    BucketSize = bucketsToSample[row.BucketIndex.Value],
+                    BucketSize = bucketSize,
                     LowerBound = lowerBound,
                     Count = row.Count ?? 0,
                 };
@@ -165,7 +162,9 @@
             ExploreMetrics = ExploreMetrics
                     .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramBuckets))
                     .Append(new ExploreResult.Metric(name: "median_estimate", value: (long)medianEstimate))
-                    .Append(new ExploreResult.Metric(name: "avg_estimate", value: (long)averageEstimate));
+                    .Append(new ExploreResult.Metric(name: "avg_estimate", value: decimal.Round(averageEstimate, 2)))
+                    .Append(new ExploreResult.Metric(name: "min_estimate", value: (long)stats.Min))
+                    .Append(new ExploreResult.Metric(name: "max_estimate", value: (long)stats.Max));
 
             yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
         }
