@@ -78,23 +78,11 @@
                 yield break;
             }
 
-            // determine approximate bucket size from min/max bounds
-            var valueDensity = (double)(stats.Count ?? 0) / (stats.Max - stats.Min)
-                ?? throw new Exception($"Unable to calculate value density from column stats {stats}");
+            Debug.Assert(
+                stats.Count.HasValue && stats.Min.HasValue && stats.Max.HasValue,
+                "Count, Min and Max should always be non-null in this context");
 
-            Debug.Assert(valueDensity > 0, "Column Count should always be greater than zero.");
-
-            var bucketSizeEstimate = new BucketSize(ValuesPerBucketTarget / valueDensity);
-
-            var bucketsToSample = (
-                from bucketSize in new List<BucketSize>
-                {
-                    bucketSizeEstimate.Smaller(steps: 2),
-                    bucketSizeEstimate,
-                    bucketSizeEstimate.Larger(steps: 2),
-                }
-                select bucketSize.SnappedSize)
-                .ToList();
+            var bucketsToSample = EstimateBucketResolutions(stats.Count.Value, stats.Min.Value, stats.Max.Value);
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
                 new SingleColumnHistogram(
@@ -167,6 +155,33 @@
                     .Append(new ExploreResult.Metric(name: "max_estimate", value: (long)stats.Max));
 
             yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
+        }
+
+        private List<decimal> EstimateBucketResolutions(long numSamples, long minSample, long maxSample)
+        {
+            double valueDensity;
+            try
+            {
+                valueDensity = (double)numSamples / (maxSample - minSample);
+            }
+            catch (DivideByZeroException)
+            {
+                return new List<decimal> { 1M };
+            }
+
+            Debug.Assert(valueDensity > 0, "Column Count should always be greater than zero.");
+
+            var bucketSizeEstimate = new BucketSize(ValuesPerBucketTarget / valueDensity);
+
+            return (
+                from bucketSize in new List<BucketSize>
+                {
+                    bucketSizeEstimate.Smaller(steps: 2),
+                    bucketSizeEstimate,
+                    bucketSizeEstimate.Larger(steps: 2),
+                }
+                select bucketSize.SnappedSize)
+                .ToList();
         }
     }
 }
