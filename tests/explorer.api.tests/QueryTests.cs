@@ -113,6 +113,32 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestMinMaxExplorer()
+        {
+            var explorer = new MinMaxExplorer(
+                jsonApiSession,
+                new Api.Models.ExploreParams
+                {
+                    DataSourceName = "gda_banking",
+                    TableName = "loans",
+                    ColumnName = "amount",
+                });
+
+            var results = new List<ExploreResult>();
+            await foreach (var result in explorer.Explore())
+            {
+                results.Add(result);
+            }
+
+            Assert.NotEmpty(results);
+            Assert.True(results[0].Status == "waiting");
+            var last = results.Last();
+            Assert.True(last.Status == "complete");
+            Assert.True((last.Metrics.Single(m => m.MetricName == "min").MetricValue as decimal?) == 3288M);
+            Assert.True((last.Metrics.Single(m => m.MetricName == "max").MetricValue as decimal?) == 495725M);
+        }
+
+        [Fact]
         public async void TestRepeatingRows()
         {
             var queryResult = await QueryResult<RepeatingRowsQuery.Result>(new RepeatingRowsQuery());
