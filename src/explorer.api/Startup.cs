@@ -8,59 +8,46 @@ namespace Explorer.Api
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
 
-    public static class Startup
+    public class Startup
     {
-        public static void ConfigureExplorer(this IWebHostBuilder builder)
+        public Startup(IConfiguration configuration)
         {
-            ConfigureExplorer(builder, null);
+            Configuration = configuration;
         }
 
-        public static void ConfigureExplorer(this IWebHostBuilder builder, Func<DelegatingHandler>? configureHandler)
+        public IConfiguration Configuration { get; }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public virtual void ConfigureServices(IServiceCollection services)
         {
-            var eb = new ExplorerWebHostBuilderConfig { ConfigureHandler = configureHandler };
-            builder.ConfigureServices(eb.ConfigureServices)
-                .ConfigureServices(eb.ConfigureHttpClient)
-                .Configure(eb.Configure);
+            services.AddControllers();
+
+            var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
+
+            services.AddSingleton<HttpClient>(_ =>
+            {
+                var client = new HttpClient { BaseAddress = config.AircloakApiUrl };
+                if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", config.AircloakApiKey))
+                {
+                    throw new Exception("Failed to add Http header 'auth-token'");
+                }
+                return client;
+            });
         }
 
-        internal class ExplorerWebHostBuilderConfig
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            public Func<DelegatingHandler>? ConfigureHandler { get; set; }
-
-            public void ConfigureServices(WebHostBuilderContext ctx, IServiceCollection services)
+            if (env.IsDevelopment())
             {
-                _ = ctx;
-                services.AddControllers();
+                app.UseDeveloperExceptionPage();
             }
 
-            public void Configure(WebHostBuilderContext ctx, IApplicationBuilder app)
-            {
-                if (ctx.HostingEnvironment.IsDevelopment())
-                {
-                    app.UseDeveloperExceptionPage();
-                }
-                app.UseRouting();
-                app.UseAuthorization();
-                app.UseEndpoints(endpoints => endpoints.MapControllers());
-            }
+            app.UseRouting();
 
-            public void ConfigureHttpClient(WebHostBuilderContext ctx, IServiceCollection services)
-            {
-                var config = ctx.Configuration.GetSection("Explorer").Get<ExplorerConfig>();
+            app.UseAuthorization();
 
-                var clientBuilder = services.AddHttpClient<Aircloak.JsonApi.JsonApiClient>(client =>
-                {
-                    client.BaseAddress = config.AircloakApiUrl;
-                    if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", config.AircloakApiKey))
-                    {
-                        throw new Exception($"Failed to add Http header 'auth-token'");
-                    }
-                });
-                if (ConfigureHandler != null)
-                {
-                    clientBuilder.AddHttpMessageHandler(ConfigureHandler);
-                }
-            }
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
 }

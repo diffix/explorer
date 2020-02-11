@@ -7,29 +7,36 @@ namespace Explorer.Api.Tests
     using System.Text.Json;
     using Xunit;
 
-    public sealed class ExploreTest
+    public sealed class ExploreTests : IClassFixture<TestWebAppFactory>
     {
         private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
         {
-            ApiKey = TestUtils.AircloakApiKey,
+            ApiKey = TestWebAppFactory.Config.AircloakApiKey,
             DataSourceName = "gda_banking",
             TableName = "loans",
             ColumnName = "amount",
         };
+
+        private readonly TestWebAppFactory factory;
+
+        public ExploreTests(TestWebAppFactory factory)
+        {
+            this.factory = factory;
+        }
 
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
 
         [Fact]
         public void Success()
         {
-            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
+            TestApi(nameof(Success), HttpMethod.Post, "/explore", ValidData, (response, content) =>
                 Assert.True(response.IsSuccessStatusCode, content));
         }
 
         [Fact]
         public void SuccessWithContents()
         {
-            TestApi(HttpMethod.Post, "/explore", ValidData, (_, content) =>
+            TestApi(nameof(SuccessWithContents), HttpMethod.Post, "/explore", ValidData, (_, content) =>
             {
                 using var jsonContent = JsonDocument.Parse(content);
                 var rootEl = jsonContent.RootElement;
@@ -62,7 +69,7 @@ namespace Explorer.Api.Tests
         [InlineData("/invalid endpoint test")]
         public void FailWithBadEndPoint(string endpoint)
         {
-            TestApi(HttpMethod.Post, endpoint, ValidData, (response, content) =>
+            TestApi(nameof(FailWithBadEndPoint), HttpMethod.Post, endpoint, ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -73,7 +80,7 @@ namespace Explorer.Api.Tests
         [InlineData("PUT")]
         public void FailWithBadMethod(string method)
         {
-            TestApi(new HttpMethod(method), "/explore", ValidData, (response, content) =>
+            TestApi(nameof(FailWithBadMethod), new HttpMethod(method), "/explore", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -81,7 +88,7 @@ namespace Explorer.Api.Tests
         public void FailWithEmptyFields()
         {
             var data = new { ApiKey = string.Empty, DataSourceName = string.Empty, TableName = string.Empty, ColumnName = string.Empty };
-            TestApi(HttpMethod.Post, "/explore", data, (response, content) =>
+            TestApi(nameof(FailWithEmptyFields), HttpMethod.Post, "/explore", data, (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -94,7 +101,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public void FailWithMissingFields()
         {
-            TestApi(HttpMethod.Post, "/explore", new { }, (response, content) =>
+            TestApi(nameof(FailWithMissingFields), HttpMethod.Post, "/explore", new { }, (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -104,12 +111,12 @@ namespace Explorer.Api.Tests
             });
         }
 
-        private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test)
+        private async void TestApi(string vcrSessionName, HttpMethod method, string endpoint, object data, ApiTestActionWithContent test)
         {
             // TestUtils.WaitDebugger();
-            // using var vcrCassette = TestUtils.UseVcrCassette("Explore");
-            using var request = TestUtils.CreateHttpRequest(method, endpoint, data);
-            using var response = await TestUtils.HttpClient.SendAsync(request);
+            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
+            using var request = factory.CreateHttpRequest(method, endpoint, data);
+            using var response = await client.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
         }

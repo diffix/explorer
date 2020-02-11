@@ -1,4 +1,4 @@
-namespace Explorer.Queries.Tests
+namespace Explorer.Api.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -6,17 +6,25 @@ namespace Explorer.Queries.Tests
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
-    using Explorer.Api.Tests;
+    using Explorer.Queries;
     using Xunit;
 
-    public sealed class QueryTests
+    public sealed class QueryTests : IClassFixture<TestWebAppFactory>
     {
         private const string TestDataSource = "gda_banking";
 
+        private readonly TestWebAppFactory factory;
+
+        public QueryTests(TestWebAppFactory factory)
+        {
+            this.factory = factory;
+        }
+
         [Fact]
-        public async void TestDistinctValueQuery()
+        public async void TestDistinctLoansDuration()
         {
             var intResult = await QueryResult<DistinctColumnValues.IntegerResult>(
+                nameof(TestDistinctLoansDuration),
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "duration"));
@@ -28,24 +36,32 @@ namespace Explorer.Queries.Tests
                 Assert.True(row.Count.HasValue && row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
+        }
 
+        [Fact]
+        public async void TestDistinctLoansPayments()
+        {
             var realResult = await QueryResult<DistinctColumnValues.RealResult>(
+                nameof(TestDistinctLoansPayments),
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
-
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
                     ((ValueColumn<double>)row.ColumnValue).ColumnValue >= 0);
                 Assert.True(row.Count.HasValue && row.Count > 0);
             });
+        }
 
+        [Fact]
+        public async void TestDistinctLoansGender()
+        {
             var textResult = await QueryResult<DistinctColumnValues.TextResult>(
+                nameof(TestDistinctLoansGender),
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
-
             Assert.All(textResult.ResultRows, row =>
             {
                 Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
@@ -58,10 +74,11 @@ namespace Explorer.Queries.Tests
         }
 
         [Fact]
-        public async void TestHistogramQuery()
+        public async void TestHistogramLoansAmount()
         {
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
             var result = await QueryResult<SingleColumnHistogram.Result>(
+                nameof(TestHistogramLoansAmount),
                 new SingleColumnHistogram(
                     "loans",
                     "amount",
@@ -78,12 +95,13 @@ namespace Explorer.Queries.Tests
             });
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query)
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(string vcrSessionName, IQuerySpec<TResult> query)
             where TResult : IJsonArrayConvertible, new()
         {
-            // using var vcrCassette = TestUtils.UseVcrCassette("Query");
-            // TestUtils.WaitDebugger();
-            return await TestUtils.JsonApiClient.Query<TResult>(
+            // WaitDebugger();
+            using var client = factory.CreateAircloakApiHttpClient(nameof(QueryTests), vcrSessionName);
+            var jsonApiClient = new JsonApiClient(client);
+            return await jsonApiClient.Query<TResult>(
                 TestDataSource,
                 query.QueryStatement,
                 TimeSpan.FromSeconds(30));

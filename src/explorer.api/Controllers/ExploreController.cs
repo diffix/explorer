@@ -1,6 +1,6 @@
 ﻿namespace Explorer.Api.Controllers
 {
-    using System;
+    using System.Net.Http;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
@@ -17,10 +17,10 @@
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
 
-        public ExploreController(ILogger<ExploreController> logger, JsonApiClient apiClient)
+        public ExploreController(ILogger<ExploreController> logger, HttpClient httpClient)
         {
             this.logger = logger;
-            this.apiClient = apiClient;
+            this.apiClient = new JsonApiClient(httpClient);
         }
 
         [HttpPost]
