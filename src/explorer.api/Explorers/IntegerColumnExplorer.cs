@@ -17,8 +17,6 @@
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
-
         public IntegerColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
             : base(apiClient, exploreParams)
         {

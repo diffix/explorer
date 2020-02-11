@@ -12,8 +12,8 @@ namespace Explorer
 
     internal class MinMaxExplorer : ColumnExplorer
     {
-        public MinMaxExplorer(JsonApiSession apiSession, ExploreParams exploreParams)
-            : base(apiSession, exploreParams)
+        public MinMaxExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
+            : base(apiClient, exploreParams)
         {
         }
 

@@ -29,7 +29,7 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            var dataSources = apiClient.GetDataSources().Result;
+            var dataSources = await apiClient.GetDataSources();
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {

@@ -116,7 +116,7 @@ namespace Explorer.Api.Tests
         public async void TestMinMaxExplorer()
         {
             var explorer = new MinMaxExplorer(
-                jsonApiSession,
+                TestUtils.JsonApiClient,
                 new Api.Models.ExploreParams
                 {
                     DataSourceName = "gda_banking",
@@ -141,8 +141,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestRepeatingRows()
         {
-            var queryResult = await QueryResult<RepeatingRowsQuery.Result>(new RepeatingRowsQuery());
-
+            var queryResult = await QueryResult(new RepeatingRowsQuery());
 
             Assert.True(queryResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(queryResult.Query.Error));

@@ -31,7 +31,7 @@ namespace Explorer
             TimeSpan timeout)
                 where TResult : IJsonArrayConvertible, new()
         {
-            return await ApiSession.Query<TResult>(
+            return await ApiClient.Query<TResult>(
                 ExploreParams.DataSourceName,
                 query.QueryStatement,
                 timeout);
