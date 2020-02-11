@@ -33,17 +33,17 @@
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
-                return BadRequest(); // TODO Return something more descriptive
+                return BadRequest($"Could not find datasource '{data.DataSourceName}'.");
             }
 
             if (!exploreDataSource.TableDict.TryGetValue(data.TableName, out var exploreTableMeta))
             {
-                return BadRequest(); // TODO Return something more descriptive
+                return BadRequest($"Could not find table '{data.TableName}'.");
             }
 
             if (!exploreTableMeta.ColumnDict.TryGetValue(data.ColumnName, out var explorerColumnMeta))
             {
-                return BadRequest(); // TODO Return something more descriptive
+                return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
             var explorer = CreateNumericColumnExplorer(explorerColumnMeta.Type, apiClient, data);
