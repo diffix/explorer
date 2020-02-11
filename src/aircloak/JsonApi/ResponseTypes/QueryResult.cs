@@ -14,9 +14,6 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// Represents the JSON response from a request to /api/queries/{query_id}.
     /// </summary>
     /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
-    /// <remarks>
-    /// <typeparamref name="TRow"/> must implement <see cref="IJsonArrayConvertible"/>.
-    /// </remarks>
     public struct QueryResult<TRow>
     {
         public QueryResultInner<TRow> Query { get; set; }

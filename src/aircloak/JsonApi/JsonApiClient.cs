@@ -59,7 +59,7 @@
         /// Posts a query to the Aircloak server, retrieves the query ID, and then polls for the result.
         /// </summary>
         /// <param name="dataSource">The data source to run the query against.</param>
-        /// <param name="queryStatement">The query statement as a string.</param>
+        /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
         /// <param name="timeout">How long to wait for the query to complete.</param>
         /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to
         /// DefaultPollingFrequencyMillis.</param>
@@ -107,6 +107,7 @@
         /// Sends a Http POST request to the Aircloak server's /api/queries/{query_id} endpoint.
         /// </summary>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
+        /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
         /// <typeparam name="TRow">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each
         /// row seralised to type <c>TRow</c>.</returns>
@@ -116,7 +117,8 @@
             var jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
-                Converters = {
+                Converters =
+                {
                     new JsonArrayConverter<IRowReader<TRow>, TRow>(querySpec),
                 },
             };
@@ -132,6 +134,7 @@
         /// cancel query execution. To do this, a call to <c>/api/queries/{query_id}/cancel</c> must be made.
         /// </remarks>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
+        /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
         /// <param name="ct">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. Default is every
         /// DefaultPollingFrequencyMillis milliseconds.
@@ -179,6 +182,7 @@
         /// Polls for a query's results until query resolution is complete, or until a specified timeout.
         /// </summary>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
+        /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
         /// <param name="timeout">How long to wait for the query to complete.</param>
         /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to
         /// DefaultPollingFrequencyMillis.</param>

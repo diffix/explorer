@@ -5,9 +5,10 @@ namespace Aircloak.JsonApi
     using System.Text.Json.Serialization;
 
     /// <summary>
-    /// Implements <see cref="JsonConverter"/> in terms of <see cref="IJsonArrayConvertible"/>.
+    /// Implements a <see cref="JsonConverter"/> for deserializing Aircloak rows from json array contents.
     /// </summary>
-    /// <typeparam name="T">A type that implements <see cref="IJsonArrayConvertible"/>.</typeparam>
+    /// <typeparam name="TRowReader">A type that implements <see cref="IRowReader{T}"/> for T.</typeparam>
+    /// <typeparam name="T">The type that the json array will be converted to.</typeparam>
     /// <remarks>Note that this is meant for reading JSON only: the Write method is intentionally
     /// left unimplemented.</remarks>
     internal class JsonArrayConverter<TRowReader, T> : JsonConverter<T>
