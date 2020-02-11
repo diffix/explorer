@@ -39,9 +39,10 @@
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
-            var totalValueCount = stats.Count ?? 0;
-            var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
+            var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
                     row.ColumnValue.IsSuppressed ? row.Count : 0);
+
+            var totalValueCount = stats.Count;
 
             if (totalValueCount == 0)
             {
@@ -78,11 +79,7 @@
                 yield break;
             }
 
-            Debug.Assert(
-                stats.Count.HasValue && stats.Min.HasValue && stats.Max.HasValue,
-                "Count, Min and Max should always be non-null in this context");
-
-            var bucketsToSample = EstimateBucketResolutions(stats.Count.Value, stats.Min.Value, stats.Max.Value);
+            var bucketsToSample = EstimateBucketResolutions(stats.Count, stats.Min, stats.Max);
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
                 new SingleColumnHistogram(
@@ -94,33 +91,32 @@
             // Note: row.BucketIndex and row.Count should never be null in this context.
             var optimumBucket = (
                 from row in histogramQ.ResultRows
-                let suppressedRatio = (double)row.Count.Value / totalValueCount
-                let suppressedBucketSize = bucketsToSample[row.BucketIndex.Value]
+                let suppressedRatio = (double)row.Count / totalValueCount
+                let suppressedBucketSize = bucketsToSample[row.BucketIndex]
                 where row.LowerBound.IsSuppressed
                     && suppressedRatio < SuppressedRatioThreshold
                 orderby suppressedBucketSize
                 select new
                 {
-                    Index = row.BucketIndex.Value,
+                    Index = row.BucketIndex,
                     Size = suppressedBucketSize,
-                    SuppressedCount = row.Count ?? 0,
+                    SuppressedCount = row.Count,
                     Ratio = suppressedRatio,
                 }).First();
 
             // Note: row.BucketIndex should never be null for this query type.
             var histogramBuckets =
                 from row in histogramQ.ResultRows
-                where row.BucketIndex.HasValue
-                    && row.BucketIndex == optimumBucket.Index
+                where row.BucketIndex == optimumBucket.Index
                     && !row.LowerBound.IsSuppressed
                 let lowerBound = ((ValueColumn<decimal>)row.LowerBound).ColumnValue
-                let bucketSize = bucketsToSample[row.BucketIndex.Value]
+                let bucketSize = bucketsToSample[row.BucketIndex]
                 orderby lowerBound
                 select new
                 {
                     BucketSize = bucketSize,
                     LowerBound = lowerBound,
-                    Count = row.Count ?? 0,
+                    row.Count,
                 };
 
             // Estimate Median

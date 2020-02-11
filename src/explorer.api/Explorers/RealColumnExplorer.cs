@@ -27,12 +27,7 @@
                 query,
                 TimeSpan.FromMinutes(2));
 
-            var rows = queryResult.ResultRows;
-            Debug.Assert(
-                rows.Count() == 1,
-                $"Expected query {query.QueryStatement} to return exactly one row.");
-
-            var stats = rows.First();
+            var stats = queryResult.ResultRows.Single();
 
             yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: new List<ExploreResult.Metric>
             {

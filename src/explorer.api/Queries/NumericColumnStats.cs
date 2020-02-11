@@ -27,10 +27,6 @@ namespace Explorer.Queries
 
         public string ColumnName { get; }
 
-        string IQuerySpec<IntegerResult>.QueryStatement => throw new System.NotImplementedException();
-
-        string IQuerySpec<RealResult>.QueryStatement => throw new System.NotImplementedException();
-
         IntegerResult IRowReader<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();

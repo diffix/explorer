@@ -71,7 +71,7 @@ namespace Explorer.Queries
                 reader.Read();
                 if (((groupingFlags >> i) & 1) == 0)
                 {
-                    bucketIndex = (numBuckets - 1) - i;
+                    bucketIndex = numBuckets - 1 - i;
                     lowerBound = AircloakColumnJsonParser.ParseDecimal(ref reader);
                 }
             }
