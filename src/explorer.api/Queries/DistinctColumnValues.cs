@@ -33,32 +33,74 @@ namespace Explorer.Queries
 
         public string ColumnName { get; }
 
-        string IQuerySpec<IntegerResult>.QueryStatement => throw new System.NotImplementedException();
-
-        string IQuerySpec<RealResult>.QueryStatement => throw new System.NotImplementedException();
-
-        string IQuerySpec<BoolResult>.QueryStatement => throw new System.NotImplementedException();
-
-        string IQuerySpec<TextResult>.QueryStatement => throw new System.NotImplementedException();
-
         IntegerResult IRowReader<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            throw new System.NotImplementedException();
+            reader.Read();
+            var columnValue = AircloakColumnJsonParser.ParseLong(ref reader);
+            var (count, countNoise) = ReadCountAndNoise(ref reader);
+
+            return new IntegerResult
+            {
+                ColumnValue = columnValue,
+                Count = count,
+                CountNoise = countNoise,
+            };
         }
 
         RealResult IRowReader<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            throw new System.NotImplementedException();
+            reader.Read();
+            var columnValue = AircloakColumnJsonParser.ParseDouble(ref reader);
+            var (count, countNoise) = ReadCountAndNoise(ref reader);
+
+            return new RealResult
+            {
+                ColumnValue = columnValue,
+                Count = count,
+                CountNoise = countNoise,
+            };
         }
 
         BoolResult IRowReader<BoolResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            throw new System.NotImplementedException();
+            reader.Read();
+            var columnValue = AircloakColumnJsonParser.ParseBool(ref reader);
+            var (count, countNoise) = ReadCountAndNoise(ref reader);
+
+            return new BoolResult
+            {
+                ColumnValue = columnValue,
+                Count = count,
+                CountNoise = countNoise,
+            };
         }
 
         TextResult IRowReader<TextResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            throw new System.NotImplementedException();
+            reader.Read();
+            var columnValue = AircloakColumnJsonParser.ParseString(ref reader);
+            var (count, countNoise) = ReadCountAndNoise(ref reader);
+
+            return new TextResult
+            {
+                ColumnValue = columnValue,
+                Count = count,
+                CountNoise = countNoise,
+            };
+        }
+
+        private (long, double?) ReadCountAndNoise(ref Utf8JsonReader reader)
+        {
+            reader.Read();
+            var count = reader.GetInt64();
+            reader.Read();
+            double? countNoise = null;
+            if (reader.TokenType != JsonTokenType.Null)
+            {
+                countNoise = reader.GetDouble();
+            }
+
+            return (count, countNoise);
         }
 
         public class IntegerResult
@@ -70,22 +112,9 @@ namespace Explorer.Queries
 
             public AircloakColumn<long> ColumnValue { get; set; }
 
-            public long? Count { get; set; }
+            public long Count { get; set; }
 
             public double? CountNoise { get; set; }
-
-            void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                ColumnValue = AircloakColumnJsonParser.ParseLong(ref reader);
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                if (reader.TokenType != JsonTokenType.Null)
-                {
-                    CountNoise = reader.GetDouble();
-                }
-            }
         }
 
         public class RealResult
@@ -97,22 +126,9 @@ namespace Explorer.Queries
 
             public AircloakColumn<double> ColumnValue { get; set; }
 
-            public long? Count { get; set; }
+            public long Count { get; set; }
 
             public double? CountNoise { get; set; }
-
-            void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                ColumnValue = AircloakColumnJsonParser.ParseDouble(ref reader);
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                if (reader.TokenType != JsonTokenType.Null)
-                {
-                    CountNoise = reader.GetDouble();
-                }
-            }
         }
 
         public class BoolResult
@@ -124,22 +140,9 @@ namespace Explorer.Queries
 
             public AircloakColumn<bool> ColumnValue { get; set; }
 
-            public long? Count { get; set; }
+            public long Count { get; set; }
 
             public double? CountNoise { get; set; }
-
-            void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                ColumnValue = AircloakColumnJsonParser.ParseBool(ref reader);
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                if (reader.TokenType != JsonTokenType.Null)
-                {
-                    CountNoise = reader.GetDouble();
-                }
-            }
         }
 
         public class TextResult
@@ -151,22 +154,9 @@ namespace Explorer.Queries
 
             public AircloakColumn<string> ColumnValue { get; set; }
 
-            public long? Count { get; set; }
+            public long Count { get; set; }
 
             public double? CountNoise { get; set; }
-
-            void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                ColumnValue = AircloakColumnJsonParser.ParseString(ref reader);
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                if (reader.TokenType != JsonTokenType.Null)
-                {
-                    CountNoise = reader.GetDouble();
-                }
-            }
         }
     }
 }

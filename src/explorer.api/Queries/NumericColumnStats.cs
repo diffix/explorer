@@ -33,58 +33,64 @@ namespace Explorer.Queries
 
         IntegerResult IRowReader<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            throw new System.NotImplementedException();
+            reader.Read();
+            var min = reader.GetInt64();
+            reader.Read();
+            var max = reader.GetInt64();
+            reader.Read();
+            var count = reader.GetInt64();
+            reader.Read();
+            var countNoise = reader.GetDouble();
+
+            return new IntegerResult
+            {
+                Min = min,
+                Max = max,
+                Count = count,
+                CountNoise = countNoise,
+            };
         }
 
         RealResult IRowReader<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            throw new System.NotImplementedException();
+            reader.Read();
+            var min = reader.GetDouble();
+            reader.Read();
+            var max = reader.GetDouble();
+            reader.Read();
+            var count = reader.GetInt64();
+            reader.Read();
+            var countNoise = reader.GetDouble();
+
+            return new RealResult
+            {
+                Min = min,
+                Max = max,
+                Count = count,
+                CountNoise = countNoise,
+            };
         }
 
         public class IntegerResult
         {
-            public long? Min { get; set; }
+            public long Min { get; set; }
 
-            public long? Max { get; set; }
+            public long Max { get; set; }
 
-            public long? Count { get; set; }
+            public long Count { get; set; }
 
-            public double? CountNoise { get; set; }
-
-            void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                Min = reader.GetInt64();
-                reader.Read();
-                Max = reader.GetInt64();
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                CountNoise = reader.GetDouble();
-            }
+            public double CountNoise { get; set; }
         }
 
         public class RealResult
         {
-            public double? Min { get; set; }
+            public double Min { get; set; }
 
-            public double? Max { get; set; }
+            public double Max { get; set; }
 
-            public long? Count { get; set; }
+            public long Count { get; set; }
 
-            public double? CountNoise { get; set; }
-
-            void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                Min = reader.GetDouble();
-                reader.Read();
-                Max = reader.GetDouble();
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                CountNoise = reader.GetDouble();
-            }
+            public double CountNoise { get; set; }
         }
     }
 }

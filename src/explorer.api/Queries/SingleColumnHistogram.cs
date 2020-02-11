@@ -58,7 +58,41 @@ namespace Explorer.Queries
 
         public Result FromJsonArray(ref Utf8JsonReader reader)
         {
-            throw new System.NotImplementedException();
+            reader.Read();
+            var groupingFlags = reader.GetInt32();
+            reader.Read();
+            var numBuckets = reader.GetInt32();
+
+            int? bucketIndex = null;
+            AircloakColumn<decimal>? lowerBound = null;
+
+            for (var i = numBuckets - 1; i >= 0; i--)
+            {
+                reader.Read();
+                if (((groupingFlags >> i) & 1) == 0)
+                {
+                    bucketIndex = (numBuckets - 1) - i;
+                    lowerBound = AircloakColumnJsonParser.ParseDecimal(ref reader);
+                }
+            }
+
+            reader.Read();
+            var count = reader.GetInt32();
+            reader.Read();
+            var countNoise = reader.TokenType == JsonTokenType.Null ? 1.0
+                                                                : reader.GetDouble();
+
+            return new Result
+            {
+                BucketIndex = bucketIndex
+                    ?? throw new System.Exception(
+                        "Unable to retrieve bucket index from grouping flags."),
+                LowerBound = lowerBound
+                    ?? throw new System.Exception(
+                        "Unable to parse columns return value, not even as Suppressed, Null."),
+                Count = count,
+                CountNoise = countNoise,
+            };
         }
 
         public class Result
@@ -68,37 +102,13 @@ namespace Explorer.Queries
                 LowerBound = new NullColumn<decimal>();
             }
 
-            public int? BucketIndex { get; set; }
+            public int BucketIndex { get; set; }
 
             public AircloakColumn<decimal> LowerBound { get; set; }
 
-            public int? Count { get; set; }
+            public int Count { get; set; }
 
             public double? CountNoise { get; set; }
-
-            void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                var groupingFlags = reader.GetInt32();
-                reader.Read();
-                var numBuckets = reader.GetInt32();
-
-                for (var i = numBuckets - 1; i >= 0; i--)
-                {
-                    reader.Read();
-                    if (((groupingFlags >> i) & 1) == 0)
-                    {
-                        BucketIndex = (numBuckets - 1) - i;
-                        LowerBound = AircloakColumnJsonParser.ParseDecimal(ref reader);
-                    }
-                }
-
-                reader.Read();
-                Count = reader.GetInt32();
-                reader.Read();
-                CountNoise = reader.TokenType == JsonTokenType.Null ? 1.0
-                                                                    : reader.GetDouble();
-            }
         }
     }
 }
