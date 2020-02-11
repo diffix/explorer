@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
 
     using Aircloak.JsonApi;
@@ -13,7 +12,7 @@
     internal class IntegerColumnExplorer : ColumnExplorer
     {
         // TODO: The following should be configuration items (?)
-        private const double ValuesPerBucketTarget = 20;
+        private const long ValuesPerBucketTarget = 20;
 
         private const double SuppressedRatioThreshold = 0.1;
 
@@ -79,7 +78,8 @@
                 yield break;
             }
 
-            var bucketsToSample = EstimateBucketResolutions(stats.Count, stats.Min, stats.Max);
+            var bucketsToSample = DiffixUtilities.EstimateBucketResolutions(
+                stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
                 new SingleColumnHistogram(
@@ -88,7 +88,6 @@
                     bucketsToSample),
                 timeout: TimeSpan.FromMinutes(10));
 
-            // Note: row.BucketIndex and row.Count should never be null in this context.
             var optimumBucket = (
                 from row in histogramQ.ResultRows
                 let suppressedRatio = (double)row.Count / totalValueCount
@@ -104,7 +103,6 @@
                     Ratio = suppressedRatio,
                 }).First();
 
-            // Note: row.BucketIndex should never be null for this query type.
             var histogramBuckets =
                 from row in histogramQ.ResultRows
                 where row.BucketIndex == optimumBucket.Index
@@ -151,33 +149,6 @@
                     .Append(new ExploreResult.Metric(name: "max_estimate", value: (long)stats.Max));
 
             yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
-        }
-
-        private List<decimal> EstimateBucketResolutions(long numSamples, long minSample, long maxSample)
-        {
-            double valueDensity;
-            try
-            {
-                valueDensity = (double)numSamples / (maxSample - minSample);
-            }
-            catch (DivideByZeroException)
-            {
-                return new List<decimal> { 1M };
-            }
-
-            Debug.Assert(valueDensity > 0, "Column Count should always be greater than zero.");
-
-            var bucketSizeEstimate = new BucketSize(ValuesPerBucketTarget / valueDensity);
-
-            return (
-                from bucketSize in new List<BucketSize>
-                {
-                    bucketSizeEstimate.Smaller(steps: 2),
-                    bucketSizeEstimate,
-                    bucketSizeEstimate.Larger(steps: 2),
-                }
-                select bucketSize.SnappedSize)
-                .ToList();
         }
     }
 }
