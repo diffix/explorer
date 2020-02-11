@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\explorer.api\explorer.api.csproj" />
+    <ProjectReference Include="..\..\src\aircloak\aircloak.csproj" />
   </ItemGroup>
 
   <ItemGroup>
