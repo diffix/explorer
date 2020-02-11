@@ -18,7 +18,6 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// <typeparamref name="TRow"/> must implement <see cref="IJsonArrayConvertible"/>.
     /// </remarks>
     public struct QueryResult<TRow>
-        where TRow : IJsonArrayConvertible
     {
         public QueryResultInner<TRow> Query { get; set; }
 
@@ -97,7 +96,6 @@ namespace Aircloak.JsonApi.ResponseTypes
         <typeparam name="TRow">The type of contained rows.</typeparam>
     */
     public struct QueryResultInner<TRow>
-        where TRow : IJsonArrayConvertible
     {
         public bool Completed { get; set; }
 

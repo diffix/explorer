@@ -67,19 +67,18 @@
         /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
         public async Task<QueryResult<TRow>> Query<TRow>(
             string dataSource,
-            string queryStatement,
+            IQuerySpec<TRow> querySpec,
             TimeSpan timeout,
             TimeSpan? pollFrequency = null)
-            where TRow : IJsonArrayConvertible, new()
         {
-            var queryResponse = await SubmitQuery(dataSource, queryStatement);
+            var queryResponse = await SubmitQuery(dataSource, querySpec.QueryStatement);
             if (!queryResponse.Success)
             {
                 throw new Exception($"Unhandled Aircloak error returned for query to {dataSource}. Query Statement:" +
-                                    $" {queryStatement}.");
+                                    $" {querySpec.QueryStatement}.");
             }
 
-            return await PollQueryUntilCompleteOrTimeout<TRow>(queryResponse.QueryId, timeout, pollFrequency);
+            return await PollQueryUntilCompleteOrTimeout(queryResponse.QueryId, querySpec, timeout, pollFrequency);
         }
 
         /// <summary>
@@ -111,14 +110,15 @@
         /// <typeparam name="TRow">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each
         /// row seralised to type <c>TRow</c>.</returns>
-        public async Task<QueryResult<TRow>> PollQueryResult<TRow>(string queryId)
-            where TRow : IJsonArrayConvertible, new()
+        public async Task<QueryResult<TRow>> PollQueryResult<TRow>(string queryId, IQuerySpec<TRow> querySpec)
         {
             // Register the JsonArrayConverter so the TRow can be deserialized correctly
             var jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
-                Converters = { new JsonArrayConverter<TRow>() },
+                Converters = {
+                    new JsonArrayConverter<IRowReader<TRow>, TRow>(querySpec),
+                },
             };
 
             return await ApiGetRequest<QueryResult<TRow>>($"queries/{queryId}", jsonOptions);
@@ -141,9 +141,9 @@
         /// row seralised to type <c>TRow</c>.</returns>
         public async Task<QueryResult<TRow>> PollQueryUntilComplete<TRow>(
             string queryId,
+            IQuerySpec<TRow> querySpec,
             CancellationToken ct,
             TimeSpan? pollFrequency = null)
-            where TRow : IJsonArrayConvertible, new()
         {
             if (pollFrequency is null)
             {
@@ -163,7 +163,7 @@
                 // case due to network delay. In this case, cancellation requests may take longer to take effect than
                 // expected. In future we could thread the cancellation token right down through to the raw SyncSend
                 // call in the HttpClient.
-                var queryResult = await PollQueryResult<TRow>(queryId);
+                var queryResult = await PollQueryResult<TRow>(queryId, querySpec);
                 if (queryResult.Query.Completed)
                 {
                     return queryResult;
@@ -187,16 +187,16 @@
         /// row seralised to type <c>TRow</c>.</returns>
         public async Task<QueryResult<TRow>> PollQueryUntilCompleteOrTimeout<TRow>(
             string queryId,
+            IQuerySpec<TRow> querySpec,
             TimeSpan timeout,
             TimeSpan? pollFrequency = null)
-            where TRow : IJsonArrayConvertible, new()
         {
             using var tokenSource = new CancellationTokenSource();
             tokenSource.CancelAfter(timeout);
 
             try
             {
-                return await PollQueryUntilComplete<TRow>(queryId, tokenSource.Token, pollFrequency);
+                return await PollQueryUntilComplete<TRow>(queryId, querySpec, tokenSource.Token, pollFrequency);
             }
             catch (OperationCanceledException e)
             {

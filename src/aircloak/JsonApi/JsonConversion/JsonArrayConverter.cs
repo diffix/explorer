@@ -10,12 +10,19 @@ namespace Aircloak.JsonApi
     /// <typeparam name="T">A type that implements <see cref="IJsonArrayConvertible"/>.</typeparam>
     /// <remarks>Note that this is meant for reading JSON only: the Write method is intentionally
     /// left unimplemented.</remarks>
-    internal class JsonArrayConverter<T> : JsonConverter<T>
-        where T : IJsonArrayConvertible, new()
+    internal class JsonArrayConverter<TRowReader, T> : JsonConverter<T>
+        where TRowReader : IRowReader<T>
     {
+        private readonly IRowReader<T> querySpec;
+
+        public JsonArrayConverter(IRowReader<T> querySpec)
+        {
+            this.querySpec = querySpec;
+        }
+
         public override T Read(
             ref Utf8JsonReader reader,
-            System.Type typeToConvert,
+            Type typeToConvert,
             JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartArray)
@@ -23,8 +30,7 @@ namespace Aircloak.JsonApi
                 throw new JsonException("Expected an array.");
             }
 
-            var value = new T();
-            value.FromArrayValues(ref reader);
+            var value = querySpec.FromJsonArray(ref reader);
 
             // Read ']' Token
             reader.Read();
