@@ -33,7 +33,35 @@ namespace Explorer.Queries
 
         public string ColumnName { get; }
 
-        public class IntegerResult : IJsonArrayConvertible
+        string IQuerySpec<IntegerResult>.QueryStatement => throw new System.NotImplementedException();
+
+        string IQuerySpec<RealResult>.QueryStatement => throw new System.NotImplementedException();
+
+        string IQuerySpec<BoolResult>.QueryStatement => throw new System.NotImplementedException();
+
+        string IQuerySpec<TextResult>.QueryStatement => throw new System.NotImplementedException();
+
+        IntegerResult IRowReader<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        RealResult IRowReader<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        BoolResult IRowReader<BoolResult>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        TextResult IRowReader<TextResult>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public class IntegerResult
         {
             public IntegerResult()
             {
@@ -46,7 +74,7 @@ namespace Explorer.Queries
 
             public double? CountNoise { get; set; }
 
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 ColumnValue = AircloakColumnJsonParser.ParseLong(ref reader);
@@ -60,7 +88,7 @@ namespace Explorer.Queries
             }
         }
 
-        public class RealResult : IJsonArrayConvertible
+        public class RealResult
         {
             public RealResult()
             {
@@ -73,7 +101,7 @@ namespace Explorer.Queries
 
             public double? CountNoise { get; set; }
 
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 ColumnValue = AircloakColumnJsonParser.ParseDouble(ref reader);
@@ -87,7 +115,7 @@ namespace Explorer.Queries
             }
         }
 
-        public class BoolResult : IJsonArrayConvertible
+        public class BoolResult
         {
             public BoolResult()
             {
@@ -100,7 +128,7 @@ namespace Explorer.Queries
 
             public double? CountNoise { get; set; }
 
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 ColumnValue = AircloakColumnJsonParser.ParseBool(ref reader);
@@ -114,7 +142,7 @@ namespace Explorer.Queries
             }
         }
 
-        public class TextResult : IJsonArrayConvertible
+        public class TextResult
         {
             public TextResult()
             {
@@ -127,7 +155,7 @@ namespace Explorer.Queries
 
             public double? CountNoise { get; set; }
 
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 ColumnValue = AircloakColumnJsonParser.ParseString(ref reader);

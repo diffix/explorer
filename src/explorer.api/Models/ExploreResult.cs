@@ -37,9 +37,6 @@ namespace Explorer
             [JsonPropertyName("name")]
             public string MetricName { get; set; }
 
-            // [JsonPropertyName("type")]
-            // public AircloakType MetricType { get; set; }
-
             [JsonPropertyName("value")]
             public object MetricValue { get; set; }
         }

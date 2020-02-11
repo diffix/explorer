@@ -39,20 +39,20 @@ namespace Explorer.Queries
 
         public decimal? UpperBound { get; }
 
-        public class Result : IJsonArrayConvertible
+        public Result FromJsonArray(ref Utf8JsonReader reader)
+        {
+            reader.Read();
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return new Result { Min = null };
+            }
+
+            return new Result { Min = reader.GetDecimal() };
+        }
+
+        public class Result
         {
             public decimal? Min { get; set; }
-
-            public void FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                if (reader.TokenType == JsonTokenType.Null)
-                {
-                    return;
-                }
-
-                Min = reader.GetDecimal();
-            }
         }
     }
 }

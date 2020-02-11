@@ -27,7 +27,21 @@ namespace Explorer.Queries
 
         public string ColumnName { get; }
 
-        public class IntegerResult : IJsonArrayConvertible
+        string IQuerySpec<IntegerResult>.QueryStatement => throw new System.NotImplementedException();
+
+        string IQuerySpec<RealResult>.QueryStatement => throw new System.NotImplementedException();
+
+        IntegerResult IRowReader<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        RealResult IRowReader<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public class IntegerResult
         {
             public long? Min { get; set; }
 
@@ -37,7 +51,7 @@ namespace Explorer.Queries
 
             public double? CountNoise { get; set; }
 
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 Min = reader.GetInt64();
@@ -50,7 +64,7 @@ namespace Explorer.Queries
             }
         }
 
-        public class RealResult : IJsonArrayConvertible
+        public class RealResult
         {
             public double? Min { get; set; }
 
@@ -60,7 +74,7 @@ namespace Explorer.Queries
 
             public double? CountNoise { get; set; }
 
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 Min = reader.GetDouble();

@@ -7,7 +7,6 @@ namespace Explorer
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api.Models;
-    using Explorer.Queries;
 
     internal abstract class ColumnExplorer
     {
@@ -29,11 +28,10 @@ namespace Explorer
         protected async Task<QueryResult<TResult>> ResolveQuery<TResult>(
             IQuerySpec<TResult> query,
             TimeSpan timeout)
-                where TResult : IJsonArrayConvertible, new()
         {
             return await ApiClient.Query<TResult>(
                 ExploreParams.DataSourceName,
-                query.QueryStatement,
+                query,
                 timeout);
         }
     }

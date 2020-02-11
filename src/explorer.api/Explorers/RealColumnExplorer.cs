@@ -18,19 +18,19 @@
 
         public override async IAsyncEnumerable<ExploreResult> Explore()
         {
-            var queryParams = new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName);
+            var query = new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName);
 
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 
             var queryResult = await ApiClient.Query<NumericColumnStats.RealResult>(
                 ExploreParams.DataSourceName,
-                queryParams.QueryStatement,
+                query,
                 TimeSpan.FromMinutes(2));
 
             var rows = queryResult.ResultRows;
             Debug.Assert(
                 rows.Count() == 1,
-                $"Expected query {queryParams.QueryStatement} to return exactly one row.");
+                $"Expected query {query.QueryStatement} to return exactly one row.");
 
             var stats = rows.First();
 

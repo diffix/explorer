@@ -56,7 +56,12 @@ namespace Explorer.Queries
 
         public IList<decimal> Buckets { get; }
 
-        public class Result : IJsonArrayConvertible
+        public Result FromJsonArray(ref Utf8JsonReader reader)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public class Result
         {
             public Result()
             {
@@ -71,7 +76,7 @@ namespace Explorer.Queries
 
             public double? CountNoise { get; set; }
 
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            void FromArrayValues(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 var groupingFlags = reader.GetInt32();
