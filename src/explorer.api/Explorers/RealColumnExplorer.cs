@@ -2,8 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
@@ -25,9 +25,9 @@
 
         public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
 
-        public override async IAsyncEnumerable<ExploreResult> Explore()
+        public override async Task Explore()
         {
-            yield return new ExploreResult(ExplorationGuid, status: "waiting");
+            LatestResult = new ExploreResult(ExplorationGuid, status: "waiting");
 
             var stats = (await ResolveQuery<NumericColumnStats.RealResult>(
                 new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
@@ -46,10 +46,10 @@
 
             if (totalValueCount == 0)
             {
-                yield return new ExploreError(
+                LatestResult = new ExploreError(
                     ExplorationGuid,
                     $"Cannot explore table/column: Invalid value count.");
-                yield break;
+                return;
             }
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
@@ -71,12 +71,12 @@
                     .Append(new ExploreResult.Metric(name: "distinct_values", value: distinctValues))
                     .Append(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
 
-                yield return new ExploreResult(
+                LatestResult = new ExploreResult(
                     ExplorationGuid,
                     status: "complete",
                     metrics: ExploreMetrics);
 
-                yield break;
+                return;
             }
 
             var bucketsToSample = DiffixUtilities.EstimateBucketResolutions(
@@ -149,7 +149,7 @@
                     .Append(new ExploreResult.Metric(name: "min_estimate", value: stats.Min))
                     .Append(new ExploreResult.Metric(name: "max_estimate", value: stats.Max));
 
-            yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
+            LatestResult = new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
         }
     }
 }

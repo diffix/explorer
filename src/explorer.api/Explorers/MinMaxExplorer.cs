@@ -1,7 +1,6 @@
 namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
@@ -19,9 +18,9 @@ namespace Explorer
 
         private delegate Task<decimal?> Estimator(decimal? bound = null);
 
-        public override async IAsyncEnumerable<ExploreResult> Explore()
+        public override async Task Explore()
         {
-            yield return new ExploreResult(ExplorationGuid, status: "waiting");
+            LatestResult = new ExploreResult(ExplorationGuid, status: "waiting");
 
             var minTask = RefinedEstimate(isMin: true);
             var maxTask = RefinedEstimate(isMin: false);
@@ -37,11 +36,11 @@ namespace Explorer
                      where result.MetricName == "error"
                      select result.MetricValue)
                      .ToList();
-                yield return new ExploreError(ExplorationGuid, string.Join("/n", errors));
-                yield break;
+                LatestResult = new ExploreError(ExplorationGuid, string.Join("/n", errors));
+                return;
             }
 
-            yield return new ExploreResult(ExplorationGuid, "complete", results);
+            LatestResult = new ExploreResult(ExplorationGuid, "complete", results);
         }
 
         private async Task<ExploreResult.Metric> RefinedEstimate(bool isMin)

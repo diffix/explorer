@@ -31,7 +31,7 @@ namespace Explorer.Api.Tests
                     columnName: "duration"));
 
             Assert.True(intResult.Query.Completed);
-            Assert.True(string.IsNullOrEmpty(intResult.Query.Error));
+            Assert.True(string.IsNullOrEmpty(intResult.Query.Error), intResult.Query.Error);
             Assert.All(intResult.ResultRows, row =>
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
@@ -50,7 +50,7 @@ namespace Explorer.Api.Tests
                     columnName: "payments"));
 
             Assert.True(realResult.Query.Completed);
-            Assert.True(string.IsNullOrEmpty(realResult.Query.Error));
+            Assert.True(string.IsNullOrEmpty(realResult.Query.Error), realResult.Query.Error);
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
@@ -68,7 +68,7 @@ namespace Explorer.Api.Tests
                     columnName: "gender"));
 
             Assert.True(textResult.Query.Completed);
-            Assert.True(string.IsNullOrEmpty(textResult.Query.Error));
+            Assert.True(string.IsNullOrEmpty(textResult.Query.Error), textResult.Query.Error);
             Assert.All(textResult.ResultRows, row =>
             {
                 Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
@@ -91,7 +91,7 @@ namespace Explorer.Api.Tests
                     bucketSizes));
 
             Assert.True(result.Query.Completed);
-            Assert.True(string.IsNullOrEmpty(result.Query.Error));
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
             Assert.All(result.ResultRows, row =>
             {
                 Assert.True(row.BucketIndex < bucketSizes.Count);
@@ -104,7 +104,7 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
-        public async void TestMinMaxExplorer()
+        public void TestMinMaxExplorer()
         {
             var vcrCassettePath = factory.GetVcrCasettePath(nameof(QueryTests), nameof(RuntimeMethodHandle));
             var vcrCassetteFile = new System.IO.FileInfo(vcrCassettePath);
@@ -121,18 +121,15 @@ namespace Explorer.Api.Tests
                     ColumnName = "amount",
                 });
 
-            var results = new List<ExploreResult>();
-            await foreach (var result in explorer.Explore())
-            {
-                results.Add(result);
-            }
+            var runner = Task.Run(async () => { await explorer.Explore(); });
+            // Assert.True(explorer.LatestResult.Status == "waiting");
 
-            Assert.NotEmpty(results);
-            Assert.True(results[0].Status == "waiting");
-            var last = results.Last();
-            Assert.True(last.Status == "complete");
-            Assert.True((last.Metrics.Single(m => m.MetricName == "min").MetricValue as decimal?) == 3288M);
-            Assert.True((last.Metrics.Single(m => m.MetricName == "max").MetricValue as decimal?) == 495725M);
+            runner.Wait();
+
+            var final = explorer.LatestResult;
+            Assert.True(final.Status == "complete");
+            Assert.True((final.Metrics.Single(m => m.MetricName == "min").MetricValue as decimal?) == 3288M);
+            Assert.True((final.Metrics.Single(m => m.MetricName == "max").MetricValue as decimal?) == 495725M);
         }
 
         [Fact]
@@ -141,7 +138,7 @@ namespace Explorer.Api.Tests
             var queryResult = await QueryResult(new RepeatingRowsQuery());
 
             Assert.True(queryResult.Query.Completed);
-            Assert.True(string.IsNullOrEmpty(queryResult.Query.Error));
+            Assert.True(string.IsNullOrEmpty(queryResult.Query.Error), queryResult.Query.Error);
             Assert.True(queryResult.ResultRows.Count() == 5);
             Assert.All(queryResult.ResultRows, row =>
             {

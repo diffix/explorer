@@ -1,6 +1,5 @@
 ﻿namespace Explorer.Api.Controllers
 {
-    using System.Net.Http;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
@@ -57,14 +56,9 @@
                 });
             }
 
-            var results = new System.Collections.Generic.List<ExploreResult>();
-            await foreach (var result in explorer.Explore())
-            {
-                logger.LogInformation($"-------> Explorer status: {result.Status}");
-                results.Add(result);
-            }
+            await explorer.Explore();
 
-            return Ok(results.FindLast(_ => true));
+            return Ok(explorer.LatestResult);
         }
 
         [Route("/{**catchall}")]
