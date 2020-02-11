@@ -3,11 +3,8 @@ namespace Explorer.Api.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
-<<<<<<< HEAD
     using System.Runtime.CompilerServices;
-=======
     using System.Text.Json;
->>>>>>> Take account of 'occurences' in QueryResult Row
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
@@ -39,7 +36,7 @@ namespace Explorer.Api.Tests
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
                     ((ValueColumn<long>)row.ColumnValue).ColumnValue >= 0);
-                Assert.True(row.Count.HasValue && row.Count > 0);
+                Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
         }
@@ -51,17 +48,14 @@ namespace Explorer.Api.Tests
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
-<<<<<<< HEAD
-=======
 
             Assert.True(realResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(realResult.Query.Error));
->>>>>>> Fix broken histogram query and associated tests.
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
                     ((ValueColumn<double>)row.ColumnValue).ColumnValue >= 0);
-                Assert.True(row.Count.HasValue && row.Count > 0);
+                Assert.True(row.Count > 0);
             });
         }
 
@@ -72,17 +66,14 @@ namespace Explorer.Api.Tests
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
-<<<<<<< HEAD
-=======
 
             Assert.True(textResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(textResult.Query.Error));
->>>>>>> Fix broken histogram query and associated tests.
             Assert.All(textResult.ResultRows, row =>
             {
                 Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
                             ((ValueColumn<string>)row.ColumnValue).ColumnValue == "Female");
-                Assert.True(row.Count.HasValue && row.Count > 0);
+                Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
 
@@ -103,11 +94,11 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(result.Query.Error));
             Assert.All(result.ResultRows, row =>
             {
-                Assert.True(row.BucketIndex.HasValue && row.BucketIndex.Value < bucketSizes.Count);
+                Assert.True(row.BucketIndex < bucketSizes.Count);
                 Assert.True(row.LowerBound.IsNull ||
                             row.LowerBound.IsSuppressed ||
                             ((ValueColumn<decimal>)row.LowerBound).ColumnValue >= 0);
-                Assert.True(row.Count.HasValue && row.Count > 0);
+                Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
         }
@@ -115,9 +106,15 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestMinMaxExplorer()
         {
+            var vcrCassettePath = factory.GetVcrCasettePath(nameof(QueryTests), nameof(RuntimeMethodHandle));
+            var vcrCassetteFile = new System.IO.FileInfo(vcrCassettePath);
+            var pollingFrequency = (vcrCassetteFile.Exists && vcrCassetteFile.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
+            using var client = factory.CreateAircloakApiHttpClient(vcrCassettePath);
+            var jsonApiClient = new JsonApiClient(client);
+
             var explorer = new MinMaxExplorer(
-                TestUtils.JsonApiClient,
-                new Api.Models.ExploreParams
+                jsonApiClient,
+                new Models.ExploreParams
                 {
                     DataSourceName = "gda_banking",
                     TableName = "loans",
@@ -148,14 +145,13 @@ namespace Explorer.Api.Tests
             Assert.True(queryResult.ResultRows.Count() == 5);
             Assert.All(queryResult.ResultRows, row =>
             {
-                Assert.True(row.one == 1);
-                Assert.True(row.two == 2);
-                Assert.True(row.three == 3);
+                Assert.True(row.One == 1);
+                Assert.True(row.Two == 2);
+                Assert.True(row.Three == 3);
             });
         }
 
         private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
-            where TResult : IJsonArrayConvertible, new()
         {
             // WaitDebugger();
             var vcrCassettePath = factory.GetVcrCasettePath(nameof(QueryTests), vcrSessionName);
@@ -165,7 +161,7 @@ namespace Explorer.Api.Tests
             var jsonApiClient = new JsonApiClient(client);
             return await jsonApiClient.Query<TResult>(
                 TestDataSource,
-                query.QueryStatement,
+                query,
                 TimeSpan.FromSeconds(30),
                 pollingFrequency);
         }
@@ -178,21 +174,23 @@ namespace Explorer.Api.Tests
                     GROUP BY duration
                     having count_noise(*) > 0";
 
-            public struct Result : IJsonArrayConvertible
+            public Result FromJsonArray(ref Utf8JsonReader reader)
             {
-                public int one;
-                public int two;
-                public int three;
+                reader.Read();
+                var one = reader.GetInt32();
+                reader.Read();
+                var two = reader.GetInt32();
+                reader.Read();
+                var three = reader.GetInt32();
 
-                public void FromArrayValues(ref Utf8JsonReader reader)
-                {
-                    reader.Read();
-                    one = reader.GetInt32();
-                    reader.Read();
-                    two = reader.GetInt32();
-                    reader.Read();
-                    three = reader.GetInt32();
-                }
+                return new Result { One = one, Two = two, Three = three };
+            }
+
+            public struct Result
+            {
+                public int One;
+                public int Two;
+                public int Three;
             }
         }
     }
