@@ -6,6 +6,7 @@ namespace Explorer.Api.Tests
     using System.Net.Http;
     using System.Runtime.CompilerServices;
     using System.Text.Json;
+    using System.Threading.Tasks;
     using Xunit;
 
     public sealed class ExploreTests : IClassFixture<TestWebAppFactory>
@@ -27,6 +28,8 @@ namespace Explorer.Api.Tests
 
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
 
+        private delegate T ApiTestActionWithContent<T>(HttpResponseMessage response, string content);
+
         [Fact]
         public void Success()
         {
@@ -47,6 +50,47 @@ namespace Explorer.Api.Tests
                 Assert.True(
                     rootEl.TryGetProperty("id", out var id),
                     $"Expected an 'id' property in:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("status", out var status),
+                    $"Expected a 'status' property in:\n{content}");
+            });
+        }
+
+        [Fact]
+        public async void SuccessWithResult()
+        {
+            var explorerGuid = await TestApi(HttpMethod.Post, "/explore", ValidData, (_, content) =>
+            {
+                using var jsonContent = JsonDocument.Parse(content);
+                var rootEl = jsonContent.RootElement;
+                Assert.True(
+                    rootEl.ValueKind == JsonValueKind.Object,
+                    "Expected a JSON object in the response:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("id", out var id),
+                    $"Expected an 'id' property in:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("status", out var status),
+                    $"Expected a 'status' property in:\n{content}");
+
+                Assert.True(id.TryGetGuid(out var explorerGuid));
+
+                return explorerGuid;
+            });
+
+            TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
+            {
+                Assert.True(response.IsSuccessStatusCode, content);
+
+                using var jsonContent = JsonDocument.Parse(content);
+                var rootEl = jsonContent.RootElement;
+                Assert.True(
+                    rootEl.ValueKind == JsonValueKind.Object,
+                    "Expected a JSON object in the response:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("id", out var id),
+                    $"Expected an 'id' property in:\n{content}");
+                Assert.True(id.GetGuid() == explorerGuid);
                 Assert.True(
                     rootEl.TryGetProperty("status", out var status),
                     $"Expected a 'status' property in:\n{content}");
@@ -148,6 +192,16 @@ namespace Explorer.Api.Tests
             using var response = await client.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
+        }
+
+        private async Task<T> TestApi<T>(HttpMethod method, string endpoint, object data, ApiTestActionWithContent<T> test, [CallerMemberName] string vcrSessionName = "")
+        {
+            // TestUtils.WaitDebugger();
+            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
+            using var request = factory.CreateHttpRequest(method, endpoint, data);
+            using var response = await client.SendAsync(request);
+            var responseString = await response.Content.ReadAsStringAsync();
+            return test(response, responseString);
         }
     }
 }
