@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Concurrent;
     using System.Threading.Tasks;
 
@@ -19,6 +20,7 @@ namespace Explorer
             ExplorationGuid = Guid.NewGuid();
 
             exploreResults = new ConcurrentQueue<ExploreResult>();
+            exploreResults.Enqueue(new ExploreResult(ExplorationGuid, "new"));
         }
 
         public Guid ExplorationGuid { get; }

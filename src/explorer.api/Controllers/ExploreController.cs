@@ -1,5 +1,6 @@
 ﻿namespace Explorer.Api.Controllers
 {
+    using System.Collections.Concurrent;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
@@ -15,6 +16,9 @@
     {
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
+
+        private static ConcurrentDictionary<System.Guid, ColumnExplorer> explorers
+            = new ConcurrentDictionary<System.Guid, ColumnExplorer>();
 
         public ExploreController(ILogger<ExploreController> logger, JsonApiClient apiClient)
         {
@@ -56,9 +60,32 @@
                 });
             }
 
-            await explorer.Explore();
+#pragma warning disable CS4014 // Consider applying the 'await' operator to the result of the call.
+            explorer.Explore();
+#pragma warning restore CS4014 // Consider applying the 'await' operator to the result of the call.
+
+            if (!explorers.TryAdd(explorer.ExplorationGuid, explorer))
+            {
+                throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
+            }
 
             return Ok(explorer.LatestResult);
+        }
+
+        [HttpGet]
+        [Route("result/{exploreId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult Result(System.Guid exploreId)
+        {
+            if (explorers.TryGetValue(exploreId, out var explorer))
+            {
+                return Ok(explorer.LatestResult);
+            }
+            else
+            {
+                return BadRequest($"Couldn't find explorer with id {exploreId}");
+            }
         }
 
         [Route("/{**catchall}")]
