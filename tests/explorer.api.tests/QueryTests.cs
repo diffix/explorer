@@ -3,6 +3,7 @@ namespace Explorer.Api.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
@@ -24,7 +25,6 @@ namespace Explorer.Api.Tests
         public async void TestDistinctLoansDuration()
         {
             var intResult = await QueryResult<DistinctColumnValues.IntegerResult>(
-                nameof(TestDistinctLoansDuration),
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "duration"));
@@ -42,7 +42,6 @@ namespace Explorer.Api.Tests
         public async void TestDistinctLoansPayments()
         {
             var realResult = await QueryResult<DistinctColumnValues.RealResult>(
-                nameof(TestDistinctLoansPayments),
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
@@ -58,7 +57,6 @@ namespace Explorer.Api.Tests
         public async void TestDistinctLoansGender()
         {
             var textResult = await QueryResult<DistinctColumnValues.TextResult>(
-                nameof(TestDistinctLoansGender),
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
@@ -78,7 +76,6 @@ namespace Explorer.Api.Tests
         {
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
             var result = await QueryResult<SingleColumnHistogram.Result>(
-                nameof(TestHistogramLoansAmount),
                 new SingleColumnHistogram(
                     "loans",
                     "amount",
@@ -95,7 +92,7 @@ namespace Explorer.Api.Tests
             });
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(string vcrSessionName, IQuerySpec<TResult> query)
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
             where TResult : IJsonArrayConvertible, new()
         {
             // WaitDebugger();

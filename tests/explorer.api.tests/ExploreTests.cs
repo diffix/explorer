@@ -4,6 +4,7 @@ namespace Explorer.Api.Tests
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
+    using System.Runtime.CompilerServices;
     using System.Text.Json;
     using Xunit;
 
@@ -29,14 +30,14 @@ namespace Explorer.Api.Tests
         [Fact]
         public void Success()
         {
-            TestApi(nameof(Success), HttpMethod.Post, "/explore", ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
                 Assert.True(response.IsSuccessStatusCode, content));
         }
 
         [Fact]
         public void SuccessWithContents()
         {
-            TestApi(nameof(SuccessWithContents), HttpMethod.Post, "/explore", ValidData, (_, content) =>
+            TestApi(HttpMethod.Post, "/explore", ValidData, (_, content) =>
             {
                 using var jsonContent = JsonDocument.Parse(content);
                 var rootEl = jsonContent.RootElement;
@@ -63,24 +64,52 @@ namespace Explorer.Api.Tests
             });
         }
 
-        [Theory]
-        [InlineData("")]
-        [InlineData("/")]
-        [InlineData("/invalid endpoint test")]
-        public void FailWithBadEndPoint(string endpoint)
+        [Fact]
+        public void FailWithInvalidEndPoint()
         {
-            TestApi(nameof(FailWithBadEndPoint), HttpMethod.Post, endpoint, ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, "/invalid_endpoint", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
-        [Theory]
-        [InlineData("DELETE")]
-        [InlineData("GET")]
-        [InlineData("HEAD")]
-        [InlineData("PUT")]
-        public void FailWithBadMethod(string method)
+        [Fact]
+        public void FailWithEmptyEndPoint()
         {
-            TestApi(nameof(FailWithBadMethod), new HttpMethod(method), "/explore", ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, string.Empty, ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithRootEndPoint()
+        {
+            TestApi(HttpMethod.Post, "/", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithGetMethod()
+        {
+            TestApi(new HttpMethod("GET"), "/explore", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithHeadMethod()
+        {
+            TestApi(new HttpMethod("HEAD"), "/explore", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithPutMethod()
+        {
+            TestApi(new HttpMethod("PUT"), "/explore", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithDeleteMethod()
+        {
+            TestApi(new HttpMethod("DELETE"), "/explore", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -88,7 +117,7 @@ namespace Explorer.Api.Tests
         public void FailWithEmptyFields()
         {
             var data = new { ApiKey = string.Empty, DataSourceName = string.Empty, TableName = string.Empty, ColumnName = string.Empty };
-            TestApi(nameof(FailWithEmptyFields), HttpMethod.Post, "/explore", data, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", data, (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -101,7 +130,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public void FailWithMissingFields()
         {
-            TestApi(nameof(FailWithMissingFields), HttpMethod.Post, "/explore", new { }, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", new { }, (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -111,7 +140,7 @@ namespace Explorer.Api.Tests
             });
         }
 
-        private async void TestApi(string vcrSessionName, HttpMethod method, string endpoint, object data, ApiTestActionWithContent test)
+        private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test, [CallerMemberName] string vcrSessionName = "")
         {
             // TestUtils.WaitDebugger();
             using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
