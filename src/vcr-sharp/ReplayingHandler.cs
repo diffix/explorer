@@ -39,7 +39,7 @@
         {
             if (string.IsNullOrWhiteSpace(mode))
             {
-                return VCRMode.Playback;
+                return VCRMode.Cache;
             }
 
             var text = mode.Trim();
