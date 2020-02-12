@@ -66,7 +66,8 @@
         public async Task<QueryResult<TRow>> Query<TRow>(
             string dataSource,
             string queryStatement,
-            TimeSpan timeout)
+            TimeSpan timeout,
+            TimeSpan? pollFrequency = null)
             where TRow : IJsonArrayConvertible, new()
         {
             var queryResponse = await SubmitQuery(dataSource, queryStatement);
@@ -76,7 +77,7 @@
                                     $" {queryStatement}.");
             }
 
-            return await PollQueryUntilCompleteOrTimeout<TRow>(queryResponse.QueryId, timeout);
+            return await PollQueryUntilCompleteOrTimeout<TRow>(queryResponse.QueryId, timeout, pollFrequency);
         }
 
         /// <summary>

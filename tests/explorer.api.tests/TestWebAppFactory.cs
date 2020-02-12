@@ -1,4 +1,5 @@
-﻿namespace Explorer.Api.Tests
+﻿#pragma warning disable CA1822 // make method static
+namespace Explorer.Api.Tests
 {
     using System;
     using System.Net.Http;
@@ -10,18 +11,12 @@
 
     public class TestWebAppFactory : WebApplicationFactory<Startup>
     {
-        public static readonly ExplorerConfig Config;
+        public static readonly ExplorerConfig Config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.Development.json")
+            .Build()
+            .GetSection("Explorer")
+            .Get<ExplorerConfig>();
 
-#pragma warning disable CA1810 // remove static constructor
-        static TestWebAppFactory()
-        {
-            var configRoot = new ConfigurationBuilder().AddJsonFile("appsettings.Development.json").Build();
-            Config = configRoot.GetSection("Explorer").Get<ExplorerConfig>();
-            Environment.SetEnvironmentVariable("VCR_MODE", "cache");
-        }
-#pragma warning restore CA1810 // remove static constructor
-
-#pragma warning disable CA1822 // make method static
         public HttpRequestMessage CreateHttpRequest(HttpMethod method, string endpoint, object data)
         {
             var request = new HttpRequestMessage(method, endpoint);
@@ -32,19 +27,23 @@
             }
             return request;
         }
-#pragma warning restore CA1822 // make method static
 
         public HttpClient CreateExplorerApiHttpClient(string testClassName, string vcrSessionName)
         {
-            var cassettePath = GetTestCasettePath(testClassName, vcrSessionName);
+            var cassettePath = GetVcrCasettePath(testClassName, vcrSessionName);
             var handler = new VcrSharp.ReplayingHandler(cassettePath);
             return CreateDefaultClient(handler);
         }
 
-#pragma warning disable CA2000 // call IDisposable.Dispose on handler object
         public HttpClient CreateAircloakApiHttpClient(string testClassName, string vcrSessionName)
         {
-            var cassettePath = GetTestCasettePath(testClassName, vcrSessionName);
+            var cassettePath = GetVcrCasettePath(testClassName, vcrSessionName);
+            return CreateAircloakApiHttpClient(cassettePath);
+        }
+
+#pragma warning disable CA2000 // call IDisposable.Dispose on handler object
+        public HttpClient CreateAircloakApiHttpClient(string cassettePath)
+        {
             var handler = new VcrSharp.ReplayingHandler(cassettePath);
             var client = new HttpClient(handler, true) { BaseAddress = Config.AircloakApiUrl };
             if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", Config.AircloakApiKey))
@@ -55,9 +54,10 @@
         }
 #pragma warning restore CA2000 // call IDisposable.Dispose on handler object
 
-        private string GetTestCasettePath(string testClassName, string vcrSessionName)
+        public string GetVcrCasettePath(string testClassName, string vcrSessionName)
         {
             return $"../../../.vcr/{testClassName}.{vcrSessionName}.json";
         }
     }
 }
+#pragma warning restore CA1822 // make method static
