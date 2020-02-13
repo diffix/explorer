@@ -17,10 +17,10 @@
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
 
-        public ExploreController(ILogger<ExploreController> logger, HttpClient httpClient)
+        public ExploreController(ILogger<ExploreController> logger, JsonApiClient apiClient)
         {
             this.logger = logger;
-            this.apiClient = new JsonApiClient(httpClient);
+            this.apiClient = apiClient;
         }
 
         [HttpPost]

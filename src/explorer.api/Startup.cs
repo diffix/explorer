@@ -24,14 +24,13 @@ namespace Explorer.Api
 
             var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
 
-            services.AddSingleton<HttpClient>(_ =>
+            services.AddHttpClient<Aircloak.JsonApi.JsonApiClient>(client =>
             {
-                var client = new HttpClient { BaseAddress = config.AircloakApiUrl };
+                client.BaseAddress = config.AircloakApiUrl;
                 if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", config.AircloakApiKey))
                 {
-                    throw new Exception("Failed to add Http header 'auth-token'");
+                    throw new Exception($"Failed to add Http header 'auth-token'");
                 }
-                return client;
             });
         }
 
