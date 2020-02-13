@@ -14,7 +14,7 @@
             {
                 Headers = request.Headers.ToDictionary(h => h.Key, h => h.Value.ToArray()),
                 Method = request.Method.Method,
-                Uri = request.RequestUri,
+                Uri = request.RequestUri.ToString(),
                 Body = await ParseContent(request.Content)
             };
         }
@@ -23,7 +23,7 @@
         {
             var request = new HttpRequestMessage();
             request.Method = new HttpMethod(cachedRequest.Method);
-            request.RequestUri = cachedRequest.Uri;
+            request.RequestUri = new Uri(cachedRequest.Uri);
             foreach (var kvp in cachedRequest.Headers)
             {
                 if (IsValidHeader(kvp.Key))
@@ -86,15 +86,14 @@
                 return new Body
                 {
                     Encoding = "",
-                    Base64String = ""
+                    Text = ""
                 };
             }
 
             var text = await content.ReadAsStringAsync();
-            var bytes = Encoding.UTF8.GetBytes(text);
             return new Body
             {
-                Base64String = Convert.ToBase64String(bytes),
+                Text = text,
                 Encoding = "UTF8-8BIT"
             };
         }
@@ -103,25 +102,15 @@
         {
             if (body.Encoding == "ASCII-8BIT")
             {
-                var text = body.Base64String;
-                var textWithoutNewLines = text.Replace("\n", "");
-                var output = DecodeBase64String(textWithoutNewLines);
-                return new StringContent(output);
+                return new StringContent(body.Text);
             }
 
             if (body.Encoding == "UTF8-8BIT")
             {
-                var output = DecodeBase64String(body.Base64String);
-                return new StringContent(output, Encoding.UTF8, mediaType);
+                return new StringContent(body.Text, Encoding.UTF8, mediaType);
             }
 
             return null;
-        }
-
-        internal static string DecodeBase64String(string text)
-        {
-            var decodedBytes = Convert.FromBase64String(text);
-            return Encoding.UTF8.GetString(decodedBytes);
         }
 
         static bool IsValidHeader(string header)

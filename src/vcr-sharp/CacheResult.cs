@@ -6,7 +6,7 @@
     {
         public bool Found { get; set; }
 
-        public HttpResponseMessage? Response { get; set; }
+        public HttpResponseMessage Response { get; set; }
 
         public static CacheResult Success(HttpResponseMessage response)
         {

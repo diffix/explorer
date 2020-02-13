@@ -61,6 +61,8 @@
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="queryStatement">The query statement as a string.</param>
         /// <param name="timeout">How long to wait for the query to complete.</param>
+        /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to
+        /// DefaultPollingFrequencyMillis.</param>
         /// <returns>A <see cref="QueryResult{TRow}"/> instance containing the success status and query Id.</returns>
         /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
         public async Task<QueryResult<TRow>> Query<TRow>(

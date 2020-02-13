@@ -56,7 +56,7 @@ namespace Explorer.Api.Tests
 
         public string GetVcrCasettePath(string testClassName, string vcrSessionName)
         {
-            return $"../../../.vcr/{testClassName}.{vcrSessionName}.json";
+            return $"../../../.vcr/{testClassName}.{vcrSessionName}.yaml";
         }
     }
 }
