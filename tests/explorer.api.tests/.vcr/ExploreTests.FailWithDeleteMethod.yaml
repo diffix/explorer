@@ -1,0 +1,20 @@
+httpInteractions:
+- request:
+    method: DELETE
+    uri: http://localhost/explore
+    body:
+      encoding: UTF8-8BIT
+      text: |-
+        {"ApiKey":"SFMyNTY.g3QAAAACZAAEZGF0YW0AAAAkNWEwOGU5MGUtODJjOC00ZmY2LTkyZmItNGJmN2E2ZTY3YjdhZAAGc2lnbmVkbgYA-oOX9W8B.55CiWZ7Jx1oUBq6t-rHU_VGA1jPtIMzHGzgq49Xcrm8","TableName":"loans","ColumnName":"amount","DataSourceName":"gda_banking"}
+    headers: {}
+  response:
+    status:
+      code: 404
+      message: NotFound
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+    body:
+      encoding: UTF8-8BIT
+      text: |-
+        {"type":"https://tools.ietf.org/html/rfc7231#section-6.5.4","title":"Not Found","status":404,"traceId":"|5b6621b1-43aa6b609fc88c2b."}
