@@ -2,6 +2,7 @@
 namespace Explorer.Api.Tests
 {
     using System;
+    using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Text.Json;
@@ -30,21 +31,21 @@ namespace Explorer.Api.Tests
 
         public HttpClient CreateExplorerApiHttpClient(string testClassName, string vcrSessionName)
         {
-            var cassettePath = GetVcrCasettePath(testClassName, vcrSessionName);
-            var handler = new VcrSharp.ReplayingHandler(cassettePath);
+            var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
+            var handler = new VcrSharp.ReplayingHandler(vcrCassetteInfo.FullName);
             return CreateDefaultClient(handler);
         }
 
         public HttpClient CreateAircloakApiHttpClient(string testClassName, string vcrSessionName)
         {
-            var cassettePath = GetVcrCasettePath(testClassName, vcrSessionName);
-            return CreateAircloakApiHttpClient(cassettePath);
+            var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
+            return CreateAircloakApiHttpClient(vcrCassetteInfo);
         }
 
 #pragma warning disable CA2000 // call IDisposable.Dispose on handler object
-        public HttpClient CreateAircloakApiHttpClient(string cassettePath)
+        public HttpClient CreateAircloakApiHttpClient(FileInfo vcrCassetteInfo)
         {
-            var handler = new VcrSharp.ReplayingHandler(cassettePath);
+            var handler = new VcrSharp.ReplayingHandler(vcrCassetteInfo.FullName);
             var client = new HttpClient(handler, true) { BaseAddress = Config.AircloakApiUrl };
             if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", Config.AircloakApiKey))
             {
@@ -54,9 +55,14 @@ namespace Explorer.Api.Tests
         }
 #pragma warning restore CA2000 // call IDisposable.Dispose on handler object
 
-        public string GetVcrCasettePath(string testClassName, string vcrSessionName)
+        public FileInfo GetVcrCasetteInfo(string testClassName, string vcrSessionName)
         {
-            return $"../../../.vcr/{testClassName}.{vcrSessionName}.yaml";
+            return new FileInfo($"../../../.vcr/{testClassName}.{vcrSessionName}.yaml");
+        }
+
+        public TimeSpan? GetApiPollingFrequencty(FileInfo vcrCassetteInfo)
+        {
+            return (vcrCassetteInfo.Exists && vcrCassetteInfo.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
         }
     }
 }
