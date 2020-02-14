@@ -14,11 +14,11 @@
     [Produces(MediaTypeNames.Application.Json)]
     public class ExploreController : ControllerBase
     {
+        private static readonly ConcurrentDictionary<System.Guid, ColumnExplorer> Explorers
+            = new ConcurrentDictionary<System.Guid, ColumnExplorer>();
+
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
-
-        private static ConcurrentDictionary<System.Guid, ColumnExplorer> explorers
-            = new ConcurrentDictionary<System.Guid, ColumnExplorer>();
 
         public ExploreController(ILogger<ExploreController> logger, JsonApiClient apiClient)
         {
@@ -64,7 +64,7 @@
             explorer.Explore();
 #pragma warning restore CS4014 // Consider applying the 'await' operator to the result of the call.
 
-            if (!explorers.TryAdd(explorer.ExplorationGuid, explorer))
+            if (!Explorers.TryAdd(explorer.ExplorationGuid, explorer))
             {
                 throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
             }
@@ -78,7 +78,7 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Result(System.Guid exploreId)
         {
-            if (explorers.TryGetValue(exploreId, out var explorer))
+            if (Explorers.TryGetValue(exploreId, out var explorer))
             {
                 return Ok(explorer.LatestResult);
             }
