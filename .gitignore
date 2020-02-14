@@ -1,3 +1,4 @@
 bin/
 obj/
 ~*
+tests/explorer.api.tests/.vcr/
