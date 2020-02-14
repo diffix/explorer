@@ -96,16 +96,14 @@ namespace Explorer.Api.Tests
             where TResult : IJsonArrayConvertible, new()
         {
             // WaitDebugger();
-            var vcrCassettePath = factory.GetVcrCasettePath(nameof(QueryTests), vcrSessionName);
-            var vcrCassetteFile = new System.IO.FileInfo(vcrCassettePath);
-            var pollingFrequency = (vcrCassetteFile.Exists && vcrCassetteFile.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassettePath);
+            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
+            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var jsonApiClient = new JsonApiClient(client);
             return await jsonApiClient.Query<TResult>(
                 TestDataSource,
                 query.QueryStatement,
                 TimeSpan.FromSeconds(30),
-                pollingFrequency);
+                factory.GetApiPollingFrequencty(vcrCassetteInfo));
         }
     }
 }
