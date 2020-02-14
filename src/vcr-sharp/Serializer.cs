@@ -21,9 +21,12 @@
 
         internal static HttpRequestMessage Deserialize(CachedRequest cachedRequest)
         {
-            var request = new HttpRequestMessage();
-            request.Method = new HttpMethod(cachedRequest.Method);
-            request.RequestUri = new Uri(cachedRequest.Uri);
+            var request = new HttpRequestMessage
+            {
+                Method = new HttpMethod(cachedRequest.Method),
+                RequestUri = new Uri(cachedRequest.Uri),
+            };
+
             foreach (var kvp in cachedRequest.Headers)
             {
                 if (IsValidHeader(kvp.Key))
