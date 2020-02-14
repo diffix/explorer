@@ -4,8 +4,9 @@ mono: none
 cache:
   directories:
     - $HOME/.nuget/packages
+    - tests/.vcr
 install:
   - dotnet restore 
 script:
   - dotnet build 
-  - dotnet test
+  - dotnet test --verbosity normal
