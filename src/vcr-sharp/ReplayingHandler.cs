@@ -61,16 +61,16 @@
             return VCRMode.Playback;
         }
 
-        VCRMode? _vcrMode;
+        VCRMode? vcrMode;
         VCRMode CurrentVCRMode
         {
             get
             {
-                if (!_vcrMode.HasValue)
+                if (!vcrMode.HasValue)
                 {
-                    _vcrMode = Parse(Environment.GetEnvironmentVariable("VCR_MODE"));
+                    vcrMode = Parse(Environment.GetEnvironmentVariable("VCR_MODE"));
                 }
-                return _vcrMode.Value;
+                return vcrMode.Value;
             }
         }
 
