@@ -104,7 +104,7 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
-        public void TestMinMaxExplorer()
+        public async void TestMinMaxExplorer()
         {
             var vcrCassettePath = factory.GetVcrCasettePath(nameof(QueryTests), nameof(RuntimeMethodHandle));
             var vcrCassetteFile = new System.IO.FileInfo(vcrCassettePath);
@@ -121,15 +121,12 @@ namespace Explorer.Api.Tests
                     ColumnName = "amount",
                 });
 
-            var runner = Task.Run(async () => { await explorer.Explore(); });
-            // Assert.True(explorer.LatestResult.Status == "waiting");
-
-            runner.Wait();
+            await explorer.Explore();
 
             var final = explorer.LatestResult;
             Assert.True(final.Status == "complete");
-            Assert.True((final.Metrics.Single(m => m.MetricName == "min").MetricValue as decimal?) == 3288M);
-            Assert.True((final.Metrics.Single(m => m.MetricName == "max").MetricValue as decimal?) == 495725M);
+            Assert.True((decimal)final.Metrics.Single(m => m.MetricName == "refined_min").MetricValue == 3288M);
+            Assert.True((decimal)final.Metrics.Single(m => m.MetricName == "refined_max").MetricValue == 495725M);
         }
 
         [Fact]

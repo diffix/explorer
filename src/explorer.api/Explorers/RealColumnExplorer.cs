@@ -27,7 +27,7 @@
 
         public override async Task Explore()
         {
-            LatestResult = new ExploreResult(ExplorationGuid, status: "waiting");
+            LatestResult = new ExploreResult(ExplorationGuid, status: "processing");
 
             var stats = (await ResolveQuery<NumericColumnStats.RealResult>(
                 new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
@@ -38,6 +38,10 @@
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.RealResult>(
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
+
+            // Start the min-max explorer
+            var minMaxExplorer = new MinMaxExplorer(ApiClient, ExploreParams);
+            var minMaxTask = Task.Run(minMaxExplorer.Explore);
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
                     row.ColumnValue.IsSuppressed ? row.Count : 0);
@@ -146,8 +150,17 @@
                     .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramBuckets))
                     .Append(new ExploreResult.Metric(name: "median_estimate", value: medianEstimate))
                     .Append(new ExploreResult.Metric(name: "avg_estimate", value: decimal.Round(averageEstimate, 2)))
-                    .Append(new ExploreResult.Metric(name: "min_estimate", value: stats.Min))
-                    .Append(new ExploreResult.Metric(name: "max_estimate", value: stats.Max));
+                    .Append(new ExploreResult.Metric(name: "naive_min", value: stats.Min))
+                    .Append(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
+
+            LatestResult = new ExploreResult(ExplorationGuid, status: "processing", metrics: ExploreMetrics);
+
+            await minMaxTask;
+            if (minMaxExplorer.LatestResult.Status == "complete")
+            {
+                ExploreMetrics = ExploreMetrics
+                    .Concat(minMaxExplorer.LatestResult.Metrics);
+            }
 
             LatestResult = new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
         }

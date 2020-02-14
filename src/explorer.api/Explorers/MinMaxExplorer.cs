@@ -25,9 +25,7 @@ namespace Explorer
             var minTask = RefinedEstimate(isMin: true);
             var maxTask = RefinedEstimate(isMin: false);
 
-            var results = await Task.WhenAll(
-                RefinedEstimate(isMin: true),
-                RefinedEstimate(isMin: false));
+            var results = await Task.WhenAll(minTask, maxTask);
 
             if (results.Any(r => r.MetricName == "error"))
             {
@@ -47,7 +45,16 @@ namespace Explorer
         {
             var estimator = isMin ? (Estimator)GetMinEstimate : (Estimator)GetMaxEstimate;
 
-            var estimate = await estimator();
+            decimal? estimate;
+            try
+            {
+                estimate = await estimator();
+            }
+            catch (InvalidOperationException e)
+                when (string.Equals(e.Message, "Sequence contains no elements", StringComparison.CurrentCulture))
+            {
+                estimate = null;
+            }
 
             // The initial estimate should always have a value (unless the dataset is empty?)
             // but check anyway.
@@ -69,7 +76,7 @@ namespace Explorer
 
             Debug.Assert(result.HasValue, $"Unexpected null result when refining {(isMin ? "Min" : "Max")} estimate.");
 
-            return new ExploreResult.Metric(name: isMin ? "min" : "max", value: result.Value);
+            return new ExploreResult.Metric(name: isMin ? "refined_min" : "refined_max", value: result.Value);
         }
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound = null) =>
