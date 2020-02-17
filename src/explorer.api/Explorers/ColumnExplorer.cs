@@ -10,7 +10,7 @@ namespace Explorer
 
     internal abstract class ColumnExplorer
     {
-        private readonly ConcurrentQueue<ExploreResult> exploreResults;
+        private readonly ConcurrentStack<ExploreResult> exploreResults;
 
         protected ColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
         {
@@ -18,16 +18,30 @@ namespace Explorer
             ExploreParams = exploreParams;
             ExplorationGuid = Guid.NewGuid();
 
-            exploreResults = new ConcurrentQueue<ExploreResult>();
-            exploreResults.Enqueue(new ExploreResult(ExplorationGuid, "new"));
+            exploreResults = new ConcurrentStack<ExploreResult>();
+            exploreResults.Push(new ExploreResult(ExplorationGuid, "new"));
         }
 
         public Guid ExplorationGuid { get; }
 
         public ExploreResult LatestResult
         {
-            get { return exploreResults.ToArray()[^1]; }
-            protected set { exploreResults.Enqueue(value); }
+            get
+            {
+                if (exploreResults.TryPeek(out var result))
+                {
+                    return result;
+                }
+                else
+                {
+                    return new ExploreError(ExplorationGuid, "Unexpected error: unknown explorer status.");
+                }
+            }
+
+            protected set
+            {
+                exploreResults.Push(value);
+            }
         }
 
         protected ExploreParams ExploreParams { get; }
