@@ -1,34 +1,28 @@
-namespace Explorer.Queries.Tests
+namespace Explorer.Api.Tests
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
+    using Explorer.Queries;
     using Xunit;
 
-    public sealed class QueryTests
+    public sealed class QueryTests : IClassFixture<TestWebAppFactory>
     {
-        private const string AircloakApiKeyEnvVariable = "AIRCLOAK_API_KEY";
-
         private const string TestDataSource = "gda_banking";
 
-        private static readonly Uri AircloakTestServerUrl = new Uri("https://attack.aircloak.com/api/");
+        private readonly TestWebAppFactory factory;
 
-        private readonly JsonApiSession jsonApiSession;
-
-        public QueryTests()
+        public QueryTests(TestWebAppFactory factory)
         {
-            var apiKey = Environment.GetEnvironmentVariable(AircloakApiKeyEnvVariable) ??
-                    throw new System.InvalidOperationException(
-                        $"Environment variable {AircloakApiKeyEnvVariable} must be set");
-
-            this.jsonApiSession = JsonApiSessionManager.NewJsonApiSession(AircloakTestServerUrl, apiKey);
+            this.factory = factory;
         }
 
         [Fact]
-        public async void TestDistinctValueQuery()
+        public async void TestDistinctLoansDuration()
         {
             var intResult = await QueryResult<DistinctColumnValues.IntegerResult>(
                 new DistinctColumnValues(
@@ -42,24 +36,30 @@ namespace Explorer.Queries.Tests
                 Assert.True(row.Count.HasValue && row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
+        }
 
+        [Fact]
+        public async void TestDistinctLoansPayments()
+        {
             var realResult = await QueryResult<DistinctColumnValues.RealResult>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
-
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
                     ((ValueColumn<double>)row.ColumnValue).ColumnValue >= 0);
                 Assert.True(row.Count.HasValue && row.Count > 0);
             });
+        }
 
+        [Fact]
+        public async void TestDistinctLoansGender()
+        {
             var textResult = await QueryResult<DistinctColumnValues.TextResult>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
-
             Assert.All(textResult.ResultRows, row =>
             {
                 Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
@@ -72,7 +72,7 @@ namespace Explorer.Queries.Tests
         }
 
         [Fact]
-        public async void TestHistogramQuery()
+        public async void TestHistogramLoansAmount()
         {
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
             var result = await QueryResult<SingleColumnHistogram.Result>(
@@ -92,13 +92,18 @@ namespace Explorer.Queries.Tests
             });
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query)
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
             where TResult : IJsonArrayConvertible, new()
         {
-            return await jsonApiSession.Query<TResult>(
+            // WaitDebugger();
+            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
+            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
+            var jsonApiClient = new JsonApiClient(client);
+            return await jsonApiClient.Query<TResult>(
                 TestDataSource,
                 query.QueryStatement,
-                TimeSpan.FromSeconds(30));
+                TimeSpan.FromSeconds(30),
+                factory.GetApiPollingFrequencty(vcrCassetteInfo));
         }
     }
 }

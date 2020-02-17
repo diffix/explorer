@@ -7,7 +7,8 @@
     <Rule Id="CA1303" Action="None" /> <!-- Use a resource string for exception message instead of literal  -->
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
-    <Rule Id="SA1600" Action="None"/> <!-- Elements should be documented -->
+    <Rule Id="SA0001" Action="None" /> <!-- XML comment analysis is disabled due to project configuration -->
+    <Rule Id="SA1600" Action="None" /> <!-- Elements should be documented -->
     <Rule Id="SA1101" Action="None" /> <!-- Prefix local calls with this -->
     <Rule Id="SA1633" Action="None" /> <!-- The file header is missing or not located at the top of the file (about comments at the beginning of the file including license/copyright) -->
     <Rule Id="SA1513" Action="None" /> <!-- Closing brace should be followed by a blank line -->

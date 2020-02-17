@@ -12,8 +12,8 @@
 
     internal class IntegerColumnExplorer : ColumnExplorer
     {
-        public IntegerColumnExplorer(JsonApiSession apiSession, ExploreParams exploreParams)
-            : base(apiSession, exploreParams)
+        public IntegerColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
+            : base(apiClient, exploreParams)
         {
         }
 
@@ -23,7 +23,7 @@
 
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 
-            var queryResult = await ApiSession.Query<NumericColumnStats.IntegerResult>(
+            var queryResult = await ApiClient.Query<NumericColumnStats.IntegerResult>(
                 ExploreParams.DataSourceName,
                 queryParams.QueryStatement,
                 TimeSpan.FromMinutes(2));

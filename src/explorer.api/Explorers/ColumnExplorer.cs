@@ -8,9 +8,9 @@ namespace Explorer
 
     internal abstract class ColumnExplorer
     {
-        protected ColumnExplorer(JsonApiSession apiSession, ExploreParams exploreParams)
+        protected ColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
         {
-            ApiSession = apiSession;
+            ApiClient = apiClient;
             ExploreParams = exploreParams;
             ExplorationGuid = Guid.NewGuid();
         }
@@ -19,7 +19,7 @@ namespace Explorer
 
         protected ExploreParams ExploreParams { get; }
 
-        protected JsonApiSession ApiSession { get; }
+        protected JsonApiClient ApiClient { get; }
 
         public abstract IAsyncEnumerable<ExploreResult> Explore();
     }

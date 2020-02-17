@@ -1,6 +1,6 @@
 ﻿namespace Explorer.Api.Controllers
 {
-    using System;
+    using System.Net.Http;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
@@ -15,12 +15,12 @@
     public class ExploreController : ControllerBase
     {
         private readonly ILogger<ExploreController> logger;
-        private readonly JsonApiClient aircloakApiClient;
+        private readonly JsonApiClient apiClient;
 
-        public ExploreController(ILogger<ExploreController> logger, JsonApiClient aircloakApiClient)
+        public ExploreController(ILogger<ExploreController> logger, JsonApiClient apiClient)
         {
             this.logger = logger;
-            this.aircloakApiClient = aircloakApiClient;
+            this.apiClient = apiClient;
         }
 
         [HttpPost]
@@ -29,12 +29,7 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            var apiSession = new JsonApiSession(
-                aircloakApiClient,
-                new Uri("https://attack.aircloak.com/api/"),
-                data.ApiKey);
-
-            var dataSources = apiSession.GetDataSources().Result;
+            var dataSources = apiClient.GetDataSources().Result;
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
@@ -51,7 +46,7 @@
                 return BadRequest(); // TODO Return something more descriptive
             }
 
-            var explorer = CreateNumericColumnExplorer(explorerColumnMeta.Type, apiSession, data);
+            var explorer = CreateNumericColumnExplorer(explorerColumnMeta.Type, apiClient, data);
 
             if (explorer == null)
             {
@@ -76,12 +71,12 @@
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private static ColumnExplorer? CreateNumericColumnExplorer(AircloakType type, JsonApiSession apiSession, Models.ExploreParams data)
+        private static ColumnExplorer? CreateNumericColumnExplorer(AircloakType type, JsonApiClient apiClient, Models.ExploreParams data)
         {
             return type switch
             {
-                AircloakType.Integer => new IntegerColumnExplorer(apiSession, data),
-                AircloakType.Real => new RealColumnExplorer(apiSession, data),
+                AircloakType.Integer => new IntegerColumnExplorer(apiClient, data),
+                AircloakType.Real => new RealColumnExplorer(apiClient, data),
                 _ => null,
             };
         }

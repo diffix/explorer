@@ -4,21 +4,26 @@ namespace Explorer.Api.Tests
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
-    using System.Net.Http.Headers;
+    using System.Runtime.CompilerServices;
     using System.Text.Json;
-    using Microsoft.AspNetCore.Hosting;
-    using Microsoft.AspNetCore.TestHost;
     using Xunit;
 
-    public sealed class ExploreTest
+    public sealed class ExploreTests : IClassFixture<TestWebAppFactory>
     {
         private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
         {
-            ApiKey = Environment.GetEnvironmentVariable("AIRCLOAK_API_KEY") ?? "API_KEY_NOT_SET",
+            ApiKey = TestWebAppFactory.Config.AircloakApiKey,
             DataSourceName = "gda_banking",
             TableName = "loans",
             ColumnName = "amount",
         };
+
+        private readonly TestWebAppFactory factory;
+
+        public ExploreTests(TestWebAppFactory factory)
+        {
+            this.factory = factory;
+        }
 
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
 
@@ -59,24 +64,52 @@ namespace Explorer.Api.Tests
             });
         }
 
-        [Theory]
-        [InlineData("")]
-        [InlineData("/")]
-        [InlineData("/invalid endpoint test")]
-        public void FailWithBadEndPoint(string endpoint)
+        [Fact]
+        public void FailWithInvalidEndPoint()
         {
-            TestApi(HttpMethod.Post, endpoint, ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, "/invalid_endpoint", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
-        [Theory]
-        [InlineData("DELETE")]
-        [InlineData("GET")]
-        [InlineData("HEAD")]
-        [InlineData("PUT")]
-        public void FailWithBadMethod(string method)
+        [Fact]
+        public void FailWithEmptyEndPoint()
         {
-            TestApi(new HttpMethod(method), "/explore", ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, string.Empty, ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithRootEndPoint()
+        {
+            TestApi(HttpMethod.Post, "/", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithGetMethod()
+        {
+            TestApi(new HttpMethod("GET"), "/explore", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithHeadMethod()
+        {
+            TestApi(new HttpMethod("HEAD"), "/explore", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithPutMethod()
+        {
+            TestApi(new HttpMethod("PUT"), "/explore", ValidData, (response, content) =>
+                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        [Fact]
+        public void FailWithDeleteMethod()
+        {
+            TestApi(new HttpMethod("DELETE"), "/explore", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -107,20 +140,13 @@ namespace Explorer.Api.Tests
             });
         }
 
-        private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test)
+        private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test, [CallerMemberName] string vcrSessionName = "")
         {
-            using var server = new TestServer(new WebHostBuilder()
-                .UseEnvironment("Development")
-                .UseStartup<Startup>());
-            using var client = server.CreateClient();
-            using var request = new HttpRequestMessage(method, endpoint);
-            if (data != null)
-            {
-                request.Content = new StringContent(JsonSerializer.Serialize(data));
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            }
-            using var response = await client.SendAsync(request).ConfigureAwait(false);
-            var responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            // TestUtils.WaitDebugger();
+            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
+            using var request = factory.CreateHttpRequest(method, endpoint, data);
+            using var response = await client.SendAsync(request);
+            var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
         }
     }

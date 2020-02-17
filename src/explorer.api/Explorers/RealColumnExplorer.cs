@@ -12,8 +12,8 @@
 
     internal class RealColumnExplorer : ColumnExplorer
     {
-        public RealColumnExplorer(JsonApiSession apiSession, ExploreParams exploreParams)
-            : base(apiSession, exploreParams)
+        public RealColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
+            : base(apiClient, exploreParams)
         {
         }
 
@@ -23,7 +23,7 @@
 
             yield return new ExploreResult(ExplorationGuid, status: "waiting");
 
-            var queryResult = await ApiSession.Query<NumericColumnStats.RealResult>(
+            var queryResult = await ApiClient.Query<NumericColumnStats.RealResult>(
                 ExploreParams.DataSourceName,
                 queryParams.QueryStatement,
                 TimeSpan.FromMinutes(2));
