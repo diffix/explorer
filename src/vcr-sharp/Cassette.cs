@@ -44,13 +44,18 @@
             storedEntries = new List<CachedRequestResponse>();
         }
 
-        static bool MatchesRequest(CachedRequestResponse cached, HttpRequestMessage request)
+        static async Task<bool> MatchesRequest(CachedRequestResponse cached, HttpRequestMessage request)
         {
             if (!string.Equals(cached.Request.Method, request.Method.Method, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
             if (cached.Request.Uri != request.RequestUri.ToString())
+            {
+                return false;
+            }
+            var reqBody = request.Content == null ? string.Empty : await request.Content.ReadAsStringAsync();
+            if (cached.Request.Body.Text != reqBody)
             {
                 return false;
             }
@@ -71,7 +76,7 @@
 
             var entry = cachedEntries[currentIndex];
             currentIndex++;
-            if (MatchesRequest(entry, request))
+            if (await MatchesRequest(entry, request))
             {
                 // persist the existing cached entry to disk
                 storedEntries.Add(entry);
