@@ -25,12 +25,12 @@
     {
         private readonly Cassette cassette;
 
-        public ReplayingHandler(HttpMessageHandler innerHandler, string cassettePath) : base(innerHandler)
+        public ReplayingHandler(HttpMessageHandler innerHandler, Cassette cassette) : base(innerHandler)
         {
-            cassette = new Cassette(cassettePath);
+            this.cassette = cassette;
         }
 
-        public ReplayingHandler(string cassettePath) : this(new HttpClientHandler(), cassettePath)
+        public ReplayingHandler(Cassette cassette) : this(new HttpClientHandler(), cassette)
         {
 
         }
@@ -78,7 +78,7 @@
         {
             if (CurrentVCRMode != VCRMode.Record)
             {
-                var cachedResponse = await cassette.FindCachedResponseAsync(request);
+                var cachedResponse = await cassette.FindCachedResponse(request);
                 if (cachedResponse.Found)
                 {
                     return cachedResponse.Response;
@@ -93,7 +93,6 @@
             var freshResponse = await base.SendAsync(request, cancellationToken);
 
             await cassette.StoreCachedResponseAsync(request, freshResponse);
-            await cassette.FlushToDisk();
 
             return freshResponse;
         }
