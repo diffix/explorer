@@ -33,20 +33,22 @@ namespace Explorer.Api.Tests
         [Fact]
         public void Success()
         {
-            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
-                Assert.True(response.IsSuccessStatusCode, content));
+            TestApi(HttpMethod.Post, "/explore", ValidData, (response, _) =>
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}."));
         }
 
         [Fact]
         public void SuccessWithContents()
         {
-            TestApi(HttpMethod.Post, "/explore", ValidData, (_, content) =>
+            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
             {
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
                 using var jsonContent = JsonDocument.Parse(content);
                 var rootEl = jsonContent.RootElement;
                 Assert.True(
                     rootEl.ValueKind == JsonValueKind.Object,
-                    "Expected a JSON object in the response:\n{content}");
+                    $"Expected a JSON object in the response:\n{content}");
                 Assert.True(
                     rootEl.TryGetProperty("id", out var id),
                     $"Expected an 'id' property in:\n{content}");
@@ -59,13 +61,15 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void SuccessWithResult()
         {
-            var explorerGuid = await TestApi(HttpMethod.Post, "/explore", ValidData, (_, content) =>
+            var explorerGuid = await TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
             {
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
                 using var jsonContent = JsonDocument.Parse(content);
                 var rootEl = jsonContent.RootElement;
                 Assert.True(
                     rootEl.ValueKind == JsonValueKind.Object,
-                    "Expected a JSON object in the response:\n{content}");
+                    $"Expected a JSON object in the response:\n{content}");
                 Assert.True(
                     rootEl.TryGetProperty("id", out var id),
                     $"Expected an 'id' property in:\n{content}");
@@ -80,13 +84,13 @@ namespace Explorer.Api.Tests
 
             TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
             {
-                Assert.True(response.IsSuccessStatusCode, content);
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
 
                 using var jsonContent = JsonDocument.Parse(content);
                 var rootEl = jsonContent.RootElement;
                 Assert.True(
                     rootEl.ValueKind == JsonValueKind.Object,
-                    "Expected a JSON object in the response:\n{content}");
+                    $"Expected a JSON object in the response:\n{content}");
                 Assert.True(
                     rootEl.TryGetProperty("id", out var id),
                     $"Expected an 'id' property in:\n{content}");
@@ -160,7 +164,13 @@ namespace Explorer.Api.Tests
         [Fact]
         public void FailWithEmptyFields()
         {
-            var data = new { ApiKey = string.Empty, DataSourceName = string.Empty, TableName = string.Empty, ColumnName = string.Empty };
+            var data = new
+            {
+                ApiKey = string.Empty,
+                DataSourceName = string.Empty,
+                TableName = string.Empty,
+                ColumnName = string.Empty,
+            };
             TestApi(HttpMethod.Post, "/explore", data, (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
@@ -184,7 +194,12 @@ namespace Explorer.Api.Tests
             });
         }
 
-        private async void TestApi(HttpMethod method, string endpoint, object data, ApiTestActionWithContent test, [CallerMemberName] string vcrSessionName = "")
+        private async void TestApi(
+            HttpMethod method,
+            string endpoint,
+            object? data,
+            ApiTestActionWithContent test,
+            [CallerMemberName] string vcrSessionName = "")
         {
             // TestUtils.WaitDebugger();
             using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
@@ -194,7 +209,12 @@ namespace Explorer.Api.Tests
             test(response, responseString);
         }
 
-        private async Task<T> TestApi<T>(HttpMethod method, string endpoint, object data, ApiTestActionWithContent<T> test, [CallerMemberName] string vcrSessionName = "")
+        private async Task<T> TestApi<T>(
+            HttpMethod method,
+            string endpoint,
+            object? data,
+            ApiTestActionWithContent<T> test,
+            [CallerMemberName] string vcrSessionName = "")
         {
             // TestUtils.WaitDebugger();
             using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);

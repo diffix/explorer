@@ -122,9 +122,13 @@ namespace Explorer.Api.Tests
             await explorer.Explore();
 
             var final = explorer.LatestResult;
-            Assert.True(final.Status == "complete");
-            Assert.True((decimal)final.Metrics.Single(m => m.MetricName == "refined_min").MetricValue == 3288M);
-            Assert.True((decimal)final.Metrics.Single(m => m.MetricName == "refined_max").MetricValue == 495725M);
+            const decimal expectedMin = 3288M;
+            const decimal expectedMax = 495725M;
+            Assert.True(final.Status == "complete", $"Expected status `complete`, got {final.Status}.");
+            var actualMin = (decimal)final.Metrics.Single(m => m.MetricName == "refined_min").MetricValue;
+            Assert.True(actualMin == expectedMin, $"Expected {expectedMin}, got {actualMin}");
+            var actualMax = (decimal)final.Metrics.Single(m => m.MetricName == "refined_max").MetricValue;
+            Assert.True(actualMax == expectedMax, $"Expected {expectedMax}, got {actualMax}");
         }
 
         [Fact]
