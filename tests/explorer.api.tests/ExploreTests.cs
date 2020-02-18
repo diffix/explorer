@@ -112,52 +112,24 @@ namespace Explorer.Api.Tests
             });
         }
 
-        [Fact]
-        public void FailWithInvalidEndPoint()
+        [Theory]
+        [InlineData("")]
+        [InlineData("/")]
+        [InlineData("/invalid endpoint test")]
+        public void FailWithBadEndPoint(string endpoint)
         {
-            TestApi(HttpMethod.Post, "/invalid_endpoint", ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, endpoint, ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
-        [Fact]
-        public void FailWithEmptyEndPoint()
+        [Theory]
+        [InlineData("DELETE")]
+        [InlineData("GET")]
+        [InlineData("HEAD")]
+        [InlineData("PUT")]
+        public void FailWithBadMethod(string method)
         {
-            TestApi(HttpMethod.Post, string.Empty, ValidData, (response, content) =>
-                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
-        }
-
-        [Fact]
-        public void FailWithRootEndPoint()
-        {
-            TestApi(HttpMethod.Post, "/", ValidData, (response, content) =>
-                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
-        }
-
-        [Fact]
-        public void FailWithGetMethod()
-        {
-            TestApi(new HttpMethod("GET"), "/explore", ValidData, (response, content) =>
-                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
-        }
-
-        [Fact]
-        public void FailWithHeadMethod()
-        {
-            TestApi(new HttpMethod("HEAD"), "/explore", ValidData, (response, content) =>
-                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
-        }
-
-        [Fact]
-        public void FailWithPutMethod()
-        {
-            TestApi(new HttpMethod("PUT"), "/explore", ValidData, (response, content) =>
-                Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
-        }
-
-        [Fact]
-        public void FailWithDeleteMethod()
-        {
-            TestApi(new HttpMethod("DELETE"), "/explore", ValidData, (response, content) =>
+            TestApi(new HttpMethod(method), "/explore", ValidData, (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
