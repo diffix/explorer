@@ -132,6 +132,62 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestCategoricalTextColumn()
+        {
+            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), nameof(TestCategoricalTextColumn));
+            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
+            var jsonApiClient = new JsonApiClient(client);
+
+            var explorer = new TextColumnExplorer(
+                jsonApiClient,
+                new Models.ExploreParams
+                {
+                    DataSourceName = "gda_banking",
+                    TableName = "loans",
+                    ColumnName = "status",
+                });
+
+            await explorer.Explore();
+
+            var final = explorer.LatestResult;
+            Assert.True(final.Status == "complete", $"Expected status `complete`, got {final.Status}.");
+
+            var expectedValues = new List<dynamic>
+            {
+                new { Value = "C", Count = 493L },
+                new { Value = "A", Count = 260L },
+                new { Value = "D", Count = 42L },
+                new { Value = "B", Count = 32L },
+            };
+
+            var distinctValues = (IEnumerable<dynamic>)final.Metrics
+                .Single(m => m.MetricName == "top_distinct_values")
+                .MetricValue;
+
+            Assert.All<(dynamic, dynamic)>(distinctValues.Zip(expectedValues), tuple =>
+            {
+                var actual = tuple.Item1;
+                var expected = tuple.Item2;
+                Assert.True(actual.Value == expected.Value, $"Expected {expected}, got {actual}.");
+                Assert.True(actual.Count == expected.Count, $"Expected {expected}, got {actual}.");
+            });
+
+            var expectedTotal = expectedValues.Sum(v => (long)v.Count);
+            var actualTotal = (long)final.Metrics
+                .Single(m => m.MetricName == "total_count")
+                .MetricValue;
+            Assert.True(expectedTotal == actualTotal, $"Expected total of {expectedTotal}, got {actualTotal}");
+
+            const long expectedSuppressed = 0L;
+            var actualSuppressed = (long)final.Metrics
+                .Single(m => m.MetricName == "suppressed_values")
+                .MetricValue;
+            Assert.True(
+                actualSuppressed == expectedSuppressed,
+                $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
+        }
+
+        [Fact]
         public async void TestRepeatingRows()
         {
             var queryResult = await QueryResult(new RepeatingRowsQuery());
