@@ -48,21 +48,7 @@ namespace Explorer
             decimal? estimate;
             decimal? result = null;
 
-            try
-            {
-                estimate = await estimator();
-            }
-            catch (InvalidOperationException e)
-                when (string.Equals(e.Message, "Sequence contains no elements", StringComparison.CurrentCulture))
-            {
-                // The initial estimate should always have a value (unless the dataset is empty?)
-                // but check anyway. If we reach here, there is something wrong with the source data.
-                var err =
-                    $"Unable to obtain initial {(isMin ? "Min" : "Max")} estimate for " +
-                    "{ExploreParams.TableName}, {ExploreParams.ColumnName}.";
-
-                return new ExploreResult.Metric(name: Status.Error, value: err);
-            }
+            estimate = await estimator();
 
             while (estimate.HasValue && estimate != result)
             {
