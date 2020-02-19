@@ -119,7 +119,7 @@
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
                 Converters =
                 {
-                    new JsonArrayConverter<IRowReader<TRow>, TRow>(querySpec),
+                    new JsonArrayConverter<IQuerySpec<TRow>, TRow>(querySpec),
                 },
             };
 

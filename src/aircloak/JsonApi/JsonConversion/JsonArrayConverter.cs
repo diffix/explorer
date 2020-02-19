@@ -7,16 +7,16 @@ namespace Aircloak.JsonApi
     /// <summary>
     /// Implements a <see cref="JsonConverter"/> for deserializing Aircloak rows from json array contents.
     /// </summary>
-    /// <typeparam name="TRowReader">A type that implements <see cref="IRowReader{T}"/> for T.</typeparam>
+    /// <typeparam name="TQuerySpec">A type that implements <see cref="IQuerySpec{T}"/> for T.</typeparam>
     /// <typeparam name="T">The type that the json array will be converted to.</typeparam>
     /// <remarks>Note that this is meant for reading JSON only: the Write method is intentionally
     /// left unimplemented.</remarks>
-    internal class JsonArrayConverter<TRowReader, T> : JsonConverter<T>
-        where TRowReader : IRowReader<T>
+    internal class JsonArrayConverter<TQuerySpec, T> : JsonConverter<T>
+        where TQuerySpec : IQuerySpec<T>
     {
-        private readonly IRowReader<T> querySpec;
+        private readonly IQuerySpec<T> querySpec;
 
-        public JsonArrayConverter(IRowReader<T> querySpec)
+        public JsonArrayConverter(IQuerySpec<T> querySpec)
         {
             this.querySpec = querySpec;
         }
