@@ -118,7 +118,9 @@ namespace Explorer.Api.Tests
 
             const decimal expectedMin = 3288M;
             const decimal expectedMax = 495725M;
-            Assert.True(final.Status == "complete", $"Expected status `complete`, got {final.Status}.");
+            Assert.True(
+                final.Status == ColumnExplorer.Status.Complete,
+                $"Expected status `{ColumnExplorer.Status.Complete}`, got {final.Status}.");
             var actualMin = (decimal)final.Metrics.Single(m => m.MetricName == "refined_min").MetricValue;
             Assert.True(actualMin == expectedMin, $"Expected {expectedMin}, got {actualMin}");
             var actualMax = (decimal)final.Metrics.Single(m => m.MetricName == "refined_max").MetricValue;

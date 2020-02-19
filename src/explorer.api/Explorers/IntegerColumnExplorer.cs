@@ -27,7 +27,7 @@
 
         public override async Task Explore()
         {
-            LatestResult = new ExploreResult(ExplorationGuid, status: "processing");
+            LatestResult = new ExploreResult(ExplorationGuid, status: Status.New);
 
             var stats = (await ResolveQuery<NumericColumnStats.IntegerResult>(
                 new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
@@ -77,7 +77,7 @@
 
                 LatestResult = new ExploreResult(
                     ExplorationGuid,
-                    status: "complete",
+                    status: Status.Complete,
                     metrics: ExploreMetrics);
 
                 return;
@@ -153,16 +153,16 @@
                     .Append(new ExploreResult.Metric(name: "naive_min", value: stats.Min))
                     .Append(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
 
-            LatestResult = new ExploreResult(ExplorationGuid, status: "processing", metrics: ExploreMetrics);
+            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Processing, metrics: ExploreMetrics);
 
             await minMaxTask;
-            if (minMaxExplorer.LatestResult.Status == "complete")
+            if (minMaxExplorer.LatestResult.Status == Status.Complete)
             {
                 ExploreMetrics = ExploreMetrics
                     .Concat(minMaxExplorer.LatestResult.Metrics);
             }
 
-            LatestResult = new ExploreResult(ExplorationGuid, status: "complete", metrics: ExploreMetrics);
+            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Complete, metrics: ExploreMetrics);
             return;
         }
     }
