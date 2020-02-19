@@ -29,11 +29,11 @@ namespace Explorer
 
             if (results.Any(r => r.MetricName == Status.Error))
             {
-                var errors =
-                    (from result in results
-                     where result.MetricName == Status.Error
-                     select result.MetricValue)
-                     .ToList();
+                var errors = results
+                                .Where(r => r.MetricName == Status.Error)
+                                .Select(r => r.MetricValue)
+                                .ToList();
+
                 LatestResult = new ExploreError(ExplorationGuid, string.Join("/n", errors));
                 return;
             }
@@ -46,6 +46,8 @@ namespace Explorer
             var estimator = isMin ? (Estimator)GetMinEstimate : (Estimator)GetMaxEstimate;
 
             decimal? estimate;
+            decimal? result = null;
+
             try
             {
                 estimate = await estimator();
@@ -53,13 +55,8 @@ namespace Explorer
             catch (InvalidOperationException e)
                 when (string.Equals(e.Message, "Sequence contains no elements", StringComparison.CurrentCulture))
             {
-                estimate = null;
-            }
-
-            // The initial estimate should always have a value (unless the dataset is empty?)
-            // but check anyway.
-            if (!estimate.HasValue)
-            {
+                // The initial estimate should always have a value (unless the dataset is empty?)
+                // but check anyway. If we reach here, there is something wrong with the source data.
                 var err =
                     $"Unable to obtain initial {(isMin ? "Min" : "Max")} estimate for " +
                     "{ExploreParams.TableName}, {ExploreParams.ColumnName}.";
@@ -67,7 +64,6 @@ namespace Explorer
                 return new ExploreResult.Metric(name: Status.Error, value: err);
             }
 
-            decimal? result = null;
             while (estimate.HasValue && estimate != result)
             {
                 result = estimate;
