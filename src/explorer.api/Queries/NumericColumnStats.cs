@@ -27,7 +27,7 @@ namespace Explorer.Queries
 
         public string ColumnName { get; }
 
-        IntegerResult IRowReader<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
+        IntegerResult IQuerySpec<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
             var min = reader.GetInt64();
@@ -47,7 +47,7 @@ namespace Explorer.Queries
             };
         }
 
-        RealResult IRowReader<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
+        RealResult IQuerySpec<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
             var min = reader.GetDouble();

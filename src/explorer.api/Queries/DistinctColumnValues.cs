@@ -33,7 +33,7 @@ namespace Explorer.Queries
 
         public string ColumnName { get; }
 
-        IntegerResult IRowReader<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
+        IntegerResult IQuerySpec<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
             var columnValue = AircloakColumnJsonParser.ParseLong(ref reader);
@@ -47,7 +47,7 @@ namespace Explorer.Queries
             };
         }
 
-        RealResult IRowReader<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
+        RealResult IQuerySpec<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
             var columnValue = AircloakColumnJsonParser.ParseDouble(ref reader);
@@ -61,7 +61,7 @@ namespace Explorer.Queries
             };
         }
 
-        BoolResult IRowReader<BoolResult>.FromJsonArray(ref Utf8JsonReader reader)
+        BoolResult IQuerySpec<BoolResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
             var columnValue = AircloakColumnJsonParser.ParseBool(ref reader);
@@ -75,7 +75,7 @@ namespace Explorer.Queries
             };
         }
 
-        TextResult IRowReader<TextResult>.FromJsonArray(ref Utf8JsonReader reader)
+        TextResult IQuerySpec<TextResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
             var columnValue = AircloakColumnJsonParser.ParseString(ref reader);
