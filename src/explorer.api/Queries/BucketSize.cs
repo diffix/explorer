@@ -77,19 +77,33 @@ namespace Explorer.Queries
 
         public BucketSize Larger(int steps)
         {
-            return new BucketSize(
-                ValidSizes
-                    .SkipWhile(size => size < SnappedSize)
-                    .ElementAt(steps));
+            try
+            {
+                return new BucketSize(
+                    ValidSizes
+                        .SkipWhile(size => size < SnappedSize)
+                        .ElementAt(steps));
+            }
+            catch (System.IndexOutOfRangeException)
+            {
+                return new BucketSize(ValidSizes.Last());
+            }
         }
 
         public BucketSize Smaller(int steps)
         {
-            return new BucketSize(
-                ValidSizes
+            try
+            {
+                return new BucketSize(
+                    ValidSizes
                     .TakeWhile(size => size <= SnappedSize)
                     .Reverse()
                     .ElementAt(steps));
+            }
+            catch (System.IndexOutOfRangeException)
+            {
+                return new BucketSize(ValidSizes.First());
+            }
         }
 
         public override bool Equals(object? obj)
