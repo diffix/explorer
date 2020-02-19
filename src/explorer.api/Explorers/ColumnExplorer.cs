@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Concurrent;
     using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace Explorer
             ExplorationGuid = Guid.NewGuid();
 
             exploreResults = new ConcurrentStack<ExploreResult>();
-            exploreResults.Push(new ExploreResult(ExplorationGuid, "new"));
+            exploreResults.Push(new ExploreResult(ExplorationGuid, Status.New));
         }
 
         public Guid ExplorationGuid { get; }
@@ -58,6 +59,14 @@ namespace Explorer
                 ExploreParams.DataSourceName,
                 query,
                 timeout);
+        }
+
+        public static class Status
+        {
+            public const string New = "new";
+            public const string Processing = "processing";
+            public const string Error = "error";
+            public const string Complete = "complete";
         }
     }
 }

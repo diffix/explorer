@@ -27,18 +27,18 @@ namespace Explorer
 
             var results = await Task.WhenAll(minTask, maxTask);
 
-            if (results.Any(r => r.MetricName == "error"))
+            if (results.Any(r => r.MetricName == Status.Error))
             {
                 var errors =
                     (from result in results
-                     where result.MetricName == "error"
+                     where result.MetricName == Status.Error
                      select result.MetricValue)
                      .ToList();
                 LatestResult = new ExploreError(ExplorationGuid, string.Join("/n", errors));
                 return;
             }
 
-            LatestResult = new ExploreResult(ExplorationGuid, "complete", results);
+            LatestResult = new ExploreResult(ExplorationGuid, Status.Complete, results);
         }
 
         private async Task<ExploreResult.Metric> RefinedEstimate(bool isMin)
@@ -64,7 +64,7 @@ namespace Explorer
                     $"Unable to obtain initial {(isMin ? "Min" : "Max")} estimate for " +
                     "{ExploreParams.TableName}, {ExploreParams.ColumnName}.";
 
-                return new ExploreResult.Metric(name: "error", value: err);
+                return new ExploreResult.Metric(name: Status.Error, value: err);
             }
 
             decimal? result = null;
