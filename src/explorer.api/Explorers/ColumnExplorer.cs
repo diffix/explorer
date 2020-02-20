@@ -1,55 +1,91 @@
 namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api.Models;
 
-    internal abstract class ColumnExplorer
+    internal class ColumnExplorer
     {
-        private readonly ConcurrentStack<ExploreResult> exploreResults;
+        private readonly ConcurrentStack<ExploreResult.Metric> exploreResults;
 
-        protected ColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
+        private readonly Dictionary<Type, Task> childTasks;
+
+        private readonly Dictionary<Type, ExplorerImpl> childExplorers;
+
+        private readonly ConcurrentDictionary<string, ExploreResult.Metric> exploreMetrics;
+
+        public ColumnExplorer()
         {
-            ApiClient = apiClient;
-            ExploreParams = exploreParams;
             ExplorationGuid = Guid.NewGuid();
 
-            exploreResults = new ConcurrentStack<ExploreResult>();
-            exploreResults.Push(new ExploreResult(ExplorationGuid, Status.New));
+            exploreResults = new ConcurrentStack<ExploreResult.Metric>();
+            exploreMetrics = new ConcurrentDictionary<string, ExploreResult.Metric>();
+
+            childTasks = new Dictionary<Type, Task>();
+            childExplorers = new Dictionary<Type, ExplorerImpl>();
         }
 
         public Guid ExplorationGuid { get; }
 
-        public ExploreResult LatestResult
+        public IEnumerable<ExploreResult.Metric> ExploreMetrics
         {
             get
             {
-                if (exploreResults.TryPeek(out var result))
+                foreach (var explorer in childExplorers.Values)
                 {
-                    return result;
+                    foreach (var metric in explorer.Metrics)
+                    {
+                        yield return metric;
+                    }
                 }
-                else
-                {
-                    return new ExploreError(ExplorationGuid, "Unexpected error: unknown explorer status.");
-                }
-            }
-
-            protected set
-            {
-                exploreResults.Push(value);
             }
         }
 
-        protected ExploreParams ExploreParams { get; }
+        public Task Completion()
+        {
+            return Task.WhenAll(childTasks.Values);
+        }
 
-        protected JsonApiClient ApiClient { get; }
+        public void Spawn(ExplorerImpl explorerImpl)
+        {
+            var exploreTask = Task.Run(explorerImpl.Explore);
+            childExplorers.Add(explorerImpl.GetType(), explorerImpl);
+            childTasks.Add(explorerImpl.GetType(), exploreTask);
+        }
+    }
+
+    internal abstract class ExplorerImpl
+    {
+        private readonly ConcurrentBag<ExploreResult.Metric> metrics;
+
+        protected ExplorerImpl(JsonApiClient apiClient, ExploreParams exploreParams)
+        {
+            ApiClient = apiClient;
+            ExploreParams = exploreParams;
+
+            metrics = new ConcurrentBag<ExploreResult.Metric>();
+        }
+
+        public ExploreResult.Metric[] Metrics
+        {
+            get => metrics.ToArray();
+        }
+
+        public ExploreParams ExploreParams { get; }
+
+        public JsonApiClient ApiClient { get; }
 
         public abstract Task Explore();
+
+        protected void PublishMetric(ExploreResult.Metric metric)
+        {
+            metrics.Add(metric);
+        }
 
         protected async Task<QueryResult<TResult>> ResolveQuery<TResult>(
             IQuerySpec<TResult> query,
@@ -59,14 +95,6 @@ namespace Explorer
                 ExploreParams.DataSourceName,
                 query,
                 timeout);
-        }
-
-        public static class Status
-        {
-            public const string New = "new";
-            public const string Processing = "processing";
-            public const string Error = "error";
-            public const string Complete = "complete";
         }
     }
 }
