@@ -48,14 +48,12 @@ namespace Explorer
         {
             var bucketSizeEstimate = new BucketSize(valuesPerBucketTarget / valueDensityEstimate);
 
-            var bucketList = new List<BucketSize>
+            return new List<decimal>
             {
-                bucketSizeEstimate.Smaller(steps: 2),
-                bucketSizeEstimate,
-                bucketSizeEstimate.Larger(steps: 2),
+                bucketSizeEstimate.Smaller(steps: 2).SnappedSize,
+                bucketSizeEstimate.SnappedSize,
+                bucketSizeEstimate.Larger(steps: 2).SnappedSize,
             };
-
-            return bucketList.Select(x => x.SnappedSize).ToList();
         }
     }
 }
