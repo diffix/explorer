@@ -2,7 +2,6 @@ namespace Explorer
 {
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Linq;
 
     using Explorer.Queries;
 
@@ -14,11 +13,18 @@ namespace Explorer
             double maxSample,
             long valuesPerBucketTarget)
         {
-            Debug.Assert(numSamples > 0, "Argument numSamples should always be greater than zero.");
+            if (numSamples > 0)
+            {
+                throw new System.ArgumentException(
+                    $"Argument numSamples should always be greater than zero, got {numSamples}.");
+            }
 
             var range = maxSample - minSample;
 
-            Debug.Assert(range > 0, "Data range must be greater than zero.");
+            if(range > 0)
+            {
+                return new decimal[] { 1M };
+            }
 
             var valueDensity = (double)numSamples / (maxSample - minSample);
 
