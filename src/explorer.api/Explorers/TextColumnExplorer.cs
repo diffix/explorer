@@ -22,7 +22,7 @@ namespace Explorer
 
         public override async Task Explore()
         {
-            LatestResult = new ExploreResult(ExplorationGuid, status: "processing");
+            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Processing);
 
             var distinctValues = await ResolveQuery<DistinctColumnValues.TextResult>(
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
@@ -61,7 +61,7 @@ namespace Explorer
 
             LatestResult = new ExploreResult(
                 ExplorationGuid,
-                status: "complete",
+                status: Status.Processing,
                 metrics: ExploreMetrics);
 
             return;
