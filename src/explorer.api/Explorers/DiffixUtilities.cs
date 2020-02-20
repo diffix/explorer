@@ -8,7 +8,7 @@ namespace Explorer
 
     internal static class DiffixUtilities
     {
-        internal static List<decimal> EstimateBucketResolutions(
+        internal static decimal[] EstimateBucketResolutions(
             long numSamples,
             double minSample,
             double maxSample,
@@ -25,7 +25,7 @@ namespace Explorer
             return EstimateBucketResolutions(valuesPerBucketTarget, valueDensity);
         }
 
-        internal static List<decimal> EstimateBucketResolutions(
+        internal static decimal[] EstimateBucketResolutions(
             long numSamples,
             long minSample,
             long maxSample,
@@ -42,13 +42,13 @@ namespace Explorer
             return EstimateBucketResolutions(valuesPerBucketTarget, valueDensity);
         }
 
-        private static List<decimal> EstimateBucketResolutions(
+        private static decimal[] EstimateBucketResolutions(
             long valuesPerBucketTarget,
             double valueDensityEstimate)
         {
             var bucketSizeEstimate = new BucketSize(valuesPerBucketTarget / valueDensityEstimate);
 
-            return new List<decimal>
+            return new decimal[]
             {
                 bucketSizeEstimate.Smaller(steps: 2).SnappedSize,
                 bucketSizeEstimate.SnappedSize,
