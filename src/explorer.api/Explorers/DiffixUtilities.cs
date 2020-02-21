@@ -13,7 +13,7 @@ namespace Explorer
             double maxSample,
             long valuesPerBucketTarget)
         {
-            if (numSamples > 0)
+            if (numSamples <= 0)
             {
                 throw new System.ArgumentException(
                     $"Argument numSamples should always be greater than zero, got {numSamples}.");
@@ -21,7 +21,7 @@ namespace Explorer
 
             var range = maxSample - minSample;
 
-            if(range > 0)
+            if(range <= 0)
             {
                 return new decimal[] { 1M };
             }
