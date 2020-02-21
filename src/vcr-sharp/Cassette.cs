@@ -1,26 +1,37 @@
 ﻿namespace VcrSharp
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using System.IO;
     using System.Net.Http;
+    using System.Threading;
     using System.Threading.Tasks;
     using YamlDotNet.Serialization;
     using YamlDotNet.Serialization.NamingConventions;
 
-    public class Cassette
+    public class Cassette : IDisposable
     {
-        private int currentIndex = 0;
         private readonly string cassettePath;
-        private List<CachedRequestResponse> cachedEntries;
-        private List<CachedRequestResponse> storedEntries;
+
+        private readonly EventWaitHandle cacheWaitHandle;
+
+        private LinkedList<CachedRequestResponse> cachedEntries;
+
+        private readonly ConcurrentQueue<CachedRequestResponse> storedEntries;
 
         public Cassette(string cassettePath)
         {
             this.cassettePath = cassettePath;
+            storedEntries = new ConcurrentQueue<CachedRequestResponse>();
+
+            cacheWaitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
+
+            SetupCache();
         }
 
-        async Task SetupCache()
+        void SetupCache()
         {
             if (File.Exists(cassettePath))
             {
@@ -31,92 +42,86 @@
                     .WithNamingConvention(CamelCaseNamingConvention.Instance)
                     .Build();
 
-                var task = Task.Factory.StartNew(() => serializer.Deserialize<CachedRequestResponseArray>(reader));
-                // var task = Task.Factory.StartNew(() => JsonSerializer.Deserialize<CachedRequestResponseArray>(File.ReadAllText(cassettePath)));
-                var contents = await task;
-                cachedEntries = new List<CachedRequestResponse>(contents.HttpInteractions ?? Array.Empty<CachedRequestResponse>());
+                var contents = serializer.Deserialize<CachedRequestResponseArray>(reader);
+                cachedEntries = new LinkedList<CachedRequestResponse>(
+                    contents.HttpInteractions ?? Array.Empty<CachedRequestResponse>());
             }
             else
             {
-                cachedEntries = new List<CachedRequestResponse>();
+                cachedEntries = new LinkedList<CachedRequestResponse>();
             }
-
-            storedEntries = new List<CachedRequestResponse>();
         }
 
-        static async Task<bool> MatchesRequest(CachedRequestResponse cached, HttpRequestMessage request)
+        static bool MatchesRequest(CachedRequest cached, CachedRequest fresh)
         {
-            if (!string.Equals(cached.Request.Method, request.Method.Method, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(cached.Method, fresh.Method, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
-            if (cached.Request.Uri != request.RequestUri.ToString())
+            if (cached.Uri != fresh.Uri)
             {
                 return false;
             }
-            var reqBody = request.Content == null ? string.Empty : await request.Content.ReadAsStringAsync();
-            if (cached.Request.Body.Text != reqBody)
+            if (cached.Body.Text != fresh.Body.Text)
             {
                 return false;
             }
             return true;
         }
 
-        internal async Task<CacheResult> FindCachedResponseAsync(HttpRequestMessage request)
+        internal async Task<CacheResult> FindCachedResponse(HttpRequestMessage request)
         {
-            if (cachedEntries == null)
-            {
-                await SetupCache();
-            }
+            // awaiting must be done *outside* the area protected by the WaitHandle to avoid deadlocks.
+            var freshRequest = await Serializer.Serialize(request);
 
-            if (currentIndex < 0 || currentIndex >= cachedEntries.Count)
-            {
-                return CacheResult.Missing();
-            }
+            // Lock the WaitHandle so only one thread can enter at a time
+            cacheWaitHandle.WaitOne();
 
-            var entry = cachedEntries[currentIndex];
-            currentIndex++;
-            if (await MatchesRequest(entry, request))
+            var result = CacheResult.Missing();
+            var entry = cachedEntries.FirstOrDefault(cached => MatchesRequest(cached.Request, freshRequest));
+
+            if (entry != default)
             {
+                cachedEntries.Remove(entry);
                 // persist the existing cached entry to disk
-                storedEntries.Add(entry);
-                return CacheResult.Success(Serializer.Deserialize(entry.Response));
+                StoreEntry(entry);
+                result = CacheResult.Success(Serializer.Deserialize(entry.Response));
             }
 
-            return CacheResult.Missing();
+            // Unlock the WaitHandle 
+            cacheWaitHandle.Set();
+
+            return result;
         }
 
         internal async Task StoreCachedResponseAsync(HttpRequestMessage request, HttpResponseMessage freshResponse)
         {
-            if (cachedEntries == null)
-            {
-                await SetupCache();
-            }
-
             var cachedResponse = new CachedRequestResponse
             {
                 Request = await Serializer.Serialize(request),
                 Response = await Serializer.Serialize(freshResponse)
             };
 
-            storedEntries.Add(cachedResponse);
+            StoreEntry(cachedResponse);
         }
 
-        internal Task FlushToDisk()
+        private void StoreEntry(CachedRequestResponse entry)
+        {
+            storedEntries.Enqueue(entry);
+        }
+
+        internal void FlushToDisk()
         {
             var data = new CachedRequestResponseArray
             {
                 HttpInteractions = storedEntries.ToArray()
             };
 
-            // var text = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
             var directory = Path.GetDirectoryName(cassettePath);
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-
-            // File.WriteAllText(cassettePath, text);
 
             var serializer = new SerializerBuilder()
                 .DisableAliases()
@@ -124,11 +129,15 @@
                 .Build();
 
             var file = new FileInfo(cassettePath);
-            using var stream = file.Open(FileMode.OpenOrCreate, FileAccess.Write);
+            using var stream = file.Open(FileMode.Create, FileAccess.Write);
             using var writer = new StreamWriter(stream);
             serializer.Serialize(writer, data);
+        }
 
-            return Task.CompletedTask;
+        public void Dispose()
+        {
+            FlushToDisk();
+            cacheWaitHandle.Dispose();
         }
     }
 

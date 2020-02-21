@@ -2,8 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
@@ -12,52 +12,157 @@
 
     internal class RealColumnExplorer : ColumnExplorer
     {
+        // TODO: The following should be configuration items (?)
+        private const long ValuesPerBucketTarget = 20;
+
+        private const double SuppressedRatioThreshold = 0.1;
+
         public RealColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
             : base(apiClient, exploreParams)
         {
+            ExploreMetrics = Array.Empty<ExploreResult.Metric>();
         }
 
-        public override async IAsyncEnumerable<ExploreResult> Explore()
+        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
+
+        public override async Task Explore()
         {
-            var queryParams = new NumericColumnStats(ExploreParams);
+            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Processing);
 
-            yield return new ExploreResult(ExplorationGuid, status: "waiting");
+            var stats = (await ResolveQuery<NumericColumnStats.RealResult>(
+                new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
+                timeout: TimeSpan.FromMinutes(2)))
+                .ResultRows
+                .Single();
 
-            var queryResult = await ApiClient.Query<NumericColumnStats.RealResult>(
-                ExploreParams.DataSourceName,
-                queryParams.QueryStatement,
-                TimeSpan.FromMinutes(2));
+            var distinctValueQ = await ResolveQuery<DistinctColumnValues.RealResult>(
+                new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
+                timeout: TimeSpan.FromMinutes(2));
 
-            var rows = queryResult.ResultRows;
-            Debug.Assert(
-                rows.Count() == 1,
-                $"Expected query {queryParams.QueryStatement} to return exactly one row.");
+            // Start the min-max explorer
+            var minMaxExplorer = new MinMaxExplorer(ApiClient, ExploreParams);
+            var minMaxTask = Task.Run(minMaxExplorer.Explore);
 
-            var stats = rows.First();
+            var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
+                    row.ColumnValue.IsSuppressed ? row.Count : 0);
 
-            yield return new ExploreResult(ExplorationGuid, status: "complete", metrics: new List<ExploreResult.Metric>
+            var totalValueCount = stats.Count;
+
+            if (totalValueCount == 0)
             {
-                new ExploreResult.Metric("Min")
+                LatestResult = new ExploreError(
+                    ExplorationGuid,
+                    $"Cannot explore table/column: Invalid value count.");
+                return;
+            }
+
+            var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
+
+            if (suppressedValueRatio < SuppressedRatioThreshold)
+            {
+                // Only few of the values are suppressed. This means the data is already well-segmented and can be
+                // considered categorical or quasi-categorical.
+                var distinctValues =
+                    from row in distinctValueQ.ResultRows
+                    where !row.ColumnValue.IsSuppressed
+                    select new
+                    {
+                        Value = ((ValueColumn<double>)row.ColumnValue).ColumnValue,
+                        row.Count,
+                    };
+
+                ExploreMetrics = ExploreMetrics
+                    .Append(new ExploreResult.Metric(name: "distinct_values", value: distinctValues))
+                    .Append(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
+
+                LatestResult = new ExploreResult(
+                    ExplorationGuid,
+                    status: Status.Complete,
+                    metrics: ExploreMetrics);
+
+                return;
+            }
+
+            var bucketsToSample = DiffixUtilities.EstimateBucketResolutions(
+                stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
+
+            var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
+                new SingleColumnHistogram(
+                    ExploreParams.TableName,
+                    ExploreParams.ColumnName,
+                    bucketsToSample),
+                timeout: TimeSpan.FromMinutes(10));
+
+            var optimumBucket = (
+                from row in histogramQ.ResultRows
+                let suppressedRatio = (double)row.Count / totalValueCount
+                let suppressedBucketSize = bucketsToSample[row.BucketIndex]
+                where row.LowerBound.IsSuppressed
+                    && suppressedRatio < SuppressedRatioThreshold
+                orderby suppressedBucketSize
+                select new
                 {
-                    MetricType = AircloakType.Real,
-                    MetricValue = stats.Min,
-                },
-                new ExploreResult.Metric("Max")
+                    Index = row.BucketIndex,
+                    Size = suppressedBucketSize,
+                    SuppressedCount = row.Count,
+                    Ratio = suppressedRatio,
+                }).First();
+
+            var histogramBuckets =
+                from row in histogramQ.ResultRows
+                where row.BucketIndex == optimumBucket.Index
+                    && !row.LowerBound.IsSuppressed
+                let lowerBound = ((ValueColumn<decimal>)row.LowerBound).ColumnValue
+                let bucketSize = bucketsToSample[row.BucketIndex]
+                orderby lowerBound
+                select new
                 {
-                    MetricType = AircloakType.Real,
-                    MetricValue = stats.Max,
-                },
-                new ExploreResult.Metric("Count")
+                    BucketSize = bucketSize,
+                    LowerBound = lowerBound,
+                    row.Count,
+                };
+
+            // Estimate Median
+            var processed = 0;
+            var target = (double)totalValueCount / 2;
+            var medianEstimate = 0.0;
+            foreach (var bucket in histogramBuckets)
+            {
+                if (processed + bucket.Count < target)
                 {
-                    MetricType = AircloakType.Integer,
-                    MetricValue = stats.Count,
-                },
-                new ExploreResult.Metric("CountNoise")
+                    processed += bucket.Count;
+                }
+                else
                 {
-                    MetricType = AircloakType.Real,
-                    MetricValue = stats.CountNoise,
-                },
-            });
+                    var ratio = (target - processed) / bucket.Count;
+                    medianEstimate =
+                        (double)bucket.LowerBound + (ratio * (double)bucket.BucketSize);
+                    break;
+                }
+            }
+
+            // Estimate Average
+            var averageEstimate = histogramBuckets
+                .Sum(bucket => bucket.Count * (bucket.LowerBound + (bucket.BucketSize / 2)))
+                / totalValueCount;
+
+            ExploreMetrics = ExploreMetrics
+                    .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramBuckets))
+                    .Append(new ExploreResult.Metric(name: "median_estimate", value: medianEstimate))
+                    .Append(new ExploreResult.Metric(name: "avg_estimate", value: decimal.Round(averageEstimate, 2)))
+                    .Append(new ExploreResult.Metric(name: "naive_min", value: stats.Min))
+                    .Append(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
+
+            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Processing, metrics: ExploreMetrics);
+
+            await minMaxTask;
+            if (minMaxExplorer.LatestResult.Status == Status.Complete)
+            {
+                ExploreMetrics = ExploreMetrics
+                    .Concat(minMaxExplorer.LatestResult.Metrics);
+            }
+
+            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Complete, metrics: ExploreMetrics);
         }
     }
 }

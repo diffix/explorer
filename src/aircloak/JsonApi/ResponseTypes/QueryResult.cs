@@ -14,11 +14,7 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// Represents the JSON response from a request to /api/queries/{query_id}.
     /// </summary>
     /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
-    /// <remarks>
-    /// <typeparamref name="TRow"/> must implement <see cref="IJsonArrayConvertible"/>.
-    /// </remarks>
     public struct QueryResult<TRow>
-        where TRow : IJsonArrayConvertible
     {
         public QueryResultInner<TRow> Query { get; set; }
 
@@ -33,7 +29,10 @@ namespace Aircloak.JsonApi.ResponseTypes
             {
                 foreach (var row_with_count in Query.Rows)
                 {
-                    yield return row_with_count.Row;
+                    for (var i = 0; i < row_with_count.Occurrences; i++)
+                    {
+                        yield return row_with_count.Row;
+                    }
                 }
             }
         }
@@ -94,7 +93,6 @@ namespace Aircloak.JsonApi.ResponseTypes
         <typeparam name="TRow">The type of contained rows.</typeparam>
     */
     public struct QueryResultInner<TRow>
-        where TRow : IJsonArrayConvertible
     {
         public bool Completed { get; set; }
 
@@ -122,6 +120,8 @@ namespace Aircloak.JsonApi.ResponseTypes
         public struct QueryRowsWithCount
         {
             public TRow Row { get; set; }
+
+            public int Occurrences { get; set; }
 
             [JsonExtensionData]
             public IDictionary<string, JsonElement> ExtensionData { get; set; }

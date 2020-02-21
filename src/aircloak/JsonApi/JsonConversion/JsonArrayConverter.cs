@@ -5,17 +5,25 @@ namespace Aircloak.JsonApi
     using System.Text.Json.Serialization;
 
     /// <summary>
-    /// Implements <see cref="JsonConverter"/> in terms of <see cref="IJsonArrayConvertible"/>.
+    /// Implements a <see cref="JsonConverter"/> for deserializing Aircloak rows from json array contents.
     /// </summary>
-    /// <typeparam name="T">A type that implements <see cref="IJsonArrayConvertible"/>.</typeparam>
+    /// <typeparam name="TQuerySpec">A type that implements <see cref="IQuerySpec{T}"/> for T.</typeparam>
+    /// <typeparam name="T">The type that the json array will be converted to.</typeparam>
     /// <remarks>Note that this is meant for reading JSON only: the Write method is intentionally
     /// left unimplemented.</remarks>
-    internal class JsonArrayConverter<T> : JsonConverter<T>
-        where T : IJsonArrayConvertible, new()
+    internal class JsonArrayConverter<TQuerySpec, T> : JsonConverter<T>
+        where TQuerySpec : IQuerySpec<T>
     {
+        private readonly IQuerySpec<T> querySpec;
+
+        public JsonArrayConverter(IQuerySpec<T> querySpec)
+        {
+            this.querySpec = querySpec;
+        }
+
         public override T Read(
             ref Utf8JsonReader reader,
-            System.Type typeToConvert,
+            Type typeToConvert,
             JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartArray)
@@ -23,8 +31,7 @@ namespace Aircloak.JsonApi
                 throw new JsonException("Expected an array.");
             }
 
-            var value = new T();
-            value.FromArrayValues(ref reader);
+            var value = querySpec.FromJsonArray(ref reader);
 
             // Read ']' Token
             reader.Read();

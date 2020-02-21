@@ -2,6 +2,7 @@
 namespace Explorer.Api.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -18,6 +19,13 @@ namespace Explorer.Api.Tests
             .GetSection("Explorer")
             .Get<ExplorerConfig>();
 
+        private readonly Dictionary<string, VcrSharp.Cassette> cassettes;
+
+        public TestWebAppFactory()
+        {
+            cassettes = new Dictionary<string, VcrSharp.Cassette>();
+        }
+
         public HttpRequestMessage CreateHttpRequest(HttpMethod method, string endpoint, object data)
         {
             var request = new HttpRequestMessage(method, endpoint);
@@ -32,7 +40,7 @@ namespace Explorer.Api.Tests
         public HttpClient CreateExplorerApiHttpClient(string testClassName, string vcrSessionName)
         {
             var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
-            var handler = new VcrSharp.ReplayingHandler(vcrCassetteInfo.FullName);
+            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName));
             return CreateDefaultClient(handler);
         }
 
@@ -45,7 +53,7 @@ namespace Explorer.Api.Tests
 #pragma warning disable CA2000 // call IDisposable.Dispose on handler object
         public HttpClient CreateAircloakApiHttpClient(FileInfo vcrCassetteInfo)
         {
-            var handler = new VcrSharp.ReplayingHandler(vcrCassetteInfo.FullName);
+            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName));
             var client = new HttpClient(handler, true) { BaseAddress = Config.AircloakApiUrl };
             if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", Config.AircloakApiKey))
             {
@@ -63,6 +71,30 @@ namespace Explorer.Api.Tests
         public TimeSpan? GetApiPollingFrequencty(FileInfo vcrCassetteInfo)
         {
             return (vcrCassetteInfo.Exists && vcrCassetteInfo.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
+        }
+
+        public new void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            foreach (var cassette in cassettes.Values)
+            {
+                cassette.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private VcrSharp.Cassette LoadCassette(string path)
+        {
+            if (!cassettes.ContainsKey(path))
+            {
+                cassettes[path] = new VcrSharp.Cassette(path);
+            }
+
+            return cassettes[path];
         }
     }
 }
