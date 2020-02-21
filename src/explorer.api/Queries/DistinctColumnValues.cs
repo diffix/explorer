@@ -1,7 +1,3 @@
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("explorer.api.tests")]
-
 namespace Explorer.Queries
 {
     using System.Text.Json;

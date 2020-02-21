@@ -44,7 +44,7 @@ The short version:
 2. Install [Visual Studio Code](https://code.visualstudio.com/)
 3. Add the [remote development pack](https://aka.ms/vscode-remote/download/extension) in VS Code
 4. Clone the Repo: `git clone https://github.com/diffix/explorer.git`
-5. Start VS Code and from the command palette (`F1`) run _Remote-Containers: Open Workspace in Container_ and select the `src/explorer.code-workspace` file.
+5. Start VS Code and from the command palette (`F1`) run _Remote-Containers: Open Folder in Container_ and select the project root folder.
 
 If you want to use an editor other than VS Code, you will need [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1) to compile the source files on your local machine.
 
