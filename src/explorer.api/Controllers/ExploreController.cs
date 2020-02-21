@@ -1,6 +1,6 @@
 ﻿namespace Explorer.Api.Controllers
 {
-    using System.Net.Http;
+    using System.Collections.Concurrent;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
@@ -14,6 +14,9 @@
     [Produces(MediaTypeNames.Application.Json)]
     public class ExploreController : ControllerBase
     {
+        private static readonly ConcurrentDictionary<System.Guid, ColumnExplorer> Explorers
+            = new ConcurrentDictionary<System.Guid, ColumnExplorer>();
+
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
 
@@ -29,21 +32,21 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            var dataSources = apiClient.GetDataSources().Result;
+            var dataSources = await apiClient.GetDataSources();
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
-                return BadRequest(); // TODO Return something more descriptive
+                return BadRequest($"Could not find datasource '{data.DataSourceName}'.");
             }
 
             if (!exploreDataSource.TableDict.TryGetValue(data.TableName, out var exploreTableMeta))
             {
-                return BadRequest(); // TODO Return something more descriptive
+                return BadRequest($"Could not find table '{data.TableName}'.");
             }
 
             if (!exploreTableMeta.ColumnDict.TryGetValue(data.ColumnName, out var explorerColumnMeta))
             {
-                return BadRequest(); // TODO Return something more descriptive
+                return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
             var explorer = CreateNumericColumnExplorer(explorerColumnMeta.Type, apiClient, data);
@@ -57,14 +60,32 @@
                 });
             }
 
-            var results = new System.Collections.Generic.List<ExploreResult>();
-            await foreach (var result in explorer.Explore())
+#pragma warning disable CS4014 // Consider applying the 'await' operator to the result of the call.
+            explorer.Explore();
+#pragma warning restore CS4014 // Consider applying the 'await' operator to the result of the call.
+
+            if (!Explorers.TryAdd(explorer.ExplorationGuid, explorer))
             {
-                logger.LogInformation($"-------> Explorer status: {result.Status}");
-                results.Add(result);
+                throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
             }
 
-            return Ok(results.FindLast(_ => true));
+            return Ok(explorer.LatestResult);
+        }
+
+        [HttpGet]
+        [Route("result/{exploreId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult Result(System.Guid exploreId)
+        {
+            if (Explorers.TryGetValue(exploreId, out var explorer))
+            {
+                return Ok(explorer.LatestResult);
+            }
+            else
+            {
+                return BadRequest($"Couldn't find explorer with id {exploreId}");
+            }
         }
 
         [Route("/{**catchall}")]
@@ -77,6 +98,8 @@
             {
                 AircloakType.Integer => new IntegerColumnExplorer(apiClient, data),
                 AircloakType.Real => new RealColumnExplorer(apiClient, data),
+                AircloakType.Text => new TextColumnExplorer(apiClient, data),
+                AircloakType.Bool => new BoolColumnExplorer(apiClient, data),
                 _ => null,
             };
         }

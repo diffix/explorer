@@ -9,10 +9,10 @@ namespace Explorer.Queries
         IQuerySpec<NumericColumnStats.IntegerResult>,
         IQuerySpec<NumericColumnStats.RealResult>
     {
-        public NumericColumnStats(ExploreParams exploreParams)
+        public NumericColumnStats(string tableName, string columnName)
         {
-            TableName = exploreParams.TableName;
-            ColumnName = exploreParams.ColumnName;
+            TableName = tableName;
+            ColumnName = columnName;
         }
 
         public string QueryStatement => $@"
@@ -27,50 +27,66 @@ namespace Explorer.Queries
 
         public string ColumnName { get; }
 
-        public class IntegerResult : IJsonArrayConvertible
+        IntegerResult IQuerySpec<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            public long? Min { get; set; }
+            reader.Read();
+            var min = reader.GetInt64();
+            reader.Read();
+            var max = reader.GetInt64();
+            reader.Read();
+            var count = reader.GetInt64();
+            reader.Read();
+            var countNoise = reader.GetDouble();
 
-            public long? Max { get; set; }
-
-            public long? Count { get; set; }
-
-            public double? CountNoise { get; set; }
-
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            return new IntegerResult
             {
-                reader.Read();
-                Min = reader.GetInt64();
-                reader.Read();
-                Max = reader.GetInt64();
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                CountNoise = reader.GetDouble();
-            }
+                Min = min,
+                Max = max,
+                Count = count,
+                CountNoise = countNoise,
+            };
         }
 
-        public class RealResult : IJsonArrayConvertible
+        RealResult IQuerySpec<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            public double? Min { get; set; }
+            reader.Read();
+            var min = reader.GetDouble();
+            reader.Read();
+            var max = reader.GetDouble();
+            reader.Read();
+            var count = reader.GetInt64();
+            reader.Read();
+            var countNoise = reader.GetDouble();
 
-            public double? Max { get; set; }
-
-            public long? Count { get; set; }
-
-            public double? CountNoise { get; set; }
-
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
+            return new RealResult
             {
-                reader.Read();
-                Min = reader.GetDouble();
-                reader.Read();
-                Max = reader.GetDouble();
-                reader.Read();
-                Count = reader.GetInt64();
-                reader.Read();
-                CountNoise = reader.GetDouble();
-            }
+                Min = min,
+                Max = max,
+                Count = count,
+                CountNoise = countNoise,
+            };
+        }
+
+        public class IntegerResult
+        {
+            public long Min { get; set; }
+
+            public long Max { get; set; }
+
+            public long Count { get; set; }
+
+            public double CountNoise { get; set; }
+        }
+
+        public class RealResult
+        {
+            public double Min { get; set; }
+
+            public double Max { get; set; }
+
+            public long Count { get; set; }
+
+            public double CountNoise { get; set; }
         }
     }
 }
