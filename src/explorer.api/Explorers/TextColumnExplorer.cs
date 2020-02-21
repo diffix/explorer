@@ -61,7 +61,7 @@ namespace Explorer
 
             LatestResult = new ExploreResult(
                 ExplorationGuid,
-                status: Status.Processing,
+                status: Status.Complete,
                 metrics: ExploreMetrics);
 
             return;
