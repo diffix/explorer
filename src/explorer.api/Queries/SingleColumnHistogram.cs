@@ -26,19 +26,23 @@ namespace Explorer.Queries
             {
                 var bucketsFragment = string.Join(
                     ",",
+                    from bucket in Buckets select $"bucket({ColumnName} by {bucket}) as bucket_{(int)bucket}");
+
+                var groupingIdArgs = string.Join(
+                    ",",
                     from bucket in Buckets select $"bucket({ColumnName} by {bucket})");
 
                 return $@"
                         select
                             grouping_id(
-                                {bucketsFragment}
+                                {groupingIdArgs}
                             ),
                             {Buckets.Count} as num_buckets,
                             {bucketsFragment},
                             count(*),
                             count_noise(*)
                         from {TableName}
-                        group by grouping sets ({Enumerable.Range(3, Buckets.Count)})";
+                        group by grouping sets ({string.Join(",", Enumerable.Range(3, Buckets.Count))})";
             }
         }
 
@@ -48,42 +52,59 @@ namespace Explorer.Queries
 
         public IList<decimal> Buckets { get; }
 
-        public class Result : IJsonArrayConvertible
+        public Result FromJsonArray(ref Utf8JsonReader reader)
+        {
+            reader.Read();
+            var groupingFlags = reader.GetInt32();
+            reader.Read();
+            var numBuckets = reader.GetInt32();
+
+            int? bucketIndex = null;
+            AircloakColumn<decimal>? lowerBound = null;
+
+            for (var i = numBuckets - 1; i >= 0; i--)
+            {
+                reader.Read();
+                if (((groupingFlags >> i) & 1) == 0)
+                {
+                    bucketIndex = numBuckets - 1 - i;
+                    lowerBound = AircloakColumnJsonParser.ParseDecimal(ref reader);
+                }
+            }
+
+            reader.Read();
+            var count = reader.GetInt32();
+            reader.Read();
+            var countNoise = reader.TokenType == JsonTokenType.Null ? 1.0
+                                                                : reader.GetDouble();
+
+            return new Result
+            {
+                BucketIndex = bucketIndex
+                    ?? throw new System.Exception(
+                        "Unable to retrieve bucket index from grouping flags."),
+                LowerBound = lowerBound
+                    ?? throw new System.Exception(
+                        "Unable to parse columns return value, not even as Suppressed, Null."),
+                Count = count,
+                CountNoise = countNoise,
+            };
+        }
+
+        public class Result
         {
             public Result()
             {
                 LowerBound = new NullColumn<decimal>();
             }
 
-            public decimal? BucketSize { get; set; }
+            public int BucketIndex { get; set; }
 
             public AircloakColumn<decimal> LowerBound { get; set; }
 
-            public int? Count { get; set; }
+            public int Count { get; set; }
 
             public double? CountNoise { get; set; }
-
-            void IJsonArrayConvertible.FromArrayValues(ref Utf8JsonReader reader)
-            {
-                reader.Read();
-                var groupingFlags = reader.GetInt32();
-                reader.Read();
-                var numBuckets = reader.GetInt32();
-
-                for (var i = 0; i < numBuckets; i++)
-                {
-                    reader.Read();
-                    if (((groupingFlags >> i) & 1) == 0)
-                    {
-                        LowerBound = AircloakColumnJsonParser.ParseDecimal(ref reader);
-                    }
-                }
-
-                reader.Read();
-                Count = reader.GetInt32();
-                reader.Read();
-                CountNoise = reader.GetInt32();
-            }
         }
     }
 }
