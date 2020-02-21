@@ -98,6 +98,8 @@
             {
                 AircloakType.Integer => new IntegerColumnExplorer(apiClient, data),
                 AircloakType.Real => new RealColumnExplorer(apiClient, data),
+                AircloakType.Text => new TextColumnExplorer(apiClient, data),
+                AircloakType.Bool => new BoolColumnExplorer(apiClient, data),
                 _ => null,
             };
         }
