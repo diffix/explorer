@@ -1,9 +1,7 @@
 namespace Explorer.Queries
 {
     using System.Text.Json;
-
     using Aircloak.JsonApi;
-    using Explorer.Api.Models;
 
     internal class NumericColumnStats :
         IQuerySpec<NumericColumnStats.IntegerResult>,
