@@ -5,10 +5,6 @@ namespace Explorer
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
-    using Explorer.Api.Models;
-
     internal class ColumnExplorer
     {
         private readonly ConcurrentStack<ExploreResult.Metric> exploreResults;
@@ -56,45 +52,6 @@ namespace Explorer
             var exploreTask = Task.Run(explorerImpl.Explore);
             childExplorers.Add(explorerImpl.GetType(), explorerImpl);
             childTasks.Add(explorerImpl.GetType(), exploreTask);
-        }
-    }
-
-    internal abstract class ExplorerImpl
-    {
-        private readonly ConcurrentBag<ExploreResult.Metric> metrics;
-
-        protected ExplorerImpl(JsonApiClient apiClient, ExploreParams exploreParams)
-        {
-            ApiClient = apiClient;
-            ExploreParams = exploreParams;
-
-            metrics = new ConcurrentBag<ExploreResult.Metric>();
-        }
-
-        public ExploreResult.Metric[] Metrics
-        {
-            get => metrics.ToArray();
-        }
-
-        public ExploreParams ExploreParams { get; }
-
-        public JsonApiClient ApiClient { get; }
-
-        public abstract Task Explore();
-
-        protected void PublishMetric(ExploreResult.Metric metric)
-        {
-            metrics.Add(metric);
-        }
-
-        protected async Task<QueryResult<TResult>> ResolveQuery<TResult>(
-            IQuerySpec<TResult> query,
-            TimeSpan timeout)
-        {
-            return await ApiClient.Query<TResult>(
-                ExploreParams.DataSourceName,
-                query,
-                timeout);
         }
     }
 }
