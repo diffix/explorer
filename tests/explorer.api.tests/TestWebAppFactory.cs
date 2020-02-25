@@ -26,7 +26,7 @@ namespace Explorer.Api.Tests
             cassettes = new Dictionary<string, VcrSharp.Cassette>();
         }
 
-        public HttpRequestMessage CreateHttpRequest(HttpMethod method, string endpoint, object data)
+        public HttpRequestMessage CreateHttpRequest(HttpMethod method, string endpoint, object? data)
         {
             var request = new HttpRequestMessage(method, endpoint);
             if (data != null)

@@ -175,7 +175,7 @@ namespace Explorer.Api.Tests
         {
             // TestUtils.WaitDebugger();
             using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
-            using var request = factory.CreateHttpRequest(method, endpoint, data!);
+            using var request = factory.CreateHttpRequest(method, endpoint, data);
             using var response = await client.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
@@ -190,7 +190,7 @@ namespace Explorer.Api.Tests
         {
             // TestUtils.WaitDebugger();
             using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
-            using var request = factory.CreateHttpRequest(method, endpoint, data!);
+            using var request = factory.CreateHttpRequest(method, endpoint, data);
             using var response = await client.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();
             return test(response, responseString);
