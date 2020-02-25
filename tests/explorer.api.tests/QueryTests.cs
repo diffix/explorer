@@ -34,8 +34,8 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(intResult.Query.Error), intResult.Query.Error);
             Assert.All(intResult.ResultRows, row =>
             {
-                Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
-                    ((ValueColumn<long>)row.ColumnValue).ColumnValue >= 0);
+                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
+                    row.DistinctData.Value >= 0);
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -53,8 +53,8 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(realResult.Query.Error), realResult.Query.Error);
             Assert.All(realResult.ResultRows, row =>
             {
-                Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
-                    ((ValueColumn<double>)row.ColumnValue).ColumnValue >= 0);
+                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
+                    row.DistinctData.Value >= 0);
                 Assert.True(row.Count > 0);
             });
         }
@@ -71,8 +71,8 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(textResult.Query.Error), textResult.Query.Error);
             Assert.All(textResult.ResultRows, row =>
             {
-                Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
-                            ((ValueColumn<string>)row.ColumnValue).ColumnValue == "Female");
+                Assert.True(row.DistinctData.Value == "Male" ||
+                            row.DistinctData.Value == "Female");
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -97,7 +97,7 @@ namespace Explorer.Api.Tests
                 Assert.True(row.BucketIndex < bucketSizes.Count);
                 Assert.True(row.LowerBound.IsNull ||
                             row.LowerBound.IsSuppressed ||
-                            ((ValueColumn<decimal>)row.LowerBound).ColumnValue >= 0);
+                            row.LowerBound.Value >= 0);
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
