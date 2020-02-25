@@ -8,7 +8,7 @@ namespace Explorer
 
     internal abstract class ExplorerImpl
     {
-        private readonly ConcurrentBag<ExploreResult.Metric> metrics;
+        private readonly ConcurrentBag<IExploreMetric> metrics;
 
         private readonly IQueryResolver queryResolver;
 
@@ -16,17 +16,17 @@ namespace Explorer
         {
             this.queryResolver = queryResolver;
 
-            metrics = new ConcurrentBag<ExploreResult.Metric>();
+            metrics = new ConcurrentBag<IExploreMetric>();
         }
 
-        public ExploreResult.Metric[] Metrics
+        public IExploreMetric[] Metrics
         {
             get => metrics.ToArray();
         }
 
         public abstract Task Explore();
 
-        protected void PublishMetric(ExploreResult.Metric metric)
+        protected void PublishMetric(IExploreMetric metric)
         {
             metrics.Add(metric);
         }

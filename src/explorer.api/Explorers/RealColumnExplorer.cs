@@ -33,8 +33,8 @@
                 .ResultRows
                 .Single();
 
-            PublishMetric(new ExploreResult.Metric(name: "naive_min", value: stats.Min));
-            PublishMetric(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
+            PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
+            PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.RealResult>(
                 new DistinctColumnValues(TableName, ColumnName),
@@ -66,8 +66,8 @@
                         row.Count,
                     };
 
-                PublishMetric(new ExploreResult.Metric(name: "distinct_values", value: distinctValues));
-                PublishMetric(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
+                PublishMetric(new UntypedMetric(name: "distinct_values", metric: distinctValues));
+                PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
 
                 return;
             }
@@ -111,7 +111,7 @@
                     row.Count,
                 };
 
-            PublishMetric(new ExploreResult.Metric(name: "histogram_buckets", value: histogramBuckets));
+            PublishMetric(new UntypedMetric(name: "histogram_buckets", metric: histogramBuckets));
 
             // Estimate Median
             var processed = 0;
@@ -132,14 +132,14 @@
                 }
             }
 
-            PublishMetric(new ExploreResult.Metric(name: "median_estimate", value: medianEstimate));
+            PublishMetric(new UntypedMetric(name: "median_estimate", metric: medianEstimate));
 
             // Estimate Average
             var averageEstimate = histogramBuckets
                 .Sum(bucket => bucket.Count * (bucket.LowerBound + (bucket.BucketSize / 2)))
                 / totalValueCount;
 
-            PublishMetric(new ExploreResult.Metric(name: "avg_estimate", value: decimal.Round(averageEstimate, 2)));
+            PublishMetric(new UntypedMetric(name: "avg_estimate", metric: decimal.Round(averageEstimate, 2)));
         }
     }
 }

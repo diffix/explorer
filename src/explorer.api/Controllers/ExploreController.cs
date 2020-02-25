@@ -1,6 +1,7 @@
 ﻿namespace Explorer.Api.Controllers
 {
     using System.Collections.Concurrent;
+    using System.Linq;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
@@ -82,10 +83,13 @@
                     _ => ExploreResult.ExploreStatus.Error,
                 };
 
+                var metrics = explorer.ExploreMetrics
+                    .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
+
                 return Ok(new ExploreResult(
                             explorer.ExplorationGuid,
                             exploreStatus,
-                            explorer.ExploreMetrics));
+                            metrics));
             }
             else
             {

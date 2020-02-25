@@ -26,7 +26,17 @@ namespace Explorer
 
         public Guid Id { get; }
 
-        internal class Metric
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum ExploreStatus
+        {
+            New,
+            Processing,
+            Complete,
+            Error,
+
+        }
+
+        public class Metric
         {
             public Metric(string name, object value)
             {
@@ -39,16 +49,6 @@ namespace Explorer
 
             [JsonPropertyName("value")]
             public object MetricValue { get; set; }
-        }
-
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public enum ExploreStatus
-        {
-            New,
-            Processing,
-            Complete,
-            Error,
-
         }
     }
 }

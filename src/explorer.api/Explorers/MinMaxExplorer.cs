@@ -47,7 +47,7 @@ namespace Explorer
 
             Debug.Assert(result.HasValue, $"Unexpected null result when refining {(isMin ? "Min" : "Max")} estimate.");
 
-            PublishMetric(new ExploreResult.Metric(name: isMin ? "refined_min" : "refined_max", value: result.Value));
+            PublishMetric(new UntypedMetric(name: isMin ? "refined_min" : "refined_max", metric: result.Value));
         }
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound = null) =>

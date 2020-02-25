@@ -29,7 +29,7 @@ namespace Explorer
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
                     row.ColumnValue.IsSuppressed ? row.Count : 0);
 
-            PublishMetric(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
+            PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
 
             var totalValueCount = distinctValues.ResultRows.Sum(row => row.Count);
 
@@ -40,7 +40,7 @@ namespace Explorer
                     $"Total value count for {TableName}, {ColumnName} is zero.");
             }
 
-            PublishMetric(new ExploreResult.Metric(name: "total_count", value: totalValueCount));
+            PublishMetric(new UntypedMetric(name: "total_count", metric: totalValueCount));
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
 
@@ -54,7 +54,7 @@ namespace Explorer
                     row.Count,
                 };
 
-            PublishMetric(new ExploreResult.Metric(name: "top_distinct_values", value: distinctValueCounts.Take(10)));
+            PublishMetric(new UntypedMetric(name: "top_distinct_values", metric: distinctValueCounts.Take(10)));
         }
     }
 }

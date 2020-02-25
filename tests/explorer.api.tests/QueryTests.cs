@@ -111,9 +111,9 @@ namespace Explorer.Api.Tests
 
             const decimal expectedMin = 3288M;
             const decimal expectedMax = 495725M;
-            var actualMin = (decimal)metrics.Single(m => m.MetricName == "refined_min").MetricValue;
+            var actualMin = (decimal)metrics.Single(m => m.Name == "refined_min").Metric;
             Assert.True(actualMin == expectedMin, $"Expected {expectedMin}, got {actualMin}");
-            var actualMax = (decimal)metrics.Single(m => m.MetricName == "refined_max").MetricValue;
+            var actualMax = (decimal)metrics.Single(m => m.Name == "refined_max").Metric;
             Assert.True(actualMax == expectedMax, $"Expected {expectedMax}, got {actualMax}");
         }
 
@@ -166,13 +166,13 @@ namespace Explorer.Api.Tests
         }
 
         private void CheckDistinctCategories(
-            IEnumerable<ExploreResult.Metric> distinctMetrics,
+            IEnumerable<IExploreMetric> distinctMetrics,
             IEnumerable<dynamic> expectedValues)
         {
             var distinctValues =
                 (IEnumerable<dynamic>)distinctMetrics
-                .Single(m => m.MetricName == "top_distinct_values")
-                .MetricValue;
+                .Single(m => m.Name == "top_distinct_values")
+                .Metric;
 
             Assert.All<(dynamic, dynamic)>(distinctValues.Zip(expectedValues), tuple =>
             {
@@ -184,14 +184,14 @@ namespace Explorer.Api.Tests
 
             var expectedTotal = expectedValues.Sum(v => (long)v.Count);
             var actualTotal = (long)distinctMetrics
-                .Single(m => m.MetricName == "total_count")
-                .MetricValue;
+                .Single(m => m.Name == "total_count")
+                .Metric;
             Assert.True(expectedTotal == actualTotal, $"Expected total of {expectedTotal}, got {actualTotal}");
 
             const long expectedSuppressed = 0L;
             var actualSuppressed = (long)distinctMetrics
-                .Single(m => m.MetricName == "suppressed_values")
-                .MetricValue;
+                .Single(m => m.Name == "suppressed_values")
+                .Metric;
             Assert.True(
                 actualSuppressed == expectedSuppressed,
                 $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
@@ -210,7 +210,7 @@ namespace Explorer.Api.Tests
                 factory.GetApiPollingFrequencty(vcrCassetteInfo));
         }
 
-        private async Task<IEnumerable<ExploreResult.Metric>> GetExplorerMetrics(
+        private async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
             string dataSourceName,
             Func<IQueryResolver, ExplorerImpl> implFactory,
             [CallerMemberName] string vcrSessionName = "")
