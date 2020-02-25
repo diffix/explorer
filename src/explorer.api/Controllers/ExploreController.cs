@@ -49,9 +49,8 @@
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var explorer = CreateNumericColumnExplorer(explorerColumnMeta.Type, apiClient, data);
-
-            if (explorer == null)
+            var explorerImpls = CreateExplorerImpls(explorerColumnMeta.Type, apiClient, data);
+            if (explorerImpls == null)
             {
                 return Ok(new Models.NotImplementedError
                 {
@@ -60,16 +59,18 @@
                 });
             }
 
-#pragma warning disable CS4014 // Consider applying the 'await' operator to the result of the call.
-            explorer.Explore();
-#pragma warning restore CS4014 // Consider applying the 'await' operator to the result of the call.
+            var explorer = new ColumnExplorer();
+            foreach (var impl in explorerImpls)
+            {
+                explorer.Spawn(impl);
+            }
 
             if (!Explorers.TryAdd(explorer.ExplorationGuid, explorer))
             {
                 throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
             }
 
-            return Ok(explorer.LatestResult);
+            return Ok(new ExploreResult(explorer.ExplorationGuid, ExploreResult.ExploreStatus.New));
         }
 
         [HttpGet]
@@ -80,7 +81,17 @@
         {
             if (Explorers.TryGetValue(exploreId, out var explorer))
             {
-                return Ok(explorer.LatestResult);
+                var exploreStatus = explorer.Completion().Status switch
+                {
+                    TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
+                    TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
+                    _ => ExploreResult.ExploreStatus.Error,
+                };
+
+                return Ok(new ExploreResult(
+                            explorer.ExplorationGuid,
+                            exploreStatus,
+                            explorer.ExploreMetrics));
             }
             else
             {
@@ -92,14 +103,24 @@
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private static ColumnExplorer? CreateNumericColumnExplorer(AircloakType type, JsonApiClient apiClient, Models.ExploreParams data)
+        private static ExplorerImpl[]? CreateExplorerImpls(AircloakType type, JsonApiClient apiClient, Models.ExploreParams data)
         {
             return type switch
             {
-                AircloakType.Integer => new IntegerColumnExplorer(apiClient, data),
-                AircloakType.Real => new RealColumnExplorer(apiClient, data),
-                AircloakType.Text => new TextColumnExplorer(apiClient, data),
-                AircloakType.Bool => new BoolColumnExplorer(apiClient, data),
+                AircloakType.Integer => new ExplorerImpl[] {
+                    new IntegerColumnExplorer(apiClient, data),
+                    new MinMaxExplorer(apiClient, data),
+                },
+                AircloakType.Real => new ExplorerImpl[] {
+                    new RealColumnExplorer(apiClient, data),
+                    new MinMaxExplorer(apiClient, data),
+                },
+                AircloakType.Text => new ExplorerImpl[] {
+                    new TextColumnExplorer(apiClient, data),
+                },
+                AircloakType.Bool => new ExplorerImpl[] {
+                    new BoolColumnExplorer(apiClient, data),
+                },
                 _ => null,
             };
         }

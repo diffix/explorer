@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
@@ -9,7 +10,7 @@ namespace Explorer
     using Explorer.Api.Models;
     using Explorer.Queries;
 
-    internal class MinMaxExplorer : ColumnExplorer
+    internal class MinMaxExplorer : ExplorerImpl
     {
         public MinMaxExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
             : base(apiClient, exploreParams)
@@ -20,28 +21,13 @@ namespace Explorer
 
         public override async Task Explore()
         {
-            LatestResult = new ExploreResult(ExplorationGuid, status: "waiting");
-
             var minTask = RefinedEstimate(isMin: true);
             var maxTask = RefinedEstimate(isMin: false);
 
-            var results = await Task.WhenAll(minTask, maxTask);
-
-            if (results.Any(r => r.MetricName == Status.Error))
-            {
-                var errors = results
-                                .Where(r => r.MetricName == Status.Error)
-                                .Select(r => r.MetricValue)
-                                .ToList();
-
-                LatestResult = new ExploreError(ExplorationGuid, string.Join("/n", errors));
-                return;
-            }
-
-            LatestResult = new ExploreResult(ExplorationGuid, Status.Complete, results);
+            await Task.WhenAll(minTask, maxTask);
         }
 
-        private async Task<ExploreResult.Metric> RefinedEstimate(bool isMin)
+        private async Task RefinedEstimate(bool isMin)
         {
             var estimator = isMin ? (Estimator)GetMinEstimate : (Estimator)GetMaxEstimate;
 
@@ -58,7 +44,7 @@ namespace Explorer
 
             Debug.Assert(result.HasValue, $"Unexpected null result when refining {(isMin ? "Min" : "Max")} estimate.");
 
-            return new ExploreResult.Metric(name: isMin ? "refined_min" : "refined_max", value: result.Value);
+            PublishMetric(new ExploreResult.Metric(name: isMin ? "refined_min" : "refined_max", value: result.Value));
         }
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound = null) =>

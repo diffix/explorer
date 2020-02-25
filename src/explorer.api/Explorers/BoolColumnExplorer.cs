@@ -10,7 +10,7 @@ namespace Explorer
     using Explorer.Api.Models;
     using Explorer.Queries;
 
-    internal class BoolColumnExplorer : ColumnExplorer
+    internal class BoolColumnExplorer : ExplorerImpl
     {
         public BoolColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
             : base(apiClient, exploreParams)
@@ -22,8 +22,6 @@ namespace Explorer
 
         public override async Task Explore()
         {
-            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Processing);
-
             var distinctValues = await ResolveQuery<DistinctColumnValues.BoolResult>(
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
@@ -36,10 +34,8 @@ namespace Explorer
             // This shouldn't happen, but check anyway.
             if (totalValueCount == 0)
             {
-                LatestResult = new ExploreError(
-                    ExplorationGuid,
-                    $"Cannot explore table/column: value count is zero.");
-                return;
+                throw new Exception(
+                    $"Total value count for {ExploreParams.TableName}, {ExploreParams.ColumnName} is zero.");
             }
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
@@ -54,17 +50,9 @@ namespace Explorer
                     row.Count,
                 };
 
-            ExploreMetrics = ExploreMetrics
-                .Append(new ExploreResult.Metric(name: "top_distinct_values", value: distinctValueCounts))
-                .Append(new ExploreResult.Metric(name: "total_count", value: totalValueCount))
-                .Append(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
-
-            LatestResult = new ExploreResult(
-                ExplorationGuid,
-                status: Status.Complete,
-                metrics: ExploreMetrics);
-
-            return;
+            PublishMetric(new ExploreResult.Metric(name: "top_distinct_values", value: distinctValueCounts));
+            PublishMetric(new ExploreResult.Metric(name: "total_count", value: totalValueCount));
+            PublishMetric(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
         }
     }
 }

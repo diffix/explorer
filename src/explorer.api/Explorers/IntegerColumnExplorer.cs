@@ -1,7 +1,6 @@
 ﻿namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -10,7 +9,7 @@
     using Explorer.Api.Models;
     using Explorer.Queries;
 
-    internal class IntegerColumnExplorer : ColumnExplorer
+    internal class IntegerColumnExplorer : ExplorerImpl
     {
         // TODO: The following should be configuration items (?)
         private const long ValuesPerBucketTarget = 20;
@@ -20,20 +19,18 @@
         public IntegerColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
             : base(apiClient, exploreParams)
         {
-            ExploreMetrics = Array.Empty<ExploreResult.Metric>();
         }
-
-        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
 
         public override async Task Explore()
         {
-            LatestResult = new ExploreResult(ExplorationGuid, status: Status.New);
-
             var stats = (await ResolveQuery<NumericColumnStats.IntegerResult>(
                 new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows
                 .Single();
+
+            PublishMetric(new ExploreResult.Metric(name: "naive_min", value: stats.Min));
+            PublishMetric(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.IntegerResult>(
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
@@ -50,10 +47,8 @@
 
             if (totalValueCount == 0)
             {
-                LatestResult = new ExploreError(
-                    ExplorationGuid,
-                    $"Cannot explore table/column: Invalid value count.");
-                return;
+                throw new Exception(
+                    $"Total value count for {ExploreParams.TableName}, {ExploreParams.ColumnName} is zero.");
             }
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
@@ -71,14 +66,8 @@
                         row.Count,
                     };
 
-                ExploreMetrics = ExploreMetrics
-                    .Append(new ExploreResult.Metric(name: "distinct_values", value: distinctValues))
-                    .Append(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
-
-                LatestResult = new ExploreResult(
-                    ExplorationGuid,
-                    status: Status.Complete,
-                    metrics: ExploreMetrics);
+                PublishMetric(new ExploreResult.Metric(name: "distinct_values", value: distinctValues));
+                PublishMetric(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
 
                 return;
             }
@@ -122,6 +111,8 @@
                     row.Count,
                 };
 
+            PublishMetric(new ExploreResult.Metric(name: "histogram_buckets", value: histogramBuckets));
+
             // Estimate Median
             var processed = 0;
             var target = (double)totalValueCount / 2;
@@ -141,29 +132,14 @@
                 }
             }
 
+            PublishMetric(new ExploreResult.Metric(name: "median_estimate", value: (long)medianEstimate));
+
             // Estimate Average
             var averageEstimate = histogramBuckets
                 .Sum(bucket => bucket.Count * (bucket.LowerBound + (bucket.BucketSize / 2)))
                 / totalValueCount;
 
-            ExploreMetrics = ExploreMetrics
-                    .Append(new ExploreResult.Metric(name: "histogram_buckets", value: histogramBuckets))
-                    .Append(new ExploreResult.Metric(name: "median_estimate", value: (long)medianEstimate))
-                    .Append(new ExploreResult.Metric(name: "avg_estimate", value: decimal.Round(averageEstimate, 2)))
-                    .Append(new ExploreResult.Metric(name: "naive_min", value: stats.Min))
-                    .Append(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
-
-            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Processing, metrics: ExploreMetrics);
-
-            await minMaxTask;
-            if (minMaxExplorer.LatestResult.Status == Status.Complete)
-            {
-                ExploreMetrics = ExploreMetrics
-                    .Concat(minMaxExplorer.LatestResult.Metrics);
-            }
-
-            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Complete, metrics: ExploreMetrics);
-            return;
+            PublishMetric(new ExploreResult.Metric(name: "avg_estimate", value: decimal.Round(averageEstimate, 2)));
         }
     }
 }

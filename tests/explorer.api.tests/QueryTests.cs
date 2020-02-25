@@ -106,7 +106,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestMinMaxExplorer()
         {
-            var final = await GetFinalExplorerResult(jsonApiClient =>
+            var metrics = await GetExplorerMetrics(jsonApiClient =>
                 new MinMaxExplorer(
                     jsonApiClient,
                     new Models.ExploreParams
@@ -118,19 +118,16 @@ namespace Explorer.Api.Tests
 
             const decimal expectedMin = 3288M;
             const decimal expectedMax = 495725M;
-            Assert.True(
-                final.Status == ColumnExplorer.Status.Complete,
-                $"Expected status `{ColumnExplorer.Status.Complete}`, got {final.Status}.");
-            var actualMin = (decimal)final.Metrics.Single(m => m.MetricName == "refined_min").MetricValue;
+            var actualMin = (decimal)metrics.Single(m => m.MetricName == "refined_min").MetricValue;
             Assert.True(actualMin == expectedMin, $"Expected {expectedMin}, got {actualMin}");
-            var actualMax = (decimal)final.Metrics.Single(m => m.MetricName == "refined_max").MetricValue;
+            var actualMax = (decimal)metrics.Single(m => m.MetricName == "refined_max").MetricValue;
             Assert.True(actualMax == expectedMax, $"Expected {expectedMax}, got {actualMax}");
         }
 
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            var final = await GetFinalExplorerResult(jsonApiClient =>
+            var metrics = await GetExplorerMetrics(jsonApiClient =>
                 new BoolColumnExplorer(
                     jsonApiClient,
                     new Models.ExploreParams
@@ -146,13 +143,13 @@ namespace Explorer.Api.Tests
                 new { Value = true, Count = 10_028L },
             };
 
-            CheckDistinctCategories(final.Metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues);
         }
 
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
-            var final = await GetFinalExplorerResult(jsonApiClient =>
+            var metrics = await GetExplorerMetrics(jsonApiClient =>
                 new TextColumnExplorer(
                     jsonApiClient,
                     new Models.ExploreParams
@@ -170,7 +167,7 @@ namespace Explorer.Api.Tests
                 new { Value = "B", Count = 32L },
             };
 
-            CheckDistinctCategories(final.Metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues);
         }
 
         [Fact]
@@ -234,22 +231,20 @@ namespace Explorer.Api.Tests
                 factory.GetApiPollingFrequencty(vcrCassetteInfo));
         }
 
-        private async Task<ExploreResult> GetFinalExplorerResult(
-            Func<JsonApiClient, ColumnExplorer> explorerFactory,
+        private async Task<IEnumerable<ExploreResult.Metric>> GetExplorerMetrics(
+            Func<JsonApiClient, ExplorerImpl> explorerFactory,
             [CallerMemberName] string vcrSessionName = "")
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var jsonApiClient = new JsonApiClient(client);
 
-            var explorer = explorerFactory(jsonApiClient);
+            var explorer = new ColumnExplorer();
+            explorer.Spawn(explorerFactory(jsonApiClient));
 
-            await explorer.Explore();
+            await explorer.Completion();
 
-            var final = explorer.LatestResult;
-            Assert.True(final.Status == "complete", $"Expected status `complete`, got {final.Status}.");
-
-            return final;
+            return explorer.ExploreMetrics;
         }
 
         private class RepeatingRowsQuery : IQuerySpec<RepeatingRowsQuery.Result>
