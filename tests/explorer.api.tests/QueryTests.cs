@@ -106,15 +106,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestMinMaxExplorer()
         {
-            var metrics = await GetExplorerMetrics(jsonApiClient =>
-                new MinMaxExplorer(
-                    jsonApiClient,
-                    new Models.ExploreParams
-                    {
-                        DataSourceName = "gda_banking",
-                        TableName = "loans",
-                        ColumnName = "amount",
-                    }));
+            var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
+                new MinMaxExplorer(queryResolver, "loans", "amount"));
 
             const decimal expectedMin = 3288M;
             const decimal expectedMax = 495725M;
@@ -127,15 +120,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            var metrics = await GetExplorerMetrics(jsonApiClient =>
-                new BoolColumnExplorer(
-                    jsonApiClient,
-                    new Models.ExploreParams
-                    {
-                        DataSourceName = "GiveMeSomeCredit",
-                        TableName = "loans",
-                        ColumnName = "SeriousDlqin2yrs",
-                    }));
+            var metrics = await GetExplorerMetrics("GiveMeSomeCredit", queryResolver =>
+                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
 
             var expectedValues = new List<object>
             {
@@ -149,15 +135,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
-            var metrics = await GetExplorerMetrics(jsonApiClient =>
-                new TextColumnExplorer(
-                    jsonApiClient,
-                    new Models.ExploreParams
-                    {
-                        DataSourceName = "gda_banking",
-                        TableName = "loans",
-                        ColumnName = "status",
-                    }));
+            var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
+                new TextColumnExplorer(queryResolver, "loans", "status"));
 
             var expectedValues = new List<object>
             {
@@ -232,15 +211,17 @@ namespace Explorer.Api.Tests
         }
 
         private async Task<IEnumerable<ExploreResult.Metric>> GetExplorerMetrics(
-            Func<JsonApiClient, ExplorerImpl> explorerFactory,
+            string dataSourceName,
+            Func<IQueryResolver, ExplorerImpl> implFactory,
             [CallerMemberName] string vcrSessionName = "")
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var jsonApiClient = new JsonApiClient(client);
 
+            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName);
             var explorer = new ColumnExplorer();
-            explorer.Spawn(explorerFactory(jsonApiClient));
+            explorer.Spawn(implFactory(queryResolver));
 
             await explorer.Completion();
 

@@ -49,20 +49,14 @@
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var explorerImpls = CreateExplorerImpls(explorerColumnMeta.Type, apiClient, data);
-            if (explorerImpls == null)
+            var explorer = CreateColumnExplorer(explorerColumnMeta.Type, data);
+            if (explorer == null)
             {
                 return Ok(new Models.NotImplementedError
                 {
                     Description = $"No exploration strategy implemented for {explorerColumnMeta.Type} columns.",
                     Data = data,
                 });
-            }
-
-            var explorer = new ColumnExplorer();
-            foreach (var impl in explorerImpls)
-            {
-                explorer.Spawn(impl);
             }
 
             if (!Explorers.TryAdd(explorer.ExplorationGuid, explorer))
@@ -103,26 +97,45 @@
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private static ExplorerImpl[]? CreateExplorerImpls(AircloakType type, JsonApiClient apiClient, Models.ExploreParams data)
+        private ColumnExplorer? CreateColumnExplorer(AircloakType type, Models.ExploreParams data)
         {
-            return type switch
+            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName);
+
+            var components = type switch
             {
-                AircloakType.Integer => new ExplorerImpl[] {
-                    new IntegerColumnExplorer(apiClient, data),
-                    new MinMaxExplorer(apiClient, data),
+                AircloakType.Integer => new ExplorerImpl[]
+                {
+                    new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                AircloakType.Real => new ExplorerImpl[] {
-                    new RealColumnExplorer(apiClient, data),
-                    new MinMaxExplorer(apiClient, data),
+                AircloakType.Real => new ExplorerImpl[]
+                {
+                    new RealColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                AircloakType.Text => new ExplorerImpl[] {
-                    new TextColumnExplorer(apiClient, data),
+                AircloakType.Text => new ExplorerImpl[]
+                {
+                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                AircloakType.Bool => new ExplorerImpl[] {
-                    new BoolColumnExplorer(apiClient, data),
+                AircloakType.Bool => new ExplorerImpl[]
+                {
+                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                _ => null,
+                _ => System.Array.Empty<ExplorerImpl>(),
             };
+
+            if (components.Length == 0)
+            {
+                return null;
+            }
+
+            var explorer = new ColumnExplorer();
+            foreach (var component in components)
+            {
+                explorer.Spawn(component);
+            }
+
+            return explorer;
         }
     }
 }

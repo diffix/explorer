@@ -4,9 +4,7 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
-    using Explorer.Api.Models;
     using Explorer.Queries;
 
     internal class IntegerColumnExplorer : ExplorerImpl
@@ -16,15 +14,21 @@
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public IntegerColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
-            : base(apiClient, exploreParams)
+        public IntegerColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+            : base(queryResolver)
         {
+            TableName = tableName;
+            ColumnName = columnName;
         }
+
+        public string TableName { get; set; }
+
+        public string ColumnName { get; set; }
 
         public override async Task Explore()
         {
             var stats = (await ResolveQuery<NumericColumnStats.IntegerResult>(
-                new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
+                new NumericColumnStats(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows
                 .Single();
@@ -33,7 +37,7 @@
             PublishMetric(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.IntegerResult>(
-                new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
+                new DistinctColumnValues(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
@@ -44,7 +48,7 @@
             if (totalValueCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {ExploreParams.TableName}, {ExploreParams.ColumnName} is zero.");
+                    $"Total value count for {TableName}, {ColumnName} is zero.");
             }
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
@@ -73,8 +77,8 @@
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
                 new SingleColumnHistogram(
-                    ExploreParams.TableName,
-                    ExploreParams.ColumnName,
+                    TableName,
+                    ColumnName,
                     bucketsToSample),
                 timeout: TimeSpan.FromMinutes(10));
 

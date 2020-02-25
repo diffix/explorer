@@ -1,23 +1,26 @@
 namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
-    using Explorer.Api.Models;
     using Explorer.Queries;
 
     internal class MinMaxExplorer : ExplorerImpl
     {
-        public MinMaxExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
-            : base(apiClient, exploreParams)
+        public MinMaxExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+            : base(queryResolver)
         {
+            TableName = tableName;
+            ColumnName = columnName;
         }
 
         private delegate Task<decimal?> Estimator(decimal? bound = null);
+
+        public string TableName { get; set; }
+
+        public string ColumnName { get; set; }
 
         public override async Task Explore()
         {
@@ -49,7 +52,7 @@ namespace Explorer
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound = null) =>
             (await ResolveQuery<Min.Result>(
-                new Min(ExploreParams.TableName, ExploreParams.ColumnName, upperBound),
+                new Min(TableName, ColumnName, upperBound),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows
                 .Single()
@@ -57,7 +60,7 @@ namespace Explorer
 
         private async Task<decimal?> GetMaxEstimate(decimal? lowerBound = null) =>
             (await ResolveQuery<Max.Result>(
-                new Max(ExploreParams.TableName, ExploreParams.ColumnName, lowerBound),
+                new Max(TableName, ColumnName, lowerBound),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows
                 .Single()

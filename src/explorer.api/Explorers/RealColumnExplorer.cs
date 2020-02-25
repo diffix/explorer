@@ -1,13 +1,10 @@
 ﻿namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
-    using Explorer.Api.Models;
     using Explorer.Queries;
 
     internal class RealColumnExplorer : ExplorerImpl
@@ -17,24 +14,30 @@
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public RealColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
-            : base(apiClient, exploreParams)
+        public RealColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+            : base(queryResolver)
         {
-            ExploreMetrics = Array.Empty<ExploreResult.Metric>();
+            TableName = tableName;
+            ColumnName = columnName;
         }
 
-        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
+        public string TableName { get; set; }
+
+        public string ColumnName { get; set; }
 
         public override async Task Explore()
         {
             var stats = (await ResolveQuery<NumericColumnStats.RealResult>(
-                new NumericColumnStats(ExploreParams.TableName, ExploreParams.ColumnName),
+                new NumericColumnStats(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows
                 .Single();
 
+            PublishMetric(new ExploreResult.Metric(name: "naive_min", value: stats.Min));
+            PublishMetric(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
+
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.RealResult>(
-                new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
+                new DistinctColumnValues(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
@@ -45,7 +48,7 @@
             if (totalValueCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {ExploreParams.TableName}, {ExploreParams.ColumnName} is zero.");
+                    $"Total value count for {TableName}, {ColumnName} is zero.");
             }
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
@@ -74,8 +77,8 @@
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
                 new SingleColumnHistogram(
-                    ExploreParams.TableName,
-                    ExploreParams.ColumnName,
+                    TableName,
+                    ColumnName,
                     bucketsToSample),
                 timeout: TimeSpan.FromMinutes(10));
 
@@ -129,15 +132,14 @@
                 }
             }
 
+            PublishMetric(new ExploreResult.Metric(name: "median_estimate", value: medianEstimate));
+
             // Estimate Average
             var averageEstimate = histogramBuckets
                 .Sum(bucket => bucket.Count * (bucket.LowerBound + (bucket.BucketSize / 2)))
                 / totalValueCount;
 
-            PublishMetric(new ExploreResult.Metric(name: "median_estimate", value: medianEstimate));
             PublishMetric(new ExploreResult.Metric(name: "avg_estimate", value: decimal.Round(averageEstimate, 2)));
-            PublishMetric(new ExploreResult.Metric(name: "naive_min", value: stats.Min));
-            PublishMetric(new ExploreResult.Metric(name: "naive_max", value: stats.Max));
         }
     }
 }

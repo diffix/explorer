@@ -1,33 +1,35 @@
 namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
-    using Explorer.Api.Models;
     using Explorer.Queries;
 
     internal class TextColumnExplorer : ExplorerImpl
     {
-        public TextColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
-            : base(apiClient, exploreParams)
+        public TextColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+            : base(queryResolver)
         {
-            ExploreMetrics = Array.Empty<ExploreResult.Metric>();
+            TableName = tableName;
+            ColumnName = columnName;
         }
 
-        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
+        public string TableName { get; set; }
+
+        public string ColumnName { get; set; }
 
         public override async Task Explore()
         {
             var distinctValues = await ResolveQuery<DistinctColumnValues.TextResult>(
-                new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
+                new DistinctColumnValues(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
                     row.ColumnValue.IsSuppressed ? row.Count : 0);
+
+            PublishMetric(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
 
             var totalValueCount = distinctValues.ResultRows.Sum(row => row.Count);
 
@@ -35,8 +37,10 @@ namespace Explorer
             if (totalValueCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {ExploreParams.TableName}, {ExploreParams.ColumnName} is zero.");
+                    $"Total value count for {TableName}, {ColumnName} is zero.");
             }
+
+            PublishMetric(new ExploreResult.Metric(name: "total_count", value: totalValueCount));
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
 
@@ -51,8 +55,6 @@ namespace Explorer
                 };
 
             PublishMetric(new ExploreResult.Metric(name: "top_distinct_values", value: distinctValueCounts.Take(10)));
-            PublishMetric(new ExploreResult.Metric(name: "total_count", value: totalValueCount));
-            PublishMetric(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
         }
     }
 }
