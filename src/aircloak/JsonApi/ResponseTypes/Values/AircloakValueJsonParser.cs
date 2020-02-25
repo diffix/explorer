@@ -16,48 +16,48 @@
         private delegate T Utf8JsonValueReader<T>(ref Utf8JsonReader reader);
 
         /// <summary>
-        /// See <see cref="ParseColumn{T}"/>.
+        /// See <see cref="ParseValue{T}"/>.
         /// </summary>
         /// <param name="reader">An instance of <see cref="Utf8JsonReader"/>.</param>
         /// <returns>An <see cref="AircloakValue{T}"/> which may be suppressed or Null.</returns>
         /// <exception cref="System.Exception">
-        /// Thrown by <see cref="ParseColumn{T}"/>.
+        /// Thrown by <see cref="ParseValue{T}"/>.
         /// </exception>
         public static AircloakValue<double> ParseDouble(ref Utf8JsonReader reader) =>
-            ParseColumn(ref reader, JsonTokenType.Number, (ref Utf8JsonReader r) => r.GetDouble());
+            ParseValue(ref reader, JsonTokenType.Number, (ref Utf8JsonReader r) => r.GetDouble());
 
         /// <summary>
-        /// See <see cref="ParseColumn{T}"/>.
+        /// See <see cref="ParseValue{T}"/>.
         /// </summary>
         /// <param name="reader">An instance of <see cref="Utf8JsonReader"/>.</param>
         /// <returns>An <see cref="AircloakValue{T}"/> which may be suppressed or Null.</returns>
         /// <exception cref="System.Exception">
-        /// Thrown by <see cref="ParseColumn{T}"/>.
+        /// Thrown by <see cref="ParseValue{T}"/>.
         /// </exception>
         public static AircloakValue<decimal> ParseDecimal(ref Utf8JsonReader reader) =>
-            ParseColumn(ref reader, JsonTokenType.Number, (ref Utf8JsonReader r) => r.GetDecimal());
+            ParseValue(ref reader, JsonTokenType.Number, (ref Utf8JsonReader r) => r.GetDecimal());
 
         /// <summary>
-        /// See <see cref="ParseColumn{T}"/>.
+        /// See <see cref="ParseValue{T}"/>.
         /// </summary>
         /// <param name="reader">An instance of <see cref="Utf8JsonReader"/>.</param>
         /// <returns>An <see cref="AircloakValue{T}"/> which may be suppressed or Null.</returns>
         /// <exception cref="System.Exception">
-        /// Thrown by <see cref="ParseColumn{T}"/>.
+        /// Thrown by <see cref="ParseValue{T}"/>.
         /// </exception>
         public static AircloakValue<long> ParseLong(ref Utf8JsonReader reader) =>
-            ParseColumn(ref reader, JsonTokenType.Number, (ref Utf8JsonReader r) => r.GetInt64());
+            ParseValue(ref reader, JsonTokenType.Number, (ref Utf8JsonReader r) => r.GetInt64());
 
         /// <summary>
-        /// See <see cref="ParseColumn{T}"/>.
+        /// See <see cref="ParseValue{T}"/>.
         /// </summary>
         /// <param name="reader">An instance of <see cref="Utf8JsonReader"/>.</param>
         /// <returns>An <see cref="AircloakValue{T}"/> which may be suppressed or Null.</returns>
         /// <exception cref="System.Exception">
-        /// Thrown by <see cref="ParseColumn{T}"/>.
+        /// Thrown by <see cref="ParseValue{T}"/>.
         /// </exception>
         public static AircloakValue<string> ParseString(ref Utf8JsonReader reader) =>
-            ParseColumn(ref reader, JsonTokenType.String, (ref Utf8JsonReader r) => r.GetString());
+            ParseValue(ref reader, JsonTokenType.String, (ref Utf8JsonReader r) => r.GetString());
 
         /// <summary>
         /// Parse Json to a <see cref="AircloakValue{T}"/> instance, indicating whether the boolean value from a
@@ -101,7 +101,7 @@
         /// </item>
         /// </list>
         /// </exception>
-        private static AircloakValue<T> ParseColumn<T>(
+        private static AircloakValue<T> ParseValue<T>(
             ref Utf8JsonReader reader,
             JsonTokenType expectedToken,
             Utf8JsonValueReader<T> valueReader) =>
