@@ -36,10 +36,6 @@
                 new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
-            // Start the min-max explorer
-            var minMaxExplorer = new MinMaxExplorer(ApiClient, ExploreParams);
-            var minMaxTask = Task.Run(minMaxExplorer.Explore);
-
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
                     row.ColumnValue.IsSuppressed ? row.Count : 0);
 
