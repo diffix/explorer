@@ -6,7 +6,6 @@ namespace Explorer
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api.Models;
     using Explorer.Queries;
 
@@ -29,7 +28,7 @@ namespace Explorer
                 timeout: TimeSpan.FromMinutes(2));
 
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
-                    row.ColumnValue.IsSuppressed ? row.Count : 0);
+                    row.DistinctData.IsSuppressed ? row.Count : 0);
 
             var totalValueCount = distinctValues.ResultRows.Sum(row => row.Count);
 
@@ -46,11 +45,11 @@ namespace Explorer
 
             var distinctValueCounts =
                 from row in distinctValues.ResultRows
-                where !row.ColumnValue.IsSuppressed
+                where !row.DistinctData.IsSuppressed
                 orderby row.Count descending
                 select new
                 {
-                    Value = ((ValueColumn<string>)row.ColumnValue).ColumnValue,
+                    row.DistinctData.Value,
                     row.Count,
                 };
 

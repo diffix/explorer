@@ -60,7 +60,7 @@ namespace Explorer.Queries
             var numBuckets = reader.GetInt32();
 
             int? bucketIndex = null;
-            AircloakColumn<decimal>? lowerBound = null;
+            AircloakValue<decimal>? lowerBound = null;
 
             for (var i = numBuckets - 1; i >= 0; i--)
             {
@@ -68,7 +68,7 @@ namespace Explorer.Queries
                 if (((groupingFlags >> i) & 1) == 0)
                 {
                     bucketIndex = numBuckets - 1 - i;
-                    lowerBound = AircloakColumnJsonParser.ParseDecimal(ref reader);
+                    lowerBound = AircloakValueJsonParser.ParseDecimal(ref reader);
                 }
             }
 
@@ -95,12 +95,12 @@ namespace Explorer.Queries
         {
             public Result()
             {
-                LowerBound = new NullColumn<decimal>();
+                LowerBound = NullValue<decimal>.Instance;
             }
 
             public int BucketIndex { get; set; }
 
-            public AircloakColumn<decimal> LowerBound { get; set; }
+            public AircloakValue<decimal> LowerBound { get; set; }
 
             public int Count { get; set; }
 
