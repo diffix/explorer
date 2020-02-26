@@ -1,6 +1,5 @@
 namespace Explorer
 {
-    using System.Collections.Generic;
     using System.Diagnostics;
 
     using Explorer.Queries;
@@ -21,12 +20,12 @@ namespace Explorer
 
             var range = maxSample - minSample;
 
-            if(range <= 0)
+            if (range <= 0)
             {
                 return new decimal[] { 1M };
             }
 
-            var valueDensity = (double)numSamples / (maxSample - minSample);
+            var valueDensity = numSamples / (maxSample - minSample);
 
             return EstimateBucketResolutions(valuesPerBucketTarget, valueDensity);
         }

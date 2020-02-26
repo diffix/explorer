@@ -4,15 +4,17 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// Represents an unsuppressed column value.
     /// </summary>
     /// <typeparam name="T">The type of the column value.</typeparam>
-    public class ValueColumn<T> : AircloakColumn<T>
+    public class DataValue<T> : AircloakValue<T>
     {
+        private T value;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="ValueColumn{T}"/> class.
+        /// Initializes a new instance of the <see cref="DataValue{T}"/> class.
         /// </summary>
         /// <param name="columnValue">The column's value.</param>
-        public ValueColumn(T columnValue)
+        public DataValue(T columnValue)
         {
-            ColumnValue = columnValue;
+            value = columnValue;
         }
 
         /// <summary>
@@ -30,6 +32,6 @@ namespace Aircloak.JsonApi.ResponseTypes
         /// <summary>
         /// Gets the column's value.
         /// </summary>
-        public T ColumnValue { get; private set; }
+        public override T Value => value;
     }
 }

@@ -1,7 +1,6 @@
 namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Collections.Concurrent;
     using System.Threading.Tasks;
 
@@ -55,7 +54,7 @@ namespace Explorer
             IQuerySpec<TResult> query,
             TimeSpan timeout)
         {
-            return await ApiClient.Query<TResult>(
+            return await ApiClient.Query(
                 ExploreParams.DataSourceName,
                 query,
                 timeout);
