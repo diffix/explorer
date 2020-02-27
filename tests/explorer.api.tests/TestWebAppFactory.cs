@@ -1,4 +1,4 @@
-﻿#pragma warning disable CA1822 // make method static
+#pragma warning disable CA1822 // make method static
 namespace Explorer.Api.Tests
 {
     using System;
@@ -37,14 +37,22 @@ namespace Explorer.Api.Tests
             return request;
         }
 
-        public HttpClient CreateExplorerApiHttpClient(string testClassName, string vcrSessionName, bool expectFail = false)
+        public HttpClient CreateExplorerApiHttpClient(string testClassName, string vcrSessionName)
         {
+            // For the explorer interactions we never want to use the cache so override the vcr mode.
+            // We actually don't need to use the vcr at all but it's useful for debugging... 
             var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
             var opts = expectFail
                             ? VcrSharp.RecordingOptions.FailureOnly
                             : VcrSharp.RecordingOptions.SuccessOnly;
 
-            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName), opts);
+            var handler = new VcrSharp.ReplayingHandler(
+                LoadCassette(vcrCassetteInfo.FullName),
+                VcrSharp.RecordingOptions.RecordAll);
+
+            // Override the vcr mode to always record.
+            handler.CurrentVCRMode = VcrSharp.VCRMode.Record;
+
             return CreateDefaultClient(handler);
         }
 
@@ -73,6 +81,17 @@ namespace Explorer.Api.Tests
         public TimeSpan? GetApiPollingFrequency(FileInfo vcrCassetteInfo)
         {
             return (vcrCassetteInfo.Exists && vcrCassetteInfo.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
+        }
+
+        public static string GetAircloakApiKeyFromEnvironment()
+        {
+            var variableName = Config.ApiKeyEnvironmentVariable ??
+                throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
+
+            var apiKey = Environment.GetEnvironmentVariable(variableName) ??
+                throw new Exception($"Environment variable {variableName} not set.");
+
+            return apiKey;
         }
 
         public new void Dispose()

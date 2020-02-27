@@ -223,7 +223,6 @@ namespace Explorer.Api.Tests
 
         private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
         {
-            // WaitDebugger();
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var jsonApiClient = new JsonApiClient(client);

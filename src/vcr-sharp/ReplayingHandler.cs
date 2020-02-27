@@ -71,7 +71,7 @@
         }
 
         VCRMode? vcrMode;
-        VCRMode CurrentVCRMode
+        public VCRMode CurrentVCRMode
         {
             get
             {
@@ -81,6 +81,7 @@
                 }
                 return vcrMode.Value;
             }
+            set => vcrMode = value;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
