@@ -11,7 +11,7 @@
     using Aircloak.JsonApi.ResponseTypes;
 
     /// <summary>
-    /// Convenience class derived from <c>HttpClient</c> provides GET and POST methods adapted to the
+    /// Convenience class providing GET and POST methods adapted to the
     /// Aircloak API:
     /// <list type="bullet">
     /// <item>
