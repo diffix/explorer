@@ -25,9 +25,9 @@ namespace Explorer.Queries
                         from {TableName}
                         group by {ColumnName}";
 
-        public string TableName { get; }
+        private string TableName { get; }
 
-        public string ColumnName { get; }
+        private string ColumnName { get; }
 
         IntegerResult IQuerySpec<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {

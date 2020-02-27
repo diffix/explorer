@@ -18,9 +18,9 @@ namespace Explorer
 
         private delegate Task<decimal?> Estimator(decimal? bound = null);
 
-        public string TableName { get; set; }
+        private string TableName { get; }
 
-        public string ColumnName { get; set; }
+        private string ColumnName { get; }
 
         public override async Task Explore()
         {

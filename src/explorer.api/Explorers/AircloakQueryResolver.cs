@@ -5,7 +5,6 @@ namespace Explorer
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
-    using Explorer.Api.Models;
 
     internal class AircloakQueryResolver : IQueryResolver
     {
@@ -21,7 +20,7 @@ namespace Explorer
 
         public async Task<QueryResult<TResult>> ResolveQuery<TResult>(IQuerySpec<TResult> query, TimeSpan timeout)
         {
-            return await ApiClient.Query<TResult>(
+            return await ApiClient.Query(
                 DataSourceName,
                 query,
                 timeout);
