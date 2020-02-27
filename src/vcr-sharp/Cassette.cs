@@ -112,6 +112,11 @@
 
         internal void FlushToDisk()
         {
+            if (storedEntries.IsEmpty)
+            {
+                return;
+            }
+
             var data = new CachedRequestResponseArray
             {
                 HttpInteractions = storedEntries.ToArray()

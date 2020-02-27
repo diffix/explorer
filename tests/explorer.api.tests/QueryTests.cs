@@ -231,7 +231,7 @@ namespace Explorer.Api.Tests
                 TestDataSource,
                 query,
                 TimeSpan.FromSeconds(30),
-                factory.GetApiPollingFrequencty(vcrCassetteInfo));
+                factory.GetApiPollingFrequency(vcrCassetteInfo));
         }
 
         private async Task<ExploreResult> GetFinalExplorerResult(

@@ -25,14 +25,23 @@
     {
         private readonly Cassette cassette;
 
-        public ReplayingHandler(HttpMessageHandler innerHandler, Cassette cassette) : base(innerHandler)
+        private readonly RecordingOptions options;
+
+        public ReplayingHandler(
+            HttpMessageHandler innerHandler,
+            Cassette cassette,
+            RecordingOptions options)
+        : base(innerHandler)
         {
             this.cassette = cassette;
+            this.options = options;
         }
 
-        public ReplayingHandler(Cassette cassette) : this(new HttpClientHandler(), cassette)
+        public ReplayingHandler(
+            Cassette cassette,
+            RecordingOptions options = RecordingOptions.SuccessOnly)
+        : this(new HttpClientHandler(), cassette, options)
         {
-
         }
 
         static VCRMode Parse(string mode)
@@ -92,7 +101,12 @@
 
             var freshResponse = await base.SendAsync(request, cancellationToken);
 
-            await cassette.StoreCachedResponseAsync(request, freshResponse);
+            if (options == RecordingOptions.RecordAll ||
+                options == RecordingOptions.SuccessOnly && freshResponse.IsSuccessStatusCode ||
+                options == RecordingOptions.FailureOnly && !freshResponse.IsSuccessStatusCode)
+            {
+                await cassette.StoreCachedResponseAsync(request, freshResponse);
+            }
 
             return freshResponse;
         }
