@@ -78,9 +78,15 @@
             {
                 var exploreStatus = explorer.Completion().Status switch
                 {
+                    TaskStatus.Canceled => ExploreResult.ExploreStatus.Complete,
+                    TaskStatus.Created => ExploreResult.ExploreStatus.New,
+                    TaskStatus.Faulted => ExploreResult.ExploreStatus.Error,
                     TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
                     TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
-                    _ => ExploreResult.ExploreStatus.Error,
+                    TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.New,
+                    TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.New,
+                    TaskStatus.WaitingForChildrenToComplete => ExploreResult.ExploreStatus.Processing,
+                    var status => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
                 };
 
                 var metrics = explorer.ExploreMetrics
