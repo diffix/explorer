@@ -41,7 +41,7 @@
                 timeout: TimeSpan.FromMinutes(2));
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
-                    row.ColumnValue.IsSuppressed ? row.Count : 0);
+                    row.DistinctData.IsSuppressed ? row.Count : 0);
 
             var totalValueCount = stats.Count;
 
@@ -59,10 +59,10 @@
                 // considered categorical or quasi-categorical.
                 var distinctValues =
                     from row in distinctValueQ.ResultRows
-                    where !row.ColumnValue.IsSuppressed
+                    where !row.DistinctData.IsSuppressed
                     select new
                     {
-                        Value = ((ValueColumn<double>)row.ColumnValue).ColumnValue,
+                        row.DistinctData.Value,
                         row.Count,
                     };
 
@@ -101,7 +101,7 @@
                 from row in histogramQ.ResultRows
                 where row.BucketIndex == optimumBucket.Index
                     && !row.LowerBound.IsSuppressed
-                let lowerBound = ((ValueColumn<decimal>)row.LowerBound).ColumnValue
+                let lowerBound = row.LowerBound.Value
                 let bucketSize = bucketsToSample[row.BucketIndex]
                 orderby lowerBound
                 select new

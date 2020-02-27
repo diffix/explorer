@@ -4,8 +4,17 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// Represents an unsuppressed NULL column value.
     /// </summary>
     /// <typeparam name="T">The expected type of the column value.</typeparam>
-    public class NullColumn<T> : AircloakColumn<T>
+    public sealed class NullValue<T> : AircloakValue<T>
     {
+        /// <summary>
+        /// Singleton instance.
+        /// </summary>
+        public static readonly AircloakValue<T> Instance = new NullValue<T>();
+
+        private NullValue()
+        {
+        }
+
         /// <summary>
         /// Gets a value indicating whether the column value was suppressed.
         /// Always returns false because the column has not been suppressed by Diffix anonymization.
@@ -17,5 +26,13 @@ namespace Aircloak.JsonApi.ResponseTypes
         /// Always returns true because the returned value is NULL.
         /// </summary>
         public override bool IsNull => true;
+
+        /// <summary>
+        /// Gets the wrapped value.
+        /// </summary>
+        /// <remarks>
+        /// Throws an exception, since accessing the value is an invalid operation.
+        /// </remarks>
+        public override T Value => throw new System.InvalidOperationException("Do not use NullValue.Value.");
     }
 }

@@ -118,7 +118,7 @@ namespace Explorer.Api.Tests
         [InlineData("/invalid endpoint test")]
         public void FailWithBadEndPoint(string endpoint)
         {
-            TestApi(HttpMethod.Post, endpoint, ValidData, (response, content) =>
+            TestApi(HttpMethod.Post, endpoint, ValidData, expectFail: true, test: (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -129,7 +129,7 @@ namespace Explorer.Api.Tests
         [InlineData("PUT")]
         public void FailWithBadMethod(string method)
         {
-            TestApi(new HttpMethod(method), "/explore", ValidData, (response, content) =>
+            TestApi(new HttpMethod(method), "/explore", ValidData, expectFail: true, test: (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -143,7 +143,7 @@ namespace Explorer.Api.Tests
                 TableName = string.Empty,
                 ColumnName = string.Empty,
             };
-            TestApi(HttpMethod.Post, "/explore", data, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", data, expectFail: true, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -156,7 +156,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public void FailWithMissingFields()
         {
-            TestApi(HttpMethod.Post, "/explore", new { }, (response, content) =>
+            TestApi(HttpMethod.Post, "/explore", new { }, expectFail: true, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -171,10 +171,11 @@ namespace Explorer.Api.Tests
             string endpoint,
             object? data,
             ApiTestActionWithContent test,
+            bool expectFail = false,
             [CallerMemberName] string vcrSessionName = "")
         {
             // TestUtils.WaitDebugger();
-            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
+            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName, expectFail);
             using var request = factory.CreateHttpRequest(method, endpoint, data);
             using var response = await client.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();
@@ -186,10 +187,11 @@ namespace Explorer.Api.Tests
             string endpoint,
             object? data,
             ApiTestActionWithContent<T> test,
+            bool expectFail = false,
             [CallerMemberName] string vcrSessionName = "")
         {
             // TestUtils.WaitDebugger();
-            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
+            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName, expectFail);
             using var request = factory.CreateHttpRequest(method, endpoint, data);
             using var response = await client.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();

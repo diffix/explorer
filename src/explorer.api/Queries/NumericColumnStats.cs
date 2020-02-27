@@ -1,7 +1,6 @@
 namespace Explorer.Queries
 {
     using System.Text.Json;
-
     using Aircloak.JsonApi;
 
     internal class NumericColumnStats :

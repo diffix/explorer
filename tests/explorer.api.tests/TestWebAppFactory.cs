@@ -26,7 +26,7 @@ namespace Explorer.Api.Tests
             cassettes = new Dictionary<string, VcrSharp.Cassette>();
         }
 
-        public HttpRequestMessage CreateHttpRequest(HttpMethod method, string endpoint, object data)
+        public HttpRequestMessage CreateHttpRequest(HttpMethod method, string endpoint, object? data)
         {
             var request = new HttpRequestMessage(method, endpoint);
             if (data != null)
@@ -37,23 +37,25 @@ namespace Explorer.Api.Tests
             return request;
         }
 
-        public HttpClient CreateExplorerApiHttpClient(string testClassName, string vcrSessionName)
+        public HttpClient CreateExplorerApiHttpClient(string testClassName, string vcrSessionName, bool expectFail = false)
         {
             var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
-            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName));
+            var opts = expectFail
+                            ? VcrSharp.RecordingOptions.FailureOnly
+                            : VcrSharp.RecordingOptions.SuccessOnly;
+
+            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName), opts);
             return CreateDefaultClient(handler);
         }
 
-        public HttpClient CreateAircloakApiHttpClient(string testClassName, string vcrSessionName)
-        {
-            var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
-            return CreateAircloakApiHttpClient(vcrCassetteInfo);
-        }
-
 #pragma warning disable CA2000 // call IDisposable.Dispose on handler object
-        public HttpClient CreateAircloakApiHttpClient(FileInfo vcrCassetteInfo)
+        public HttpClient CreateAircloakApiHttpClient(FileInfo vcrCassetteInfo, bool expectFail = false)
         {
-            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName));
+            var opts = expectFail
+                            ? VcrSharp.RecordingOptions.FailureOnly
+                            : VcrSharp.RecordingOptions.SuccessOnly;
+
+            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName), opts);
             var client = new HttpClient(handler, true) { BaseAddress = Config.AircloakApiUrl };
             if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", Config.AircloakApiKey))
             {
@@ -68,7 +70,7 @@ namespace Explorer.Api.Tests
             return new FileInfo($"../../../.vcr/{testClassName}.{vcrSessionName}.yaml");
         }
 
-        public TimeSpan? GetApiPollingFrequencty(FileInfo vcrCassetteInfo)
+        public TimeSpan? GetApiPollingFrequency(FileInfo vcrCassetteInfo)
         {
             return (vcrCassetteInfo.Exists && vcrCassetteInfo.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
         }
