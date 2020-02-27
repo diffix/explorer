@@ -2,48 +2,44 @@ namespace Explorer
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
 
     internal class ColumnExplorer
     {
-        private readonly Dictionary<Type, Task> childTasks;
+        private readonly List<Task> childTasks;
 
-        private readonly Dictionary<Type, ExplorerImpl> childExplorers;
+        private readonly List<ExplorerImpl> childExplorers;
 
-        public ColumnExplorer()
+        public ColumnExplorer(IEnumerable<ExplorerImpl> explorerImpls)
         {
             ExplorationGuid = Guid.NewGuid();
 
-            childTasks = new Dictionary<Type, Task>();
-            childExplorers = new Dictionary<Type, ExplorerImpl>();
+            childTasks = new List<Task>();
+            childExplorers = new List<ExplorerImpl>();
+
+            foreach (var impl in explorerImpls)
+            {
+                Spawn(impl);
+            }
+
+            Completion = Task.WhenAll(childTasks);
         }
 
         public Guid ExplorationGuid { get; }
 
-        public IEnumerable<IExploreMetric> ExploreMetrics
-        {
-            get
-            {
-                foreach (var explorer in childExplorers.Values)
-                {
-                    foreach (var metric in explorer.Metrics)
-                    {
-                        yield return metric;
-                    }
-                }
-            }
-        }
+        public IEnumerable<IExploreMetric> ExploreMetrics =>
+            childExplorers.SelectMany(explorer => explorer.Metrics);
 
-        public Task Completion()
-        {
-            return Task.WhenAll(childTasks.Values);
-        }
+        public Task Completion { get; }
 
-        public void Spawn(ExplorerImpl explorerImpl)
+        public TaskStatus Status => Completion.Status;
+
+        private void Spawn(ExplorerImpl explorerImpl)
         {
             var exploreTask = Task.Run(explorerImpl.Explore);
-            childExplorers.Add(explorerImpl.GetType(), explorerImpl);
-            childTasks.Add(explorerImpl.GetType(), exploreTask);
+            childExplorers.Add(explorerImpl);
+            childTasks.Add(exploreTask);
         }
     }
 }

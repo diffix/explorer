@@ -76,7 +76,7 @@
         {
             if (Explorers.TryGetValue(exploreId, out var explorer))
             {
-                var exploreStatus = explorer.Completion().Status switch
+                var exploreStatus = explorer.Status switch
                 {
                     TaskStatus.Canceled => ExploreResult.ExploreStatus.Complete,
                     TaskStatus.Created => ExploreResult.ExploreStatus.New,
@@ -147,13 +147,7 @@
                 return null;
             }
 
-            var explorer = new ColumnExplorer();
-            foreach (var component in components)
-            {
-                explorer.Spawn(component);
-            }
-
-            return explorer;
+            return new ColumnExplorer(components);
         }
     }
 }

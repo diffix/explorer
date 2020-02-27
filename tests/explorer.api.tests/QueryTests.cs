@@ -220,10 +220,9 @@ namespace Explorer.Api.Tests
             var jsonApiClient = new JsonApiClient(client);
 
             var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName);
-            var explorer = new ColumnExplorer();
-            explorer.Spawn(implFactory(queryResolver));
+            var explorer = new ColumnExplorer(new[] { implFactory(queryResolver), });
 
-            await explorer.Completion();
+            await explorer.Completion;
 
             return explorer.ExploreMetrics;
         }
