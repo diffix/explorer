@@ -6,6 +6,7 @@
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
+    using Explorer.Api.Authentication;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -32,6 +33,8 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
+            this.RegisterApiKey(data.ApiKey);
+
             var dataSources = await apiClient.GetDataSources();
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))

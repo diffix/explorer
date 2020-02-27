@@ -1,4 +1,4 @@
-#pragma warning disable CA1822 // make method static
+﻿#pragma warning disable CA1822 // make method static
 namespace Explorer.Api.Tests
 {
     using System;
@@ -42,9 +42,6 @@ namespace Explorer.Api.Tests
             // For the explorer interactions we never want to use the cache so override the vcr mode.
             // We actually don't need to use the vcr at all but it's useful for debugging... 
             var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
-            var opts = expectFail
-                            ? VcrSharp.RecordingOptions.FailureOnly
-                            : VcrSharp.RecordingOptions.SuccessOnly;
 
             var handler = new VcrSharp.ReplayingHandler(
                 LoadCassette(vcrCassetteInfo.FullName),
@@ -59,16 +56,21 @@ namespace Explorer.Api.Tests
 #pragma warning disable CA2000 // call IDisposable.Dispose on handler object
         public HttpClient CreateAircloakApiHttpClient(FileInfo vcrCassetteInfo, bool expectFail = false)
         {
-            var opts = expectFail
+            var vcrOptions = expectFail
                             ? VcrSharp.RecordingOptions.FailureOnly
                             : VcrSharp.RecordingOptions.SuccessOnly;
 
-            var handler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName), opts);
-            var client = new HttpClient(handler, true) { BaseAddress = Config.AircloakApiUrl };
-            if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", Config.AircloakApiKey))
-            {
-                throw new Exception("Failed to add Http header 'auth-token'");
-            }
+            var vcrHandler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName), vcrOptions);
+
+            var variableName = Config.ApiKeyEnvironmentVariable ??
+                throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
+
+            var authenticatingVcrHandler = Aircloak.JsonApi.StaticApiKeyAuthHandler.FromEnvironmentVariable(
+                variableName,
+                innerHandler: vcrHandler);
+
+            var client = new HttpClient(authenticatingVcrHandler, true) { BaseAddress = Config.AircloakApiUrl };
+
             return client;
         }
 #pragma warning restore CA2000 // call IDisposable.Dispose on handler object
