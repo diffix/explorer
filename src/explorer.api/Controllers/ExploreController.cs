@@ -92,10 +92,18 @@
                 var metrics = explorer.ExploreMetrics
                     .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
 
-                return Ok(new ExploreResult(
+                var result = new ExploreResult(
                             explorer.ExplorationGuid,
                             exploreStatus,
-                            metrics));
+                            metrics);
+
+                if (exploreStatus == ExploreResult.ExploreStatus.Complete ||
+                    exploreStatus == ExploreResult.ExploreStatus.Error)
+                {
+                    _ = Explorers.TryRemove(exploreId, out _);
+                }
+
+                return Ok(result);
             }
             else
             {
