@@ -31,11 +31,11 @@ namespace Explorer.Queries
             }
         }
 
-        public string TableName { get; }
+        private string TableName { get; }
 
-        public string ColumnName { get; }
+        private string ColumnName { get; }
 
-        public decimal? UpperBound { get; }
+        private decimal? UpperBound { get; }
 
         public Result FromJsonArray(ref Utf8JsonReader reader)
         {

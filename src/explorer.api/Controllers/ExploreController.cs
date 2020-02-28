@@ -1,6 +1,7 @@
 ﻿namespace Explorer.Api.Controllers
 {
     using System.Collections.Concurrent;
+    using System.Linq;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
@@ -14,8 +15,8 @@
     [Produces(MediaTypeNames.Application.Json)]
     public class ExploreController : ControllerBase
     {
-        private static readonly ConcurrentDictionary<System.Guid, ColumnExplorer> Explorers
-            = new ConcurrentDictionary<System.Guid, ColumnExplorer>();
+        private static readonly ConcurrentDictionary<System.Guid, Exploration> Explorations
+            = new ConcurrentDictionary<System.Guid, Exploration>();
 
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
@@ -49,9 +50,8 @@
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var explorer = CreateNumericColumnExplorer(explorerColumnMeta.Type, apiClient, data);
-
-            if (explorer == null)
+            var exploration = CreateExploration(explorerColumnMeta.Type, data);
+            if (exploration == null)
             {
                 return Ok(new Models.NotImplementedError
                 {
@@ -60,31 +60,54 @@
                 });
             }
 
-#pragma warning disable CS4014 // Consider applying the 'await' operator to the result of the call.
-            explorer.Explore();
-#pragma warning restore CS4014 // Consider applying the 'await' operator to the result of the call.
-
-            if (!Explorers.TryAdd(explorer.ExplorationGuid, explorer))
+            if (!Explorations.TryAdd(exploration.ExplorationGuid, exploration))
             {
                 throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
             }
 
-            return Ok(explorer.LatestResult);
+            return Ok(new ExploreResult(exploration.ExplorationGuid, ExploreResult.ExploreStatus.New));
         }
 
         [HttpGet]
-        [Route("result/{exploreId}")]
+        [Route("result/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Result(System.Guid exploreId)
+        public IActionResult Result(System.Guid explorationId)
         {
-            if (Explorers.TryGetValue(exploreId, out var explorer))
+            if (Explorations.TryGetValue(explorationId, out var explorer))
             {
-                return Ok(explorer.LatestResult);
+                var exploreStatus = explorer.Status switch
+                {
+                    TaskStatus.Canceled => ExploreResult.ExploreStatus.Complete,
+                    TaskStatus.Created => ExploreResult.ExploreStatus.New,
+                    TaskStatus.Faulted => ExploreResult.ExploreStatus.Error,
+                    TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
+                    TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
+                    TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.New,
+                    TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.New,
+                    TaskStatus.WaitingForChildrenToComplete => ExploreResult.ExploreStatus.Processing,
+                    var status => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
+                };
+
+                var metrics = explorer.ExploreMetrics
+                    .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
+
+                var result = new ExploreResult(
+                            explorer.ExplorationGuid,
+                            exploreStatus,
+                            metrics);
+
+                if (exploreStatus == ExploreResult.ExploreStatus.Complete ||
+                    exploreStatus == ExploreResult.ExploreStatus.Error)
+                {
+                    _ = Explorations.TryRemove(explorationId, out _);
+                }
+
+                return Ok(result);
             }
             else
             {
-                return BadRequest($"Couldn't find explorer with id {exploreId}");
+                return BadRequest($"Couldn't find explorer with id {explorationId}");
             }
         }
 
@@ -92,16 +115,39 @@
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private static ColumnExplorer? CreateNumericColumnExplorer(AircloakType type, JsonApiClient apiClient, Models.ExploreParams data)
+        private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data)
         {
-            return type switch
+            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName);
+
+            var components = type switch
             {
-                AircloakType.Integer => new IntegerColumnExplorer(apiClient, data),
-                AircloakType.Real => new RealColumnExplorer(apiClient, data),
-                AircloakType.Text => new TextColumnExplorer(apiClient, data),
-                AircloakType.Bool => new BoolColumnExplorer(apiClient, data),
-                _ => null,
+                AircloakType.Integer => new ExplorerBase[]
+                {
+                    new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
+                },
+                AircloakType.Real => new ExplorerBase[]
+                {
+                    new RealColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
+                },
+                AircloakType.Text => new ExplorerBase[]
+                {
+                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
+                },
+                AircloakType.Bool => new ExplorerBase[]
+                {
+                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
+                },
+                _ => System.Array.Empty<ExplorerBase>(),
             };
+
+            if (components.Length == 0)
+            {
+                return null;
+            }
+
+            return new Exploration(components);
         }
     }
 }

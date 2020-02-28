@@ -1,45 +1,45 @@
 namespace Explorer
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
-    using Explorer.Api.Models;
     using Explorer.Queries;
 
-    internal class TextColumnExplorer : ColumnExplorer
+    internal class TextColumnExplorer : ExplorerBase
     {
-        public TextColumnExplorer(JsonApiClient apiClient, ExploreParams exploreParams)
-            : base(apiClient, exploreParams)
+        public TextColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+            : base(queryResolver)
         {
-            ExploreMetrics = Array.Empty<ExploreResult.Metric>();
+            TableName = tableName;
+            ColumnName = columnName;
         }
 
-        public IEnumerable<ExploreResult.Metric> ExploreMetrics { get; set; }
+        private string TableName { get; }
+
+        private string ColumnName { get; }
 
         public override async Task Explore()
         {
-            LatestResult = new ExploreResult(ExplorationGuid, status: Status.Processing);
-
             var distinctValues = await ResolveQuery<DistinctColumnValues.TextResult>(
-                new DistinctColumnValues(ExploreParams.TableName, ExploreParams.ColumnName),
+                new DistinctColumnValues(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
                     row.DistinctData.IsSuppressed ? row.Count : 0);
+
+            PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
 
             var totalValueCount = distinctValues.ResultRows.Sum(row => row.Count);
 
             // This shouldn't happen, but check anyway.
             if (totalValueCount == 0)
             {
-                LatestResult = new ExploreError(
-                    ExplorationGuid,
-                    $"Cannot explore table/column: value count is zero.");
-                return;
+                throw new Exception(
+                    $"Total value count for {TableName}, {ColumnName} is zero.");
             }
+
+            PublishMetric(new UntypedMetric(name: "total_count", metric: totalValueCount));
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
 
@@ -53,17 +53,7 @@ namespace Explorer
                     row.Count,
                 };
 
-            ExploreMetrics = ExploreMetrics
-                .Append(new ExploreResult.Metric(name: "top_distinct_values", value: distinctValueCounts.Take(10)))
-                .Append(new ExploreResult.Metric(name: "total_count", value: totalValueCount))
-                .Append(new ExploreResult.Metric(name: "suppressed_values", value: suppressedValueCount));
-
-            LatestResult = new ExploreResult(
-                ExplorationGuid,
-                status: Status.Complete,
-                metrics: ExploreMetrics);
-
-            return;
+            PublishMetric(new UntypedMetric(name: "top_distinct_values", metric: distinctValueCounts.Take(10)));
         }
     }
 }

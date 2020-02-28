@@ -46,11 +46,11 @@ namespace Explorer.Queries
             }
         }
 
-        public string TableName { get; }
+        private string TableName { get; }
 
-        public string ColumnName { get; }
+        private string ColumnName { get; }
 
-        public IList<decimal> Buckets { get; }
+        private IList<decimal> Buckets { get; }
 
         public Result FromJsonArray(ref Utf8JsonReader reader)
         {
