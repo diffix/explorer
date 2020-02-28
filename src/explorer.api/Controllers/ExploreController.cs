@@ -15,8 +15,8 @@
     [Produces(MediaTypeNames.Application.Json)]
     public class ExploreController : ControllerBase
     {
-        private static readonly ConcurrentDictionary<System.Guid, ColumnExplorer> Explorers
-            = new ConcurrentDictionary<System.Guid, ColumnExplorer>();
+        private static readonly ConcurrentDictionary<System.Guid, Exploration> Explorations
+            = new ConcurrentDictionary<System.Guid, Exploration>();
 
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
@@ -50,8 +50,8 @@
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var explorer = CreateColumnExplorer(explorerColumnMeta.Type, data);
-            if (explorer == null)
+            var exploration = CreateExploration(explorerColumnMeta.Type, data);
+            if (exploration == null)
             {
                 return Ok(new Models.NotImplementedError
                 {
@@ -60,21 +60,21 @@
                 });
             }
 
-            if (!Explorers.TryAdd(explorer.ExplorationGuid, explorer))
+            if (!Explorations.TryAdd(exploration.ExplorationGuid, exploration))
             {
                 throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
             }
 
-            return Ok(new ExploreResult(explorer.ExplorationGuid, ExploreResult.ExploreStatus.New));
+            return Ok(new ExploreResult(exploration.ExplorationGuid, ExploreResult.ExploreStatus.New));
         }
 
         [HttpGet]
-        [Route("result/{exploreId}")]
+        [Route("result/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Result(System.Guid exploreId)
+        public IActionResult Result(System.Guid explorationId)
         {
-            if (Explorers.TryGetValue(exploreId, out var explorer))
+            if (Explorations.TryGetValue(explorationId, out var explorer))
             {
                 var exploreStatus = explorer.Status switch
                 {
@@ -100,14 +100,14 @@
                 if (exploreStatus == ExploreResult.ExploreStatus.Complete ||
                     exploreStatus == ExploreResult.ExploreStatus.Error)
                 {
-                    _ = Explorers.TryRemove(exploreId, out _);
+                    _ = Explorations.TryRemove(explorationId, out _);
                 }
 
                 return Ok(result);
             }
             else
             {
-                return BadRequest($"Couldn't find explorer with id {exploreId}");
+                return BadRequest($"Couldn't find explorer with id {explorationId}");
             }
         }
 
@@ -115,31 +115,31 @@
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private ColumnExplorer? CreateColumnExplorer(AircloakType type, Models.ExploreParams data)
+        private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data)
         {
             var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName);
 
             var components = type switch
             {
-                AircloakType.Integer => new ExplorerImpl[]
+                AircloakType.Integer => new ExplorerBase[]
                 {
                     new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName),
                     new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                AircloakType.Real => new ExplorerImpl[]
+                AircloakType.Real => new ExplorerBase[]
                 {
                     new RealColumnExplorer(resolver, data.TableName, data.ColumnName),
                     new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                AircloakType.Text => new ExplorerImpl[]
+                AircloakType.Text => new ExplorerBase[]
                 {
                     new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                AircloakType.Bool => new ExplorerImpl[]
+                AircloakType.Bool => new ExplorerBase[]
                 {
                     new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
-                _ => System.Array.Empty<ExplorerImpl>(),
+                _ => System.Array.Empty<ExplorerBase>(),
             };
 
             if (components.Length == 0)
@@ -147,7 +147,7 @@
                 return null;
             }
 
-            return new ColumnExplorer(components);
+            return new Exploration(components);
         }
     }
 }

@@ -6,13 +6,13 @@ namespace Explorer
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
 
-    internal abstract class ExplorerImpl
+    internal abstract class ExplorerBase
     {
         private readonly ConcurrentBag<IExploreMetric> metrics;
 
         private readonly IQueryResolver queryResolver;
 
-        protected ExplorerImpl(IQueryResolver queryResolver)
+        protected ExplorerBase(IQueryResolver queryResolver)
         {
             this.queryResolver = queryResolver;
 

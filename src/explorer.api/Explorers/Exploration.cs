@@ -5,18 +5,18 @@ namespace Explorer
     using System.Linq;
     using System.Threading.Tasks;
 
-    internal class ColumnExplorer
+    internal class Exploration
     {
         private readonly List<Task> childTasks;
 
-        private readonly List<ExplorerImpl> childExplorers;
+        private readonly List<ExplorerBase> childExplorers;
 
-        public ColumnExplorer(IEnumerable<ExplorerImpl> explorerImpls)
+        public Exploration(IEnumerable<ExplorerBase> explorerImpls)
         {
             ExplorationGuid = Guid.NewGuid();
 
             childTasks = new List<Task>();
-            childExplorers = new List<ExplorerImpl>();
+            childExplorers = new List<ExplorerBase>();
 
             foreach (var impl in explorerImpls)
             {
@@ -35,7 +35,7 @@ namespace Explorer
 
         public TaskStatus Status => Completion.Status;
 
-        private void Spawn(ExplorerImpl explorerImpl)
+        private void Spawn(ExplorerBase explorerImpl)
         {
             var exploreTask = Task.Run(explorerImpl.Explore);
             childExplorers.Add(explorerImpl);

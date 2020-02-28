@@ -7,7 +7,7 @@ namespace Explorer
 
     using Explorer.Queries;
 
-    internal class MinMaxExplorer : ExplorerImpl
+    internal class MinMaxExplorer : ExplorerBase
     {
         public MinMaxExplorer(IQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)

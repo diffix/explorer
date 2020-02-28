@@ -4,10 +4,9 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Queries;
 
-    internal class IntegerColumnExplorer : ExplorerImpl
+    internal class IntegerColumnExplorer : ExplorerBase
     {
         // TODO: The following should be configuration items (?)
         private const long ValuesPerBucketTarget = 20;

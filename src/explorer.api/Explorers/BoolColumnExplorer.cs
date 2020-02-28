@@ -4,10 +4,9 @@ namespace Explorer
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Queries;
 
-    internal class BoolColumnExplorer : ExplorerImpl
+    internal class BoolColumnExplorer : ExplorerBase
     {
         public BoolColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)

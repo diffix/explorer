@@ -212,7 +212,7 @@ namespace Explorer.Api.Tests
 
         private async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
             string dataSourceName,
-            Func<IQueryResolver, ExplorerImpl> implFactory,
+            Func<IQueryResolver, ExplorerBase> explorerFactory,
             [CallerMemberName] string vcrSessionName = "")
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
@@ -220,7 +220,7 @@ namespace Explorer.Api.Tests
             var jsonApiClient = new JsonApiClient(client);
 
             var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName);
-            var explorer = new ColumnExplorer(new[] { implFactory(queryResolver), });
+            var explorer = new Exploration(new[] { explorerFactory(queryResolver), });
 
             await explorer.Completion;
 

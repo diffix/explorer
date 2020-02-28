@@ -4,10 +4,9 @@ namespace Explorer
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Queries;
 
-    internal class TextColumnExplorer : ExplorerImpl
+    internal class TextColumnExplorer : ExplorerBase
     {
         public TextColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)
