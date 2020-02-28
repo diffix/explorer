@@ -40,8 +40,10 @@
         public ReplayingHandler(
             Cassette cassette,
             RecordingOptions options = RecordingOptions.SuccessOnly)
-        : this(new HttpClientHandler(), cassette, options)
+        : base()
         {
+            this.cassette = cassette;
+            this.options = options;
         }
 
         static VCRMode Parse(string mode)

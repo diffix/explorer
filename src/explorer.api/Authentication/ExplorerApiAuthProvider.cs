@@ -1,27 +1,20 @@
-namespace Explorer.Api.Authentication
+﻿namespace Explorer.Api.Authentication
 {
     using Aircloak.JsonApi;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.DependencyInjection;
-    using System.Net.Http;
     using System.Threading.Tasks;
 
-    internal class ExplorerApiAuthHandler : AircloakAuthenticationHandler
+    internal class ExplorerApiAuthProvider : IAircloakAuthenticationProvider
     {
         private readonly IHttpContextAccessor ctx;
 
-        public ExplorerApiAuthHandler(IHttpContextAccessor ctx)
+        public ExplorerApiAuthProvider(IHttpContextAccessor ctx)
         {
             this.ctx = ctx;
         }
 
-        public ExplorerApiAuthHandler(HttpMessageHandler innerHandler, IHttpContextAccessor ctx)
-        : base(innerHandler)
-        {
-            this.ctx = ctx;
-        }
-
-        protected override Task<string> GetAuthToken()
+        public Task<string> GetAuthToken()
         {
             return Task.FromResult((string)ctx.HttpContext.Items["ApiKey"]);
         }

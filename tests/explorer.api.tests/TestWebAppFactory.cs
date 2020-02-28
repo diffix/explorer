@@ -1,6 +1,7 @@
 ﻿#pragma warning disable CA1822 // make method static
 namespace Explorer.Api.Tests
 {
+    using Aircloak.JsonApi;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -8,8 +9,10 @@ namespace Explorer.Api.Tests
     using System.Net.Http.Headers;
     using System.Text.Json;
     using Explorer.Api;
+    using Explorer.Api.Authentication;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
 
     public class TestWebAppFactory : WebApplicationFactory<Startup>
     {
@@ -24,6 +27,21 @@ namespace Explorer.Api.Tests
         public TestWebAppFactory()
         {
             cassettes = new Dictionary<string, VcrSharp.Cassette>();
+        }
+
+        protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+        {
+            builder.ConfigureServices(services =>
+            {
+                ExplorerApiAuthProvider.ConfigureServices(services);
+
+                services
+                    .AddAircloakJsonApiServices<ExplorerApiAuthProvider>(Config.AircloakApiUrl ??
+                        throw new Exception("No Aircloak Api base Url provided in Explorer config."))
+                    .AddHttpMessageHandler(_ => new VcrSharp.ReplayingHandler(
+                            LoadCassette(GetVcrCasetteInfo(GetType().ToString(), "Webhost.OutgoingRequests").FullName),
+                            VcrSharp.RecordingOptions.RecordAll));
+            });
         }
 
         public HttpRequestMessage CreateHttpRequest(HttpMethod method, string endpoint, object? data)
@@ -41,10 +59,11 @@ namespace Explorer.Api.Tests
         {
             // For the explorer interactions we never want to use the cache so override the vcr mode.
             // We actually don't need to use the vcr at all but it's useful for debugging... 
-            var vcrCassetteInfo = GetVcrCasetteInfo(testClassName, vcrSessionName);
+            var cassette = LoadCassette(GetVcrCasetteInfo(testClassName, vcrSessionName).FullName);
 
             var handler = new VcrSharp.ReplayingHandler(
-                LoadCassette(vcrCassetteInfo.FullName),
+                new HttpClientHandler(),
+                cassette,
                 VcrSharp.RecordingOptions.RecordAll);
 
             // Override the vcr mode to always record.
@@ -60,20 +79,24 @@ namespace Explorer.Api.Tests
                             ? VcrSharp.RecordingOptions.FailureOnly
                             : VcrSharp.RecordingOptions.SuccessOnly;
 
-            var vcrHandler = new VcrSharp.ReplayingHandler(LoadCassette(vcrCassetteInfo.FullName), vcrOptions);
+            var vcrHandler = new VcrSharp.ReplayingHandler(
+                innerHandler: new HttpClientHandler(),
+                LoadCassette(vcrCassetteInfo.FullName),
+                vcrOptions);
 
-            var variableName = Config.ApiKeyEnvironmentVariable ??
-                throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
-
-            var authenticatingVcrHandler = Aircloak.JsonApi.StaticApiKeyAuthHandler.FromEnvironmentVariable(
-                variableName,
-                innerHandler: vcrHandler);
-
-            var client = new HttpClient(authenticatingVcrHandler, true) { BaseAddress = Config.AircloakApiUrl };
+            var client = new HttpClient(vcrHandler, true) { BaseAddress = Config.AircloakApiUrl };
 
             return client;
         }
 #pragma warning restore CA2000 // call IDisposable.Dispose on handler object
+
+        public IAircloakAuthenticationProvider EnvironmentVariableAuthProvider()
+        {
+            var variableName = Config.ApiKeyEnvironmentVariable ??
+                throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
+
+            return StaticApiKeyAuthProvider.FromEnvironmentVariable(variableName);
+        }
 
         public FileInfo GetVcrCasetteInfo(string testClassName, string vcrSessionName)
         {

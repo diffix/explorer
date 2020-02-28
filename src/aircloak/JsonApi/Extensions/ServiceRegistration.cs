@@ -18,12 +18,11 @@ namespace Aircloak.JsonApi
         public static IHttpClientBuilder AddAircloakJsonApiServices<TAuthHandler>(
             this IServiceCollection services,
             System.Uri apiBaseAddress)
-        where TAuthHandler : AircloakAuthenticationHandler
+        where TAuthHandler : class, IAircloakAuthenticationProvider
         {
             return services
-                .AddScoped<TAuthHandler>()
-                .AddHttpClient<JsonApiClient>(client => client.BaseAddress = apiBaseAddress)
-                .AddHttpMessageHandler<TAuthHandler>();
+                .AddScoped<IAircloakAuthenticationProvider, TAuthHandler>()
+                .AddHttpClient<JsonApiClient>(client => client.BaseAddress = apiBaseAddress);
         }
     }
 }

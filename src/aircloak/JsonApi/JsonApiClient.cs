@@ -36,13 +36,18 @@
 
         private readonly HttpClient httpClient;
 
+        private readonly IAircloakAuthenticationProvider authProvider;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonApiClient" /> class.
         /// </summary>
         /// <param name="httpClient">A HttpClient object injected into this instance.</param>
-        public JsonApiClient(HttpClient httpClient)
+        /// <param name="authProvider">An authentication token source.</param>
+        public JsonApiClient(HttpClient httpClient, IAircloakAuthenticationProvider authProvider)
         {
             this.httpClient = httpClient;
+
+            this.authProvider = authProvider;
         }
 
         /// <summary>
@@ -325,6 +330,11 @@
             {
                 requestMessage.Content = new StringContent(requestContent);
                 requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(System.Net.Mime.MediaTypeNames.Application.Json);
+            }
+
+            if (!requestMessage.Headers.TryAddWithoutValidation("auth-token", await authProvider.GetAuthToken()))
+            {
+                throw new Exception("Failed to add auth-token header!");
             }
 
             using var response = await httpClient.SendAsync(

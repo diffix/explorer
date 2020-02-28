@@ -225,8 +225,10 @@ namespace Explorer.Api.Tests
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var jsonApiClient = new JsonApiClient(client);
-            return await jsonApiClient.Query<TResult>(
+            var authProvider = factory.EnvironmentVariableAuthProvider();
+            var jsonApiClient = new JsonApiClient(client, authProvider);
+
+            return await jsonApiClient.Query(
                 TestDataSource,
                 query,
                 TimeSpan.FromSeconds(30),
@@ -239,7 +241,8 @@ namespace Explorer.Api.Tests
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var jsonApiClient = new JsonApiClient(client);
+            var authProvider = factory.EnvironmentVariableAuthProvider();
+            var jsonApiClient = new JsonApiClient(client, authProvider);
 
             var explorer = explorerFactory(jsonApiClient);
 
