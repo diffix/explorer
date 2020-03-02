@@ -34,8 +34,8 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(intResult.Query.Error), intResult.Query.Error);
             Assert.All(intResult.ResultRows, row =>
             {
-                Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
-                    ((ValueColumn<long>)row.ColumnValue).ColumnValue >= 0);
+                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
+                    row.DistinctData.Value >= 0);
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -53,8 +53,8 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(realResult.Query.Error), realResult.Query.Error);
             Assert.All(realResult.ResultRows, row =>
             {
-                Assert.True(row.ColumnValue.IsNull || row.ColumnValue.IsSuppressed ||
-                    ((ValueColumn<double>)row.ColumnValue).ColumnValue >= 0);
+                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
+                    row.DistinctData.Value >= 0);
                 Assert.True(row.Count > 0);
             });
         }
@@ -71,8 +71,8 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(textResult.Query.Error), textResult.Query.Error);
             Assert.All(textResult.ResultRows, row =>
             {
-                Assert.True(((ValueColumn<string>)row.ColumnValue).ColumnValue == "Male" ||
-                            ((ValueColumn<string>)row.ColumnValue).ColumnValue == "Female");
+                Assert.True(row.DistinctData.Value == "Male" ||
+                            row.DistinctData.Value == "Female");
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -97,7 +97,7 @@ namespace Explorer.Api.Tests
                 Assert.True(row.BucketIndex < bucketSizes.Count);
                 Assert.True(row.LowerBound.IsNull ||
                             row.LowerBound.IsSuppressed ||
-                            ((ValueColumn<decimal>)row.LowerBound).ColumnValue >= 0);
+                            row.LowerBound.Value >= 0);
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -106,39 +106,22 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestMinMaxExplorer()
         {
-            var final = await GetFinalExplorerResult(jsonApiClient =>
-                new MinMaxExplorer(
-                    jsonApiClient,
-                    new Models.ExploreParams
-                    {
-                        DataSourceName = "gda_banking",
-                        TableName = "loans",
-                        ColumnName = "amount",
-                    }));
+            var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
+                new MinMaxExplorer(queryResolver, "loans", "amount"));
 
             const decimal expectedMin = 3288M;
             const decimal expectedMax = 495725M;
-            Assert.True(
-                final.Status == ColumnExplorer.Status.Complete,
-                $"Expected status `{ColumnExplorer.Status.Complete}`, got {final.Status}.");
-            var actualMin = (decimal)final.Metrics.Single(m => m.MetricName == "refined_min").MetricValue;
+            var actualMin = (decimal)metrics.Single(m => m.Name == "refined_min").Metric;
             Assert.True(actualMin == expectedMin, $"Expected {expectedMin}, got {actualMin}");
-            var actualMax = (decimal)final.Metrics.Single(m => m.MetricName == "refined_max").MetricValue;
+            var actualMax = (decimal)metrics.Single(m => m.Name == "refined_max").Metric;
             Assert.True(actualMax == expectedMax, $"Expected {expectedMax}, got {actualMax}");
         }
 
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            var final = await GetFinalExplorerResult(jsonApiClient =>
-                new BoolColumnExplorer(
-                    jsonApiClient,
-                    new Models.ExploreParams
-                    {
-                        DataSourceName = "GiveMeSomeCredit",
-                        TableName = "loans",
-                        ColumnName = "SeriousDlqin2yrs",
-                    }));
+            var metrics = await GetExplorerMetrics("GiveMeSomeCredit", queryResolver =>
+                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
 
             var expectedValues = new List<object>
             {
@@ -146,21 +129,14 @@ namespace Explorer.Api.Tests
                 new { Value = true, Count = 10_028L },
             };
 
-            CheckDistinctCategories(final.Metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues);
         }
 
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
-            var final = await GetFinalExplorerResult(jsonApiClient =>
-                new TextColumnExplorer(
-                    jsonApiClient,
-                    new Models.ExploreParams
-                    {
-                        DataSourceName = "gda_banking",
-                        TableName = "loans",
-                        ColumnName = "status",
-                    }));
+            var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
+                new TextColumnExplorer(queryResolver, "loans", "status"));
 
             var expectedValues = new List<object>
             {
@@ -170,7 +146,7 @@ namespace Explorer.Api.Tests
                 new { Value = "B", Count = 32L },
             };
 
-            CheckDistinctCategories(final.Metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues);
         }
 
         [Fact]
@@ -190,13 +166,13 @@ namespace Explorer.Api.Tests
         }
 
         private void CheckDistinctCategories(
-            IEnumerable<ExploreResult.Metric> distinctMetrics,
+            IEnumerable<IExploreMetric> distinctMetrics,
             IEnumerable<dynamic> expectedValues)
         {
             var distinctValues =
                 (IEnumerable<dynamic>)distinctMetrics
-                .Single(m => m.MetricName == "top_distinct_values")
-                .MetricValue;
+                .Single(m => m.Name == "top_distinct_values")
+                .Metric;
 
             Assert.All<(dynamic, dynamic)>(distinctValues.Zip(expectedValues), tuple =>
             {
@@ -208,14 +184,14 @@ namespace Explorer.Api.Tests
 
             var expectedTotal = expectedValues.Sum(v => (long)v.Count);
             var actualTotal = (long)distinctMetrics
-                .Single(m => m.MetricName == "total_count")
-                .MetricValue;
+                .Single(m => m.Name == "total_count")
+                .Metric;
             Assert.True(expectedTotal == actualTotal, $"Expected total of {expectedTotal}, got {actualTotal}");
 
             const long expectedSuppressed = 0L;
             var actualSuppressed = (long)distinctMetrics
-                .Single(m => m.MetricName == "suppressed_values")
-                .MetricValue;
+                .Single(m => m.Name == "suppressed_values")
+                .Metric;
             Assert.True(
                 actualSuppressed == expectedSuppressed,
                 $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
@@ -235,8 +211,9 @@ namespace Explorer.Api.Tests
                 factory.GetApiPollingFrequency(vcrCassetteInfo));
         }
 
-        private async Task<ExploreResult> GetFinalExplorerResult(
-            Func<JsonApiClient, ColumnExplorer> explorerFactory,
+        private async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
+            string dataSourceName,
+            Func<IQueryResolver, ExplorerBase> explorerFactory,
             [CallerMemberName] string vcrSessionName = "")
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
@@ -244,14 +221,12 @@ namespace Explorer.Api.Tests
             var authProvider = factory.EnvironmentVariableAuthProvider();
             var jsonApiClient = new JsonApiClient(client, authProvider);
 
-            var explorer = explorerFactory(jsonApiClient);
+            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName);
+            var explorer = new Exploration(new[] { explorerFactory(queryResolver), });
 
-            await explorer.Explore();
+            await explorer.Completion;
 
-            var final = explorer.LatestResult;
-            Assert.True(final.Status == "complete", $"Expected status `complete`, got {final.Status}.");
-
-            return final;
+            return explorer.ExploreMetrics;
         }
 
         private class RepeatingRowsQuery : IQuerySpec<RepeatingRowsQuery.Result>

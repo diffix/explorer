@@ -25,19 +25,19 @@ namespace Explorer.Queries
                         from {TableName}
                         group by {ColumnName}";
 
-        public string TableName { get; }
+        private string TableName { get; }
 
-        public string ColumnName { get; }
+        private string ColumnName { get; }
 
         IntegerResult IQuerySpec<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
-            var columnValue = AircloakColumnJsonParser.ParseLong(ref reader);
+            var columnValue = AircloakValueJsonParser.ParseLong(ref reader);
             var (count, countNoise) = ReadCountAndNoise(ref reader);
 
             return new IntegerResult
             {
-                ColumnValue = columnValue,
+                DistinctData = columnValue,
                 Count = count,
                 CountNoise = countNoise,
             };
@@ -46,12 +46,12 @@ namespace Explorer.Queries
         RealResult IQuerySpec<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
-            var columnValue = AircloakColumnJsonParser.ParseDouble(ref reader);
+            var columnValue = AircloakValueJsonParser.ParseDouble(ref reader);
             var (count, countNoise) = ReadCountAndNoise(ref reader);
 
             return new RealResult
             {
-                ColumnValue = columnValue,
+                DistinctData = columnValue,
                 Count = count,
                 CountNoise = countNoise,
             };
@@ -60,12 +60,12 @@ namespace Explorer.Queries
         BoolResult IQuerySpec<BoolResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
-            var columnValue = AircloakColumnJsonParser.ParseBool(ref reader);
+            var columnValue = AircloakValueJsonParser.ParseBool(ref reader);
             var (count, countNoise) = ReadCountAndNoise(ref reader);
 
             return new BoolResult
             {
-                ColumnValue = columnValue,
+                DistinctData = columnValue,
                 Count = count,
                 CountNoise = countNoise,
             };
@@ -74,12 +74,12 @@ namespace Explorer.Queries
         TextResult IQuerySpec<TextResult>.FromJsonArray(ref Utf8JsonReader reader)
         {
             reader.Read();
-            var columnValue = AircloakColumnJsonParser.ParseString(ref reader);
+            var columnValue = AircloakValueJsonParser.ParseString(ref reader);
             var (count, countNoise) = ReadCountAndNoise(ref reader);
 
             return new TextResult
             {
-                ColumnValue = columnValue,
+                DistinctData = columnValue,
                 Count = count,
                 CountNoise = countNoise,
             };
@@ -95,18 +95,12 @@ namespace Explorer.Queries
             {
                 countNoise = reader.GetDouble();
             }
-
             return (count, countNoise);
         }
 
         public class IntegerResult
         {
-            public IntegerResult()
-            {
-                ColumnValue = new NullColumn<long>();
-            }
-
-            public AircloakColumn<long> ColumnValue { get; set; }
+            public AircloakValue<long> DistinctData { get; set; } = NullValue<long>.Instance;
 
             public long Count { get; set; }
 
@@ -115,12 +109,7 @@ namespace Explorer.Queries
 
         public class RealResult
         {
-            public RealResult()
-            {
-                ColumnValue = new NullColumn<double>();
-            }
-
-            public AircloakColumn<double> ColumnValue { get; set; }
+            public AircloakValue<double> DistinctData { get; set; } = NullValue<double>.Instance;
 
             public long Count { get; set; }
 
@@ -129,12 +118,7 @@ namespace Explorer.Queries
 
         public class BoolResult
         {
-            public BoolResult()
-            {
-                ColumnValue = new NullColumn<bool>();
-            }
-
-            public AircloakColumn<bool> ColumnValue { get; set; }
+            public AircloakValue<bool> DistinctData { get; set; } = NullValue<bool>.Instance;
 
             public long Count { get; set; }
 
@@ -143,12 +127,7 @@ namespace Explorer.Queries
 
         public class TextResult
         {
-            public TextResult()
-            {
-                ColumnValue = new NullColumn<string>();
-            }
-
-            public AircloakColumn<string> ColumnValue { get; set; }
+            public AircloakValue<string> DistinctData { get; set; } = NullValue<string>.Instance;
 
             public long Count { get; set; }
 

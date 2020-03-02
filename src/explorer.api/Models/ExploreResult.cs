@@ -6,27 +6,37 @@ namespace Explorer
 
     internal class ExploreResult
     {
-        public ExploreResult(Guid explorationId, string status)
+        public ExploreResult(Guid explorationId, ExploreStatus status)
         {
             Id = explorationId;
             Status = status;
             Metrics = Array.Empty<Metric>();
         }
 
-        public ExploreResult(Guid explorationId, string status, IEnumerable<Metric> metrics)
+        public ExploreResult(Guid explorationId, ExploreStatus status, IEnumerable<Metric> metrics)
         {
             Id = explorationId;
             Status = status;
             Metrics = metrics;
         }
 
-        public string Status { get; }
+        public ExploreStatus Status { get; }
 
         public IEnumerable<Metric> Metrics { get; }
 
         public Guid Id { get; }
 
-        internal class Metric
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum ExploreStatus
+        {
+            New,
+            Processing,
+            Complete,
+            Error,
+
+        }
+
+        public class Metric
         {
             public Metric(string name, object value)
             {
