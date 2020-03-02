@@ -199,11 +199,12 @@ namespace Explorer.Api.Tests
 
         private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
         {
-            // WaitDebugger();
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var jsonApiClient = new JsonApiClient(client);
-            return await jsonApiClient.Query<TResult>(
+            var authProvider = factory.EnvironmentVariableAuthProvider();
+            var jsonApiClient = new JsonApiClient(client, authProvider);
+
+            return await jsonApiClient.Query(
                 TestDataSource,
                 query,
                 TimeSpan.FromSeconds(30),
@@ -217,7 +218,8 @@ namespace Explorer.Api.Tests
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var jsonApiClient = new JsonApiClient(client);
+            var authProvider = factory.EnvironmentVariableAuthProvider();
+            var jsonApiClient = new JsonApiClient(client, authProvider);
 
             var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName);
             var explorer = new Exploration(new[] { explorerFactory(queryResolver), });

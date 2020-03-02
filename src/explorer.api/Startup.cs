@@ -1,7 +1,7 @@
 namespace Explorer.Api
 {
-    using System;
-    using System.Net.Http;
+    using Aircloak.JsonApi;
+    using Explorer.Api.Authentication;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -24,14 +24,10 @@ namespace Explorer.Api
 
             var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
 
-            services.AddHttpClient<Aircloak.JsonApi.JsonApiClient>(client =>
-            {
-                client.BaseAddress = config.AircloakApiUrl;
-                if (!client.DefaultRequestHeaders.TryAddWithoutValidation("auth-token", config.AircloakApiKey))
-                {
-                    throw new Exception($"Failed to add Http header 'auth-token'");
-                }
-            });
+            ExplorerApiAuthProvider.ConfigureServices(services);
+
+            services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>(config.AircloakApiUrl ??
+                throw new System.Exception("No Aircloak Api base Url provided in Explorer config."));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
