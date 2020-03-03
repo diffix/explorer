@@ -25,7 +25,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            var intResult = await QueryResult<DistinctColumnValues.IntegerResult>(
+            var intResult = await QueryResult<DistinctColumnValues.Result<long>>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "duration"));
@@ -44,7 +44,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            var realResult = await QueryResult<DistinctColumnValues.RealResult>(
+            var realResult = await QueryResult<DistinctColumnValues.Result<double>>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
@@ -62,7 +62,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            var textResult = await QueryResult<DistinctColumnValues.TextResult>(
+            var textResult = await QueryResult<DistinctColumnValues.Result<string>>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));

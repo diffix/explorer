@@ -2,9 +2,12 @@ namespace Explorer.Queries
 {
     using System.Text.Json;
     using Aircloak.JsonApi;
+    using Aircloak.JsonApi.JsonReaderExtensions;
 
     internal class Min :
-        IQuerySpec<Min.Result>
+        IQuerySpec<Min.Result<long>>,
+        IQuerySpec<Min.Result<double>>,
+        IQuerySpec<Min.Result<decimal>>
     {
         public Min(string tableName, string columnName, decimal? upperBound = null)
         {
@@ -37,20 +40,28 @@ namespace Explorer.Queries
 
         private decimal? UpperBound { get; }
 
-        public Result FromJsonArray(ref Utf8JsonReader reader)
-        {
-            reader.Read();
-            if (reader.TokenType == JsonTokenType.Null)
+        Result<long> IQuerySpec<Result<long>>.FromJsonArray(ref Utf8JsonReader reader) =>
+            new Result<long>
             {
-                return new Result { Min = null };
-            }
+                Min = reader.ParseNullableMetric<long>(),
+            };
 
-            return new Result { Min = reader.GetDecimal() };
-        }
+        Result<double> IQuerySpec<Result<double>>.FromJsonArray(ref Utf8JsonReader reader) =>
+            new Result<double>
+            {
+                Min = reader.ParseNullableMetric<double>(),
+            };
 
-        public class Result
+        Result<decimal> IQuerySpec<Result<decimal>>.FromJsonArray(ref Utf8JsonReader reader) =>
+            new Result<decimal>
+            {
+                Min = reader.ParseNullableMetric<decimal>(),
+            };
+
+        public class Result<T>
+            where T : struct
         {
-            public decimal? Min { get; set; }
+            public T? Min { get; set; }
         }
     }
 }

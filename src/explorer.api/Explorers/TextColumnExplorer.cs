@@ -21,7 +21,7 @@ namespace Explorer
 
         public override async Task Explore()
         {
-            var distinctValues = await ResolveQuery<DistinctColumnValues.TextResult>(
+            var distinctValues = await ResolveQuery<DistinctColumnValues.Result<string>>(
                 new DistinctColumnValues(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
