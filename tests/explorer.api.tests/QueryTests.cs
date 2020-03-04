@@ -106,6 +106,61 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
+        {
+            var result = await QueryResult<CyclicalDatetimes.Result>(
+                dataSourceName: "gda_taxi",
+                query: new CyclicalDatetimes(
+                    "rides",
+                    "pickup_datetime"
+                )
+            );
+
+            Assert.True(result.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
+            Assert.All(result.ResultRows, row =>
+            {
+                Assert.True(row.Count > 0);
+                Assert.False(
+                    row.Year.IsNull &&
+                    row.Quarter.IsNull &&
+                    row.Month.IsNull &&
+                    row.Day.IsNull &&
+                    row.Weekday.IsNull &&
+                    row.Hour.IsNull &&
+                    row.Minute.IsNull &&
+                    row.Second.IsNull);
+            });
+        }
+
+        [Fact]
+        public async void TestBucketedDatetimeQueryTaxiPickupTimes()
+        {
+            var result = await QueryResult<BucketedDatetimes.Result>(
+                dataSourceName: "gda_taxi",
+                query: new BucketedDatetimes(
+                    "rides",
+                    "pickup_datetime"
+                )
+            );
+
+            Assert.True(result.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
+            Assert.All(result.ResultRows, row =>
+            {
+                Assert.True(row.Count > 0);
+                Assert.False(
+                    row.Year.IsNull &&
+                    row.Quarter.IsNull &&
+                    row.Month.IsNull &&
+                    row.Day.IsNull &&
+                    row.Hour.IsNull &&
+                    row.Minute.IsNull &&
+                    row.Second.IsNull);
+            });
+        }
+
+        [Fact]
         public async void TestMinMaxExplorer()
         {
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
@@ -230,7 +285,10 @@ namespace Explorer.Api.Tests
                 $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(
+            IQuerySpec<TResult> query,
+            string dataSourceName = TestDataSource,
+            [CallerMemberName] string vcrSessionName = "")
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
@@ -238,7 +296,7 @@ namespace Explorer.Api.Tests
             var jsonApiClient = new JsonApiClient(client, authProvider);
 
             return await jsonApiClient.Query(
-                TestDataSource,
+                dataSourceName,
                 query,
                 factory.GetApiPollingFrequency(vcrCassetteInfo),
                 CancellationToken.None);
