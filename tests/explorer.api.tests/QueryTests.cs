@@ -212,8 +212,10 @@ namespace Explorer.Api.Tests
             var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
                 new DatetimeColumnExplorer(queryResolver, "rides", "pickup_datetime"));
 
-            Assert.Single(metrics, m => m.Name == "dummy_datehist");
-            Assert.Single(metrics, m => m.Name == "dummy_daterepetition");
+            Assert.Single(metrics, m => m.Name == "dates_linear");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.second");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.minute");
         }
 
         [Fact]

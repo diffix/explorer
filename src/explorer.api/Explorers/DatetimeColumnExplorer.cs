@@ -1,6 +1,7 @@
 ﻿namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -100,12 +101,81 @@
 
         private void ProcessLinearBuckets(QueryResult<BucketedDatetimes.Result> queryResult)
         {
-            PublishMetric(new UntypedMetric(name: "dummy_datehist", metric: new object { }));
+
+            PublishMetric(new UntypedMetric(name: "dates_linear", metric: new object { }));
         }
 
         private void ProcessCyclicalBuckets(QueryResult<CyclicalDatetimes.Result> queryResult)
         {
-            PublishMetric(new UntypedMetric(name: "dummy_daterepetition", metric: new object { }));
+            // Years are not cyclical
+            // Months are y-cyclical where y is the number of distinct years
+            // Days are (y * m)-cyclical where m is the number of distinct months
+            // etc.
+            // If there are fewer than 2 years, don't bother including months
+            // If there are fewer than 2 months, don't bother including days
+            // "" 2 weeks ... weekdays
+            // etc.
+            var yearsRows = ExtractValueCounts(queryResult.ResultRows, row => row.Year);
+            var (yearsCount, yearsSuppressed) = CountTotalAndSuppressed(yearsRows);
+
+            foreach (var (component, selector) in cyclicalDatetimeComponentSelectors)
+            {
+                var rows = ExtractValueCounts(queryResult.ResultRows, selector);
+                var (totalCount, suppressedCount) = CountTotalAndSuppressed(rows);
+                PublishMetric(new UntypedMetric(name: $"dates_cyclical.{component}", metric: new
+                {
+                    Total = totalCount,
+                    Suppressed = suppressedCount,
+                    Counts =
+                        from tup in rows
+                        where !tup.Item1.IsSuppressed
+                        let value = tup.Item1.Value
+                        orderby value ascending
+                        select new
+                        {
+                            Value = value,
+                            Count = tup.Item2,
+                            CountNoise = tup.Item3,
+                        },
+                }));
+            }
+
+            var months = ExtractValueCounts(queryResult.ResultRows, row => row.Month);
+            var days = ExtractValueCounts(queryResult.ResultRows, row => row.Day);
+            var weekdays = ExtractValueCounts(queryResult.ResultRows, row => row.Weekday);
+            var hours = ExtractValueCounts(queryResult.ResultRows, row => row.Hour);
+            var minutes = ExtractValueCounts(queryResult.ResultRows, row => row.Minute);
+            var seconds = ExtractValueCounts(queryResult.ResultRows, row => row.Second);
+
+            PublishMetric(new UntypedMetric(name: "dates_cyclical", metric: months));
         }
+
+        private IEnumerable<(AircloakValue<T>, long, double?)> ExtractValueCounts<T>(
+            IEnumerable<CyclicalDatetimes.Result> rows,
+            Func<CyclicalDatetimes.Result, AircloakValue<T>> selector) =>
+                from row in rows
+                let value = selector(row)
+                where !value.IsNull
+                select (value, count: row.Count, noise: row.CountNoise);
+
+        private (long, long) CountTotalAndSuppressed<T>(IEnumerable<(AircloakValue<T>, long, double?)> valueCounts) =>
+            valueCounts.Aggregate(
+                (0L, 0L),
+                (acc, next) => (
+                    acc.Item1 + next.Item2,
+                    acc.Item2 + (next.Item1.IsSuppressed ? next.Item2 : 0L)));
+
+        private static readonly Dictionary<string, Func<CyclicalDatetimes.Result, AircloakValue<int>>>
+            cyclicalDatetimeComponentSelectors =
+                new Dictionary<string, Func<CyclicalDatetimes.Result, AircloakValue<int>>>
+                {
+                    { "year", _ => _.Year },
+                    { "month", _ => _.Month },
+                    { "day", _ => _.Day },
+                    { "weekday", _ => _.Weekday },
+                    { "hour", _ => _.Hour },
+                    { "minute", _ => _.Minute },
+                    { "second", _ => _.Second },
+                };
     }
 }
