@@ -1,4 +1,4 @@
-namespace Explorer.Api.Controllers
+﻿namespace Explorer.Api.Controllers
 {
     using System.Collections.Concurrent;
     using System.Linq;
@@ -80,7 +80,7 @@ namespace Explorer.Api.Controllers
         [Route("result/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Result(System.Guid explorationId)
+        public async Task<IActionResult> Result(System.Guid explorationId)
         {
             if (Explorations.TryGetValue(explorationId, out var explorer))
             {
@@ -105,17 +105,24 @@ namespace Explorer.Api.Controllers
                             exploreStatus,
                             metrics);
 
-                if (exploreStatus == ExploreResult.ExploreStatus.Complete ||
-                    exploreStatus == ExploreResult.ExploreStatus.Error)
+                if (explorer.Completion.IsCompleted)
                 {
-                    _ = Explorations.TryRemove(explorationId, out _);
+                    try
+                    {
+                        // await the completion task to trigger any inner exceptions
+                        await explorer.Completion;
+                    }
+                    finally
+                    {
+                        Explorations.TryRemove(explorationId, out _);
+                    }
                 }
 
                 return Ok(result);
             }
             else
             {
-                return BadRequest($"Couldn't find explorer with id {explorationId}");
+                return NotFound($"Couldn't find explorer with id {explorationId}");
             }
         }
 
