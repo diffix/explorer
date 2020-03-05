@@ -40,8 +40,10 @@
         public ReplayingHandler(
             Cassette cassette,
             RecordingOptions options = RecordingOptions.SuccessOnly)
-        : this(new HttpClientHandler(), cassette, options)
+        : base()
         {
+            this.cassette = cassette;
+            this.options = options;
         }
 
         static VCRMode Parse(string mode)
@@ -71,7 +73,7 @@
         }
 
         VCRMode? vcrMode;
-        VCRMode CurrentVCRMode
+        public VCRMode CurrentVCRMode
         {
             get
             {
@@ -81,6 +83,7 @@
                 }
                 return vcrMode.Value;
             }
+            set => vcrMode = value;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
