@@ -207,6 +207,16 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestDateTimeColumnExplorer()
+        {
+            var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
+                new DatetimeColumnExplorer(queryResolver, "rides", "pickup_datetime"));
+
+            Assert.Single(metrics, m => m.Name == "dummy_datehist");
+            Assert.Single(metrics, m => m.Name == "dummy_daterepetition");
+        }
+
+        [Fact]
         public async void TestRepeatingRows()
         {
             var queryResult = await QueryResult(new RepeatingRowsQuery());

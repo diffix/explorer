@@ -4,6 +4,7 @@
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Queries;
 
     internal class DatetimeColumnExplorer : ExplorerBase
@@ -72,12 +73,39 @@
             // var bucketsToSample = DiffixUtilities.EstimateBucketResolutions(
             //     stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
-            // Dates histogram (date_trunc by year, quarter, month, day, hour, minute, and second
-            //   ==> might as well query all at same time and then keep the most useful)
-            // Cyclical Histogram (ie. year(), quarter(), month(), day(), hour(), minute(), second(), weekday()
-            //   ==> same as above: just query everything and decide what to do with it after.)
+            await Task.WhenAll(LinearBuckets(), CyclicalBuckets());
+
+            // Other metrics?
             // Median
             // Average
+        }
+
+        private async Task LinearBuckets()
+        {
+            var queryResult = await ResolveQuery(
+                new BucketedDatetimes(TableName, ColumnName),
+                TimeSpan.FromMinutes(10));
+
+            await Task.Run(() => ProcessLinearBuckets(queryResult));
+        }
+
+        private async Task CyclicalBuckets()
+        {
+            var queryResult = await ResolveQuery(
+                new CyclicalDatetimes(TableName, ColumnName),
+                TimeSpan.FromMinutes(10));
+
+            await Task.Run(() => ProcessCyclicalBuckets(queryResult));
+        }
+
+        private void ProcessLinearBuckets(QueryResult<BucketedDatetimes.Result> queryResult)
+        {
+            PublishMetric(new UntypedMetric(name: "dummy_datehist", metric: new object { }));
+        }
+
+        private void ProcessCyclicalBuckets(QueryResult<CyclicalDatetimes.Result> queryResult)
+        {
+            PublishMetric(new UntypedMetric(name: "dummy_daterepetition", metric: new object { }));
         }
     }
 }
