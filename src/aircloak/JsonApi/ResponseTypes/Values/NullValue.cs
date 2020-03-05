@@ -28,6 +28,12 @@ namespace Aircloak.JsonApi.ResponseTypes
         public override bool IsNull => true;
 
         /// <summary>
+        /// Gets a value indicating whether the column contained a valid value.
+        /// Always returns false since the returned value is NULL.
+        /// </summary>
+        public override bool HasValue => false;
+
+        /// <summary>
         /// Gets the wrapped value.
         /// </summary>
         /// <remarks>
