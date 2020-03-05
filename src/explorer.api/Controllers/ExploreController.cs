@@ -1,4 +1,4 @@
-﻿namespace Explorer.Api.Controllers
+namespace Explorer.Api.Controllers
 {
     using System.Collections.Concurrent;
     using System.Linq;
@@ -21,11 +21,16 @@
 
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
+        private readonly ExplorerApiAuthProvider authProvider;
 
-        public ExploreController(ILogger<ExploreController> logger, JsonApiClient apiClient)
+        public ExploreController(
+            ILogger<ExploreController> logger,
+            JsonApiClient apiClient,
+            IAircloakAuthenticationProvider authProvider)
         {
             this.logger = logger;
             this.apiClient = apiClient;
+            this.authProvider = (ExplorerApiAuthProvider)authProvider;
         }
 
         [HttpPost]
@@ -34,7 +39,7 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            this.RegisterApiKey(data.ApiKey);
+            authProvider.RegisterApiKey(data.ApiKey);
 
             var dataSources = await apiClient.GetDataSources();
 

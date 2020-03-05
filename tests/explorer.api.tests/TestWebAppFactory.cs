@@ -33,8 +33,6 @@ namespace Explorer.Api.Tests
         {
             builder.ConfigureServices(services =>
             {
-                ExplorerApiAuthProvider.ConfigureServices(services);
-
                 services
                     .AddAircloakJsonApiServices<ExplorerApiAuthProvider>(Config.AircloakApiUrl ??
                         throw new Exception("No Aircloak Api base Url provided in Explorer config."))
