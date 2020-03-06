@@ -6,6 +6,7 @@ namespace Explorer.Queries
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
+    using Aircloak.JsonApi.JsonReaderExtensions;
 
     internal class SingleColumnHistogram :
         IQuerySpec<SingleColumnHistogram.Result>
@@ -54,29 +55,28 @@ namespace Explorer.Queries
 
         public Result FromJsonArray(ref Utf8JsonReader reader)
         {
-            reader.Read();
-            var groupingFlags = reader.GetInt32();
-            reader.Read();
-            var numBuckets = reader.GetInt32();
+            var groupingFlags = reader.ParseNonNullableMetric<int>();
+            var numBuckets = reader.ParseNonNullableMetric<int>();
 
             int? bucketIndex = null;
             AircloakValue<decimal>? lowerBound = null;
 
             for (var i = numBuckets - 1; i >= 0; i--)
             {
-                reader.Read();
                 if (((groupingFlags >> i) & 1) == 0)
                 {
                     bucketIndex = numBuckets - 1 - i;
-                    lowerBound = AircloakValueJsonParser.ParseDecimal(ref reader);
+                    lowerBound = reader.ParseAircloakResultValue<decimal>();
+                }
+                else
+                {
+                    // discard value
+                    reader.ParseAircloakResultValue<decimal>();
                 }
             }
 
-            reader.Read();
-            var count = reader.GetInt32();
-            reader.Read();
-            var countNoise = reader.TokenType == JsonTokenType.Null ? 1.0
-                                                                : reader.GetDouble();
+            var count = reader.ParseCount();
+            var countNoise = reader.ParseCountNoise();
 
             return new Result
             {
@@ -102,7 +102,7 @@ namespace Explorer.Queries
 
             public AircloakValue<decimal> LowerBound { get; set; }
 
-            public int Count { get; set; }
+            public long Count { get; set; }
 
             public double? CountNoise { get; set; }
         }

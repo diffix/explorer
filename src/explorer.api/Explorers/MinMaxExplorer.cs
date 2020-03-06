@@ -51,7 +51,7 @@ namespace Explorer
         }
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound = null) =>
-            (await ResolveQuery<Min.Result>(
+            (await ResolveQuery<Min.Result<decimal>>(
                 new Min(TableName, ColumnName, upperBound),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows
@@ -59,7 +59,7 @@ namespace Explorer
                 .Min;
 
         private async Task<decimal?> GetMaxEstimate(decimal? lowerBound = null) =>
-            (await ResolveQuery<Max.Result>(
+            (await ResolveQuery<Max.Result<decimal>>(
                 new Max(TableName, ColumnName, lowerBound),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows

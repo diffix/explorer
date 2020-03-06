@@ -2,9 +2,12 @@ namespace Explorer.Queries
 {
     using System.Text.Json;
     using Aircloak.JsonApi;
+    using Aircloak.JsonApi.JsonReaderExtensions;
 
     internal class Max :
-        IQuerySpec<Max.Result>
+        IQuerySpec<Max.Result<long>>,
+        IQuerySpec<Max.Result<double>>,
+        IQuerySpec<Max.Result<decimal>>
     {
         public Max(string tableName, string columnName, decimal? lowerBound = null)
         {
@@ -37,20 +40,28 @@ namespace Explorer.Queries
 
         private decimal? LowerBound { get; }
 
-        public Result FromJsonArray(ref Utf8JsonReader reader)
-        {
-            reader.Read();
-            if (reader.TokenType == JsonTokenType.Null)
+        Result<long> IQuerySpec<Result<long>>.FromJsonArray(ref Utf8JsonReader reader) =>
+            new Result<long>
             {
-                return new Result { Max = null };
-            }
+                Max = reader.ParseNullableMetric<long>(),
+            };
 
-            return new Result { Max = reader.GetDecimal() };
-        }
+        Result<double> IQuerySpec<Result<double>>.FromJsonArray(ref Utf8JsonReader reader) =>
+            new Result<double>
+            {
+                Max = reader.ParseNullableMetric<double>(),
+            };
 
-        public class Result
+        Result<decimal> IQuerySpec<Result<decimal>>.FromJsonArray(ref Utf8JsonReader reader) =>
+            new Result<decimal>
+            {
+                Max = reader.ParseNullableMetric<decimal>(),
+            };
+
+        public class Result<T>
+            where T : struct
         {
-            public decimal? Max { get; set; }
+            public T? Max { get; set; }
         }
     }
 }

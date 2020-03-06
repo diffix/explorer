@@ -26,7 +26,7 @@
 
         public override async Task Explore()
         {
-            var stats = (await ResolveQuery<NumericColumnStats.RealResult>(
+            var stats = (await ResolveQuery<NumericColumnStats.Result<double>>(
                 new NumericColumnStats(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2)))
                 .ResultRows
@@ -35,7 +35,7 @@
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await ResolveQuery<DistinctColumnValues.RealResult>(
+            var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result<double>>(
                 new DistinctColumnValues(TableName, ColumnName),
                 timeout: TimeSpan.FromMinutes(2));
 
@@ -113,7 +113,7 @@
             PublishMetric(new UntypedMetric(name: "histogram_buckets", metric: histogramBuckets));
 
             // Estimate Median
-            var processed = 0;
+            long processed = 0;
             var target = (double)totalValueCount / 2;
             var medianEstimate = 0.0;
             foreach (var bucket in histogramBuckets)

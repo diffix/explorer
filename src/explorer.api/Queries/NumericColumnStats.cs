@@ -2,10 +2,11 @@ namespace Explorer.Queries
 {
     using System.Text.Json;
     using Aircloak.JsonApi;
+    using Aircloak.JsonApi.JsonReaderExtensions;
 
     internal class NumericColumnStats :
-        IQuerySpec<NumericColumnStats.IntegerResult>,
-        IQuerySpec<NumericColumnStats.RealResult>
+        IQuerySpec<NumericColumnStats.Result<long>>,
+        IQuerySpec<NumericColumnStats.Result<double>>
     {
         public NumericColumnStats(string tableName, string columnName)
         {
@@ -25,66 +26,38 @@ namespace Explorer.Queries
 
         private string ColumnName { get; }
 
-        IntegerResult IQuerySpec<IntegerResult>.FromJsonArray(ref Utf8JsonReader reader)
+        Result<long> IQuerySpec<Result<long>>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            reader.Read();
-            var min = reader.GetInt64();
-            reader.Read();
-            var max = reader.GetInt64();
-            reader.Read();
-            var count = reader.GetInt64();
-            reader.Read();
-            var countNoise = reader.GetDouble();
-
-            return new IntegerResult
+            return new Result<long>
             {
-                Min = min,
-                Max = max,
-                Count = count,
-                CountNoise = countNoise,
+                Min = reader.ParseNonNullableMetric<long>(),
+                Max = reader.ParseNonNullableMetric<long>(),
+                Count = reader.ParseCount(),
+                CountNoise = reader.ParseCountNoise(),
             };
         }
 
-        RealResult IQuerySpec<RealResult>.FromJsonArray(ref Utf8JsonReader reader)
+        Result<double> IQuerySpec<Result<double>>.FromJsonArray(ref Utf8JsonReader reader)
         {
-            reader.Read();
-            var min = reader.GetDouble();
-            reader.Read();
-            var max = reader.GetDouble();
-            reader.Read();
-            var count = reader.GetInt64();
-            reader.Read();
-            var countNoise = reader.GetDouble();
-
-            return new RealResult
+            return new Result<double>
             {
-                Min = min,
-                Max = max,
-                Count = count,
-                CountNoise = countNoise,
+                Min = reader.ParseNonNullableMetric<double>(),
+                Max = reader.ParseNonNullableMetric<double>(),
+                Count = reader.ParseCount(),
+                CountNoise = reader.ParseCountNoise(),
             };
         }
 
-        public class IntegerResult
+        public class Result<T>
+            where T : unmanaged
         {
-            public long Min { get; set; }
+            public T Min { get; set; }
 
-            public long Max { get; set; }
+            public T Max { get; set; }
 
             public long Count { get; set; }
 
-            public double CountNoise { get; set; }
-        }
-
-        public class RealResult
-        {
-            public double Min { get; set; }
-
-            public double Max { get; set; }
-
-            public long Count { get; set; }
-
-            public double CountNoise { get; set; }
+            public double? CountNoise { get; set; }
         }
     }
 }
