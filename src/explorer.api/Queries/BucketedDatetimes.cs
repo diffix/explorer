@@ -6,6 +6,8 @@ namespace Explorer.Queries
     using Aircloak.JsonApi.ResponseTypes;
     using Aircloak.JsonApi.JsonReaderExtensions;
 
+    using Explorer.Diffix.Interfaces;
+
     internal class BucketedDatetimes :
         IQuerySpec<BucketedDatetimes.Result>
     {
@@ -42,19 +44,19 @@ namespace Explorer.Queries
         public Result FromJsonArray(ref Utf8JsonReader reader) =>
             new Result
             {
-                Year = reader.ParseAircloakResultValue((ref Utf8JsonReader reader) => reader.GetDateTime().Year),
+                Year = reader.ParseAircloakResultValue<System.DateTime>(),
 
                 Quarter = reader.ParseAircloakResultValue<System.DateTime>(),
 
-                Month = reader.ParseAircloakResultValue((ref Utf8JsonReader reader) => reader.GetDateTime().Month),
+                Month = reader.ParseAircloakResultValue<System.DateTime>(),
 
-                Day = reader.ParseAircloakResultValue((ref Utf8JsonReader reader) => reader.GetDateTime().Day),
+                Day = reader.ParseAircloakResultValue<System.DateTime>(),
 
-                Hour = reader.ParseAircloakResultValue((ref Utf8JsonReader reader) => reader.GetDateTime().Hour),
+                Hour = reader.ParseAircloakResultValue<System.DateTime>(),
 
-                Minute = reader.ParseAircloakResultValue((ref Utf8JsonReader reader) => reader.GetDateTime().Minute),
+                Minute = reader.ParseAircloakResultValue<System.DateTime>(),
 
-                Second = reader.ParseAircloakResultValue((ref Utf8JsonReader reader) => reader.GetDateTime().Second),
+                Second = reader.ParseAircloakResultValue<System.DateTime>(),
 
                 Count = reader.ParseCount(),
 
@@ -62,21 +64,21 @@ namespace Explorer.Queries
             };
 
 #pragma warning disable CS8618 // Non-nullable property 'Year' is uninitialized. Consider declaring the property as nullable. 
-        public class Result
+        public class Result : ICountAggregate
         {
-            public AircloakValue<int> Year { get; set; }
+            public AircloakValue<System.DateTime> Year { get; set; }
 
             public AircloakValue<System.DateTime> Quarter { get; set; }
 
-            public AircloakValue<int> Month { get; set; }
+            public AircloakValue<System.DateTime> Month { get; set; }
 
-            public AircloakValue<int> Day { get; set; }
+            public AircloakValue<System.DateTime> Day { get; set; }
 
-            public AircloakValue<int> Hour { get; set; }
+            public AircloakValue<System.DateTime> Hour { get; set; }
 
-            public AircloakValue<int> Minute { get; set; }
+            public AircloakValue<System.DateTime> Minute { get; set; }
 
-            public AircloakValue<int> Second { get; set; }
+            public AircloakValue<System.DateTime> Second { get; set; }
 
             public long Count { get; set; }
 
