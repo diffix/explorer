@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System.Collections.Concurrent;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
@@ -12,10 +13,12 @@ namespace Explorer
 
         private readonly IQueryResolver queryResolver;
 
-        protected ExplorerBase(IQueryResolver queryResolver)
+        private readonly CancellationToken cancellationToken;
+
+        protected ExplorerBase(IQueryResolver queryResolver, CancellationToken cancellationToken)
         {
             this.queryResolver = queryResolver;
-
+            this.cancellationToken = cancellationToken;
             metrics = new ConcurrentBag<IExploreMetric>();
         }
 
@@ -32,10 +35,9 @@ namespace Explorer
         }
 
         protected async Task<QueryResult<TResult>> ResolveQuery<TResult>(
-            IQuerySpec<TResult> query,
-            System.TimeSpan timeout)
+            IQuerySpec<TResult> query)
         {
-            return await queryResolver.ResolveQuery(query, timeout);
+            return await queryResolver.ResolveQuery(query, cancellationToken);
         }
     }
 }

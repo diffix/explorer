@@ -1,4 +1,4 @@
-﻿namespace Aircloak.JsonApi
+namespace Aircloak.JsonApi
 {
     using System;
     using System.Net;
@@ -53,11 +53,12 @@
         /// <summary>
         /// Sends a Http GET request to the Aircloak server's /api/data_sources endpoint.
         /// </summary>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <returns>A <c>List&lt;DataSource&gt;</c> containing the data sources provided by this
         /// Aircloak instance.</returns>
-        public async Task<DataSourceCollection> GetDataSources()
+        public async Task<DataSourceCollection> GetDataSources(CancellationToken cancellationToken)
         {
-            return await ApiGetRequest<DataSourceCollection>("data_sources");
+            return await ApiGetRequest<DataSourceCollection>("data_sources", cancellationToken);
         }
 
         /// <summary>
@@ -65,7 +66,7 @@
         /// </summary>
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
-        /// <param name="timeout">How long to wait for the query to complete.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to
         /// DefaultPollingFrequencyMillis.</param>
         /// <returns>A <see cref="QueryResult{TRow}"/> instance containing the success status and query Id.</returns>
@@ -73,17 +74,17 @@
         public async Task<QueryResult<TRow>> Query<TRow>(
             string dataSource,
             IQuerySpec<TRow> querySpec,
-            TimeSpan timeout,
+            CancellationToken cancellationToken,
             TimeSpan? pollFrequency = null)
         {
-            var queryResponse = await SubmitQuery(dataSource, querySpec.QueryStatement);
+            var queryResponse = await SubmitQuery(dataSource, querySpec.QueryStatement, cancellationToken);
             if (!queryResponse.Success)
             {
                 throw new Exception($"Unhandled Aircloak error returned for query to {dataSource}. Query Statement:" +
                                     $" {querySpec.QueryStatement}.");
             }
 
-            return await PollQueryUntilCompleteOrTimeout(queryResponse.QueryId, querySpec, timeout, pollFrequency);
+            return await PollQueryUntilCompleteOrTimeout(queryResponse.QueryId, querySpec, cancellationToken, pollFrequency);
         }
 
         /// <summary>
@@ -91,10 +92,12 @@
         /// </summary>
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="queryStatement">The query statement as a string.</param>
+        /// <param name="cancellationToken">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <returns>A QueryResonse instance containing the success status and query Id.</returns>
         public async Task<QueryResponse> SubmitQuery(
             string dataSource,
-            string queryStatement)
+            string queryStatement,
+            CancellationToken cancellationToken)
         {
             var queryBody = new
             {
@@ -104,8 +107,8 @@
                     data_source_name = dataSource,
                 },
             };
-
-            return await ApiPostRequest<QueryResponse>("queries", JsonSerializer.Serialize(queryBody));
+            var requestContent = JsonSerializer.Serialize(queryBody);
+            return await ApiPostRequest<QueryResponse>("queries", requestContent, cancellationToken);
         }
 
         /// <summary>
@@ -113,10 +116,14 @@
         /// </summary>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
+        /// <param name="cancellationToken">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <typeparam name="TRow">The type to use to deserialise each row returned in the query results.</typeparam>
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each
         /// row seralised to type <c>TRow</c>.</returns>
-        public async Task<QueryResult<TRow>> PollQueryResult<TRow>(string queryId, IQuerySpec<TRow> querySpec)
+        public async Task<QueryResult<TRow>> PollQueryResult<TRow>(
+            string queryId,
+            IQuerySpec<TRow> querySpec,
+            CancellationToken cancellationToken)
         {
             // Register the JsonArrayConverter so the TRow can be deserialized correctly
             var jsonOptions = new JsonSerializerOptions
@@ -128,19 +135,19 @@
                 },
             };
 
-            return await ApiGetRequest<QueryResult<TRow>>($"queries/{queryId}", jsonOptions);
+            return await ApiGetRequest<QueryResult<TRow>>($"queries/{queryId}", cancellationToken, jsonOptions);
         }
 
         /// <summary>
         /// Calls <c>PollQueryResult</c> in a loop until the query completes. Can be canceled.
         /// </summary>
         /// <remarks>
-        /// Canceling via the <c>CancellationToken</c> cancels the returned <c>Task</c> but does not
-        /// cancel query execution. To do this, a call to <c>/api/queries/{query_id}/cancel</c> must be made.
+        /// Canceling via the <c>CancellationToken</c> cancels the returned <c>Task</c> and
+        /// automatically cancels the query execution by calling <c>/api/queries/{query_id}/cancel</c>.
         /// </remarks>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
-        /// <param name="ct">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
+        /// <param name="cancellationToken">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. Default is every
         /// DefaultPollingFrequencyMillis milliseconds.
         /// </param>
@@ -150,7 +157,7 @@
         public async Task<QueryResult<TRow>> PollQueryUntilComplete<TRow>(
             string queryId,
             IQuerySpec<TRow> querySpec,
-            CancellationToken ct,
+            CancellationToken cancellationToken,
             TimeSpan? pollFrequency = null)
         {
             if (pollFrequency is null)
@@ -160,10 +167,10 @@
 
             while (true)
             {
-                if (ct.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    await CancelQuery(queryId);
-                    ct.ThrowIfCancellationRequested();
+                    await CancelQuery(queryId, cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
 
                 // Note: the cancellation token is not currently passed through to the PollQueryResult call. The
@@ -171,14 +178,14 @@
                 // case due to network delay. In this case, cancellation requests may take longer to take effect than
                 // expected. In future we could thread the cancellation token right down through to the raw SyncSend
                 // call in the HttpClient.
-                var queryResult = await PollQueryResult<TRow>(queryId, querySpec);
+                var queryResult = await PollQueryResult<TRow>(queryId, querySpec, cancellationToken);
                 if (queryResult.Query.Completed)
                 {
                     return queryResult;
                 }
                 else
                 {
-                    await Task.Delay(pollFrequency.Value, ct);
+                    await Task.Delay(pollFrequency.Value, cancellationToken);
                 }
             }
         }
@@ -188,7 +195,7 @@
         /// </summary>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
-        /// <param name="timeout">How long to wait for the query to complete.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <param name="pollFrequency">Optional. How often to poll the api endpoint. Defaults to
         /// DefaultPollingFrequencyMillis.</param>
         /// <typeparam name="TRow">The type to use to deserialise each row returned in the query results.</typeparam>
@@ -197,19 +204,16 @@
         public async Task<QueryResult<TRow>> PollQueryUntilCompleteOrTimeout<TRow>(
             string queryId,
             IQuerySpec<TRow> querySpec,
-            TimeSpan timeout,
+            CancellationToken cancellationToken,
             TimeSpan? pollFrequency = null)
         {
-            using var tokenSource = new CancellationTokenSource();
-            tokenSource.CancelAfter(timeout);
-
             try
             {
-                return await PollQueryUntilComplete<TRow>(queryId, querySpec, tokenSource.Token, pollFrequency);
+                return await PollQueryUntilComplete<TRow>(queryId, querySpec, cancellationToken, pollFrequency);
             }
             catch (OperationCanceledException e)
             {
-                if (e.CancellationToken == tokenSource.Token)
+                if (e.CancellationToken == cancellationToken)
                 {
                     throw new TimeoutException($"Timed out while waiting for query results for {queryId}");
                 }
@@ -223,17 +227,19 @@
         /// server.
         /// </summary>
         /// <param name="queryId">The id of the query to cancel.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <returns>A <c>CancelResponse</c> instance indicating whether or not the query was indeed canceled.
         /// </returns>
-        public async Task<CancelResponse> CancelQuery(string queryId)
+        public async Task<CancelResponse> CancelQuery(string queryId, CancellationToken cancellationToken)
         {
-            return await ApiPostRequest<CancelResponse>($"queries/{queryId}/cancel");
+            return await ApiPostRequest<CancelResponse>($"queries/{queryId}/cancel", null, cancellationToken);
         }
 
         /// <summary>
         /// Send a GET request to the Aircloak API. Handles authentication.
         /// </summary>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
@@ -247,9 +253,10 @@
         /// </exception>
         public async Task<T> ApiGetRequest<T>(
             string apiEndpoint,
+            CancellationToken cancellationToken,
             JsonSerializerOptions? options = null)
         {
-            return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, options: options);
+            return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, null, cancellationToken, options);
         }
 
         /// <summary>
@@ -257,6 +264,7 @@
         /// </summary>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="requestContent">JSON-encoded request message (optional).</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
@@ -270,10 +278,11 @@
         /// </exception>
         public async Task<T> ApiPostRequest<T>(
             string apiEndpoint,
-            string? requestContent = default,
+            string? requestContent,
+            CancellationToken cancellationToken,
             JsonSerializerOptions? options = null)
         {
-            return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, requestContent, options);
+            return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, requestContent, cancellationToken, options);
         }
 
         /// <summary>
@@ -306,6 +315,7 @@
         /// <param name="requestMethod">The HTTP method to use in the request.</param>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="requestContent">JSON-encoded request message (optional).</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
         /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
@@ -320,11 +330,11 @@
         private async Task<T> ApiRequest<T>(
             HttpMethod requestMethod,
             string apiEndpoint,
-            string? requestContent = default,
+            string? requestContent,
+            CancellationToken cancellationToken,
             JsonSerializerOptions? options = null)
         {
-            using var requestMessage =
-                new HttpRequestMessage(requestMethod, apiEndpoint);
+            using var requestMessage = new HttpRequestMessage(requestMethod, apiEndpoint);
 
             if (!(requestContent is null))
             {
@@ -332,25 +342,29 @@
                 requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(System.Net.Mime.MediaTypeNames.Application.Json);
             }
 
-            if (!requestMessage.Headers.TryAddWithoutValidation("auth-token", await authProvider.GetAuthToken()))
+            var authToken = await Task.Run(authProvider.GetAuthToken, cancellationToken);
+            if (!requestMessage.Headers.TryAddWithoutValidation("auth-token", authToken))
             {
                 throw new Exception("Failed to add auth-token header!");
             }
 
             using var response = await httpClient.SendAsync(
                 requestMessage,
-                HttpCompletionOption.ResponseHeadersRead);
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
-                using var contentStream = await response.Content.ReadAsStreamAsync();
+                using var contentStream = await Task.Run(response.Content.ReadAsStreamAsync, cancellationToken);
                 return await JsonSerializer.DeserializeAsync<T>(
                     contentStream,
-                    options ?? DefaultJsonOptions);
+                    options ?? DefaultJsonOptions,
+                    cancellationToken);
             }
             else
             {
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var responseContent = await Task.Run(response.Content.ReadAsStringAsync, cancellationToken);
+                responseContent = await Task.Run(response.Content.ReadAsStringAsync, cancellationToken);
                 throw new HttpRequestException($"Request Error: {ServiceError(response)}.\n{requestMessage}\n{requestContent}\n{responseContent}");
             }
         }

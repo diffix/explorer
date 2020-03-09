@@ -5,6 +5,7 @@ namespace Explorer.Api.Tests
     using System.Linq;
     using System.Runtime.CompilerServices;
     using System.Text.Json;
+    using System.Threading;
     using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
@@ -106,8 +107,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestMinMaxExplorer()
         {
+            using var cts = new CancellationTokenSource();
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new MinMaxExplorer(queryResolver, "loans", "amount"));
+                new MinMaxExplorer(queryResolver, "loans", "amount", cts.Token));
 
             const decimal expectedMin = 3288M;
             const decimal expectedMax = 495725M;
@@ -120,8 +122,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
+            using var cts = new CancellationTokenSource();
             var metrics = await GetExplorerMetrics("GiveMeSomeCredit", queryResolver =>
-                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
+                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs", cts.Token));
 
             var expectedValues = new List<object>
             {
@@ -135,8 +138,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
+            using var cts = new CancellationTokenSource();
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new TextColumnExplorer(queryResolver, "loans", "status"));
+                new TextColumnExplorer(queryResolver, "loans", "status", cts.Token));
 
             var expectedValues = new List<object>
             {
@@ -203,11 +207,12 @@ namespace Explorer.Api.Tests
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var authProvider = factory.EnvironmentVariableAuthProvider();
             var jsonApiClient = new JsonApiClient(client, authProvider);
+            using var cts = new CancellationTokenSource();
 
             return await jsonApiClient.Query(
                 TestDataSource,
                 query,
-                TimeSpan.FromSeconds(30),
+                cts.Token,
                 factory.GetApiPollingFrequency(vcrCassetteInfo));
         }
 
@@ -220,9 +225,10 @@ namespace Explorer.Api.Tests
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var authProvider = factory.EnvironmentVariableAuthProvider();
             var jsonApiClient = new JsonApiClient(client, authProvider);
+            using var cts = new CancellationTokenSource();
 
             var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName);
-            var explorer = new Exploration(new[] { explorerFactory(queryResolver), });
+            var explorer = new Exploration(new[] { explorerFactory(queryResolver), }, cts);
 
             await explorer.Completion;
 

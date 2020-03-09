@@ -3,14 +3,15 @@ namespace Explorer
     using System;
     using System.Diagnostics;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Explorer.Queries;
 
     internal class MinMaxExplorer : ExplorerBase
     {
-        public MinMaxExplorer(IQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public MinMaxExplorer(IQueryResolver queryResolver, string tableName, string columnName, CancellationToken ct)
+            : base(queryResolver, ct)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -50,20 +51,18 @@ namespace Explorer
             PublishMetric(new UntypedMetric(name: isMin ? "refined_min" : "refined_max", metric: result.Value));
         }
 
-        private async Task<decimal?> GetMinEstimate(decimal? upperBound = null) =>
-            (await ResolveQuery<Min.Result<decimal>>(
-                new Min(TableName, ColumnName, upperBound),
-                timeout: TimeSpan.FromMinutes(2)))
-                .ResultRows
-                .Single()
-                .Min;
+        private async Task<decimal?> GetMinEstimate(decimal? upperBound = null)
+        {
+            var minQ = await ResolveQuery<Min.Result<decimal>>(
+                new Min(TableName, ColumnName, upperBound));
+            return minQ.ResultRows.Single().Min;
+        }
 
-        private async Task<decimal?> GetMaxEstimate(decimal? lowerBound = null) =>
-            (await ResolveQuery<Max.Result<decimal>>(
-                new Max(TableName, ColumnName, lowerBound),
-                timeout: TimeSpan.FromMinutes(2)))
-                .ResultRows
-                .Single()
-                .Max;
+        private async Task<decimal?> GetMaxEstimate(decimal? lowerBound = null)
+        {
+            var maxQ = await ResolveQuery<Max.Result<decimal>>(
+                new Max(TableName, ColumnName, lowerBound));
+            return maxQ.ResultRows.Single().Max;
+        }
     }
 }

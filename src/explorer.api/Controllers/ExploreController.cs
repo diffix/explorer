@@ -1,8 +1,9 @@
-﻿namespace Explorer.Api.Controllers
+namespace Explorer.Api.Controllers
 {
     using System.Collections.Concurrent;
     using System.Linq;
     using System.Net.Mime;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
@@ -36,7 +37,8 @@
         {
             this.RegisterApiKey(data.ApiKey);
 
-            var dataSources = await apiClient.GetDataSources();
+            using var cts = new CancellationTokenSource();
+            var dataSources = await apiClient.GetDataSources(cts.Token);
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
@@ -53,7 +55,7 @@
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var exploration = CreateExploration(explorerColumnMeta.Type, data);
+            var exploration = CreateExploration(explorerColumnMeta.Type, data, cts);
             if (exploration == null)
             {
                 return Ok(new Models.NotImplementedError
@@ -65,7 +67,7 @@
 
             if (!Explorations.TryAdd(exploration.ExplorationGuid, exploration))
             {
-                throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
+                throw new System.Exception("Failed to store exploration in Dict - This should never happen!");
             }
 
             return Ok(new ExploreResult(exploration.ExplorationGuid, ExploreResult.ExploreStatus.New));
@@ -77,26 +79,15 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Result(System.Guid explorationId)
         {
-            if (Explorations.TryGetValue(explorationId, out var explorer))
+            if (Explorations.TryGetValue(explorationId, out var exploration))
             {
-                var exploreStatus = explorer.Status switch
-                {
-                    TaskStatus.Canceled => ExploreResult.ExploreStatus.Complete,
-                    TaskStatus.Created => ExploreResult.ExploreStatus.New,
-                    TaskStatus.Faulted => ExploreResult.ExploreStatus.Error,
-                    TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
-                    TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
-                    TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.New,
-                    TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.New,
-                    TaskStatus.WaitingForChildrenToComplete => ExploreResult.ExploreStatus.Processing,
-                    var status => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
-                };
+                var exploreStatus = exploration.Status;
 
-                var metrics = explorer.ExploreMetrics
+                var metrics = exploration.ExploreMetrics
                     .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
 
                 var result = new ExploreResult(
-                            explorer.ExplorationGuid,
+                            exploration.ExplorationGuid,
                             exploreStatus,
                             metrics);
 
@@ -110,15 +101,29 @@
             }
             else
             {
-                return BadRequest($"Couldn't find explorer with id {explorationId}");
+                return BadRequest($"Couldn't find exploration with id {explorationId}");
             }
+        }
+
+        [HttpGet]
+        [Route("cancel/{explorationId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult Cancel(System.Guid explorationId)
+        {
+            if (!Explorations.TryGetValue(explorationId, out var exploration))
+            {
+                return BadRequest($"Couldn't find exploration with id {explorationId}");
+            }
+            exploration.Cancel();
+            return Ok();
         }
 
         [Route("/{**catchall}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data)
+        private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data, CancellationTokenSource cts)
         {
             var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName);
 
@@ -126,21 +131,21 @@
             {
                 AircloakType.Integer => new ExplorerBase[]
                 {
-                    new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName),
-                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
+                    new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
                 },
                 AircloakType.Real => new ExplorerBase[]
                 {
-                    new RealColumnExplorer(resolver, data.TableName, data.ColumnName),
-                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
+                    new RealColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
                 },
                 AircloakType.Text => new ExplorerBase[]
                 {
-                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
                 },
                 AircloakType.Bool => new ExplorerBase[]
                 {
-                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
                 },
                 _ => System.Array.Empty<ExplorerBase>(),
             };
@@ -150,7 +155,7 @@
                 return null;
             }
 
-            return new Exploration(components);
+            return new Exploration(components, cts);
         }
     }
 }

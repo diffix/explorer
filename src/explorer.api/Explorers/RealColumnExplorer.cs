@@ -1,7 +1,8 @@
-﻿namespace Explorer
+namespace Explorer
 {
     using System;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Explorer.Queries;
@@ -13,8 +14,8 @@
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public RealColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public RealColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName, CancellationToken ct)
+            : base(queryResolver, ct)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -26,18 +27,16 @@
 
         public override async Task Explore()
         {
-            var stats = (await ResolveQuery<NumericColumnStats.Result<double>>(
-                new NumericColumnStats(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2)))
-                .ResultRows
-                .Single();
+            var statsQ = await ResolveQuery<NumericColumnStats.Result<double>>(
+                new NumericColumnStats(TableName, ColumnName));
+
+            var stats = statsQ.ResultRows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result<double>>(
-                new DistinctColumnValues(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2));
+                new DistinctColumnValues(TableName, ColumnName));
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
                     row.DistinctData.IsSuppressed ? row.Count : 0);
@@ -75,11 +74,7 @@
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
-                new SingleColumnHistogram(
-                    TableName,
-                    ColumnName,
-                    bucketsToSample),
-                timeout: TimeSpan.FromMinutes(10));
+                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample));
 
             var optimumBucket = (
                 from row in histogramQ.ResultRows

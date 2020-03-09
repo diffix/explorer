@@ -2,14 +2,15 @@ namespace Explorer
 {
     using System;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Explorer.Queries;
 
     internal class TextColumnExplorer : ExplorerBase
     {
-        public TextColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public TextColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName, CancellationToken ct)
+            : base(queryResolver, ct)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -22,8 +23,7 @@ namespace Explorer
         public override async Task Explore()
         {
             var distinctValues = await ResolveQuery<DistinctColumnValues.Result<string>>(
-                new DistinctColumnValues(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2));
+                new DistinctColumnValues(TableName, ColumnName));
 
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
                     row.DistinctData.IsSuppressed ? row.Count : 0);

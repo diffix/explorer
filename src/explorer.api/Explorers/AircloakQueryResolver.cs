@@ -1,6 +1,6 @@
 namespace Explorer
 {
-    using System;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
@@ -18,12 +18,12 @@ namespace Explorer
 
         public JsonApiClient ApiClient { get; }
 
-        public async Task<QueryResult<TResult>> ResolveQuery<TResult>(IQuerySpec<TResult> query, TimeSpan timeout)
+        public async Task<QueryResult<TResult>> ResolveQuery<TResult>(IQuerySpec<TResult> query, CancellationToken ct)
         {
             return await ApiClient.Query(
                 DataSourceName,
                 query,
-                timeout);
+                ct);
         }
     }
 }
