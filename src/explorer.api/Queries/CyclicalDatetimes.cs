@@ -6,6 +6,8 @@ namespace Explorer.Queries
     using Aircloak.JsonApi.ResponseTypes;
     using Aircloak.JsonApi.JsonReaderExtensions;
 
+    using Explorer.Diffix.Interfaces;
+
     internal class CyclicalDatetimes :
         IQuerySpec<CyclicalDatetimes.Result>
     {
@@ -65,7 +67,7 @@ namespace Explorer.Queries
             };
 
 #pragma warning disable CS8618 // Non-nullable property 'Year' is uninitialized. Consider declaring the property as nullable. 
-        public class Result
+        public class Result : ICountAggregate
         {
             public AircloakValue<int> Year { get; set; }
 

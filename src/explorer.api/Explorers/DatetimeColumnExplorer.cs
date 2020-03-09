@@ -6,13 +6,13 @@
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi.ResponseTypes;
+
+    using Explorer.Diffix.Interfaces;
     using Explorer.Queries;
 
     internal class DatetimeColumnExplorer : ExplorerBase
     {
         // TODO: The following should be configuration items (?)
-        private const long ValuesPerBucketTarget = 20;
-
         private const double SuppressedRatioThreshold = 0.1;
 
         public DatetimeColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
@@ -87,7 +87,7 @@
                 new BucketedDatetimes(TableName, ColumnName),
                 TimeSpan.FromMinutes(10));
 
-            await Task.Run(() => ProcessLinearBuckets(queryResult));
+            await Task.Run(() => ProcessLinearBuckets(queryResult.ResultRows));
         }
 
         private async Task CyclicalBuckets()
@@ -96,86 +96,106 @@
                 new CyclicalDatetimes(TableName, ColumnName),
                 TimeSpan.FromMinutes(10));
 
-            await Task.Run(() => ProcessCyclicalBuckets(queryResult));
+            await Task.Run(() => ProcessCyclicalBuckets(queryResult.ResultRows));
         }
 
-        private void ProcessLinearBuckets(QueryResult<BucketedDatetimes.Result> queryResult)
+        private void ProcessLinearBuckets(IEnumerable<BucketedDatetimes.Result> queryResult)
         {
+
 
             PublishMetric(new UntypedMetric(name: "dates_linear", metric: new object { }));
         }
 
-        private void ProcessCyclicalBuckets(QueryResult<CyclicalDatetimes.Result> queryResult)
+        private void ProcessCyclicalBuckets(IEnumerable<CyclicalDatetimes.Result> queryResult)
         {
-            // Years are not cyclical
-            // Months are y-cyclical where y is the number of distinct years
-            // Days are (y * m)-cyclical where m is the number of distinct months
-            // etc.
-            // If there are fewer than 2 years, don't bother including months
-            // If there are fewer than 2 months, don't bother including days
-            // "" 2 weeks ... weekdays
-            // etc.
-            var yearsRows = ExtractValueCounts(queryResult.ResultRows, row => row.Year);
-            var (yearsCount, yearsSuppressed) = CountTotalAndSuppressed(yearsRows);
-
-            foreach (var (component, selector) in cyclicalDatetimeComponentSelectors)
+            var includeRest = false;
+            foreach (var (component, selector) in new (string, Func<CyclicalDatetimes.Result, AircloakValue<int>>)[]
             {
-                var rows = ExtractValueCounts(queryResult.ResultRows, selector);
-                var (totalCount, suppressedCount) = CountTotalAndSuppressed(rows);
+                ("year", row => row.Year),
+                ("quarter", row => row.Year),
+                ("month", row => row.Month),
+                ("day", row => row.Day),
+                ("weekday", row => row.Weekday),
+                ("hour", row => row.Hour),
+                ("minute", row => row.Minute),
+                ("second", row => row.Second),
+            })
+            {
+                if (includeRest == false)
+                {
+                    var distinctValueCount = queryResult.Count(row => !selector(row).IsSuppressed);
+                    includeRest = (component, distinctValueCount) switch
+                    {
+                        ("quarter", var count) when count > 4 => true,
+                        ("day", var count) when count > 7 => true,
+                        (_, var count) when count > 1 => true,
+                        _ => false,
+                    };
+
+                    continue;
+                }
+                var selected = queryResult
+                    .Where(row => !selector(row).IsNull)
+                    .Select(row => new AircloakValueCount<int>(selector(row), row.Count, row.CountNoise));
+
+                var (totalCount, suppressedCount) = CountTotalAndSuppressed(selected);
                 PublishMetric(new UntypedMetric(name: $"dates_cyclical.{component}", metric: new
                 {
                     Total = totalCount,
                     Suppressed = suppressedCount,
                     Counts =
-                        from tup in rows
-                        where !tup.Item1.IsSuppressed
-                        let value = tup.Item1.Value
-                        orderby value ascending
+                        from valueCount in selected
+                        where !valueCount.IsSuppressed
+                        orderby valueCount.Value ascending
                         select new
                         {
-                            Value = value,
-                            Count = tup.Item2,
-                            CountNoise = tup.Item3,
+                            valueCount.Value,
+                            valueCount.Count,
+                            valueCount.CountNoise,
                         },
                 }));
             }
-
-            var months = ExtractValueCounts(queryResult.ResultRows, row => row.Month);
-            var days = ExtractValueCounts(queryResult.ResultRows, row => row.Day);
-            var weekdays = ExtractValueCounts(queryResult.ResultRows, row => row.Weekday);
-            var hours = ExtractValueCounts(queryResult.ResultRows, row => row.Hour);
-            var minutes = ExtractValueCounts(queryResult.ResultRows, row => row.Minute);
-            var seconds = ExtractValueCounts(queryResult.ResultRows, row => row.Second);
-
-            PublishMetric(new UntypedMetric(name: "dates_cyclical", metric: months));
         }
 
-        private IEnumerable<(AircloakValue<T>, long, double?)> ExtractValueCounts<T>(
-            IEnumerable<CyclicalDatetimes.Result> rows,
-            Func<CyclicalDatetimes.Result, AircloakValue<T>> selector) =>
-                from row in rows
-                let value = selector(row)
-                where !value.IsNull
-                select (value, count: row.Count, noise: row.CountNoise);
-
-        private (long, long) CountTotalAndSuppressed<T>(IEnumerable<(AircloakValue<T>, long, double?)> valueCounts) =>
-            valueCounts.Aggregate(
+        private (long, long) CountTotalAndSuppressed<T>(IEnumerable<T> valueCounts)
+        where T : ICountAggregate, INullable, ISuppressible
+        => valueCounts.Aggregate(
                 (0L, 0L),
                 (acc, next) => (
-                    acc.Item1 + next.Item2,
-                    acc.Item2 + (next.Item1.IsSuppressed ? next.Item2 : 0L)));
+                    acc.Item1 + next.Count,
+                    acc.Item2 + (next.IsSuppressed ? next.Count : 0L)));
 
-        private static readonly Dictionary<string, Func<CyclicalDatetimes.Result, AircloakValue<int>>>
-            cyclicalDatetimeComponentSelectors =
-                new Dictionary<string, Func<CyclicalDatetimes.Result, AircloakValue<int>>>
-                {
-                    { "year", _ => _.Year },
-                    { "month", _ => _.Month },
-                    { "day", _ => _.Day },
-                    { "weekday", _ => _.Weekday },
-                    { "hour", _ => _.Hour },
-                    { "minute", _ => _.Minute },
-                    { "second", _ => _.Second },
-                };
+        private class ValueCount : ICountAggregate, INullable, ISuppressible
+        {
+            public bool IsSuppressed { get; set; }
+
+            public bool IsNull { get; set; }
+
+            public long Count { get; set; }
+
+            public double? CountNoise { get; set; }
+        }
+
+        private class AircloakValueCount<T> : ICountAggregate, INullable, ISuppressible
+        {
+            private readonly AircloakValue<T> av;
+
+            public AircloakValueCount(AircloakValue<T> av, long count, double? countNoise)
+            {
+                this.av = av;
+                Count = count;
+                CountNoise = countNoise;
+            }
+
+            public T Value => av.Value;
+
+            public bool IsSuppressed => av.IsSuppressed;
+
+            public bool IsNull => av.IsNull;
+
+            public long Count { get; set; }
+
+            public double? CountNoise { get; set; }
+        }
     }
 }
