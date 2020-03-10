@@ -21,11 +21,16 @@
 
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
+        private readonly ExplorerApiAuthProvider authProvider;
 
-        public ExploreController(ILogger<ExploreController> logger, JsonApiClient apiClient)
+        public ExploreController(
+            ILogger<ExploreController> logger,
+            JsonApiClient apiClient,
+            IAircloakAuthenticationProvider authProvider)
         {
             this.logger = logger;
             this.apiClient = apiClient;
+            this.authProvider = (ExplorerApiAuthProvider)authProvider;
         }
 
         [HttpPost]
@@ -34,7 +39,7 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(Models.ExploreParams data)
         {
-            this.RegisterApiKey(data.ApiKey);
+            authProvider.RegisterApiKey(data.ApiKey);
 
             var dataSources = await apiClient.GetDataSources();
 
@@ -75,7 +80,7 @@
         [Route("result/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Result(System.Guid explorationId)
+        public async Task<IActionResult> Result(System.Guid explorationId)
         {
             if (Explorations.TryGetValue(explorationId, out var explorer))
             {
@@ -100,17 +105,24 @@
                             exploreStatus,
                             metrics);
 
-                if (exploreStatus == ExploreResult.ExploreStatus.Complete ||
-                    exploreStatus == ExploreResult.ExploreStatus.Error)
+                if (explorer.Completion.IsCompleted)
                 {
-                    _ = Explorations.TryRemove(explorationId, out _);
+                    try
+                    {
+                        // await the completion task to trigger any inner exceptions
+                        await explorer.Completion;
+                    }
+                    finally
+                    {
+                        Explorations.TryRemove(explorationId, out _);
+                    }
                 }
 
                 return Ok(result);
             }
             else
             {
-                return BadRequest($"Couldn't find explorer with id {explorationId}");
+                return NotFound($"Couldn't find explorer with id {explorationId}");
             }
         }
 

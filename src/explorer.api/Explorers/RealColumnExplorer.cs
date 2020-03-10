@@ -113,7 +113,7 @@
             PublishMetric(new UntypedMetric(name: "histogram_buckets", metric: histogramBuckets));
 
             // Estimate Median
-            long processed = 0;
+            var processed = 0L;
             var target = (double)totalValueCount / 2;
             var medianEstimate = 0.0;
             foreach (var bucket in histogramBuckets)

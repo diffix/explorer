@@ -12,9 +12,17 @@ namespace Aircloak.JsonApi.ResponseTypes
         public abstract bool IsSuppressed { get; }
 
         /// <summary>
-        /// Gets a value indicating whether the column value was suppressed.
+        /// Gets a value indicating whether the column value was NULL.
         /// </summary>
         public abstract bool IsNull { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the column contained a valid value.
+        /// </summary>
+        public virtual bool HasValue
+        {
+            get => !(IsNull || IsSuppressed);
+        }
 
         /// <summary>
         /// Gets the wrapped value.

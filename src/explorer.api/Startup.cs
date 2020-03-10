@@ -24,8 +24,6 @@ namespace Explorer.Api
 
             var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
 
-            ExplorerApiAuthProvider.ConfigureServices(services);
-
             services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>(config.AircloakApiUrl ??
                 throw new System.Exception("No Aircloak Api base Url provided in Explorer config."));
         }
