@@ -29,6 +29,16 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         }
 
         /// <summary>
+        /// Parses the result of the grouping_id() function.
+        /// </summary>
+        /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
+        /// <returns>The parsed grouping_id() result value.</returns>
+        public static int ParseGroupingId(this ref Utf8JsonReader reader)
+        {
+            return ParseNonNullableMetric<int>(ref reader);
+        }
+
+        /// <summary>
         /// Parses the result of the count_noise() aircloak function.
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
