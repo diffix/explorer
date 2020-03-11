@@ -7,6 +7,7 @@
 
     using Aircloak.JsonApi.ResponseTypes;
 
+    using Explorer.Diffix.Extensions;
     using Explorer.Diffix.Interfaces;
     using Explorer.Queries;
 
@@ -71,14 +72,33 @@
                 PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
             }
 
-            // var bucketsToSample = DiffixUtilities.EstimateBucketResolutions(
-            //     stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
-
             await Task.WhenAll(LinearBuckets(), CyclicalBuckets());
 
             // Other metrics?
             // Median
             // Average
+        }
+
+        private static object DatetimeMetric<T>(
+            long total,
+            long suppressed,
+            IEnumerable<AircloakValueCount<T>> valueCounts)
+        {
+            return new
+            {
+                Total = total,
+                Suppressed = suppressed,
+                Counts =
+                    from valueCount in valueCounts
+                    where !valueCount.IsSuppressed
+                    orderby valueCount.Value ascending
+                    select new
+                    {
+                        valueCount.Value,
+                        valueCount.Count,
+                        valueCount.CountNoise,
+                    },
+            };
         }
 
         private async Task LinearBuckets()
@@ -101,18 +121,45 @@
 
         private void ProcessLinearBuckets(IEnumerable<BucketedDatetimes.Result> queryResult)
         {
+            foreach (var (componentName, componentSelector) in new (string, Func<BucketedDatetimes.Result, AircloakValue<DateTime>>)[]
+            {
+                ("year", row => row.Year),
+                ("quarter", row => row.Quarter),
+                ("month", row => row.Month),
+                ("day", row => row.Day),
+                ("hour", row => row.Hour),
+                ("minute", row => row.Minute),
+                ("second", row => row.Second),
+            })
+            {
+                // check suppressed and noise (?)
+                // Start with years, then quarter, then month, etc...
+                var selected = queryResult.Where(row => !componentSelector(row).IsNull);
 
+                var valueCounts = selected
+                    .Select(row => new AircloakValueCount<DateTime>(componentSelector(row), row.Count, row.CountNoise));
 
-            PublishMetric(new UntypedMetric(name: "dates_linear", metric: new object { }));
+                var (totalCount, suppressedCount) = valueCounts.CountTotalAndSuppressed();
+
+                var suppressedRatio = (double)suppressedCount / totalCount;
+
+                if (suppressedRatio > SuppressedRatioThreshold)
+                {
+                    break;
+                }
+
+                PublishMetric(new UntypedMetric(name: $"dates_linear.{componentName}", metric: DatetimeMetric(
+                    totalCount, suppressedCount, valueCounts)));
+            }
         }
 
         private void ProcessCyclicalBuckets(IEnumerable<CyclicalDatetimes.Result> queryResult)
         {
             var includeRest = false;
-            foreach (var (component, selector) in new (string, Func<CyclicalDatetimes.Result, AircloakValue<int>>)[]
+            foreach (var (componentName, componentSelector) in new (string, Func<CyclicalDatetimes.Result, AircloakValue<int>>)[]
             {
                 ("year", row => row.Year),
-                ("quarter", row => row.Year),
+                ("quarter", row => row.Quarter),
                 ("month", row => row.Month),
                 ("day", row => row.Day),
                 ("weekday", row => row.Weekday),
@@ -121,10 +168,13 @@
                 ("second", row => row.Second),
             })
             {
-                if (includeRest == false)
+                var selected = queryResult.Where(row => !componentSelector(row).IsNull);
+
+                if (!includeRest)
                 {
-                    var distinctValueCount = queryResult.Count(row => !selector(row).IsSuppressed);
-                    includeRest = (component, distinctValueCount) switch
+                    var distinctValueCount = selected.Count(row => componentSelector(row).HasValue);
+
+                    includeRest = (componentName, distinctValueCount) switch
                     {
                         ("quarter", var count) when count > 4 => true,
                         ("day", var count) when count > 7 => true,
@@ -134,46 +184,22 @@
 
                     continue;
                 }
-                var selected = queryResult
-                    .Where(row => !selector(row).IsNull)
-                    .Select(row => new AircloakValueCount<int>(selector(row), row.Count, row.CountNoise));
 
-                var (totalCount, suppressedCount) = CountTotalAndSuppressed(selected);
-                PublishMetric(new UntypedMetric(name: $"dates_cyclical.{component}", metric: new
+                var valueCounts = selected
+                    .Select(row => new AircloakValueCount<int>(componentSelector(row), row.Count, row.CountNoise));
+
+                var (totalCount, suppressedCount) = valueCounts.CountTotalAndSuppressed();
+
+                var suppressedRatio = (double)suppressedCount / totalCount;
+
+                if (suppressedRatio > SuppressedRatioThreshold)
                 {
-                    Total = totalCount,
-                    Suppressed = suppressedCount,
-                    Counts =
-                        from valueCount in selected
-                        where !valueCount.IsSuppressed
-                        orderby valueCount.Value ascending
-                        select new
-                        {
-                            valueCount.Value,
-                            valueCount.Count,
-                            valueCount.CountNoise,
-                        },
-                }));
+                    break;
+                }
+
+                PublishMetric(new UntypedMetric(name: $"dates_cyclical.{componentName}", metric: DatetimeMetric(
+                    totalCount, suppressedCount, valueCounts)));
             }
-        }
-
-        private (long, long) CountTotalAndSuppressed<T>(IEnumerable<T> valueCounts)
-        where T : ICountAggregate, INullable, ISuppressible
-        => valueCounts.Aggregate(
-                (0L, 0L),
-                (acc, next) => (
-                    acc.Item1 + next.Count,
-                    acc.Item2 + (next.IsSuppressed ? next.Count : 0L)));
-
-        private class ValueCount : ICountAggregate, INullable, ISuppressible
-        {
-            public bool IsSuppressed { get; set; }
-
-            public bool IsNull { get; set; }
-
-            public long Count { get; set; }
-
-            public double? CountNoise { get; set; }
         }
 
         private class AircloakValueCount<T> : ICountAggregate, INullable, ISuppressible

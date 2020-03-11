@@ -112,9 +112,7 @@ namespace Explorer.Api.Tests
                 dataSourceName: "gda_taxi",
                 query: new CyclicalDatetimes(
                     "rides",
-                    "pickup_datetime"
-                )
-            );
+                    "pickup_datetime"));
 
             Assert.True(result.Query.Completed);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
@@ -140,9 +138,7 @@ namespace Explorer.Api.Tests
                 dataSourceName: "gda_taxi",
                 query: new BucketedDatetimes(
                     "rides",
-                    "pickup_datetime"
-                )
-            );
+                    "pickup_datetime"));
 
             Assert.True(result.Query.Completed);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
@@ -212,8 +208,8 @@ namespace Explorer.Api.Tests
             var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
                 new DatetimeColumnExplorer(queryResolver, "rides", "pickup_datetime"));
 
-            Assert.Single(metrics, m => m.Name == "dates_linear");
-            Assert.Single(metrics, m => m.Name == "dates_cyclical");
+            Assert.Single(metrics, m => m.Name == "dates_linear.second");
+            Assert.Single(metrics, m => m.Name == "dates_linear.minute");
             Assert.Single(metrics, m => m.Name == "dates_cyclical.second");
             Assert.Single(metrics, m => m.Name == "dates_cyclical.minute");
         }
