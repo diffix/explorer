@@ -1,7 +1,7 @@
 namespace Aircloak.JsonApi.JsonReaderExtensions
 {
-    using System.Text.Json;
     using System.Collections.Generic;
+    using System.Text.Json;
 
     using Aircloak.JsonApi.ResponseTypes;
 
@@ -44,6 +44,16 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
         /// <returns>A value of type <c>double</c>, or null.</returns>
         public static double? ParseCountNoise(this ref Utf8JsonReader reader)
+        {
+            return ParseNullableMetric<double>(ref reader);
+        }
+
+        /// <summary>
+        /// Parses the result of a *_noise() aircloak function.
+        /// </summary>
+        /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
+        /// <returns>A value of type <c>double</c>, or null.</returns>
+        public static double? ParseNoise(this ref Utf8JsonReader reader)
         {
             return ParseNullableMetric<double>(ref reader);
         }
@@ -216,10 +226,11 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         private static readonly Utf8JsonValueParser<System.DateTime> RawDatetimeParser =
             (ref Utf8JsonReader reader) => reader.GetDateTime();
 
-        private static readonly Utf8JsonValueParser<int> RawYearFromDatetimeParser =
-            (ref Utf8JsonReader reader) => reader.GetDateTime().Year;
+        private static readonly Utf8JsonValueParser<JsonElement> RawJsonElementParser =
+            (ref Utf8JsonReader reader) => JsonDocument.ParseValue(ref reader).RootElement;
 
-        private static readonly Dictionary<System.Type, object> DefaultParsers = new Dictionary<System.Type, object> {
+        private static readonly Dictionary<System.Type, object> DefaultParsers = new Dictionary<System.Type, object>
+        {
             { typeof(string), RawStringParser },
             { typeof(bool), RawBoolParser },
             { typeof(long), RawInt64Parser },
@@ -228,6 +239,7 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
             { typeof(int), RawInt32Parser },
             { typeof(char[]), RawCharArrayParser },
             { typeof(System.DateTime), RawDatetimeParser },
+            { typeof(JsonElement), RawJsonElementParser },
         };
     }
 }
