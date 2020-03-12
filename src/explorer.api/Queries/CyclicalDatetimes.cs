@@ -1,16 +1,25 @@
 namespace Explorer.Queries
 {
+    using System.Linq;
     using System.Text.Json;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.JsonReaderExtensions;
-    using Aircloak.JsonApi.ResponseTypes;
-
-    using Explorer.Diffix.Interfaces;
 
     internal class CyclicalDatetimes :
         IQuerySpec<CyclicalDatetimes.Result>
     {
+        public static readonly string[] DateComponents = new[]
+        {
+            "year",
+            "quarter",
+            "month",
+            "day",
+            "weekday",
+            "hour",
+            "minute",
+            "second",
+        };
+
         public CyclicalDatetimes(
             string tableName,
             string columnName)
@@ -23,26 +32,19 @@ namespace Explorer.Queries
         {
             get
             {
-                var fragment = $@"
-                    year({ColumnName}),
-                    quarter({ColumnName}),
-                    month({ColumnName}),
-                    day({ColumnName}),
-                    hour({ColumnName}),
-                    minute({ColumnName}),
-                    second({ColumnName}),
-                    weekday({ColumnName})";
+                var groupsFragment = string.Join(",\n", DateComponents.Select(s => $"date_trunc('{s}', {ColumnName})"));
+                var groupingSets = string.Join(", ", Enumerable.Range(2, DateComponents.Length));
 
                 return $@"
                 select
                     grouping_id(
-                        {fragment}
+                        {groupsFragment}
                     ),
-                    {fragment},
+                    {groupsFragment},
                     count(*),
                     count_noise(*)
                 from {TableName}
-                group by grouping sets (1, 2, 3, 4, 5, 6, 7, 8)
+                group by grouping sets ({groupingSets})
                 ";
             }
         }
@@ -51,57 +53,16 @@ namespace Explorer.Queries
 
         private string ColumnName { get; }
 
-        public Result FromJsonArray(ref Utf8JsonReader reader) =>
-            new Result
-            {
-                GroupingId = reader.ParseGroupingId(),
+        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader);
 
-                Year = reader.ParseAircloakResultValue<int>(),
-
-                Quarter = reader.ParseAircloakResultValue<int>(),
-
-                Month = reader.ParseAircloakResultValue<int>(),
-
-                Day = reader.ParseAircloakResultValue<int>(),
-
-                Hour = reader.ParseAircloakResultValue<int>(),
-
-                Minute = reader.ParseAircloakResultValue<int>(),
-
-                Second = reader.ParseAircloakResultValue<int>(),
-
-                Weekday = reader.ParseAircloakResultValue<int>(),
-
-                Count = reader.ParseCount(),
-
-                CountNoise = reader.ParseCountNoise(),
-            };
-
-#pragma warning disable CS8618 // Non-nullable property 'Year' is uninitialized. Consider declaring the property as nullable.
-        public class Result : ICountAggregate
+        public class Result : GroupingSetsResult<int>
         {
-            public int GroupingId { get; set; }
+            public Result(ref Utf8JsonReader reader)
+                : base(ref reader)
+            {
+            }
 
-            public AircloakValue<int> Year { get; set; }
-
-            public AircloakValue<int> Quarter { get; set; }
-
-            public AircloakValue<int> Month { get; set; }
-
-            public AircloakValue<int> Day { get; set; }
-
-            public AircloakValue<int> Hour { get; set; }
-
-            public AircloakValue<int> Minute { get; set; }
-
-            public AircloakValue<int> Second { get; set; }
-
-            public AircloakValue<int> Weekday { get; set; }
-
-            public long Count { get; set; }
-
-            public double? CountNoise { get; set; }
+            public override string[] GroupingLabels { get => DateComponents; }
         }
-#pragma warning restore CS8618 // Non-nullable property 'X' is uninitialized. Consider declaring the property as nullable.
     }
 }
