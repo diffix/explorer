@@ -1,15 +1,19 @@
 ﻿namespace Explorer.Queries
 {
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
 
-    public class GroupingIdConverter
+    public sealed class GroupingIdConverter
     {
+        private static ImmutableDictionary<int, GroupingIdConverter> converters =
+            ImmutableDictionary.Create<int, GroupingIdConverter>();
+
         private readonly int groupMask;
 
         private readonly int groupSize;
 
-        public GroupingIdConverter(int groupSize)
+        private GroupingIdConverter(int groupSize)
         {
             if (groupSize < 1 || groupSize > sizeof(int) * 8)
             {
@@ -25,6 +29,12 @@
 
             groupMask = mask;
             this.groupSize = groupSize;
+        }
+
+        public static GroupingIdConverter GetConverter(int groupSize)
+        {
+            return ImmutableInterlocked
+                .GetOrAdd(ref converters, groupSize, size => new GroupingIdConverter(size));
         }
 
         public int GroupingIdFromIndex(int index)

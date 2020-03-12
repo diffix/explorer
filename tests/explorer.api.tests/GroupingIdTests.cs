@@ -13,7 +13,7 @@ namespace Explorer.Queries.Tests
         [InlineData(0)]
         public void FailsWithInvalidGroupSize(int groupSize)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new GroupingIdConverter(groupSize));
+            Assert.Throws<ArgumentOutOfRangeException>(() => GroupingIdConverter.GetConverter(groupSize));
         }
 
         [Theory]
@@ -21,7 +21,7 @@ namespace Explorer.Queries.Tests
         [InlineData(4, 4)] // out of bounds
         public void FailsWithOutOfBoundsIndices(int groupSize, int invalidValue)
         {
-            var converter = new GroupingIdConverter(groupSize);
+            var converter = GroupingIdConverter.GetConverter(groupSize);
             Assert.Throws<ArgumentOutOfRangeException>(() => converter.GroupingIdFromIndex(invalidValue));
         }
 
@@ -31,7 +31,7 @@ namespace Explorer.Queries.Tests
         [InlineData(4, 0b0000)] // all values in group
         public void FailsWithInvalidGroupingId(int groupSize, int invalidValue)
         {
-            var converter = new GroupingIdConverter(groupSize);
+            var converter = GroupingIdConverter.GetConverter(groupSize);
             Assert.Throws<InvalidOperationException>(() => converter.SingleIndexFromGroupingId(invalidValue));
         }
 
@@ -41,7 +41,7 @@ namespace Explorer.Queries.Tests
         [InlineData(4, -1)] // out of bounds grouping id, index in bounds
         public void FailsWithOutOfBoundsGroupingId(int groupSize, int invalidValue)
         {
-            var converter = new GroupingIdConverter(groupSize);
+            var converter = GroupingIdConverter.GetConverter(groupSize);
             Assert.Throws<ArgumentOutOfRangeException>(() => converter.SingleIndexFromGroupingId(invalidValue));
         }
 
@@ -55,7 +55,7 @@ namespace Explorer.Queries.Tests
         [InlineData(7, 2, 111)]
         public void ReturnsCorrectSingleGroupingId(int groupSize, int index, int expectedGroupingId)
         {
-            var converter = new GroupingIdConverter(groupSize);
+            var converter = GroupingIdConverter.GetConverter(groupSize);
 
             Assert.Equal(expectedGroupingId, converter.GroupingIdFromIndex(index));
         }
@@ -68,7 +68,7 @@ namespace Explorer.Queries.Tests
         [InlineData(4, 0b0111, new int[] { 0 })]
         public void ReturnsCorrectIndices(int groupSize, int groupingId, int[] expectedIndices)
         {
-            var converter = new GroupingIdConverter(groupSize);
+            var converter = GroupingIdConverter.GetConverter(groupSize);
 
             Assert.Equal(expectedIndices, converter.IndicesFromGroupingId(groupingId).ToArray());
         }
