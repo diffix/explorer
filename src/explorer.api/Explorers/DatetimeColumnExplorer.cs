@@ -121,23 +121,11 @@
 
         private void ProcessLinearBuckets(IEnumerable<BucketedDatetimes.Result> queryResult)
         {
-            foreach (var (componentName, componentSelector) in new (string, Func<BucketedDatetimes.Result, AircloakValue<DateTime>>)[]
+            foreach (var group in GroupByLabel(queryResult))
             {
-                ("year", row => row.Year),
-                ("quarter", row => row.Quarter),
-                ("month", row => row.Month),
-                ("day", row => row.Day),
-                ("hour", row => row.Hour),
-                ("minute", row => row.Minute),
-                ("second", row => row.Second),
-            })
-            {
-                // check suppressed and noise (?)
-                // Start with years, then quarter, then month, etc...
-                var selected = queryResult.Where(row => !componentSelector(row).IsNull);
-
-                var valueCounts = selected
-                    .Select(row => new AircloakValueCount<DateTime>(componentSelector(row), row.Count, row.CountNoise));
+                var label = group.Key;
+                var valueCounts = group
+                    .Select(row => new AircloakValueCount<DateTime>(row.GroupingValue, row.Count, row.CountNoise));
 
                 var (totalCount, suppressedCount) = valueCounts.CountTotalAndSuppressed();
 
@@ -148,33 +136,29 @@
                     break;
                 }
 
-                PublishMetric(new UntypedMetric(name: $"dates_linear.{componentName}", metric: DatetimeMetric(
+                PublishMetric(new UntypedMetric(name: $"dates_linear.{label}", metric: DatetimeMetric(
                     totalCount, suppressedCount, valueCounts)));
             }
+        }
+
+        private IEnumerable<IGrouping<string, T>> GroupByLabel<T>(IEnumerable<T> queryResult)
+            where T : IGroupingSetsAggregate
+        {
+            return queryResult.GroupBy(row => row.GroupingLabel);
         }
 
         private void ProcessCyclicalBuckets(IEnumerable<CyclicalDatetimes.Result> queryResult)
         {
             var includeRest = false;
-            foreach (var (componentName, componentSelector) in new (string, Func<CyclicalDatetimes.Result, AircloakValue<int>>)[]
+            foreach (var group in GroupByLabel(queryResult))
             {
-                ("year", row => row.Year),
-                ("quarter", row => row.Quarter),
-                ("month", row => row.Month),
-                ("day", row => row.Day),
-                ("weekday", row => row.Weekday),
-                ("hour", row => row.Hour),
-                ("minute", row => row.Minute),
-                ("second", row => row.Second),
-            })
-            {
-                var selected = queryResult.Where(row => !componentSelector(row).IsNull);
+                var label = group.Key;
 
                 if (!includeRest)
                 {
-                    var distinctValueCount = selected.Count(row => componentSelector(row).HasValue);
+                    var distinctValueCount = group.Count(row => row.GroupingValue.HasValue);
 
-                    includeRest = (componentName, distinctValueCount) switch
+                    includeRest = (label, distinctValueCount) switch
                     {
                         ("quarter", var count) when count > 4 => true,
                         ("day", var count) when count > 7 => true,
@@ -185,8 +169,8 @@
                     continue;
                 }
 
-                var valueCounts = selected
-                    .Select(row => new AircloakValueCount<int>(componentSelector(row), row.Count, row.CountNoise));
+                var valueCounts = group
+                    .Select(row => new AircloakValueCount<int>(row.GroupingValue, row.Count, row.CountNoise));
 
                 var (totalCount, suppressedCount) = valueCounts.CountTotalAndSuppressed();
 
@@ -197,7 +181,7 @@
                     break;
                 }
 
-                PublishMetric(new UntypedMetric(name: $"dates_cyclical.{componentName}", metric: DatetimeMetric(
+                PublishMetric(new UntypedMetric(name: $"dates_cyclical.{label}", metric: DatetimeMetric(
                     totalCount, suppressedCount, valueCounts)));
             }
         }
@@ -219,9 +203,9 @@
 
             public bool IsNull => av.IsNull;
 
-            public long Count { get; set; }
+            public long Count { get; }
 
-            public double? CountNoise { get; set; }
+            public double? CountNoise { get; }
         }
     }
 }

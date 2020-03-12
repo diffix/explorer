@@ -115,20 +115,9 @@ namespace Explorer.Api.Tests
                     "pickup_datetime"));
 
             Assert.True(result.Query.Completed);
+            Assert.Equal("completed", result.Query.QueryState);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.ResultRows, row =>
-            {
-                Assert.True(row.Count > 0);
-                Assert.False(
-                    row.Year.IsNull &&
-                    row.Quarter.IsNull &&
-                    row.Month.IsNull &&
-                    row.Day.IsNull &&
-                    row.Weekday.IsNull &&
-                    row.Hour.IsNull &&
-                    row.Minute.IsNull &&
-                    row.Second.IsNull);
-            });
+            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
         }
 
         [Fact]
@@ -141,19 +130,9 @@ namespace Explorer.Api.Tests
                     "pickup_datetime"));
 
             Assert.True(result.Query.Completed);
+            Assert.Equal("completed", result.Query.QueryState);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.ResultRows, row =>
-            {
-                Assert.True(row.Count > 0);
-                Assert.False(
-                    row.Year.IsNull &&
-                    row.Quarter.IsNull &&
-                    row.Month.IsNull &&
-                    row.Day.IsNull &&
-                    row.Hour.IsNull &&
-                    row.Minute.IsNull &&
-                    row.Second.IsNull);
-            });
+            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
         }
 
         [Fact]
@@ -208,8 +187,8 @@ namespace Explorer.Api.Tests
             var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
                 new DatetimeColumnExplorer(queryResolver, "rides", "pickup_datetime"));
 
-            Assert.Single(metrics, m => m.Name == "dates_linear.second");
             Assert.Single(metrics, m => m.Name == "dates_linear.minute");
+            Assert.Single(metrics, m => m.Name == "dates_linear.hour");
             Assert.Single(metrics, m => m.Name == "dates_cyclical.second");
             Assert.Single(metrics, m => m.Name == "dates_cyclical.minute");
         }
