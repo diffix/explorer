@@ -13,8 +13,9 @@ namespace Aircloak.JsonApi
         /// <param name="services">The IServiceCollection.</param>
         /// <param name="apiBaseAddress">The base Url for the aircloak api.</param>
         /// <typeparam name="TAuthHandler">
-        /// A type that implements <see cref="AircloakAuthenticationHandler"/>.
+        /// A type that implements <see cref="IAircloakAuthenticationProvider"/>.
         /// </typeparam>
+        /// <returns>The <see cref="IHttpClientBuilder"/> with the attached services.</returns>
         public static IHttpClientBuilder AddAircloakJsonApiServices<TAuthHandler>(
             this IServiceCollection services,
             System.Uri apiBaseAddress)

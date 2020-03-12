@@ -8,31 +8,22 @@ namespace Explorer
 
     internal class Exploration
     {
-        private readonly List<Task> childTasks;
-
-        private readonly List<ExplorerBase> childExplorers;
+        private readonly IEnumerable<ExplorerBase> explorers;
 
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        public Exploration(IEnumerable<ExplorerBase> explorers, CancellationTokenSource cts)
+        public Exploration(IEnumerable<ExplorerBase> explorers, CancellationTokenSource cancellationTokenSource)
         {
+            this.explorers = explorers;
+            this.cancellationTokenSource = cancellationTokenSource;
             ExplorationGuid = Guid.NewGuid();
-            childTasks = new List<Task>();
-            childExplorers = new List<ExplorerBase>();
-            cancellationTokenSource = cts;
-
-            foreach (var explorer in explorers)
-            {
-                Spawn(explorer);
-            }
-
-            Completion = Task.WhenAll(childTasks);
+            Completion = Task.WhenAll(explorers.Select(async e => await e.Explore()));
         }
 
         public Guid ExplorationGuid { get; }
 
         public IEnumerable<IExploreMetric> ExploreMetrics =>
-            childExplorers.SelectMany(explorer => explorer.Metrics);
+            explorers.SelectMany(explorer => explorer.Metrics);
 
         public Task Completion { get; }
 
@@ -53,13 +44,6 @@ namespace Explorer
         public void Cancel()
         {
             cancellationTokenSource.Cancel();
-        }
-
-        private void Spawn(ExplorerBase explorer)
-        {
-            var exploreTask = Task.Run(explorer.Explore, cancellationTokenSource.Token);
-            childExplorers.Add(explorer);
-            childTasks.Add(exploreTask);
         }
     }
 }

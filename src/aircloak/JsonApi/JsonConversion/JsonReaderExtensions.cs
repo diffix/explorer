@@ -51,27 +51,49 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         }
 
         /// <summary>
-        /// Parses a nullable aircloak metric using the provided parser if the value is non-null.
+        /// Parses a nullable aircloak metric, returning a default value if the parsed return value is null.
+        /// </summary>
+        /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
+        /// <param name="defaultValue">The value to return if the parsed value is null.</param>
+        /// <typeparam name="T">Type of the parsed value.</typeparam>
+        /// <returns>A value of type T.</returns>
+        public static T ParseNullableMetric<T>(this ref Utf8JsonReader reader, T defaultValue)
+            where T : unmanaged
+        {
+#pragma warning disable SA1009 // Closing parenthesis should be followed by a space.
+            // We know that we are passinga non-null defaultValue so the return value will always be non-null.
+            return ParseNullableMetric(ref reader, DefaultParser<T>(), defaultValue)!.Value;
+#pragma warning restore SA1009 // Closing parenthesis should be followed by a space.
+        }
+
+        /// <summary>
+        /// Parses a nullable aircloak metric using the provided parser if the value is non-null. An optional
+        /// default value can be passed and is returned if the parsed return value is null. If no default value
+        /// is provided, returns <c>null</c>.
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
         /// <param name="parseRawValue">A parser to use if the value is non-null.</param>
+        /// <param name="defaultValue">The value to return if the parsed value is null.</param>
         /// <typeparam name="T">Type of the parsed value.</typeparam>
-        /// <returns></returns>
-        public static T? ParseNullableMetric<T>(this ref Utf8JsonReader reader, Utf8JsonValueParser<T> parseRawValue)
+        /// <returns>A value of type T, or null.</returns>
+        public static T? ParseNullableMetric<T>(
+            this ref Utf8JsonReader reader,
+            Utf8JsonValueParser<T> parseRawValue,
+            T? defaultValue = null)
             where T : unmanaged
         {
             reader.Read();
 
             if (reader.TokenType == JsonTokenType.Null)
             {
-                return null;
+                return defaultValue;
             }
             return parseRawValue(ref reader);
         }
 
         /// <summary>
         /// Check the token type of the next token in the sequence. Throw an exception if it doesn't match the provided
-        /// <see cref="JsonTokenType"/>. \
+        /// <see cref="JsonTokenType"/>.
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
         /// <param name="token">The expected token type.</param>
@@ -85,7 +107,7 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         }
 
         /// <summary>
-        /// Parses a non-nullable aircloak metric using the default parser for the provided type parameter 
+        /// Parses a non-nullable aircloak metric using the default parser for the provided type parameter
         /// <c>T</c>.
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
@@ -110,7 +132,7 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         }
 
         /// <summary>
-        /// Parses a suppressible, nullable aircloak column value using the default parser for the provided type 
+        /// Parses a suppressible, nullable aircloak column value using the default parser for the provided type
         /// parameter <c>T</c>.
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
@@ -122,7 +144,7 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         }
 
         /// <summary>
-        /// 
+        /// Parses a suppressible, nullable aircloak column value using the provided parser for the wrapped value.
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
         /// <param name="parseRawValue">A parser to use if the value is not suppressed and non-null.</param>
@@ -150,7 +172,7 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         /// <returns>A <see cref="Utf8JsonValueParser{T}"/> for the given type.</returns>
         public static Utf8JsonValueParser<T> DefaultParser<T>()
         {
-            if (defaultParsers.TryGetValue(typeof(T), out var parser))
+            if (DefaultParsers.TryGetValue(typeof(T), out var parser))
             {
                 return (Utf8JsonValueParser<T>)parser;
             }
@@ -184,7 +206,10 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         private static readonly Utf8JsonValueParser<System.DateTime> RawDatetimeParser =
             (ref Utf8JsonReader reader) => reader.GetDateTime();
 
-        private static readonly Dictionary<System.Type, object> defaultParsers = new Dictionary<System.Type, object> {
+        private static readonly Utf8JsonValueParser<int> RawYearFromDatetimeParser =
+            (ref Utf8JsonReader reader) => reader.GetDateTime().Year;
+
+        private static readonly Dictionary<System.Type, object> DefaultParsers = new Dictionary<System.Type, object> {
             { typeof(string), RawStringParser },
             { typeof(bool), RawBoolParser },
             { typeof(long), RawInt64Parser },
