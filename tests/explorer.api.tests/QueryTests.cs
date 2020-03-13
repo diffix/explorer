@@ -3,6 +3,7 @@ namespace Explorer.Api.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net.Http;
     using System.Runtime.CompilerServices;
     using System.Text.Json;
     using System.Threading;
@@ -169,6 +170,37 @@ namespace Explorer.Api.Tests
             });
         }
 
+        [Fact]
+        public async void TestCancelQuery()
+        {
+            using var client = new HttpClient() { BaseAddress = TestWebAppFactory.Config.AircloakApiUrl };
+            var authProvider = factory.EnvironmentVariableAuthProvider();
+            var pollFrequency = TimeSpan.FromMilliseconds(10);
+            var jsonApiClient = new JsonApiClient(client, authProvider);
+            var query = new Min("loans", "amount", null);
+
+            using var cts = new CancellationTokenSource();
+            var queryInfo = await jsonApiClient.SubmitQuery("gda_banking", query.QueryStatement, cts.Token);
+            cts.CancelAfter(1);
+
+            await Assert.ThrowsAsync<TaskCanceledException>(() =>
+                jsonApiClient.PollQueryUntilComplete<Min.Result<decimal>>(queryInfo.QueryId, query, pollFrequency, cts.Token));
+
+            try
+            {
+                // check that Aircloak query was canceled or completed
+                using var cts2 = new CancellationTokenSource();
+                await jsonApiClient.PollQueryUntilComplete<Min.Result<decimal>>(queryInfo.QueryId, query, pollFrequency, cts2.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+                // we ignore this because it's a valid result: it might happen because the query was cancelled;
+                // but sometimes the API query will complete, so the exception is not always thrown.
+                // TODO: this should be modified if we find a query that can be canceled realliably on the Aircloak system.
+            }
+        }
+
         private void CheckDistinctCategories(
             IEnumerable<IExploreMetric> distinctMetrics,
             IEnumerable<dynamic> expectedValues)
@@ -212,8 +244,8 @@ namespace Explorer.Api.Tests
             return await jsonApiClient.Query(
                 TestDataSource,
                 query,
-                cts.Token,
-                factory.GetApiPollingFrequency(vcrCassetteInfo));
+                factory.GetApiPollingFrequency(vcrCassetteInfo),
+                cts.Token);
         }
 
         private async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
@@ -224,10 +256,12 @@ namespace Explorer.Api.Tests
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var authProvider = factory.EnvironmentVariableAuthProvider();
+            var pollFrequency = factory.GetApiPollingFrequency(vcrCassetteInfo);
             var jsonApiClient = new JsonApiClient(client, authProvider);
             using var cts = new CancellationTokenSource();
 
-            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName);
+            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, pollFrequency);
+
             var explorer = new Exploration(new[] { explorerFactory(queryResolver), }, cts);
 
             await explorer.Completion;

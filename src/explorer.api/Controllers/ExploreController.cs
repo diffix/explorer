@@ -23,12 +23,15 @@ namespace Explorer.Api.Controllers
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
         private readonly ExplorerApiAuthProvider authProvider;
+        private readonly ExplorerConfig config;
 
         public ExploreController(
             ILogger<ExploreController> logger,
             JsonApiClient apiClient,
-            IAircloakAuthenticationProvider authProvider)
+            IAircloakAuthenticationProvider authProvider,
+            ExplorerConfig config)
         {
+            this.config = config;
             this.logger = logger;
             this.apiClient = apiClient;
             this.authProvider = (ExplorerApiAuthProvider)authProvider;
@@ -137,7 +140,7 @@ namespace Explorer.Api.Controllers
 
         private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data, CancellationTokenSource cts)
         {
-            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName);
+            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
 
             var components = type switch
             {

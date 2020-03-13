@@ -26,6 +26,7 @@ namespace Explorer.Api
 
             services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>(config.AircloakApiUrl ??
                 throw new System.Exception("No Aircloak Api base Url provided in Explorer config."));
+            services.AddSingleton(config);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
