@@ -32,7 +32,7 @@ namespace Explorer.Queries
         {
             get
             {
-                var groupsFragment = string.Join(",\n", DateComponents.Select(s => $"date_trunc('{s}', {ColumnName})"));
+                var groupsFragment = string.Join(",\n", DateComponents.Select(s => $"{s}({ColumnName})"));
                 var groupingSets = string.Join(", ", Enumerable.Range(2, DateComponents.Length));
 
                 return $@"
