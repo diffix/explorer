@@ -157,7 +157,6 @@ namespace Aircloak.JsonApi
                         }
                     }
 
-                    cancellationToken.ThrowIfCancellationRequested();
                     await Task.Delay(pollFrequency, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                 }
