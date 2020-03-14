@@ -152,7 +152,7 @@ namespace Aircloak.JsonApi
                                 throw new Exception("Aircloak API query error.\n" +
                                     GetQueryResultDetails(querySpec, queryResult));
                             case "cancelled":
-                                throw new OperationCanceledException("Aircolak API query canceled.\n" +
+                                throw new OperationCanceledException("Aircloak API query canceled.\n" +
                                     GetQueryResultDetails(querySpec, queryResult));
                         }
                     }
