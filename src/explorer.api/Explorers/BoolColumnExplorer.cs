@@ -9,8 +9,8 @@ namespace Explorer
 
     internal class BoolColumnExplorer : ExplorerBase
     {
-        public BoolColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName, CancellationToken ct)
-            : base(queryResolver, ct)
+        public BoolColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+            : base(queryResolver)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -20,10 +20,11 @@ namespace Explorer
 
         private string ColumnName { get; }
 
-        public override async Task Explore()
+        public override async Task Explore(CancellationToken cancellationToken)
         {
             var distinctValues = await ResolveQuery<DistinctColumnValues.Result<bool>>(
-                new DistinctColumnValues(TableName, ColumnName));
+                new DistinctColumnValues(TableName, ColumnName),
+                cancellationToken);
 
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
                     row.DistinctData.IsSuppressed ? row.Count : 0);

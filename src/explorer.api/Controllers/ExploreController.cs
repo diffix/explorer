@@ -45,8 +45,7 @@ namespace Explorer.Api.Controllers
         {
             authProvider.RegisterApiKey(data.ApiKey);
 
-            using var cts = new CancellationTokenSource();
-            var dataSources = await apiClient.GetDataSources(cts.Token);
+            var dataSources = await apiClient.GetDataSources(CancellationToken.None);
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
@@ -63,7 +62,7 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var exploration = CreateExploration(explorerColumnMeta.Type, data, cts);
+            var exploration = CreateExploration(explorerColumnMeta.Type, data);
             if (exploration == null)
             {
                 return Ok(new Models.NotImplementedError
@@ -138,7 +137,7 @@ namespace Explorer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data, CancellationTokenSource cts)
+        private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data)
         {
             var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
 
@@ -146,21 +145,21 @@ namespace Explorer.Api.Controllers
             {
                 AircloakType.Integer => new ExplorerBase[]
                 {
-                    new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
-                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
+                    new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 AircloakType.Real => new ExplorerBase[]
                 {
-                    new RealColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
-                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
+                    new RealColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 AircloakType.Text => new ExplorerBase[]
                 {
-                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
+                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 AircloakType.Bool => new ExplorerBase[]
                 {
-                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName, cts.Token),
+                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 _ => System.Array.Empty<ExplorerBase>(),
             };
@@ -170,7 +169,7 @@ namespace Explorer.Api.Controllers
                 return null;
             }
 
-            return new Exploration(components, cts);
+            return new Exploration(components);
         }
     }
 }

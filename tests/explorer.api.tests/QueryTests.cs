@@ -108,9 +108,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestMinMaxExplorer()
         {
-            using var cts = new CancellationTokenSource();
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new MinMaxExplorer(queryResolver, "loans", "amount", cts.Token));
+                new MinMaxExplorer(queryResolver, "loans", "amount"));
 
             const decimal expectedMin = 3288M;
             const decimal expectedMax = 495725M;
@@ -123,9 +122,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            using var cts = new CancellationTokenSource();
             var metrics = await GetExplorerMetrics("GiveMeSomeCredit", queryResolver =>
-                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs", cts.Token));
+                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
 
             var expectedValues = new List<object>
             {
@@ -139,9 +137,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
-            using var cts = new CancellationTokenSource();
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new TextColumnExplorer(queryResolver, "loans", "status", cts.Token));
+                new TextColumnExplorer(queryResolver, "loans", "status"));
 
             var expectedValues = new List<object>
             {
@@ -239,13 +236,12 @@ namespace Explorer.Api.Tests
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var authProvider = factory.EnvironmentVariableAuthProvider();
             var jsonApiClient = new JsonApiClient(client, authProvider);
-            using var cts = new CancellationTokenSource();
 
             return await jsonApiClient.Query(
                 TestDataSource,
                 query,
                 factory.GetApiPollingFrequency(vcrCassetteInfo),
-                cts.Token);
+                CancellationToken.None);
         }
 
         private async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
@@ -258,11 +254,10 @@ namespace Explorer.Api.Tests
             var authProvider = factory.EnvironmentVariableAuthProvider();
             var pollFrequency = factory.GetApiPollingFrequency(vcrCassetteInfo);
             var jsonApiClient = new JsonApiClient(client, authProvider);
-            using var cts = new CancellationTokenSource();
 
             var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, pollFrequency);
 
-            var explorer = new Exploration(new[] { explorerFactory(queryResolver), }, cts);
+            var explorer = new Exploration(new[] { explorerFactory(queryResolver), });
 
             await explorer.Completion;
 

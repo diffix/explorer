@@ -13,12 +13,9 @@ namespace Explorer
 
         private readonly IQueryResolver queryResolver;
 
-        private readonly CancellationToken cancellationToken;
-
-        protected ExplorerBase(IQueryResolver queryResolver, CancellationToken cancellationToken)
+        protected ExplorerBase(IQueryResolver queryResolver)
         {
             this.queryResolver = queryResolver;
-            this.cancellationToken = cancellationToken;
             metrics = new ConcurrentBag<IExploreMetric>();
         }
 
@@ -27,7 +24,7 @@ namespace Explorer
             get => metrics.ToArray();
         }
 
-        public abstract Task Explore();
+        public abstract Task Explore(CancellationToken cancellationToken);
 
         protected void PublishMetric(IExploreMetric metric)
         {
@@ -35,7 +32,8 @@ namespace Explorer
         }
 
         protected async Task<QueryResult<TResult>> ResolveQuery<TResult>(
-            IQuerySpec<TResult> query)
+            IQuerySpec<TResult> query,
+            CancellationToken cancellationToken)
         {
             return await queryResolver.ResolveQuery(query, cancellationToken);
         }

@@ -14,8 +14,8 @@ namespace Explorer
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public RealColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName, CancellationToken ct)
-            : base(queryResolver, ct)
+        public RealColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+            : base(queryResolver)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -25,10 +25,11 @@ namespace Explorer
 
         private string ColumnName { get; }
 
-        public override async Task Explore()
+        public override async Task Explore(CancellationToken cancellationToken)
         {
             var statsQ = await ResolveQuery<NumericColumnStats.Result<double>>(
-                new NumericColumnStats(TableName, ColumnName));
+                new NumericColumnStats(TableName, ColumnName),
+                cancellationToken);
 
             var stats = statsQ.ResultRows.Single();
 
@@ -36,10 +37,11 @@ namespace Explorer
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result<double>>(
-                new DistinctColumnValues(TableName, ColumnName));
+                new DistinctColumnValues(TableName, ColumnName),
+                cancellationToken);
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
-                    row.DistinctData.IsSuppressed ? row.Count : 0);
+                row.DistinctData.IsSuppressed ? row.Count : 0);
 
             var totalValueCount = stats.Count;
 
@@ -74,7 +76,8 @@ namespace Explorer
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
-                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample));
+                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample),
+                cancellationToken);
 
             var optimumBucket = (
                 from row in histogramQ.ResultRows

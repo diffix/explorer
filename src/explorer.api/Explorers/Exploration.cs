@@ -6,18 +6,21 @@ namespace Explorer
     using System.Threading;
     using System.Threading.Tasks;
 
-    internal class Exploration
+    internal class Exploration : IDisposable
     {
         private readonly IEnumerable<ExplorerBase> explorers;
 
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        public Exploration(IEnumerable<ExplorerBase> explorers, CancellationTokenSource cancellationTokenSource)
+        private bool isDisposed;
+
+        public Exploration(IEnumerable<ExplorerBase> explorers)
         {
             this.explorers = explorers;
-            this.cancellationTokenSource = cancellationTokenSource;
+            isDisposed = false;
+            cancellationTokenSource = new CancellationTokenSource();
             ExplorationGuid = Guid.NewGuid();
-            Completion = Task.WhenAll(explorers.Select(async e => await e.Explore()));
+            Completion = Task.WhenAll(explorers.Select(async e => await e.Explore(cancellationTokenSource.Token)));
         }
 
         public Guid ExplorationGuid { get; }
@@ -44,6 +47,24 @@ namespace Explorer
         public void Cancel()
         {
             cancellationTokenSource.Cancel();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                if (disposing)
+                {
+                    cancellationTokenSource.Dispose();
+                }
+                isDisposed = true;
+            }
         }
     }
 }
