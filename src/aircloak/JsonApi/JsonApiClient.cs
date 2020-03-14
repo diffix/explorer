@@ -136,12 +136,13 @@ namespace Aircloak.JsonApi
             };
 
             var queryCompleted = false;
+            var speed = 16;
 
             try
             {
                 while (true)
                 {
-                    await Task.Delay(pollFrequency, cancellationToken);
+                    await Task.Delay(pollFrequency / speed, cancellationToken);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -163,6 +164,8 @@ namespace Aircloak.JsonApi
                                     GetQueryResultDetails(querySpec, queryResult));
                         }
                     }
+
+                    speed = Math.Max(speed / 2, 1);
                 }
             }
             catch (Exception)
