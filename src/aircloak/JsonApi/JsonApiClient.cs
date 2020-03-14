@@ -135,15 +135,22 @@ namespace Aircloak.JsonApi
                 Converters = { new JsonArrayConverter<IQuerySpec<TRow>, TRow>(querySpec) },
             };
 
+            var queryCompleted = false;
+
             try
             {
                 while (true)
                 {
+                    await Task.Delay(pollFrequency, cancellationToken);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     var queryResult = await ApiGetRequest<QueryResult<TRow>>(
                         $"queries/{queryId}", jsonDeserializeOptions, cancellationToken);
 
                     if (queryResult.Query.Completed)
                     {
+                        queryCompleted = true;
                         switch (queryResult.Query.QueryState)
                         {
                             case "completed":
@@ -156,16 +163,13 @@ namespace Aircloak.JsonApi
                                     GetQueryResultDetails(querySpec, queryResult));
                         }
                     }
-
-                    await Task.Delay(pollFrequency, cancellationToken);
-                    cancellationToken.ThrowIfCancellationRequested();
                 }
             }
-            catch (OperationCanceledException ex)
+            catch (Exception)
             {
-                if (ex.CancellationToken == cancellationToken)
+                if (!queryCompleted)
                 {
-                    await CancelQuery(queryId, cancellationToken);
+                    await CancelQuery(queryId);
                 }
                 throw;
             }
@@ -183,13 +187,12 @@ namespace Aircloak.JsonApi
         /// server.
         /// </summary>
         /// <param name="queryId">The id of the query to cancel.</param>
-        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <returns>A <c>CancelResponse</c> instance indicating whether or not the query was indeed canceled.
         /// </returns>
-        public async Task<CancelResponse> CancelQuery(string queryId, CancellationToken cancellationToken)
+        private async Task<CancelResponse> CancelQuery(string queryId)
         {
             return await ApiPostRequest<CancelResponse>(
-                $"queries/{queryId}/cancel", null, DefaultJsonOptions, cancellationToken);
+                $"queries/{queryId}/cancel", null, DefaultJsonOptions, CancellationToken.None);
         }
 
         /// <summary>
