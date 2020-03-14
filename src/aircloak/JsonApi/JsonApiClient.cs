@@ -322,7 +322,6 @@ namespace Aircloak.JsonApi
             else
             {
                 var responseContent = await Task.Run(response.Content.ReadAsStringAsync, cancellationToken);
-                responseContent = await Task.Run(response.Content.ReadAsStringAsync, cancellationToken);
                 throw new HttpRequestException($"Request Error: {ServiceError(response)}.\n{requestMessage}\n{requestContent}\n{responseContent}");
             }
         }
