@@ -182,7 +182,7 @@ namespace Explorer.Api.Tests
 
             using var cts = new CancellationTokenSource();
             cts.Cancel();
-            await Assert.ThrowsAsync<TaskCanceledException>(() =>
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
                 jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, cts.Token));
 
             try
