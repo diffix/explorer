@@ -142,8 +142,6 @@ namespace Aircloak.JsonApi
             {
                 while (true)
                 {
-                    await Task.Delay(pollFrequency / speed, cancellationToken);
-
                     cancellationToken.ThrowIfCancellationRequested();
 
                     var queryResult = await ApiGetRequest<QueryResult<TRow>>(
@@ -165,6 +163,7 @@ namespace Aircloak.JsonApi
                         }
                     }
 
+                    await Task.Delay(pollFrequency / speed, cancellationToken);
                     speed = Math.Max(speed / 2, 1);
                 }
             }
