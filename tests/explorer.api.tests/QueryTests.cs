@@ -170,31 +170,31 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCancelQuery()
         {
-            using var client = new HttpClient() { BaseAddress = TestWebAppFactory.Config.AircloakApiUrl };
+            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), nameof(TestCancelQuery));
+            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
             var authProvider = factory.EnvironmentVariableAuthProvider();
             var pollFrequency = TimeSpan.FromMilliseconds(10);
             var jsonApiClient = new JsonApiClient(client, authProvider);
-            var query = new Min("loans", "amount", null);
+            var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
+            var query = new SingleColumnHistogram("loans", "amount", bucketSizes);
+
+            var queryInfo = await jsonApiClient.SubmitQuery("gda_banking", query.QueryStatement, CancellationToken.None);
 
             using var cts = new CancellationTokenSource();
-            var queryInfo = await jsonApiClient.SubmitQuery("gda_banking", query.QueryStatement, cts.Token);
-            cts.CancelAfter(1);
-
+            cts.Cancel();
             await Assert.ThrowsAsync<TaskCanceledException>(() =>
-                jsonApiClient.PollQueryUntilComplete<Min.Result<decimal>>(queryInfo.QueryId, query, pollFrequency, cts.Token));
+                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, cts.Token));
 
             try
             {
                 // check that Aircloak query was canceled or completed
-                using var cts2 = new CancellationTokenSource();
-                await jsonApiClient.PollQueryUntilComplete<Min.Result<decimal>>(queryInfo.QueryId, query, pollFrequency, cts2.Token);
+                await jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, CancellationToken.None);
             }
             catch (OperationCanceledException)
             {
-                throw;
                 // we ignore this because it's a valid result: it might happen because the query was cancelled;
                 // but sometimes the API query will complete, so the exception is not always thrown.
-                // TODO: this should be modified if we find a query that can be canceled realliably on the Aircloak system.
+                // TODO: this should be modified to always check for exceptions if we find some query that can be canceled realliably on the Aircloak system.
             }
         }
 
