@@ -4,7 +4,7 @@ namespace Explorer.Api
 {
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
-    using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Configuration;
 
     public static class Program
     {
@@ -15,7 +15,10 @@ namespace Explorer.Api
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
-            return WebHost.CreateDefaultBuilder<Startup>(args);
+            var config = new ConfigurationBuilder()
+                .AddCommandLine(args)
+                .Build();
+            return WebHost.CreateDefaultBuilder<Startup>(args).UseConfiguration(config);
         }
     }
 }
