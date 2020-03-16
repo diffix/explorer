@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi.ResponseTypes;
@@ -27,20 +28,20 @@
 
         private string ColumnName { get; }
 
-        public override async Task Explore()
+        public override async Task Explore(CancellationToken cancellationToken)
         {
-            var stats = (await ResolveQuery<NumericColumnStats.Result<DateTime>>(
+            var statsQ = (await ResolveQuery<NumericColumnStats.Result<DateTime>>(
                 new NumericColumnStats(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2)))
-                .ResultRows
-                .Single();
+                cancellationToken));
+
+            var stats = statsQ.ResultRows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result<DateTime>>(
                 new DistinctColumnValues(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2));
+                cancellationToken);
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
                     row.DistinctData.IsSuppressed ? row.Count : 0);
@@ -72,7 +73,9 @@
                 PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
             }
 
-            await Task.WhenAll(LinearBuckets(), CyclicalBuckets());
+            await Task.WhenAll(
+                LinearBuckets(cancellationToken),
+                CyclicalBuckets(cancellationToken));
 
             // Other metrics?
             // Median
@@ -101,28 +104,36 @@
             };
         }
 
-        private async Task LinearBuckets()
+        private async Task LinearBuckets(CancellationToken cancellationToken)
         {
             var queryResult = await ResolveQuery(
                 new BucketedDatetimes(TableName, ColumnName),
-                TimeSpan.FromMinutes(10));
+                cancellationToken);
 
-            await Task.Run(() => ProcessLinearBuckets(queryResult.ResultRows));
+            await Task.Run(
+                () => ProcessLinearBuckets(queryResult.ResultRows, cancellationToken),
+                cancellationToken);
         }
 
-        private async Task CyclicalBuckets()
+        private async Task CyclicalBuckets(CancellationToken cancellationToken)
         {
             var queryResult = await ResolveQuery(
                 new CyclicalDatetimes(TableName, ColumnName),
-                TimeSpan.FromMinutes(10));
+                cancellationToken);
 
-            await Task.Run(() => ProcessCyclicalBuckets(queryResult.ResultRows));
+            await Task.Run(
+                () => ProcessCyclicalBuckets(queryResult.ResultRows, cancellationToken),
+                cancellationToken);
         }
 
-        private void ProcessLinearBuckets(IEnumerable<BucketedDatetimes.Result> queryResult)
+        private void ProcessLinearBuckets(
+            IEnumerable<BucketedDatetimes.Result> queryResult,
+            CancellationToken cancellationToken)
         {
             foreach (var group in GroupByLabel(queryResult))
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var label = group.Key;
                 var valueCounts = group
                     .Select(row => new AircloakValueCount<DateTime>(row.GroupingValue, row.Count, row.CountNoise));
@@ -141,17 +152,15 @@
             }
         }
 
-        private IEnumerable<IGrouping<string, T>> GroupByLabel<T>(IEnumerable<T> queryResult)
-            where T : IGroupingSetsAggregate
-        {
-            return queryResult.GroupBy(row => row.GroupingLabel);
-        }
-
-        private void ProcessCyclicalBuckets(IEnumerable<CyclicalDatetimes.Result> queryResult)
+        private void ProcessCyclicalBuckets(
+            IEnumerable<CyclicalDatetimes.Result> queryResult,
+            CancellationToken cancellationToken)
         {
             var includeRest = false;
             foreach (var group in GroupByLabel(queryResult))
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var label = group.Key;
 
                 if (!includeRest)
@@ -184,6 +193,12 @@
                 PublishMetric(new UntypedMetric(name: $"dates_cyclical.{label}", metric: DatetimeMetric(
                     totalCount, suppressedCount, valueCounts)));
             }
+        }
+
+        private IEnumerable<IGrouping<string, T>> GroupByLabel<T>(IEnumerable<T> queryResult)
+            where T : IGroupingSetsAggregate
+        {
+            return queryResult.GroupBy(row => row.GroupingLabel);
         }
 
         private class AircloakValueCount<T> : ICountAggregate, INullable, ISuppressible
