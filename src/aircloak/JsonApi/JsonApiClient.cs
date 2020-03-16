@@ -179,7 +179,7 @@ namespace Aircloak.JsonApi
 
             static string GetQueryResultDetails(IQuerySpec<TRow> querySpec, QueryResult<TRow> queryResult)
             {
-                return $"DataSource: {queryResult.Query.DataSource}.\n" +
+                return $"DataSource: {queryResult.Query.DataSource.Name}.\n" +
                     $"Error: {queryResult.Query.Error}\n" +
                     $"Query Statement: {querySpec.QueryStatement}";
             }
