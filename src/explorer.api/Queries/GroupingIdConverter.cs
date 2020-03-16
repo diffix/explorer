@@ -18,7 +18,7 @@
             if (groupSize < 1 || groupSize > sizeof(int) * 8)
             {
                 throw new System.ArgumentOutOfRangeException(
-                    $"Group size must be in range [{1} {sizeof(int) * 8}].");
+                    $"Group size must be in range [1 {sizeof(int) * 8}].");
             }
 
             var mask = 0;
@@ -58,7 +58,7 @@
             if (groupingId < 0 || groupingId > groupMask)
             {
                 throw new System.ArgumentOutOfRangeException(
-                    $"Grouping id must be in range [{1} {groupMask}]. Got {groupingId}.");
+                    $"Grouping id must be in range [0 {groupMask}]. Got {groupingId}.");
             }
 
             return IndexIterator();

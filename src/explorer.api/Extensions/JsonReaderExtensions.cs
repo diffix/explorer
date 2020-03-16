@@ -15,13 +15,13 @@ namespace Explorer.Diffix.Extensions
         {
             var groupingId = reader.ParseGroupingId();
             var converter = GroupingIdConverter.GetConverter(groupSize);
-            AircloakValue<T>? resultEl = null;
+            AircloakValue<T>? groupValue = null;
 
             for (var i = 0; i < groupSize; i++)
             {
                 if (converter.SingleIndexFromGroupingId(groupingId) == i)
                 {
-                    resultEl = reader.ParseAircloakResultValue<T>();
+                    groupValue = reader.ParseAircloakResultValue<T>();
                 }
                 else
                 {
@@ -31,7 +31,7 @@ namespace Explorer.Diffix.Extensions
 
             return (
                 groupingId,
-                resultEl ?? throw new System.Exception("Unable to Parse result from grouping set."));
+                groupValue ?? throw new System.Exception("Unable to Parse result from grouping set."));
         }
     }
 }

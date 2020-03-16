@@ -83,6 +83,19 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestDistinctDatetimes()
+        {
+            var datetimeResult = await QueryResult<DistinctColumnValues.Result<DateTime>>(
+                new DistinctColumnValues(tableName: "patients", columnName: "date_of_birth"),
+                dataSourceName: "Clinic");
+
+            Assert.True(datetimeResult.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(datetimeResult.Query.Error), datetimeResult.Query.Error);
+            Assert.True(datetimeResult.ResultRows.Any());
+            Assert.All(datetimeResult.ResultRows, row => Assert.True(row.Count > 0));
+        }
+
+        [Fact]
         public async void TestHistogramLoansAmount()
         {
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
