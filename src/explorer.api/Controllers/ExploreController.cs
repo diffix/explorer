@@ -1,8 +1,9 @@
-﻿namespace Explorer.Api.Controllers
+namespace Explorer.Api.Controllers
 {
     using System.Collections.Concurrent;
     using System.Linq;
     using System.Net.Mime;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
@@ -22,12 +23,15 @@
         private readonly ILogger<ExploreController> logger;
         private readonly JsonApiClient apiClient;
         private readonly ExplorerApiAuthProvider authProvider;
+        private readonly ExplorerConfig config;
 
         public ExploreController(
             ILogger<ExploreController> logger,
             JsonApiClient apiClient,
-            IAircloakAuthenticationProvider authProvider)
+            IAircloakAuthenticationProvider authProvider,
+            ExplorerConfig config)
         {
+            this.config = config;
             this.logger = logger;
             this.apiClient = apiClient;
             this.authProvider = (ExplorerApiAuthProvider)authProvider;
@@ -41,7 +45,7 @@
         {
             authProvider.RegisterApiKey(data.ApiKey);
 
-            var dataSources = await apiClient.GetDataSources();
+            var dataSources = await apiClient.GetDataSources(CancellationToken.None);
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
@@ -70,7 +74,7 @@
 
             if (!Explorations.TryAdd(exploration.ExplorationGuid, exploration))
             {
-                throw new System.Exception("Failed to store explorer in Dict - This should never happen!");
+                throw new System.Exception("Failed to store exploration in Dict - This should never happen!");
             }
 
             return Ok(new ExploreResult(exploration.ExplorationGuid, ExploreResult.ExploreStatus.New));
@@ -82,35 +86,24 @@
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Result(System.Guid explorationId)
         {
-            if (Explorations.TryGetValue(explorationId, out var explorer))
+            if (Explorations.TryGetValue(explorationId, out var exploration))
             {
-                var exploreStatus = explorer.Status switch
-                {
-                    TaskStatus.Canceled => ExploreResult.ExploreStatus.Complete,
-                    TaskStatus.Created => ExploreResult.ExploreStatus.New,
-                    TaskStatus.Faulted => ExploreResult.ExploreStatus.Error,
-                    TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
-                    TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
-                    TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.New,
-                    TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.New,
-                    TaskStatus.WaitingForChildrenToComplete => ExploreResult.ExploreStatus.Processing,
-                    var status => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
-                };
+                var exploreStatus = exploration.Status;
 
-                var metrics = explorer.ExploreMetrics
+                var metrics = exploration.ExploreMetrics
                     .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
 
                 var result = new ExploreResult(
-                            explorer.ExplorationGuid,
+                            exploration.ExplorationGuid,
                             exploreStatus,
                             metrics);
 
-                if (explorer.Completion.IsCompleted)
+                if (exploration.Completion.IsCompleted)
                 {
                     try
                     {
                         // await the completion task to trigger any inner exceptions
-                        await explorer.Completion;
+                        await exploration.Completion;
                     }
                     finally
                     {
@@ -126,13 +119,27 @@
             }
         }
 
+        [HttpGet]
+        [Route("cancel/{explorationId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult Cancel(System.Guid explorationId)
+        {
+            if (!Explorations.TryGetValue(explorationId, out var exploration))
+            {
+                return BadRequest($"Couldn't find exploration with id {explorationId}");
+            }
+            exploration.Cancel();
+            return Ok();
+        }
+
         [Route("/{**catchall}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
         private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data)
         {
-            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName);
+            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
 
             var components = type switch
             {

@@ -2,6 +2,7 @@ namespace Explorer
 {
     using System;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Explorer.Queries;
@@ -19,11 +20,11 @@ namespace Explorer
 
         private string ColumnName { get; }
 
-        public override async Task Explore()
+        public override async Task Explore(CancellationToken cancellationToken)
         {
             var distinctValues = await ResolveQuery<DistinctColumnValues.Result<string>>(
                 new DistinctColumnValues(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2));
+                cancellationToken);
 
             var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
                     row.DistinctData.IsSuppressed ? row.Count : 0);

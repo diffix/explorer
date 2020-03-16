@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
@@ -8,22 +9,26 @@ namespace Explorer
 
     internal class AircloakQueryResolver : IQueryResolver
     {
-        public AircloakQueryResolver(JsonApiClient apiClient, string dataSourceName)
+        private readonly string dataSourceName;
+
+        private readonly JsonApiClient apiClient;
+
+        private readonly TimeSpan pollFrequency;
+
+        public AircloakQueryResolver(JsonApiClient apiClient, string dataSourceName, TimeSpan pollFrequency)
         {
-            ApiClient = apiClient;
-            DataSourceName = dataSourceName;
+            this.apiClient = apiClient;
+            this.dataSourceName = dataSourceName;
+            this.pollFrequency = pollFrequency;
         }
 
-        public string DataSourceName { get; }
-
-        public JsonApiClient ApiClient { get; }
-
-        public async Task<QueryResult<TResult>> ResolveQuery<TResult>(IQuerySpec<TResult> query, TimeSpan timeout)
+        public async Task<QueryResult<TResult>> ResolveQuery<TResult>(IQuerySpec<TResult> query, CancellationToken ct)
         {
-            return await ApiClient.Query(
-                DataSourceName,
+            return await apiClient.Query(
+                dataSourceName,
                 query,
-                timeout);
+                pollFrequency,
+                ct);
         }
     }
 }

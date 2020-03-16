@@ -32,6 +32,7 @@ namespace Explorer
             New,
             Processing,
             Complete,
+            Canceled,
             Error,
 
         }

@@ -1,5 +1,6 @@
 namespace Explorer
 {
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
@@ -9,6 +10,6 @@ namespace Explorer
     {
         public Task<QueryResult<TResult>> ResolveQuery<TResult>(
             IQuerySpec<TResult> query,
-            System.TimeSpan timeout);
+            CancellationToken cancellationToken);
     }
 }

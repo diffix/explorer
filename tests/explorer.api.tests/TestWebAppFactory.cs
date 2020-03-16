@@ -101,9 +101,11 @@ namespace Explorer.Api.Tests
             return new FileInfo($"../../../.vcr/{testClassName}.{vcrSessionName}.yaml");
         }
 
-        public TimeSpan? GetApiPollingFrequency(FileInfo vcrCassetteInfo)
+        public TimeSpan GetApiPollingFrequency(FileInfo vcrCassetteInfo)
         {
-            return (vcrCassetteInfo.Exists && vcrCassetteInfo.Length > 0) ? TimeSpan.FromMilliseconds(1) : default(TimeSpan?);
+            return (vcrCassetteInfo.Exists && vcrCassetteInfo.Length > 0) ?
+                TimeSpan.FromMilliseconds(1) :
+                Config.PollFrequencyTimeSpan;
         }
 
         public static string GetAircloakApiKeyFromEnvironment()

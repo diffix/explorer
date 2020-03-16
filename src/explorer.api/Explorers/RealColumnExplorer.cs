@@ -1,7 +1,8 @@
-﻿namespace Explorer
+namespace Explorer
 {
     using System;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Explorer.Queries;
@@ -24,23 +25,23 @@
 
         private string ColumnName { get; }
 
-        public override async Task Explore()
+        public override async Task Explore(CancellationToken cancellationToken)
         {
-            var stats = (await ResolveQuery<NumericColumnStats.Result<double>>(
+            var statsQ = await ResolveQuery<NumericColumnStats.Result<double>>(
                 new NumericColumnStats(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2)))
-                .ResultRows
-                .Single();
+                cancellationToken);
+
+            var stats = statsQ.ResultRows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
             var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result<double>>(
                 new DistinctColumnValues(TableName, ColumnName),
-                timeout: TimeSpan.FromMinutes(2));
+                cancellationToken);
 
             var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
-                    row.DistinctData.IsSuppressed ? row.Count : 0);
+                row.DistinctData.IsSuppressed ? row.Count : 0);
 
             var totalValueCount = stats.Count;
 
@@ -75,11 +76,8 @@
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
-                new SingleColumnHistogram(
-                    TableName,
-                    ColumnName,
-                    bucketsToSample),
-                timeout: TimeSpan.FromMinutes(10));
+                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample),
+                cancellationToken);
 
             var optimumBucket = (
                 from row in histogramQ.ResultRows
