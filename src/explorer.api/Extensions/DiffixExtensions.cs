@@ -7,7 +7,7 @@ namespace Explorer.Diffix.Extensions
 
     internal static class DiffixExtensions
     {
-        public static (long, long) CountTotalAndSuppressed<T>(this IEnumerable<T> valueCounts)
+        public static (long Total, long Suppressed) CountTotalAndSuppressed<T>(this IEnumerable<T> valueCounts)
         where T : ICountAggregate, INullable, ISuppressible
         => valueCounts.Aggregate(
                 (0L, 0L),
