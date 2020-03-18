@@ -27,68 +27,34 @@
 
         private readonly RecordingOptions options;
 
+        private readonly VCRMode vcrMode;
+
         public ReplayingHandler(
             HttpMessageHandler innerHandler,
+            VCRMode vcrMode,
             Cassette cassette,
             RecordingOptions options)
         : base(innerHandler)
         {
             this.cassette = cassette;
             this.options = options;
+            this.vcrMode = vcrMode;
         }
 
         public ReplayingHandler(
+            VCRMode vcrMode,
             Cassette cassette,
             RecordingOptions options = RecordingOptions.SuccessOnly)
         : base()
         {
             this.cassette = cassette;
             this.options = options;
-        }
-
-        static VCRMode Parse(string mode)
-        {
-            if (string.IsNullOrWhiteSpace(mode))
-            {
-                return VCRMode.Cache;
-            }
-
-            var text = mode.Trim();
-            if (text.Equals("playback", StringComparison.OrdinalIgnoreCase))
-            {
-                return VCRMode.Playback;
-            }
-
-            if (text.Equals("cache", StringComparison.OrdinalIgnoreCase))
-            {
-                return VCRMode.Cache;
-            }
-
-            if (text.Equals("record", StringComparison.OrdinalIgnoreCase))
-            {
-                return VCRMode.Record;
-            }
-
-            return VCRMode.Playback;
-        }
-
-        VCRMode? vcrMode;
-        public VCRMode CurrentVCRMode
-        {
-            get
-            {
-                if (!vcrMode.HasValue)
-                {
-                    vcrMode = Parse(Environment.GetEnvironmentVariable("VCR_MODE"));
-                }
-                return vcrMode.Value;
-            }
-            set => vcrMode = value;
+            this.vcrMode = vcrMode;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (CurrentVCRMode != VCRMode.Record)
+            if (vcrMode != VCRMode.Record)
             {
                 var cachedResponse = await cassette.FindCachedResponse(request);
                 if (cachedResponse.Found)
@@ -97,7 +63,7 @@
                 }
             }
 
-            if (CurrentVCRMode == VCRMode.Playback)
+            if (vcrMode == VCRMode.Playback)
             {
                 throw new PlaybackException("A cached response was not found, and the environment is in playback mode which means the network cannot be accessed.");
             }

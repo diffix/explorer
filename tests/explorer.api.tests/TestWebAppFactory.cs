@@ -1,4 +1,4 @@
-#pragma warning disable CA1822 // make method static
+﻿#pragma warning disable CA1822 // make method static
 namespace Explorer.Api.Tests
 {
     using Aircloak.JsonApi;
@@ -31,15 +31,18 @@ namespace Explorer.Api.Tests
 
         internal class TestConfig
         {
-            public TestConfig(string vcrCassettePath, TimeSpan pollFrequency)
+            public TestConfig(string vcrCassettePath, TimeSpan pollFrequency, VcrSharp.VCRMode vcrMode)
             {
                 VcrCassettePath = vcrCassettePath;
                 PollFrequency = pollFrequency;
+                VcrMode = vcrMode;
             }
 
             public string VcrCassettePath { get; }
 
             public TimeSpan PollFrequency { get; }
+
+            public VcrSharp.VCRMode VcrMode { get; }
         }
 
         protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
@@ -52,7 +55,7 @@ namespace Explorer.Api.Tests
                     .AddAircloakJsonApiServices<ExplorerApiAuthProvider>(Config.AircloakApiUrl ??
                         throw new Exception("No Aircloak Api base Url provided in Explorer config."))
                     .AddHttpMessageHandler(_ => new VcrSharp.ReplayingHandler(
-                            LoadCassette(apiConfig.VcrCassettePath),
+                            testConfig.VcrMode,
                             LoadCassette(testConfig.VcrCassettePath),
                             VcrSharp.RecordingOptions.RecordAll));
             });
@@ -73,11 +76,13 @@ namespace Explorer.Api.Tests
         {
             // For the explorer interactions we never want to use the cache so override the vcr mode.
             // We actually don't need to use the vcr at all but it's useful for debugging...
-            var testConfig = GetTestConfig(testClassName, vcrSessionName);
+            // So we set the vcr mode to always record.
+            var testConfig = GetTestConfig(testClassName, vcrSessionName, VcrSharp.VCRMode.Record);
             var cassette = LoadCassette(testConfig.VcrCassettePath);
 
             var handler = new VcrSharp.ReplayingHandler(
                 new HttpClientHandler(),
+                testConfig.VcrMode,
                 cassette,
                 VcrSharp.RecordingOptions.RecordAll);
 
@@ -89,7 +94,7 @@ namespace Explorer.Api.Tests
         {
             var vcrOptions = expectFail ? VcrSharp.RecordingOptions.FailureOnly : VcrSharp.RecordingOptions.SuccessOnly;
             var vcrCassette = LoadCassette(vcrCassettePath);
-            var vcrHandler = new VcrSharp.ReplayingHandler(new HttpClientHandler(), vcrCassette, vcrOptions);
+            var vcrHandler = new VcrSharp.ReplayingHandler(new HttpClientHandler(), VcrSharp.VCRMode.Cache, vcrCassette, vcrOptions);
             var httpClient = new HttpClient(vcrHandler, true) { BaseAddress = Config.AircloakApiUrl };
             var authProvider = EnvironmentVariableAuthProvider();
             return new JsonApiClient(httpClient, authProvider);
@@ -120,13 +125,18 @@ namespace Explorer.Api.Tests
             Dispose(true);
         }
 
-        internal TestConfig GetTestConfig(string testClassName, string vcrSessionName)
+        internal TestConfig GetTestConfig(string testClassName, string vcrSessionName, VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Cache)
         {
             var vcrCassette = new FileInfo($"../../../.vcr/{testClassName}.{vcrSessionName}.yaml");
-            var pollFrequency = (vcrCassette.Exists && vcrCassette.Length > 0) ?
-                TimeSpan.FromMilliseconds(1) :
-                Config.PollFrequencyTimeSpan;
-            return new TestConfig(vcrCassette.FullName, pollFrequency);
+
+            // take care to use a small polling interval only when VCR is allowed to playback and we have a non-empty cassette
+            // (i.e. when in Record only mode, the polling interval will be large)
+            var vcrPlayback = vcrMode == VcrSharp.VCRMode.Playback || vcrMode == VcrSharp.VCRMode.Cache;
+            var pollFrequency = (vcrCassette.Exists && vcrCassette.Length > 0 && vcrPlayback) ?
+                    TimeSpan.FromMilliseconds(1) :
+                    Config.PollFrequencyTimeSpan;
+
+            return new TestConfig(vcrCassette.FullName, pollFrequency, vcrMode);
         }
 
         protected override void Dispose(bool disposing)
