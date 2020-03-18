@@ -230,27 +230,22 @@ namespace Explorer.Api.Tests
             var authProvider = factory.EnvironmentVariableAuthProvider();
             var pollFrequency = TimeSpan.FromMilliseconds(10);
             var jsonApiClient = new JsonApiClient(client, authProvider);
-            var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
-            var query = new SingleColumnHistogram("loans", "amount", bucketSizes);
+            var query = new LongRunningQuery();
 
-            var queryInfo = await jsonApiClient.SubmitQuery("gda_banking", query.QueryStatement, CancellationToken.None);
+            var queryInfo = await jsonApiClient.SubmitQuery(
+                LongRunningQuery.DataSet,
+                query.QueryStatement,
+                CancellationToken.None);
 
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
                 jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, cts.Token));
 
-            try
-            {
-                // check that Aircloak query was canceled or completed
-                await jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, CancellationToken.None);
-            }
-            catch (OperationCanceledException)
-            {
-                // we ignore this because it's a valid result: it might happen because the query was cancelled;
-                // but sometimes the API query will complete, so the exception is not always thrown.
-                // TODO: this should be modified to always check for exceptions if we find some query that can be canceled realliably on the Aircloak system.
-            }
+            var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, CancellationToken.None));
+
+            Assert.StartsWith("Aircloak API query canceled", ex.Message);
         }
 
         private void CheckDistinctCategories(
@@ -347,6 +342,47 @@ namespace Explorer.Api.Tests
                 public int One;
                 public int Two;
                 public int Three;
+            }
+        }
+
+        private class LongRunningQuery : IQuerySpec<LongRunningQuery.Result>
+        {
+            public static string DataSet = "gda_taxi";
+            public string QueryStatement =>
+                @"select
+                    date_trunc('year', pickup_datetime),
+                    date_trunc('quarter', pickup_datetime),
+                    date_trunc('month', pickup_datetime),
+                    date_trunc('day', pickup_datetime),
+                    date_trunc('hour', pickup_datetime),
+                    date_trunc('minute', pickup_datetime),
+                    date_trunc('second', pickup_datetime),
+                    grouping_id(
+                        date_trunc('year', pickup_datetime),
+                        date_trunc('quarter', pickup_datetime),
+                        date_trunc('month', pickup_datetime),
+                        date_trunc('day', pickup_datetime),
+                        date_trunc('hour', pickup_datetime),
+                        date_trunc('minute', pickup_datetime),
+                        date_trunc('second', pickup_datetime)
+                    ),
+                    count(*),
+                    count_noise(*)
+                    from rides
+                    group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
+
+            public Result FromJsonArray(ref Utf8JsonReader reader)
+            {
+                while (reader.TokenType != JsonTokenType.EndArray)
+                {
+                    reader.Read();
+                }
+
+                return new Result();
+            }
+
+            public struct Result
+            {
             }
         }
     }
