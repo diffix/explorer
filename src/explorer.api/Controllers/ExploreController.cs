@@ -130,7 +130,7 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Couldn't find exploration with id {explorationId}");
             }
             exploration.Cancel();
-            return Ok();
+            return Ok(true);
         }
 
         [Route("/{**catchall}")]
