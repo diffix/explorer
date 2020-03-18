@@ -27,7 +27,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            var intResult = await QueryResult<DistinctColumnValues.Result<long>>(
+            var intResult = await QueryResult<DistinctColumnValues.Result>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "duration"));
@@ -37,7 +37,7 @@ namespace Explorer.Api.Tests
             Assert.All(intResult.ResultRows, row =>
             {
                 Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    row.DistinctData.Value >= 0);
+                    row.DistinctData.Value.ValueKind == JsonValueKind.Number);
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -46,7 +46,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            var realResult = await QueryResult<DistinctColumnValues.Result<double>>(
+            var realResult = await QueryResult<DistinctColumnValues.Result>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
@@ -56,7 +56,7 @@ namespace Explorer.Api.Tests
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    row.DistinctData.Value >= 0);
+                    row.DistinctData.Value.ValueKind == JsonValueKind.Number);
                 Assert.True(row.Count > 0);
             });
         }
@@ -64,7 +64,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            var textResult = await QueryResult<DistinctColumnValues.Result<string>>(
+            var textResult = await QueryResult<DistinctColumnValues.Result>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
@@ -73,8 +73,7 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(textResult.Query.Error), textResult.Query.Error);
             Assert.All(textResult.ResultRows, row =>
             {
-                Assert.True(row.DistinctData.Value == "Male" ||
-                            row.DistinctData.Value == "Female");
+                Assert.True(row.DistinctData.Value.ValueKind == JsonValueKind.String);
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -85,14 +84,19 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctDatetimes()
         {
-            var datetimeResult = await QueryResult<DistinctColumnValues.Result<DateTime>>(
+            var datetimeResult = await QueryResult<DistinctColumnValues.Result>(
                 new DistinctColumnValues(tableName: "patients", columnName: "date_of_birth"),
                 dataSourceName: "Clinic");
 
             Assert.True(datetimeResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(datetimeResult.Query.Error), datetimeResult.Query.Error);
             Assert.True(datetimeResult.ResultRows.Any());
-            Assert.All(datetimeResult.ResultRows, row => Assert.True(row.Count > 0));
+            Assert.All(datetimeResult.ResultRows, row =>
+            {
+                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
+                    row.DistinctData.Value.ValueKind == JsonValueKind.String);
+                Assert.True(row.Count > 0);
+            });
         }
 
         [Fact]
@@ -166,7 +170,7 @@ namespace Explorer.Api.Tests
         public async void TestCategoricalBoolExplorer()
         {
             var metrics = await GetExplorerMetrics("GiveMeSomeCredit", queryResolver =>
-                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
+                new CategoricalColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
 
             var expectedValues = new List<object>
             {
@@ -174,14 +178,14 @@ namespace Explorer.Api.Tests
                 new { Value = true, Count = 10_028L },
             };
 
-            CheckDistinctCategories(metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues, el => el.GetBoolean());
         }
 
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new TextColumnExplorer(queryResolver, "loans", "status"));
+                new CategoricalColumnExplorer(queryResolver, "loans", "status"));
 
             var expectedValues = new List<object>
             {
@@ -191,7 +195,7 @@ namespace Explorer.Api.Tests
                 new { Value = "B", Count = 32L },
             };
 
-            CheckDistinctCategories(metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues, el => el.GetString());
         }
 
         [Fact]
@@ -255,20 +259,16 @@ namespace Explorer.Api.Tests
 
         private void CheckDistinctCategories(
             IEnumerable<IExploreMetric> distinctMetrics,
-            IEnumerable<dynamic> expectedValues)
+            IEnumerable<dynamic> expectedValues,
+            Func<JsonElement, dynamic> parseElement)
         {
-            var distinctValues =
-                (IEnumerable<dynamic>)distinctMetrics
-                .Single(m => m.Name == "top_distinct_values")
-                .Metric;
+            var distinctValues = (IEnumerable<dynamic>)distinctMetrics.Single(m => m.Name == "top_distinct_values").Metric;
 
-            Assert.All<(dynamic, dynamic)>(distinctValues.Zip(expectedValues), tuple =>
+            foreach (var (actual, expected) in distinctValues.Zip(expectedValues))
             {
-                var actual = tuple.Item1;
-                var expected = tuple.Item2;
-                Assert.True(actual.Value == expected.Value, $"Expected {expected}, got {actual}.");
+                Assert.True(parseElement(actual.Value) == expected.Value, $"Expected {expected}, got {actual}.");
                 Assert.True(actual.Count == expected.Count, $"Expected {expected}, got {actual}.");
-            });
+            }
 
             var expectedTotal = expectedValues.Sum(v => (long)v.Count);
             var actualTotal = (long)distinctMetrics
