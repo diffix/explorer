@@ -225,11 +225,8 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCancelQuery()
         {
-            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), nameof(TestCancelQuery));
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var authProvider = factory.EnvironmentVariableAuthProvider();
-            var pollFrequency = TimeSpan.FromMilliseconds(10);
-            var jsonApiClient = new JsonApiClient(client, authProvider);
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), "TestCancelQuery");
+            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
             var query = new LongRunningQuery();
 
             var queryInfo = await jsonApiClient.SubmitQuery(
@@ -240,10 +237,10 @@ namespace Explorer.Api.Tests
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, cts.Token));
+                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, testConfig.PollFrequency, cts.Token));
 
             var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, CancellationToken.None));
+                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, testConfig.PollFrequency, CancellationToken.None));
 
             Assert.StartsWith("Aircloak API query canceled", ex.Message);
         }
@@ -285,15 +282,13 @@ namespace Explorer.Api.Tests
             string dataSourceName = TestDataSource,
             [CallerMemberName] string vcrSessionName = "")
         {
-            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var authProvider = factory.EnvironmentVariableAuthProvider();
-            var jsonApiClient = new JsonApiClient(client, authProvider);
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), vcrSessionName);
+            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
 
             return await jsonApiClient.Query(
                 dataSourceName,
                 query,
-                factory.GetApiPollingFrequency(vcrCassetteInfo),
+                testConfig.PollFrequency,
                 CancellationToken.None);
         }
 
@@ -302,13 +297,10 @@ namespace Explorer.Api.Tests
             Func<IQueryResolver, ExplorerBase> explorerFactory,
             [CallerMemberName] string vcrSessionName = "")
         {
-            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var authProvider = factory.EnvironmentVariableAuthProvider();
-            var pollFrequency = factory.GetApiPollingFrequency(vcrCassetteInfo);
-            var jsonApiClient = new JsonApiClient(client, authProvider);
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), vcrSessionName);
+            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
 
-            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, pollFrequency);
+            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, testConfig.PollFrequency);
 
             var explorer = new Exploration(new[] { explorerFactory(queryResolver), });
 
