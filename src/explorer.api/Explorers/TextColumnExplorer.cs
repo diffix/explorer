@@ -5,6 +5,7 @@ namespace Explorer
     using System.Threading;
     using System.Threading.Tasks;
 
+    using Explorer.Diffix.Extensions;
     using Explorer.Queries;
 
     internal class TextColumnExplorer : ExplorerBase
@@ -22,16 +23,13 @@ namespace Explorer
 
         public override async Task Explore(CancellationToken cancellationToken)
         {
-            var distinctValues = await ResolveQuery<DistinctColumnValues.Result<string>>(
+            var distinctValuesQ = await ResolveQuery<DistinctColumnValues.Result>(
                 new DistinctColumnValues(TableName, ColumnName),
                 cancellationToken);
 
-            var suppressedValueCount = distinctValues.ResultRows.Sum(row =>
-                    row.DistinctData.IsSuppressed ? row.Count : 0);
+            var (totalValueCount, suppressedValueCount) = distinctValuesQ.ResultRows.CountTotalAndSuppressed();
 
             PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
-
-            var totalValueCount = distinctValues.ResultRows.Sum(row => row.Count);
 
             // This shouldn't happen, but check anyway.
             if (totalValueCount == 0)
@@ -45,7 +43,7 @@ namespace Explorer
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
 
             var distinctValueCounts =
-                from row in distinctValues.ResultRows
+                from row in distinctValuesQ.ResultRows
                 where !row.DistinctData.IsSuppressed
                 orderby row.Count descending
                 select new

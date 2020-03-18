@@ -36,7 +36,7 @@ namespace Explorer
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result<double>>(
+            var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result>(
                 new DistinctColumnValues(TableName, ColumnName),
                 cancellationToken);
 
