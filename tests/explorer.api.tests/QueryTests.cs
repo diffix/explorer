@@ -83,6 +83,19 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestDistinctDatetimes()
+        {
+            var datetimeResult = await QueryResult<DistinctColumnValues.Result<DateTime>>(
+                new DistinctColumnValues(tableName: "patients", columnName: "date_of_birth"),
+                dataSourceName: "Clinic");
+
+            Assert.True(datetimeResult.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(datetimeResult.Query.Error), datetimeResult.Query.Error);
+            Assert.True(datetimeResult.ResultRows.Any());
+            Assert.All(datetimeResult.ResultRows, row => Assert.True(row.Count > 0));
+        }
+
+        [Fact]
         public async void TestHistogramLoansAmount()
         {
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
@@ -103,6 +116,36 @@ namespace Explorer.Api.Tests
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
+        }
+
+        [Fact]
+        public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
+        {
+            var result = await QueryResult<CyclicalDatetimes.Result>(
+                dataSourceName: "gda_taxi",
+                query: new CyclicalDatetimes(
+                    "rides",
+                    "pickup_datetime"));
+
+            Assert.True(result.Query.Completed);
+            Assert.Equal("completed", result.Query.QueryState);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
+            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
+        }
+
+        [Fact]
+        public async void TestBucketedDatetimeQueryTaxiPickupTimes()
+        {
+            var result = await QueryResult<BucketedDatetimes.Result>(
+                dataSourceName: "gda_taxi",
+                query: new BucketedDatetimes(
+                    "rides",
+                    "pickup_datetime"));
+
+            Assert.True(result.Query.Completed);
+            Assert.Equal("completed", result.Query.QueryState);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
+            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
         }
 
         [Fact]
@@ -149,6 +192,18 @@ namespace Explorer.Api.Tests
             };
 
             CheckDistinctCategories(metrics, expectedValues);
+        }
+
+        [Fact]
+        public async void TestDateTimeColumnExplorer()
+        {
+            var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
+                new DatetimeColumnExplorer(queryResolver, "rides", "pickup_datetime"));
+
+            Assert.Single(metrics, m => m.Name == "dates_linear.minute");
+            Assert.Single(metrics, m => m.Name == "dates_linear.hour");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.second");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.minute");
         }
 
         [Fact]
@@ -230,7 +285,10 @@ namespace Explorer.Api.Tests
                 $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(
+            IQuerySpec<TResult> query,
+            string dataSourceName = TestDataSource,
+            [CallerMemberName] string vcrSessionName = "")
         {
             var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
             using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
@@ -238,7 +296,7 @@ namespace Explorer.Api.Tests
             var jsonApiClient = new JsonApiClient(client, authProvider);
 
             return await jsonApiClient.Query(
-                TestDataSource,
+                dataSourceName,
                 query,
                 factory.GetApiPollingFrequency(vcrCassetteInfo),
                 CancellationToken.None);

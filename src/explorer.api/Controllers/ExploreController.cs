@@ -161,6 +161,10 @@ namespace Explorer.Api.Controllers
                 {
                     new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
+                AircloakType.Datetime => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName),
+                },
                 _ => System.Array.Empty<ExplorerBase>(),
             };
 

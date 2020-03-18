@@ -10,7 +10,8 @@ namespace Explorer.Queries
         IQuerySpec<DistinctColumnValues.Result<long>>,
         IQuerySpec<DistinctColumnValues.Result<double>>,
         IQuerySpec<DistinctColumnValues.Result<bool>>,
-        IQuerySpec<DistinctColumnValues.Result<string>>
+        IQuerySpec<DistinctColumnValues.Result<string>>,
+        IQuerySpec<DistinctColumnValues.Result<System.DateTime>>
     {
         public DistinctColumnValues(string tableName, string columnName)
         {
@@ -48,6 +49,11 @@ namespace Explorer.Queries
         Result<string> IQuerySpec<Result<string>>.FromJsonArray(ref Utf8JsonReader reader)
         {
             return FromJsonArray<string>(ref reader);
+        }
+
+        Result<System.DateTime> IQuerySpec<Result<System.DateTime>>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            return FromJsonArray<System.DateTime>(ref reader);
         }
 
         private Result<T> FromJsonArray<T>(
