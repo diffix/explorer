@@ -231,6 +231,20 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestDateColumnExplorer()
+        {
+            var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
+                new DatetimeColumnExplorer(queryResolver, "rides", "birthdate", AircloakType.Date));
+
+            Assert.Single(metrics, m => m.Name == "dates_linear.year");
+            Assert.Single(metrics, m => m.Name == "dates_linear.month");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.day");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.weekday");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.month");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.quarter");
+        }
+
+        [Fact]
         public async void TestRepeatingRows()
         {
             var queryResult = await QueryResult(new RepeatingRowsQuery());

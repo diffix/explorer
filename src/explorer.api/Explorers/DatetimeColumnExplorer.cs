@@ -17,16 +17,23 @@
         // TODO: The following should be configuration items (?)
         private const double SuppressedRatioThreshold = 0.1;
 
-        public DatetimeColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+        public DatetimeColumnExplorer(
+            IQueryResolver queryResolver,
+            string tableName,
+            string columnName,
+            AircloakType columnType = AircloakType.Datetime)
             : base(queryResolver)
         {
             TableName = tableName;
             ColumnName = columnName;
+            ColumnType = columnType;
         }
 
         private string TableName { get; }
 
         private string ColumnName { get; }
+
+        private AircloakType ColumnType { get; }
 
         public override async Task Explore(CancellationToken cancellationToken)
         {
@@ -107,7 +114,7 @@
         private async Task LinearBuckets(CancellationToken cancellationToken)
         {
             var queryResult = await ResolveQuery(
-                new BucketedDatetimes(TableName, ColumnName),
+                new BucketedDatetimes(TableName, ColumnName, ColumnType),
                 cancellationToken);
 
             await Task.Run(
@@ -118,7 +125,7 @@
         private async Task CyclicalBuckets(CancellationToken cancellationToken)
         {
             var queryResult = await ResolveQuery(
-                new CyclicalDatetimes(TableName, ColumnName),
+                new CyclicalDatetimes(TableName, ColumnName, ColumnType),
                 cancellationToken);
 
             await Task.Run(
