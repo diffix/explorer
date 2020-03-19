@@ -142,6 +142,22 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestCyclicalDateQueryTaxiBirthdates()
+        {
+            var result = await QueryResult<CyclicalDatetimes.Result>(
+                dataSourceName: "gda_taxi",
+                query: new CyclicalDatetimes(
+                    "rides",
+                    "birthdate",
+                    AircloakType.Date));
+
+            Assert.True(result.Query.Completed);
+            Assert.Equal("completed", result.Query.QueryState);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
+            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
+        }
+
+        [Fact]
         public async void TestBucketedDatetimeQueryTaxiPickupTimes()
         {
             var result = await QueryResult<BucketedDatetimes.Result>(

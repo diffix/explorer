@@ -165,6 +165,14 @@ namespace Explorer.Api.Controllers
                 {
                     new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
+                AircloakType.Timestamp => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName),
+                },
+                AircloakType.Date => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName),
+                },
                 _ => System.Array.Empty<ExplorerBase>(),
             };
 
