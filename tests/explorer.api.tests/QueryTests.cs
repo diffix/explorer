@@ -37,7 +37,8 @@ namespace Explorer.Api.Tests
             Assert.All(intResult.ResultRows, row =>
             {
                 Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    row.DistinctData.Value.ValueKind == JsonValueKind.Number);
+                    (row.DistinctData.Value.ValueKind == JsonValueKind.Number &&
+                    row.DistinctData.Value.GetInt32() >= 0));
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -56,7 +57,8 @@ namespace Explorer.Api.Tests
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    row.DistinctData.Value.ValueKind == JsonValueKind.Number);
+                    (row.DistinctData.Value.ValueKind == JsonValueKind.Number &&
+                    row.DistinctData.Value.GetDouble() >= 0));
                 Assert.True(row.Count > 0);
             });
         }
@@ -74,6 +76,8 @@ namespace Explorer.Api.Tests
             Assert.All(textResult.ResultRows, row =>
             {
                 Assert.True(row.DistinctData.Value.ValueKind == JsonValueKind.String);
+                Assert.True(row.DistinctData.Value.GetString() == "Male" ||
+                            row.DistinctData.Value.GetString() == "Female");
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
