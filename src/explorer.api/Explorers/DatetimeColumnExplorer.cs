@@ -30,16 +30,16 @@
 
         public override async Task Explore(CancellationToken cancellationToken)
         {
-            var statsQ = (await ResolveQuery<NumericColumnStats.Result<DateTime>>(
+            var statsQ = await ResolveQuery<NumericColumnStats.Result<DateTime>>(
                 new NumericColumnStats(TableName, ColumnName),
-                cancellationToken));
+                cancellationToken);
 
             var stats = statsQ.ResultRows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result<DateTime>>(
+            var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result>(
                 new DistinctColumnValues(TableName, ColumnName),
                 cancellationToken);
 

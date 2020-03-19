@@ -227,7 +227,11 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
             (ref Utf8JsonReader reader) => reader.GetDateTime();
 
         private static readonly Utf8JsonValueParser<JsonElement> RawJsonElementParser =
-            (ref Utf8JsonReader reader) => JsonDocument.ParseValue(ref reader).RootElement;
+            (ref Utf8JsonReader reader) =>
+            {
+                using var jdoc = JsonDocument.ParseValue(ref reader);
+                return jdoc.RootElement.Clone();
+            };
 
         private static readonly Dictionary<System.Type, object> DefaultParsers = new Dictionary<System.Type, object>
         {

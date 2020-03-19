@@ -8,9 +8,9 @@ namespace Explorer
     using Explorer.Diffix.Extensions;
     using Explorer.Queries;
 
-    internal class TextColumnExplorer : ExplorerBase
+    internal class CategoricalColumnExplorer : ExplorerBase
     {
-        public TextColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+        public CategoricalColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)
         {
             TableName = tableName;

@@ -3,15 +3,13 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
     using Aircloak.JsonApi.JsonReaderExtensions;
+    using Aircloak.JsonApi.ResponseTypes;
+
+    using Explorer.Diffix.Interfaces;
 
     internal class DistinctColumnValues :
-        IQuerySpec<DistinctColumnValues.Result<long>>,
-        IQuerySpec<DistinctColumnValues.Result<double>>,
-        IQuerySpec<DistinctColumnValues.Result<bool>>,
-        IQuerySpec<DistinctColumnValues.Result<string>>,
-        IQuerySpec<DistinctColumnValues.Result<System.DateTime>>
+        IQuerySpec<DistinctColumnValues.Result>
     {
         public DistinctColumnValues(string tableName, string columnName)
         {
@@ -31,49 +29,26 @@ namespace Explorer.Queries
 
         private string ColumnName { get; }
 
-        Result<long> IQuerySpec<Result<long>>.FromJsonArray(ref Utf8JsonReader reader)
-        {
-            return FromJsonArray<long>(ref reader);
-        }
+        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader);
 
-        Result<double> IQuerySpec<Result<double>>.FromJsonArray(ref Utf8JsonReader reader)
+        public class Result : ICountAggregate, INullable, ISuppressible
         {
-            return FromJsonArray<double>(ref reader);
-        }
-
-        Result<bool> IQuerySpec<Result<bool>>.FromJsonArray(ref Utf8JsonReader reader)
-        {
-            return FromJsonArray<bool>(ref reader);
-        }
-
-        Result<string> IQuerySpec<Result<string>>.FromJsonArray(ref Utf8JsonReader reader)
-        {
-            return FromJsonArray<string>(ref reader);
-        }
-
-        Result<System.DateTime> IQuerySpec<Result<System.DateTime>>.FromJsonArray(ref Utf8JsonReader reader)
-        {
-            return FromJsonArray<System.DateTime>(ref reader);
-        }
-
-        private Result<T> FromJsonArray<T>(
-            ref Utf8JsonReader reader)
-        {
-            return new Result<T>
+            public Result(ref Utf8JsonReader reader)
             {
-                DistinctData = reader.ParseAircloakResultValue<T>(),
-                Count = reader.ParseCount(),
-                CountNoise = reader.ParseCountNoise(),
-            };
-        }
+                DistinctData = reader.ParseAircloakResultValue<JsonElement>();
+                Count = reader.ParseCount();
+                CountNoise = reader.ParseCountNoise();
+            }
 
-        public class Result<T>
-        {
-            public AircloakValue<T> DistinctData { get; set; } = NullValue<T>.Instance;
+            public AircloakValue<JsonElement> DistinctData { get; set; }
 
             public long Count { get; set; }
 
             public double? CountNoise { get; set; }
+
+            public bool IsNull => DistinctData.IsNull;
+
+            public bool IsSuppressed => DistinctData.IsSuppressed;
         }
     }
 }

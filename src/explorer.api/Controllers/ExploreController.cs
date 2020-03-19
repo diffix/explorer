@@ -155,11 +155,11 @@ namespace Explorer.Api.Controllers
                 },
                 AircloakType.Text => new ExplorerBase[]
                 {
-                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new CategoricalColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 AircloakType.Bool => new ExplorerBase[]
                 {
-                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new CategoricalColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 AircloakType.Datetime => new ExplorerBase[]
                 {
