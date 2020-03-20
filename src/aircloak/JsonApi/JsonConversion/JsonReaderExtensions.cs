@@ -1,4 +1,4 @@
-namespace Aircloak.JsonApi.JsonReaderExtensions
+namespace Aircloak.JsonApi.JsonConversion
 {
     using System.Collections.Generic;
     using System.Text.Json;

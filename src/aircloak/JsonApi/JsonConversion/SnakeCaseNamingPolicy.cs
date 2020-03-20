@@ -1,6 +1,6 @@
 ﻿#pragma warning disable CA1308 // replace the call to 'ToLowerInvariant' with 'ToUpperInvariant'
 
-namespace Aircloak.JsonApi
+namespace Aircloak.JsonApi.JsonConversion
 {
     using System.Linq;
     using System.Text.Json;

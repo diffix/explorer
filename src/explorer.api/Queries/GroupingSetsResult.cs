@@ -2,7 +2,7 @@
 {
     using System.Text.Json;
 
-    using Aircloak.JsonApi.JsonReaderExtensions;
+    using Aircloak.JsonApi.JsonConversion;
     using Aircloak.JsonApi.ResponseTypes;
 
     using Explorer.Diffix.Extensions;
