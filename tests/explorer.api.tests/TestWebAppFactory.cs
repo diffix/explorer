@@ -41,7 +41,7 @@
             return apiKey;
         }
 
-        public Task<HttpResponseMessage> SendExplorerApiRequest(HttpMethod method, string endpoint, object? data, string testClassName, string vcrSessionName)
+        public async Task<HttpResponseMessage> SendExplorerApiRequest(HttpMethod method, string endpoint, object? data, string testClassName, string vcrSessionName)
         {
             // For the explorer interactions we never want to use the cache so override the vcr mode.
             // We actually don't need to use the vcr at all but it's useful for debugging...
@@ -66,7 +66,7 @@
 
             using var client = CreateDefaultClient(handler);
 
-            return client.SendAsync(request);
+            return await client.SendAsync(request);
         }
 
 #pragma warning disable CA2000 // call IDisposable.Dispose on handler object
