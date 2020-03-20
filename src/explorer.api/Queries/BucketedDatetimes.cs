@@ -4,6 +4,7 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Aircloak.JsonApi;
+    using Aircloak.JsonApi.ResponseTypes;
 
     internal class BucketedDatetimes :
         IQuerySpec<BucketedDatetimes.Result>
@@ -14,6 +15,10 @@ namespace Explorer.Queries
             "quarter",
             "month",
             "day",
+        };
+
+        public static readonly string[] TimeComponents = new[]
+        {
             "hour",
             "minute",
             "second",
@@ -21,18 +26,26 @@ namespace Explorer.Queries
 
         public BucketedDatetimes(
             string tableName,
-            string columnName)
+            string columnName,
+            AircloakType columnType = AircloakType.Datetime)
         {
             TableName = tableName;
             ColumnName = columnName;
+            QueryComponents = columnType switch
+            {
+                AircloakType.Datetime => DateComponents.Concat(TimeComponents).ToArray(),
+                AircloakType.Timestamp => TimeComponents,
+                AircloakType.Date => DateComponents,
+                _ => throw new System.ArgumentException($"Expected Datetime, Date or Time, got {columnType}."),
+            };
         }
 
         public string QueryStatement
         {
             get
             {
-                var groupsFragment = string.Join(",\n", DateComponents.Select(s => $"date_trunc('{s}', {ColumnName})"));
-                var groupingSets = string.Join(", ", Enumerable.Range(2, DateComponents.Length));
+                var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"date_trunc('{s}', {ColumnName})"));
+                var groupingSets = string.Join(", ", Enumerable.Range(2, QueryComponents.Length));
 
                 return $@"
                 select
@@ -48,20 +61,23 @@ namespace Explorer.Queries
             }
         }
 
+        public string[] QueryComponents { get; }
+
         private string TableName { get; }
 
         private string ColumnName { get; }
 
-        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader);
+        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader, QueryComponents);
 
         public class Result : GroupingSetsResult<System.DateTime>
         {
-            public Result(ref Utf8JsonReader reader)
-                : base(ref reader)
+            public Result(ref Utf8JsonReader reader, string[] groupingLabels)
+                : base(ref reader, groupingLabels.Length)
             {
+                GroupingLabels = groupingLabels;
             }
 
-            public override string[] GroupingLabels { get => DateComponents; }
+            public override string[] GroupingLabels { get; }
         }
     }
 }

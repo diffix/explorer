@@ -10,9 +10,9 @@
 
     internal abstract class GroupingSetsResult<T> : ICountAggregate, IGroupingSetsAggregate<T>
     {
-        protected GroupingSetsResult(ref Utf8JsonReader reader)
+        protected GroupingSetsResult(ref Utf8JsonReader reader, int groupSize)
         {
-            (GroupingId, GroupingValue) = reader.ParseGroupingSet<T>(GroupingLabels.Length);
+            (GroupingId, GroupingValue) = reader.ParseGroupingSet<T>(groupSize);
             Count = reader.ParseCount();
             CountNoise = reader.ParseNoise();
         }
