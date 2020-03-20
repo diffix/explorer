@@ -140,11 +140,11 @@ namespace Explorer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
 
-        private Exploration? CreateExploration(AircloakType type, Models.ExploreParams data)
+        private Exploration? CreateExploration(AircloakType columnType, Models.ExploreParams data)
         {
             var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
 
-            var components = type switch
+            var components = columnType switch
             {
                 AircloakType.Integer => new ExplorerBase[]
                 {
@@ -166,7 +166,15 @@ namespace Explorer.Api.Controllers
                 },
                 AircloakType.Datetime => new ExplorerBase[]
                 {
-                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName, columnType),
+                },
+                AircloakType.Timestamp => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName, columnType),
+                },
+                AircloakType.Date => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName, columnType),
                 },
                 _ => System.Array.Empty<ExplorerBase>(),
             };
