@@ -20,12 +20,7 @@ namespace Explorer
             Metrics = metrics;
         }
 
-        public ExploreStatus Status { get; }
-
-        public IEnumerable<Metric> Metrics { get; }
-
-        public Guid Id { get; }
-
+#pragma warning disable SA1602 // Enumeration items should be documented
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum ExploreStatus
         {
@@ -34,8 +29,14 @@ namespace Explorer
             Complete,
             Canceled,
             Error,
-
         }
+#pragma warning restore
+
+        public ExploreStatus Status { get; }
+
+        public IEnumerable<Metric> Metrics { get; }
+
+        public Guid Id { get; }
 
         public class Metric
         {

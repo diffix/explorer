@@ -49,7 +49,6 @@ namespace Explorer.Queries
             };
         }
 
-
         Result<System.DateTime> IQuerySpec<Result<System.DateTime>>.FromJsonArray(ref Utf8JsonReader reader)
         {
             return new Result<System.DateTime>

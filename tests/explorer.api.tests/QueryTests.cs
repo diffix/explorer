@@ -250,7 +250,7 @@ namespace Explorer.Api.Tests
             var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
                 jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, testConfig.PollFrequency, CancellationToken.None));
 
-            Assert.StartsWith("Aircloak API query canceled", ex.Message);
+            Assert.StartsWith("Aircloak API query canceled", ex.Message, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private void CheckDistinctCategories(
@@ -341,9 +341,10 @@ namespace Explorer.Api.Tests
             }
         }
 
-        private class LongRunningQuery : IQuerySpec<LongRunningQuery.Result>
+        private class LongRunningQuery : IQuerySpec<int>
         {
-            public static string DataSet = "gda_taxi";
+            public const string DataSet = "gda_taxi";
+
             public string QueryStatement =>
                 @"select
                     date_trunc('year', pickup_datetime),
@@ -367,18 +368,14 @@ namespace Explorer.Api.Tests
                     from rides
                     group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
 
-            public Result FromJsonArray(ref Utf8JsonReader reader)
+            public int FromJsonArray(ref Utf8JsonReader reader)
             {
                 while (reader.TokenType != JsonTokenType.EndArray)
                 {
                     reader.Read();
                 }
 
-                return new Result();
-            }
-
-            public struct Result
-            {
+                return 0;
             }
         }
     }

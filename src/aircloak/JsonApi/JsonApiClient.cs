@@ -185,6 +185,30 @@ namespace Aircloak.JsonApi
         }
 
         /// <summary>
+        /// Turns the HTTP response into a custom error string.
+        /// </summary>
+        /// <param name="response">The HTTP response.</param>
+        /// <returns>A string containing a custom error message.</returns>
+        private static string ServiceError(HttpResponseMessage response)
+        {
+            return response.StatusCode switch
+            {
+                HttpStatusCode.Unauthorized =>
+                    "Unauthorized -- Your API token is wrong",
+                HttpStatusCode.NotFound =>
+                    "Not Found -- Invalid URL",
+                HttpStatusCode.InternalServerError =>
+                    "Internal Server Error -- We had a problem with our server. Try again later.",
+                HttpStatusCode.ServiceUnavailable =>
+                    "Service Unavailable -- We're temporarily offline for maintenance. Please try again later.",
+                HttpStatusCode.GatewayTimeout =>
+                    "Gateway Timeout -- A timeout occured while contacting the data source. " +
+                    "The system might be overloaded. Try again later.",
+                _ => response.StatusCode.ToString(),
+            };
+        }
+
+        /// <summary>
         /// Sends a Http GET request to the /api/queries/{query_id}/cancel. Cancels a running query on the Aircloak
         /// server.
         /// </summary>
@@ -245,30 +269,6 @@ namespace Aircloak.JsonApi
             CancellationToken cancellationToken)
         {
             return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, requestContent, options, cancellationToken);
-        }
-
-        /// <summary>
-        /// Turns the HTTP response into a custom error string.
-        /// </summary>
-        /// <param name="response">The HTTP response.</param>
-        /// <returns>A string containing a custom error message.</returns>
-        private static string ServiceError(HttpResponseMessage response)
-        {
-            return response.StatusCode switch
-            {
-                HttpStatusCode.Unauthorized =>
-                    "Unauthorized -- Your API token is wrong",
-                HttpStatusCode.NotFound =>
-                    "Not Found -- Invalid URL",
-                HttpStatusCode.InternalServerError =>
-                    "Internal Server Error -- We had a problem with our server. Try again later.",
-                HttpStatusCode.ServiceUnavailable =>
-                    "Service Unavailable -- We're temporarily offline for maintenance. Please try again later.",
-                HttpStatusCode.GatewayTimeout =>
-                    "Gateway Timeout -- A timeout occured while contacting the data source. " +
-                    "The system might be overloaded. Try again later.",
-                _ => response.StatusCode.ToString(),
-            };
         }
 
         /// <summary>

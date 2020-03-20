@@ -87,6 +87,7 @@
             Dispose(true);
         }
 
+#pragma warning disable CA1822 // method should be made static
         internal TestConfig GetTestConfig(string testClassName, string vcrSessionName, VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Cache)
         {
             var vcrCassette = new FileInfo($"../../../.vcr/{testClassName}.{vcrSessionName}.yaml");
@@ -100,6 +101,7 @@
 
             return new TestConfig(vcrCassette.FullName, pollFrequency, vcrMode);
         }
+#pragma warning restore CA1822 // method should be made static
 
         protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
         {

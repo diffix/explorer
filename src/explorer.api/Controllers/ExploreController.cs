@@ -62,7 +62,9 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
+#pragma warning disable CA2000 // call IDisposable.Dispose
             var exploration = CreateExploration(explorerColumnMeta.Type, data);
+#pragma warning restore CA2000 // call IDisposable.Dispose
             if (exploration == null)
             {
                 return Ok(new Models.NotImplementedError
@@ -108,6 +110,7 @@ namespace Explorer.Api.Controllers
                     finally
                     {
                         Explorations.TryRemove(explorationId, out _);
+                        exploration.Dispose();
                     }
                 }
 

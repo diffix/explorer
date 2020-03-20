@@ -5,8 +5,8 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
     using Aircloak.JsonApi.JsonReaderExtensions;
+    using Aircloak.JsonApi.ResponseTypes;
 
     internal class SingleColumnHistogram :
         IQuerySpec<SingleColumnHistogram.Result>

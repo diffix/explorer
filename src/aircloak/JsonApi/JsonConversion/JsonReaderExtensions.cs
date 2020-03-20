@@ -10,6 +10,50 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
     /// </summary>
     public static class JsonReaderExtensions
     {
+        private static readonly Utf8JsonValueParser<string> RawStringParser =
+            (ref Utf8JsonReader reader) => reader.GetString();
+
+        private static readonly Utf8JsonValueParser<bool> RawBoolParser =
+            (ref Utf8JsonReader reader) => reader.GetBoolean();
+
+        private static readonly Utf8JsonValueParser<long> RawInt64Parser =
+            (ref Utf8JsonReader reader) => reader.GetInt64();
+
+        private static readonly Utf8JsonValueParser<int> RawInt32Parser =
+            (ref Utf8JsonReader reader) => reader.GetInt32();
+
+        private static readonly Utf8JsonValueParser<double> RawDoubleParser =
+            (ref Utf8JsonReader reader) => reader.GetDouble();
+
+        private static readonly Utf8JsonValueParser<decimal> RawDecimalParser =
+            (ref Utf8JsonReader reader) => reader.GetDecimal();
+
+        private static readonly Utf8JsonValueParser<char[]> RawCharArrayParser =
+            (ref Utf8JsonReader reader) => reader.GetString().ToCharArray();
+
+        private static readonly Utf8JsonValueParser<System.DateTime> RawDatetimeParser =
+            (ref Utf8JsonReader reader) => reader.GetDateTime();
+
+        private static readonly Utf8JsonValueParser<JsonElement> RawJsonElementParser =
+            (ref Utf8JsonReader reader) =>
+            {
+                using var jdoc = JsonDocument.ParseValue(ref reader);
+                return jdoc.RootElement.Clone();
+            };
+
+        private static readonly Dictionary<System.Type, object> DefaultParsers = new Dictionary<System.Type, object>
+        {
+            { typeof(string), RawStringParser },
+            { typeof(bool), RawBoolParser },
+            { typeof(long), RawInt64Parser },
+            { typeof(double), RawDoubleParser },
+            { typeof(decimal), RawDecimalParser },
+            { typeof(int), RawInt32Parser },
+            { typeof(char[]), RawCharArrayParser },
+            { typeof(System.DateTime), RawDatetimeParser },
+            { typeof(JsonElement), RawJsonElementParser },
+        };
+
         /// <summary>
         /// Delegate definition for a function that parses a value from a <see cref="Utf8JsonReader"/>.
         /// </summary>
@@ -80,10 +124,9 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
         public static T ParseNullableMetric<T>(this ref Utf8JsonReader reader, T defaultValue)
             where T : unmanaged
         {
-#pragma warning disable SA1009 // Closing parenthesis should be followed by a space.
             // We know that we are passinga non-null defaultValue so the return value will always be non-null.
-            return ParseNullableMetric(ref reader, DefaultParser<T>(), defaultValue)!.Value;
-#pragma warning restore SA1009 // Closing parenthesis should be followed by a space.
+            var metric = ParseNullableMetric(ref reader, DefaultParser<T>(), defaultValue);
+            return metric!.Value;
         }
 
         /// <summary>
@@ -201,49 +244,5 @@ namespace Aircloak.JsonApi.JsonReaderExtensions
                 throw new System.Exception("No parser defined for {typeof(T)}");
             }
         }
-
-        private static readonly Utf8JsonValueParser<string> RawStringParser =
-            (ref Utf8JsonReader reader) => reader.GetString();
-
-        private static readonly Utf8JsonValueParser<bool> RawBoolParser =
-            (ref Utf8JsonReader reader) => reader.GetBoolean();
-
-        private static readonly Utf8JsonValueParser<long> RawInt64Parser =
-            (ref Utf8JsonReader reader) => reader.GetInt64();
-
-        private static readonly Utf8JsonValueParser<int> RawInt32Parser =
-            (ref Utf8JsonReader reader) => reader.GetInt32();
-
-        private static readonly Utf8JsonValueParser<double> RawDoubleParser =
-            (ref Utf8JsonReader reader) => reader.GetDouble();
-
-        private static readonly Utf8JsonValueParser<decimal> RawDecimalParser =
-            (ref Utf8JsonReader reader) => reader.GetDecimal();
-
-        private static readonly Utf8JsonValueParser<char[]> RawCharArrayParser =
-            (ref Utf8JsonReader reader) => reader.GetString().ToCharArray();
-
-        private static readonly Utf8JsonValueParser<System.DateTime> RawDatetimeParser =
-            (ref Utf8JsonReader reader) => reader.GetDateTime();
-
-        private static readonly Utf8JsonValueParser<JsonElement> RawJsonElementParser =
-            (ref Utf8JsonReader reader) =>
-            {
-                using var jdoc = JsonDocument.ParseValue(ref reader);
-                return jdoc.RootElement.Clone();
-            };
-
-        private static readonly Dictionary<System.Type, object> DefaultParsers = new Dictionary<System.Type, object>
-        {
-            { typeof(string), RawStringParser },
-            { typeof(bool), RawBoolParser },
-            { typeof(long), RawInt64Parser },
-            { typeof(double), RawDoubleParser },
-            { typeof(decimal), RawDecimalParser },
-            { typeof(int), RawInt32Parser },
-            { typeof(char[]), RawCharArrayParser },
-            { typeof(System.DateTime), RawDatetimeParser },
-            { typeof(JsonElement), RawJsonElementParser },
-        };
     }
 }
