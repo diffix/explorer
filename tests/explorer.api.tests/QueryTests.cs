@@ -27,7 +27,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            var intResult = await QueryResult<DistinctColumnValues.Result<long>>(
+            var intResult = await QueryResult<DistinctColumnValues.Result>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "duration"));
@@ -37,7 +37,8 @@ namespace Explorer.Api.Tests
             Assert.All(intResult.ResultRows, row =>
             {
                 Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    row.DistinctData.Value >= 0);
+                    (row.DistinctData.Value.ValueKind == JsonValueKind.Number &&
+                    row.DistinctData.Value.GetInt32() >= 0));
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -46,7 +47,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            var realResult = await QueryResult<DistinctColumnValues.Result<double>>(
+            var realResult = await QueryResult<DistinctColumnValues.Result>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
@@ -56,7 +57,8 @@ namespace Explorer.Api.Tests
             Assert.All(realResult.ResultRows, row =>
             {
                 Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    row.DistinctData.Value >= 0);
+                    (row.DistinctData.Value.ValueKind == JsonValueKind.Number &&
+                    row.DistinctData.Value.GetDouble() >= 0));
                 Assert.True(row.Count > 0);
             });
         }
@@ -64,7 +66,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            var textResult = await QueryResult<DistinctColumnValues.Result<string>>(
+            var textResult = await QueryResult<DistinctColumnValues.Result>(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
@@ -73,13 +75,32 @@ namespace Explorer.Api.Tests
             Assert.True(string.IsNullOrEmpty(textResult.Query.Error), textResult.Query.Error);
             Assert.All(textResult.ResultRows, row =>
             {
-                Assert.True(row.DistinctData.Value == "Male" ||
-                            row.DistinctData.Value == "Female");
+                Assert.True(row.DistinctData.Value.ValueKind == JsonValueKind.String);
+                Assert.True(row.DistinctData.Value.GetString() == "Male" ||
+                            row.DistinctData.Value.GetString() == "Female");
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
 
             Assert.True(textResult.ResultRows.Count() == 2);
+        }
+
+        [Fact]
+        public async void TestDistinctDatetimes()
+        {
+            var datetimeResult = await QueryResult<DistinctColumnValues.Result>(
+                new DistinctColumnValues(tableName: "patients", columnName: "date_of_birth"),
+                dataSourceName: "Clinic");
+
+            Assert.True(datetimeResult.Query.Completed);
+            Assert.True(string.IsNullOrEmpty(datetimeResult.Query.Error), datetimeResult.Query.Error);
+            Assert.True(datetimeResult.ResultRows.Any());
+            Assert.All(datetimeResult.ResultRows, row =>
+            {
+                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
+                    row.DistinctData.Value.ValueKind == JsonValueKind.String);
+                Assert.True(row.Count > 0);
+            });
         }
 
         [Fact]
@@ -106,6 +127,36 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
+        public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
+        {
+            var result = await QueryResult<CyclicalDatetimes.Result>(
+                dataSourceName: "gda_taxi",
+                query: new CyclicalDatetimes(
+                    "rides",
+                    "pickup_datetime"));
+
+            Assert.True(result.Query.Completed);
+            Assert.Equal("completed", result.Query.QueryState);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
+            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
+        }
+
+        [Fact]
+        public async void TestBucketedDatetimeQueryTaxiPickupTimes()
+        {
+            var result = await QueryResult<BucketedDatetimes.Result>(
+                dataSourceName: "gda_taxi",
+                query: new BucketedDatetimes(
+                    "rides",
+                    "pickup_datetime"));
+
+            Assert.True(result.Query.Completed);
+            Assert.Equal("completed", result.Query.QueryState);
+            Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
+            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
+        }
+
+        [Fact]
         public async void TestMinMaxExplorer()
         {
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
@@ -123,7 +174,7 @@ namespace Explorer.Api.Tests
         public async void TestCategoricalBoolExplorer()
         {
             var metrics = await GetExplorerMetrics("GiveMeSomeCredit", queryResolver =>
-                new BoolColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
+                new CategoricalColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
 
             var expectedValues = new List<object>
             {
@@ -131,14 +182,14 @@ namespace Explorer.Api.Tests
                 new { Value = true, Count = 10_028L },
             };
 
-            CheckDistinctCategories(metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues, el => el.GetBoolean());
         }
 
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
             var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new TextColumnExplorer(queryResolver, "loans", "status"));
+                new CategoricalColumnExplorer(queryResolver, "loans", "status"));
 
             var expectedValues = new List<object>
             {
@@ -148,7 +199,19 @@ namespace Explorer.Api.Tests
                 new { Value = "B", Count = 32L },
             };
 
-            CheckDistinctCategories(metrics, expectedValues);
+            CheckDistinctCategories(metrics, expectedValues, el => el.GetString());
+        }
+
+        [Fact]
+        public async void TestDateTimeColumnExplorer()
+        {
+            var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
+                new DatetimeColumnExplorer(queryResolver, "rides", "pickup_datetime"));
+
+            Assert.Single(metrics, m => m.Name == "dates_linear.minute");
+            Assert.Single(metrics, m => m.Name == "dates_linear.hour");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.second");
+            Assert.Single(metrics, m => m.Name == "dates_cyclical.minute");
         }
 
         [Fact]
@@ -170,50 +233,38 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCancelQuery()
         {
-            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), nameof(TestCancelQuery));
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var authProvider = factory.EnvironmentVariableAuthProvider();
-            var pollFrequency = TimeSpan.FromMilliseconds(10);
-            var jsonApiClient = new JsonApiClient(client, authProvider);
-            var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
-            var query = new SingleColumnHistogram("loans", "amount", bucketSizes);
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), "TestCancelQuery");
+            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
+            var query = new LongRunningQuery();
 
-            var queryInfo = await jsonApiClient.SubmitQuery("gda_banking", query.QueryStatement, CancellationToken.None);
+            var queryInfo = await jsonApiClient.SubmitQuery(
+                LongRunningQuery.DataSet,
+                query.QueryStatement,
+                CancellationToken.None);
 
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, cts.Token));
+                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, testConfig.PollFrequency, cts.Token));
 
-            try
-            {
-                // check that Aircloak query was canceled or completed
-                await jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, pollFrequency, CancellationToken.None);
-            }
-            catch (OperationCanceledException)
-            {
-                // we ignore this because it's a valid result: it might happen because the query was cancelled;
-                // but sometimes the API query will complete, so the exception is not always thrown.
-                // TODO: this should be modified to always check for exceptions if we find some query that can be canceled realliably on the Aircloak system.
-            }
+            var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, testConfig.PollFrequency, CancellationToken.None));
+
+            Assert.StartsWith("Aircloak API query canceled", ex.Message);
         }
 
         private void CheckDistinctCategories(
             IEnumerable<IExploreMetric> distinctMetrics,
-            IEnumerable<dynamic> expectedValues)
+            IEnumerable<dynamic> expectedValues,
+            Func<JsonElement, dynamic> parseElement)
         {
-            var distinctValues =
-                (IEnumerable<dynamic>)distinctMetrics
-                .Single(m => m.Name == "top_distinct_values")
-                .Metric;
+            var distinctValues = (IEnumerable<dynamic>)distinctMetrics.Single(m => m.Name == "top_distinct_values").Metric;
 
-            Assert.All<(dynamic, dynamic)>(distinctValues.Zip(expectedValues), tuple =>
+            foreach (var (actual, expected) in distinctValues.Zip(expectedValues))
             {
-                var actual = tuple.Item1;
-                var expected = tuple.Item2;
-                Assert.True(actual.Value == expected.Value, $"Expected {expected}, got {actual}.");
+                Assert.True(parseElement(actual.Value) == expected.Value, $"Expected {expected}, got {actual}.");
                 Assert.True(actual.Count == expected.Count, $"Expected {expected}, got {actual}.");
-            });
+            }
 
             var expectedTotal = expectedValues.Sum(v => (long)v.Count);
             var actualTotal = (long)distinctMetrics
@@ -230,17 +281,18 @@ namespace Explorer.Api.Tests
                 $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
         }
 
-        private async Task<QueryResult<TResult>> QueryResult<TResult>(IQuerySpec<TResult> query, [CallerMemberName] string vcrSessionName = "")
+        private async Task<QueryResult<TResult>> QueryResult<TResult>(
+            IQuerySpec<TResult> query,
+            string dataSourceName = TestDataSource,
+            [CallerMemberName] string vcrSessionName = "")
         {
-            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var authProvider = factory.EnvironmentVariableAuthProvider();
-            var jsonApiClient = new JsonApiClient(client, authProvider);
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), vcrSessionName);
+            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
 
             return await jsonApiClient.Query(
-                TestDataSource,
+                dataSourceName,
                 query,
-                factory.GetApiPollingFrequency(vcrCassetteInfo),
+                testConfig.PollFrequency,
                 CancellationToken.None);
         }
 
@@ -249,13 +301,10 @@ namespace Explorer.Api.Tests
             Func<IQueryResolver, ExplorerBase> explorerFactory,
             [CallerMemberName] string vcrSessionName = "")
         {
-            var vcrCassetteInfo = factory.GetVcrCasetteInfo(nameof(QueryTests), vcrSessionName);
-            using var client = factory.CreateAircloakApiHttpClient(vcrCassetteInfo);
-            var authProvider = factory.EnvironmentVariableAuthProvider();
-            var pollFrequency = factory.GetApiPollingFrequency(vcrCassetteInfo);
-            var jsonApiClient = new JsonApiClient(client, authProvider);
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), vcrSessionName);
+            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
 
-            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, pollFrequency);
+            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, testConfig.PollFrequency);
 
             var explorer = new Exploration(new[] { explorerFactory(queryResolver), });
 
@@ -289,6 +338,47 @@ namespace Explorer.Api.Tests
                 public int One;
                 public int Two;
                 public int Three;
+            }
+        }
+
+        private class LongRunningQuery : IQuerySpec<LongRunningQuery.Result>
+        {
+            public static string DataSet = "gda_taxi";
+            public string QueryStatement =>
+                @"select
+                    date_trunc('year', pickup_datetime),
+                    date_trunc('quarter', pickup_datetime),
+                    date_trunc('month', pickup_datetime),
+                    date_trunc('day', pickup_datetime),
+                    date_trunc('hour', pickup_datetime),
+                    date_trunc('minute', pickup_datetime),
+                    date_trunc('second', pickup_datetime),
+                    grouping_id(
+                        date_trunc('year', pickup_datetime),
+                        date_trunc('quarter', pickup_datetime),
+                        date_trunc('month', pickup_datetime),
+                        date_trunc('day', pickup_datetime),
+                        date_trunc('hour', pickup_datetime),
+                        date_trunc('minute', pickup_datetime),
+                        date_trunc('second', pickup_datetime)
+                    ),
+                    count(*),
+                    count_noise(*)
+                    from rides
+                    group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
+
+            public Result FromJsonArray(ref Utf8JsonReader reader)
+            {
+                while (reader.TokenType != JsonTokenType.EndArray)
+                {
+                    reader.Read();
+                }
+
+                return new Result();
+            }
+
+            public struct Result
+            {
             }
         }
     }

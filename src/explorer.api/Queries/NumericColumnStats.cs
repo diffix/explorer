@@ -6,7 +6,8 @@ namespace Explorer.Queries
 
     internal class NumericColumnStats :
         IQuerySpec<NumericColumnStats.Result<long>>,
-        IQuerySpec<NumericColumnStats.Result<double>>
+        IQuerySpec<NumericColumnStats.Result<double>>,
+        IQuerySpec<NumericColumnStats.Result<System.DateTime>>
     {
         public NumericColumnStats(string tableName, string columnName)
         {
@@ -43,6 +44,18 @@ namespace Explorer.Queries
             {
                 Min = reader.ParseNonNullableMetric<double>(),
                 Max = reader.ParseNonNullableMetric<double>(),
+                Count = reader.ParseCount(),
+                CountNoise = reader.ParseCountNoise(),
+            };
+        }
+
+
+        Result<System.DateTime> IQuerySpec<Result<System.DateTime>>.FromJsonArray(ref Utf8JsonReader reader)
+        {
+            return new Result<System.DateTime>
+            {
+                Min = reader.ParseNonNullableMetric<System.DateTime>(),
+                Max = reader.ParseNonNullableMetric<System.DateTime>(),
                 Count = reader.ParseCount(),
                 CountNoise = reader.ParseCountNoise(),
             };

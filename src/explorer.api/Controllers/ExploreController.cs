@@ -130,7 +130,7 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Couldn't find exploration with id {explorationId}");
             }
             exploration.Cancel();
-            return Ok();
+            return Ok(true);
         }
 
         [Route("/{**catchall}")]
@@ -155,11 +155,15 @@ namespace Explorer.Api.Controllers
                 },
                 AircloakType.Text => new ExplorerBase[]
                 {
-                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new CategoricalColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 AircloakType.Bool => new ExplorerBase[]
                 {
-                    new BoolColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new CategoricalColumnExplorer(resolver, data.TableName, data.ColumnName),
+                },
+                AircloakType.Datetime => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 _ => System.Array.Empty<ExplorerBase>(),
             };
