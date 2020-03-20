@@ -341,7 +341,7 @@ namespace Explorer.Api.Tests
             }
         }
 
-        private class LongRunningQuery : IQuerySpec<int>
+        private class LongRunningQuery : IQuerySpec<LongRunningQuery.Result>
         {
             public const string DataSet = "gda_taxi";
 
@@ -368,14 +368,22 @@ namespace Explorer.Api.Tests
                     from rides
                     group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
 
-            public int FromJsonArray(ref Utf8JsonReader reader)
+            public Result FromJsonArray(ref Utf8JsonReader reader)
             {
                 while (reader.TokenType != JsonTokenType.EndArray)
                 {
                     reader.Read();
                 }
 
-                return 0;
+                return new Result(42);
+            }
+
+            public struct Result
+            {
+                public Result(int dummy)
+                {
+                    _ = dummy;
+                }
             }
         }
     }
