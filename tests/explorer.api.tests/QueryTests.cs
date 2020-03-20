@@ -375,15 +375,11 @@ namespace Explorer.Api.Tests
                     reader.Read();
                 }
 
-                return new Result(42);
+                return default;
             }
 
             public struct Result
             {
-                public Result(int dummy)
-                {
-                    _ = dummy;
-                }
             }
         }
     }
