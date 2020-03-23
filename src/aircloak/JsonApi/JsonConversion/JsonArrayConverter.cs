@@ -1,4 +1,4 @@
-namespace Aircloak.JsonApi
+namespace Aircloak.JsonApi.JsonConversion
 {
     using System;
     using System.Text.Json;

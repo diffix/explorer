@@ -8,24 +8,15 @@
     /// </summary>
     public class StaticApiKeyAuthProvider : IAircloakAuthenticationProvider
     {
-        private string ApiKey { get; }
+        private readonly string apiKey;
 
         /// <summary>
-        /// Creates a new instance with the given <c>apiKey</c>.
+        /// Initializes a new instance of the <see cref="StaticApiKeyAuthProvider" /> class with the given <c>apiKey</c>.
         /// </summary>
         /// <param name="apiKey">The api key.</param>
         public StaticApiKeyAuthProvider(string apiKey)
         {
-            ApiKey = apiKey;
-        }
-
-        /// <summary>
-        /// Returns a <c>Task</c> that immediately resolves to the stored <c>apiKey</c>.
-        /// </summary>
-        /// <returns>A <c>Task</c> that immediately resolves to the stored <c>apiKey</c>.</returns>>
-        public Task<string> GetAuthToken()
-        {
-            return Task.FromResult(ApiKey);
+            this.apiKey = apiKey;
         }
 
         /// <summary>
@@ -40,6 +31,15 @@
                 throw new Exception($"Environment variable {environmentVariable} not set.");
 
             return new StaticApiKeyAuthProvider(apiKey);
+        }
+
+        /// <summary>
+        /// Returns a <c>Task</c> that immediately resolves to the stored <c>apiKey</c>.
+        /// </summary>
+        /// <returns>A <c>Task</c> that immediately resolves to the stored <c>apiKey</c>.</returns>>
+        public Task<string> GetAuthToken()
+        {
+            return Task.FromResult(apiKey);
         }
     }
 }

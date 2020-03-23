@@ -182,7 +182,7 @@ namespace Explorer.Api.Tests
                 test: (response, content) =>
                 {
                     Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-                    Assert.Contains("Unauthorized", content);
+                    Assert.Contains("Unauthorized", content, StringComparison.InvariantCultureIgnoreCase);
                 });
         }
 
@@ -193,10 +193,7 @@ namespace Explorer.Api.Tests
             ApiTestActionWithContent test,
             [CallerMemberName] string vcrSessionName = "")
         {
-            // TestUtils.WaitDebugger();
-            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
-            using var request = factory.CreateHttpRequest(method, endpoint, data);
-            using var response = await client.SendAsync(request);
+            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ExploreTests), vcrSessionName);
             var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
         }
@@ -208,10 +205,7 @@ namespace Explorer.Api.Tests
             ApiTestActionWithContent<T> test,
             [CallerMemberName] string vcrSessionName = "")
         {
-            // TestUtils.WaitDebugger();
-            using var client = factory.CreateExplorerApiHttpClient(nameof(ExploreTests), vcrSessionName);
-            using var request = factory.CreateHttpRequest(method, endpoint, data);
-            using var response = await client.SendAsync(request);
+            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ExploreTests), vcrSessionName);
             var responseString = await response.Content.ReadAsStringAsync();
             return test(response, responseString);
         }

@@ -280,7 +280,7 @@ namespace Explorer.Api.Tests
             var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
                 jsonApiClient.PollQueryUntilComplete(queryInfo.QueryId, query, testConfig.PollFrequency, CancellationToken.None));
 
-            Assert.StartsWith("Aircloak API query canceled", ex.Message);
+            Assert.StartsWith("Aircloak API query canceled", ex.Message, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private void CheckDistinctCategories(
@@ -373,7 +373,8 @@ namespace Explorer.Api.Tests
 
         private class LongRunningQuery : IQuerySpec<LongRunningQuery.Result>
         {
-            public static string DataSet = "gda_taxi";
+            public const string DataSet = "gda_taxi";
+
             public string QueryStatement =>
                 @"select
                     date_trunc('year', pickup_datetime),
@@ -404,7 +405,7 @@ namespace Explorer.Api.Tests
                     reader.Read();
                 }
 
-                return new Result();
+                return default;
             }
 
             public struct Result

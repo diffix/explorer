@@ -2,7 +2,7 @@ namespace Explorer.Queries
 {
     using System.Text.Json;
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.JsonReaderExtensions;
+    using Aircloak.JsonApi.JsonConversion;
 
     internal class NumericColumnStats :
         IQuerySpec<NumericColumnStats.Result<long>>,
@@ -48,7 +48,6 @@ namespace Explorer.Queries
                 CountNoise = reader.ParseCountNoise(),
             };
         }
-
 
         Result<System.DateTime> IQuerySpec<Result<System.DateTime>>.FromJsonArray(ref Utf8JsonReader reader)
         {
