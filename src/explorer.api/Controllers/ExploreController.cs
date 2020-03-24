@@ -158,7 +158,8 @@ namespace Explorer.Api.Controllers
                 },
                 AircloakType.Text => new ExplorerBase[]
                 {
-                    new CategoricalColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new EmailColumnExplorer(resolver, data.TableName, data.ColumnName),
                 },
                 AircloakType.Bool => new ExplorerBase[]
                 {
