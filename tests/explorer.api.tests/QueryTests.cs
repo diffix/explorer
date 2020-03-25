@@ -316,14 +316,7 @@ namespace Explorer.Api.Tests
             string dataSourceName = TestDataSource,
             [CallerMemberName] string vcrSessionName = "")
         {
-            var testConfig = factory.GetTestConfig(nameof(QueryTests), vcrSessionName);
-            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
-
-            return await jsonApiClient.Query(
-                dataSourceName,
-                query,
-                testConfig.PollFrequency,
-                CancellationToken.None);
+            return await factory.QueryResult(query, dataSourceName, nameof(QueryTests), vcrSessionName);
         }
 
         private async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(

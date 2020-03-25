@@ -5,10 +5,13 @@
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Runtime.CompilerServices;
     using System.Text.Json;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
+    using Aircloak.JsonApi.ResponseTypes;
     using Explorer.Api;
     using Explorer.Api.Authentication;
     using Microsoft.AspNetCore.Mvc.Testing;
@@ -39,6 +42,22 @@
                 throw new Exception($"Environment variable {variableName} not set.");
 
             return apiKey;
+        }
+
+        public async Task<QueryResult<TResult>> QueryResult<TResult>(
+            IQuerySpec<TResult> query,
+            string dataSourceName,
+            string testClassName,
+            [CallerMemberName] string vcrSessionName = "")
+        {
+            var testConfig = GetTestConfig(testClassName, vcrSessionName);
+            var jsonApiClient = CreateJsonApiClient(testConfig.VcrCassettePath);
+
+            return await jsonApiClient.Query(
+                dataSourceName,
+                query,
+                testConfig.PollFrequency,
+                CancellationToken.None);
         }
 
         public async Task<HttpResponseMessage> SendExplorerApiRequest(HttpMethod method, string endpoint, object? data, string testClassName, string vcrSessionName)
