@@ -11,32 +11,40 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// </summary>
     internal class AircloakTypeEnumConverter : JsonConverter<AircloakType>
     {
+        private const string Integer = "integer";
+        private const string Real = "real";
+        private const string Text = "text";
+        private const string Timestamp = "timestamp";
+        private const string Date = "date";
+        private const string Datetime = "datetime";
+        private const string Bool = "boolean";
+
         public override AircloakType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             return reader.GetString() switch
             {
-                "integer" => AircloakType.Integer,
-                "real" => AircloakType.Real,
-                "text" => AircloakType.Text,
-                "timestamp" => AircloakType.Timestamp,
-                "date" => AircloakType.Date,
-                "datetime" => AircloakType.Datetime,
-                "bool" => AircloakType.Bool,
+                Integer => AircloakType.Integer,
+                Real => AircloakType.Real,
+                Text => AircloakType.Text,
+                Timestamp => AircloakType.Timestamp,
+                Date => AircloakType.Date,
+                Datetime => AircloakType.Datetime,
+                Bool => AircloakType.Bool,
                 _ => AircloakType.Unknown,
             };
         }
 
-        public override void Write(Utf8JsonWriter writer, AircloakType value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, AircloakType aircloakType, JsonSerializerOptions options)
         {
-            var s = value switch
+            var s = aircloakType switch
             {
-                AircloakType.Integer => "integer",
-                AircloakType.Real => "real",
-                AircloakType.Text => "text",
-                AircloakType.Timestamp => "timestamp",
-                AircloakType.Date => "date",
-                AircloakType.Datetime => "datetime",
-                AircloakType.Bool => "bool",
+                AircloakType.Integer => Integer,
+                AircloakType.Real => Real,
+                AircloakType.Text => Text,
+                AircloakType.Timestamp => Timestamp,
+                AircloakType.Date => Date,
+                AircloakType.Datetime => Datetime,
+                AircloakType.Bool => Bool,
                 _ => "unknown",
             };
             writer.WriteStringValue(s);
