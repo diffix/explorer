@@ -38,7 +38,7 @@ namespace Explorer.Api.Tests
         public async void TestEmailNegative()
         {
             var query = await factory.QueryResult(
-                new TextColumnTrim("accounts", "lastname", TextColumnTrimType.Both, EmailColumnExplorer.EmailAddressChars),
+                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, EmailColumnExplorer.EmailAddressChars),
                 TestDataSource,
                 nameof(TextColumnTrimTests));
 
