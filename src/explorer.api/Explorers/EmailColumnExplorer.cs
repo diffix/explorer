@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -41,6 +42,38 @@ namespace Explorer
             {
                 return;
             }
+
+            var tldQ = await ResolveQuery<TextColumnSuffix.Result>(
+                new TextColumnSuffix(TableName, ColumnName, 3, 7),
+                cancellationToken);
+
+            var tldList =
+                from row in tldQ.ResultRows
+                where row.Suffix.StartsWith(".", StringComparison.InvariantCulture)
+                orderby row.Count descending
+                select new
+                {
+                    name = row.Suffix,
+                    row.Count,
+                };
+
+            PublishMetric(new UntypedMetric(name: "email.top_level_domains", metric: tldList));
+
+            var domainQ = await ResolveQuery<TextColumnTrim.Result>(
+                new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Leading, EmailAddressChars),
+                cancellationToken);
+
+            var domainList =
+                from row in domainQ.ResultRows
+                where !row.IsSuppressed
+                orderby row.Count descending
+                select new
+                {
+                    name = row.TrimmedText,
+                    row.Count,
+                };
+
+            PublishMetric(new UntypedMetric(name: "email.domains", metric: domainList.Take(10)));
         }
     }
 }
