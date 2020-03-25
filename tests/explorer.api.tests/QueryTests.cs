@@ -324,16 +324,7 @@ namespace Explorer.Api.Tests
             Func<IQueryResolver, ExplorerBase> explorerFactory,
             [CallerMemberName] string vcrSessionName = "")
         {
-            var testConfig = factory.GetTestConfig(nameof(QueryTests), vcrSessionName);
-            var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
-
-            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, testConfig.PollFrequency);
-
-            var explorer = new Exploration(new[] { explorerFactory(queryResolver), });
-
-            await explorer.Completion;
-
-            return explorer.ExploreMetrics;
+            return await factory.GetExplorerMetrics(dataSourceName, explorerFactory, nameof(QueryTests), vcrSessionName);
         }
 
         private class RepeatingRowsQuery : IQuerySpec<RepeatingRowsQuery.Result>

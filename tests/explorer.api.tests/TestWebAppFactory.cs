@@ -106,6 +106,24 @@
             Dispose(true);
         }
 
+        internal async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
+            string dataSourceName,
+            Func<IQueryResolver, ExplorerBase> explorerFactory,
+            string testClassName,
+            [CallerMemberName] string vcrSessionName = "")
+        {
+            var testConfig = GetTestConfig(testClassName, vcrSessionName);
+            var jsonApiClient = CreateJsonApiClient(testConfig.VcrCassettePath);
+
+            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, testConfig.PollFrequency);
+
+            using var exploration = new Exploration(new[] { explorerFactory(queryResolver), });
+
+            await exploration.Completion;
+
+            return exploration.ExploreMetrics;
+        }
+
 #pragma warning disable CA1822 // method should be made static
         internal TestConfig GetTestConfig(string testClassName, string vcrSessionName, VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Cache)
         {
