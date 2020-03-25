@@ -1,17 +1,19 @@
 # https://hub.docker.com/_/microsoft-dotnet-core
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 
+ENV SLN_FILE explorer.deploy.sln
+
 # copy the sln and csproj files and restore as distinct layers
 # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
-COPY explorer.sln /
+COPY $SLN_FILE /
 COPY src/explorer.api/*.csproj /src/explorer.api/
 COPY src/aircloak/*.csproj /src/aircloak/
-RUN dotnet restore 
+RUN dotnet restore $SLN_FILE
 
 # copy everything else
 COPY . . 
 # build solution 
-RUN dotnet publish -c release -o /app --no-restore
+RUN dotnet publish $SLN_FILE -c release -o /app --no-restore
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
