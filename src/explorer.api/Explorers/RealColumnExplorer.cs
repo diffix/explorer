@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -111,26 +112,31 @@ namespace Explorer
 
             PublishMetric(new UntypedMetric(name: "histogram_buckets", metric: histogramBuckets));
 
-            // Estimate Median
+            // Estimate Quartiles
             var processed = 0L;
-            var target = (double)totalValueCount / 2;
-            var medianEstimate = 0.0;
+            var quartile_count = (double)totalValueCount / 4;
+            var quartile = 1;
+            var quartileEstimates = new List<double>();
             foreach (var bucket in histogramBuckets)
             {
-                if (processed + bucket.Count < target)
+                if (processed + bucket.Count < quartile_count * quartile)
                 {
                     processed += bucket.Count;
                 }
                 else
                 {
-                    var ratio = (target - processed) / bucket.Count;
-                    medianEstimate =
-                        (double)bucket.LowerBound + (ratio * (double)bucket.BucketSize);
-                    break;
+                    var ratio = ((quartile_count * quartile) - processed) / bucket.Count;
+                    quartileEstimates.Add(
+                        (double)bucket.LowerBound + (ratio * (double)bucket.BucketSize));
+                    if (quartile == 3)
+                    {
+                        break;
+                    }
+                    quartile++;
                 }
             }
 
-            PublishMetric(new UntypedMetric(name: "median_estimate", metric: medianEstimate));
+            PublishMetric(new UntypedMetric(name: "quartile_estimates", metric: quartileEstimates));
 
             // Estimate Average
             var averageEstimate = histogramBuckets
