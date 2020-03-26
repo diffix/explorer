@@ -288,7 +288,7 @@ namespace Explorer.Api.Tests
             IEnumerable<dynamic> expectedValues,
             Func<JsonElement, dynamic> parseElement)
         {
-            var distinctValues = (IEnumerable<dynamic>)distinctMetrics.Single(m => m.Name == "top_distinct_values").Metric;
+            var distinctValues = (IEnumerable<dynamic>)distinctMetrics.Single(m => m.Name == "distinct.top_values").Metric;
 
             foreach (var (actual, expected) in distinctValues.Zip(expectedValues))
             {
@@ -298,13 +298,13 @@ namespace Explorer.Api.Tests
 
             var expectedTotal = expectedValues.Sum(v => (long)v.Count);
             var actualTotal = (long)distinctMetrics
-                .Single(m => m.Name == "total_count")
+                .Single(m => m.Name == "distinct.total_count")
                 .Metric;
             Assert.True(expectedTotal == actualTotal, $"Expected total of {expectedTotal}, got {actualTotal}");
 
             const long expectedSuppressed = 0L;
             var actualSuppressed = (long)distinctMetrics
-                .Single(m => m.Name == "suppressed_values")
+                .Single(m => m.Name == "distinct.suppressed_count")
                 .Metric;
             Assert.True(
                 actualSuppressed == expectedSuppressed,

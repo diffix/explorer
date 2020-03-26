@@ -10,7 +10,8 @@
             "args": [
                 "build",
                 "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "/consoleloggerparameters:NoSummary",
+                "explorer.sln"
             ],
             "group": {
                 "kind": "build",
