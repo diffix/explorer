@@ -20,7 +20,7 @@ namespace Explorer
             isDisposed = false;
             cancellationTokenSource = new CancellationTokenSource();
             ExplorationGuid = Guid.NewGuid();
-            Completion = Task.WhenAll(explorers.Select(async e => await e.Explore(cancellationTokenSource.Token)));
+            Completion = Task.WhenAll(explorers.Select(e => e.Explore(cancellationTokenSource.Token)));
         }
 
         public Guid ExplorationGuid { get; }
@@ -38,8 +38,8 @@ namespace Explorer
                     TaskStatus.Faulted => ExploreResult.ExploreStatus.Error,
                     TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
                     TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
-                    TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.New,
-                    TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.New,
+                    TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.Processing,
+                    TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.Processing,
                     TaskStatus.WaitingForChildrenToComplete => ExploreResult.ExploreStatus.Processing,
                     _ => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
                 };

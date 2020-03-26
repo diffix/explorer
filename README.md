@@ -31,6 +31,8 @@ docker build -t explorer .
 docker run -it --rm  -e AIRCLOAK_API_KEY -p 5000:80 explorer
 ```
 
+If you are running in a unix-like environment, you use or adapt the `build.sh` and `run.sh` scripts.
+
 ### Development
 
 The simplest way to get started is with VS Code's remote containers feature.
