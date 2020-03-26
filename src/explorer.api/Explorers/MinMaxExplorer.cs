@@ -10,6 +10,8 @@ namespace Explorer
 
     internal class MinMaxExplorer : ExplorerBase
     {
+        private const int MaxIterations = 10;
+
         public MinMaxExplorer(IQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)
         {
@@ -40,10 +42,16 @@ namespace Explorer
 
             estimate = await estimator(result, cancellationToken);
 
-            while (estimate.HasValue && estimate != result)
+            for (var i = 0; i < MaxIterations; i++)
             {
                 result = estimate;
                 estimate = await estimator(result, cancellationToken);
+                if ((!estimate.HasValue) ||
+                    (isMin ? estimate >= result : estimate <= result) ||
+                    (isMin && estimate == decimal.Zero))
+                {
+                    break;
+                }
             }
 
             Debug.Assert(result.HasValue, $"Unexpected null result when refining {(isMin ? "Min" : "Max")} estimate.");
