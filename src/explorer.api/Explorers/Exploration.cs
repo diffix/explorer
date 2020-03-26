@@ -15,7 +15,7 @@ namespace Explorer
 
         private bool isDisposed;
 
-        private Exploration(IEnumerable<ExplorerBase> explorers)
+        public Exploration(IEnumerable<ExplorerBase> explorers)
         {
             this.explorers = explorers;
             isDisposed = false;

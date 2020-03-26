@@ -141,6 +141,5 @@ namespace Explorer.Api.Controllers
         [Route("/{**catchall}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
-
     }
 }
