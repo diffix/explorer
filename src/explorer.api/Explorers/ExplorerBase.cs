@@ -13,9 +13,12 @@ namespace Explorer
 
         private readonly IQueryResolver queryResolver;
 
-        protected ExplorerBase(IQueryResolver queryResolver)
+        private readonly string metricNamePrefix;
+
+        protected ExplorerBase(IQueryResolver queryResolver, string metricNamePrefix = "")
         {
             this.queryResolver = queryResolver;
+            this.metricNamePrefix = metricNamePrefix;
             metrics = new ConcurrentBag<IExploreMetric>();
         }
 
@@ -28,6 +31,10 @@ namespace Explorer
 
         protected void PublishMetric(IExploreMetric metric)
         {
+            if (!string.IsNullOrEmpty(metricNamePrefix))
+            {
+                metric.Name = metricNamePrefix + "." + metric.Name;
+            }
             metrics.Add(metric);
         }
 

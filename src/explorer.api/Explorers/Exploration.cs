@@ -55,7 +55,7 @@ namespace Explorer
             {
                 AircloakType.Integer => new ExplorerBase[]
                 {
-                    new IntegerColumnExplorer(resolver, tableName, columnName),
+                    new IntegerColumnExplorer(resolver, tableName, columnName, string.Empty),
                     new MinMaxExplorer(resolver, tableName, columnName),
                 },
                 AircloakType.Real => new ExplorerBase[]
@@ -67,7 +67,7 @@ namespace Explorer
                 {
                     new TextColumnExplorer(resolver, tableName, columnName),
                     new EmailColumnExplorer(resolver, tableName, columnName),
-                    new IntegerColumnExplorer(resolver, tableName, $"length({columnName})"),
+                    new IntegerColumnExplorer(resolver, tableName, $"length({columnName})", "text.length"),
                 },
                 AircloakType.Bool => new ExplorerBase[]
                 {

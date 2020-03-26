@@ -14,8 +14,8 @@ namespace Explorer
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public IntegerColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public IntegerColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName, string metricNamePrefix)
+            : base(queryResolver, metricNamePrefix)
         {
             TableName = tableName;
             ColumnName = columnName;
