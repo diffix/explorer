@@ -160,6 +160,7 @@ namespace Explorer.Api.Controllers
                 {
                     new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
                     new EmailColumnExplorer(resolver, data.TableName, data.ColumnName),
+                    new IntegerColumnExplorer(resolver, data.TableName, $"length({data.ColumnName})"),
                 },
                 AircloakType.Bool => new ExplorerBase[]
                 {
