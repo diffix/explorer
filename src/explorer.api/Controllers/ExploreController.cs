@@ -62,8 +62,10 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
+            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
+
 #pragma warning disable CA2000 // call IDisposable.Dispose
-            var exploration = CreateExploration(explorerColumnMeta.Type, data);
+            var exploration = Exploration.Create(resolver, explorerColumnMeta.Type, data.TableName, data.ColumnName);
 #pragma warning restore CA2000 // call IDisposable.Dispose
             if (exploration == null)
             {
@@ -139,53 +141,5 @@ namespace Explorer.Api.Controllers
         [Route("/{**catchall}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult OtherActions() => NotFound();
-
-        private Exploration? CreateExploration(AircloakType columnType, Models.ExploreParams data)
-        {
-            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
-
-            var components = columnType switch
-            {
-                AircloakType.Integer => new ExplorerBase[]
-                {
-                    new IntegerColumnExplorer(resolver, data.TableName, data.ColumnName),
-                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
-                },
-                AircloakType.Real => new ExplorerBase[]
-                {
-                    new RealColumnExplorer(resolver, data.TableName, data.ColumnName),
-                    new MinMaxExplorer(resolver, data.TableName, data.ColumnName),
-                },
-                AircloakType.Text => new ExplorerBase[]
-                {
-                    new TextColumnExplorer(resolver, data.TableName, data.ColumnName),
-                    new EmailColumnExplorer(resolver, data.TableName, data.ColumnName),
-                },
-                AircloakType.Bool => new ExplorerBase[]
-                {
-                    new CategoricalColumnExplorer(resolver, data.TableName, data.ColumnName),
-                },
-                AircloakType.Datetime => new ExplorerBase[]
-                {
-                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName, columnType),
-                },
-                AircloakType.Timestamp => new ExplorerBase[]
-                {
-                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName, columnType),
-                },
-                AircloakType.Date => new ExplorerBase[]
-                {
-                    new DatetimeColumnExplorer(resolver, data.TableName, data.ColumnName, columnType),
-                },
-                _ => System.Array.Empty<ExplorerBase>(),
-            };
-
-            if (components.Length == 0)
-            {
-                return null;
-            }
-
-            return new Exploration(components);
-        }
     }
 }
