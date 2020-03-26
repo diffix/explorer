@@ -33,7 +33,7 @@ namespace Explorer
             var (totalValueCount, suppressedValueCount) = emailCheckQ.ResultRows.CountTotalAndSuppressed();
 
             var isEmail = totalValueCount == emailCheckQ.ResultRows
-                .Where(r => r.TrimmedText == "@")
+                .Where(r => r.TrimmedText == "@" || r.IsNull)
                 .Sum(r => r.Count);
 
             PublishMetric(new UntypedMetric(name: "is_email", metric: isEmail));
