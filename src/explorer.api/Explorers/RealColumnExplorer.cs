@@ -60,6 +60,7 @@ namespace Explorer
                 var distinctValues =
                     from row in distinctValueQ.ResultRows
                     where !row.DistinctData.IsSuppressed
+                    orderby row.Count descending
                     select new
                     {
                         row.DistinctData.Value,
