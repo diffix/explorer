@@ -67,8 +67,8 @@ namespace Explorer
                         row.Count,
                     };
 
-                PublishMetric(new UntypedMetric(name: "distinct_values", metric: distinctValues));
-                PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
+                PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
+                PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: suppressedValueCount));
 
                 return;
             }
