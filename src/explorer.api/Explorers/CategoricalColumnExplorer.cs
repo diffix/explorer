@@ -29,7 +29,7 @@ namespace Explorer
 
             var (totalValueCount, suppressedValueCount) = distinctValuesQ.ResultRows.CountTotalAndSuppressed();
 
-            PublishMetric(new UntypedMetric(name: "suppressed_values", metric: suppressedValueCount));
+            PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: suppressedValueCount));
 
             // This shouldn't happen, but check anyway.
             if (totalValueCount == 0)
@@ -38,7 +38,7 @@ namespace Explorer
                     $"Total value count for {TableName}, {ColumnName} is zero.");
             }
 
-            PublishMetric(new UntypedMetric(name: "total_count", metric: totalValueCount));
+            PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: totalValueCount));
 
             var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
 
@@ -52,7 +52,7 @@ namespace Explorer
                     row.Count,
                 };
 
-            PublishMetric(new UntypedMetric(name: "top_distinct_values", metric: distinctValueCounts.Take(10)));
+            PublishMetric(new UntypedMetric(name: "distinct.top_values", metric: distinctValueCounts.Take(10)));
         }
     }
 }
