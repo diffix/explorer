@@ -110,7 +110,9 @@ namespace Explorer
                     row.Count,
                 };
 
-            PublishMetric(new UntypedMetric(name: "histogram_buckets", metric: histogramBuckets));
+            PublishMetric(new UntypedMetric(name: "histogram.buckets", metric: histogramBuckets));
+            PublishMetric(new UntypedMetric(name: "histogram.suppressed_count", metric: optimumBucket.SuppressedCount));
+            PublishMetric(new UntypedMetric(name: "histogram.suppressed_ratio", metric: optimumBucket.Ratio));
 
             // Estimate Quartiles
             var processed = 0L;
