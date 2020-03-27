@@ -116,25 +116,50 @@ namespace Explorer
 
             // Estimate Quartiles
             var processed = 0L;
-            var quartile_count = (double)totalValueCount / 4;
+            var quartileCount = totalValueCount / 4;
             var quartile = 1;
             var quartileEstimates = new List<double>();
             foreach (var bucket in histogramBuckets)
             {
-                if (processed + bucket.Count < quartile_count * quartile)
+                if (processed + bucket.Count < quartileCount * quartile)
                 {
+                    // no quartiles in this bucket
                     processed += bucket.Count;
                 }
                 else
                 {
-                    var ratio = ((quartile_count * quartile) - processed) / bucket.Count;
-                    quartileEstimates.Add(
-                        (double)bucket.LowerBound + (ratio * (double)bucket.BucketSize));
-                    if (quartile == 3)
+                    // one or more quartiles in this bucket
+                    var remaining = bucket.Count;
+                    var lowerBound = (double)bucket.LowerBound;
+                    var range = (double)bucket.BucketSize;
+
+                    do
+                    {
+                        var toProcess = (quartileCount * quartile) - processed;
+
+                        if (toProcess > remaining)
+                        {
+                            processed += remaining;
+                            break;
+                        }
+
+                        var subRange = (double)toProcess / remaining * range;
+                        var quartileEstimate = lowerBound + subRange;
+
+                        quartileEstimates.Add(quartileEstimate);
+
+                        lowerBound = quartileEstimate;
+                        range -= subRange;
+                        processed += toProcess;
+                        remaining -= toProcess;
+                        quartile++;
+                    }
+                    while (remaining > 0 && quartile <= 3);
+
+                    if (quartile > 3)
                     {
                         break;
                     }
-                    quartile++;
                 }
             }
 
