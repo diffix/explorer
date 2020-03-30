@@ -3,4 +3,4 @@ obj/
 ~*
 tests/explorer.api.tests/.vcr/
 
-tests/ExplorerWebClient/client_config.js
+src/clients/ExplorerWebClient/client_config.js
