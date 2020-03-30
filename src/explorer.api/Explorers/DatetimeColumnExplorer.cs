@@ -69,7 +69,7 @@
                 // considered categorical or quasi-categorical.
                 var distinctValues =
                     from row in distinctValueQ.ResultRows
-                    where !row.DistinctData.IsSuppressed
+                    where row.DistinctData.HasValue
                     orderby row.Count descending
                     select new
                     {
@@ -101,7 +101,7 @@
                 Suppressed = suppressed,
                 Counts =
                     from valueCount in valueCounts
-                    where !valueCount.IsSuppressed
+                    where !valueCount.IsSuppressed && !valueCount.IsNull
                     orderby valueCount.Value ascending
                     select new
                     {

@@ -44,7 +44,7 @@ namespace Explorer
 
             var distinctValueCounts =
                 from row in distinctValuesQ.ResultRows
-                where !row.DistinctData.IsSuppressed
+                where !row.DistinctData.IsSuppressed && !row.IsNull
                 orderby row.Count descending
                 select new
                 {
