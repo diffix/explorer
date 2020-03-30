@@ -60,7 +60,7 @@ namespace Explorer
                 // considered categorical or quasi-categorical.
                 var distinctValues =
                     from row in distinctValueQ.ResultRows
-                    where !row.DistinctData.IsSuppressed
+                    where row.DistinctData.HasValue
                     orderby row.Count descending
                     select new
                     {
@@ -69,6 +69,9 @@ namespace Explorer
                     };
 
                 PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
+                PublishMetric(new UntypedMetric(
+                    name: "distinct.null_count",
+                    metric: distinctValueQ.ResultRows.Sum(row => row.DistinctData.IsNull ? row.Count : 0)));
                 PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: suppressedValueCount));
 
                 return;
@@ -99,7 +102,7 @@ namespace Explorer
             var histogramBuckets =
                 from row in histogramQ.ResultRows
                 where row.BucketIndex == optimumBucket.Index
-                    && !row.LowerBound.IsSuppressed
+                    && row.LowerBound.HasValue
                 let lowerBound = row.LowerBound.Value
                 let bucketSize = bucketsToSample[row.BucketIndex]
                 orderby lowerBound
