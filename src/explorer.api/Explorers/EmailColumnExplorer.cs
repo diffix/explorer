@@ -65,7 +65,7 @@ namespace Explorer
 
             var domainList =
                 from row in domainQ.ResultRows
-                where !row.IsSuppressed
+                where !row.IsSuppressed && !row.IsNull
                 orderby row.Count descending
                 select new
                 {
