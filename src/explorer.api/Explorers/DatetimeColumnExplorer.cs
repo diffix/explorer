@@ -1,4 +1,4 @@
-﻿namespace Explorer
+namespace Explorer
 {
     using System;
     using System.Collections.Generic;
@@ -142,19 +142,17 @@
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var label = group.Key;
-                var valueCounts = group
-                    .Select(row => new AircloakValueCount<DateTime>(row.GroupingValue, row.Count, row.CountNoise));
-
-                var counts = valueCounts.CountTotalAndSuppressed();
-
+                var counts = ValueCounts.Compute(group);
                 if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
                 {
                     break;
                 }
 
+                var label = group.Key;
+                var metricValue = group
+                    .Select(row => new AircloakValueCount<DateTime>(row.GroupingValue, row.Count, row.CountNoise));
                 PublishMetric(new UntypedMetric(name: $"dates_linear.{label}", metric: DatetimeMetric(
-                    counts.TotalCount, counts.SuppressedCount, valueCounts)));
+                    counts.TotalCount, counts.SuppressedCount, metricValue)));
             }
         }
 
@@ -184,18 +182,16 @@
                     continue;
                 }
 
-                var valueCounts = group
-                    .Select(row => new AircloakValueCount<int>(row.GroupingValue, row.Count, row.CountNoise));
-
-                var counts = valueCounts.CountTotalAndSuppressed();
-
+                var counts = ValueCounts.Compute(group);
                 if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
                 {
                     break;
                 }
 
+                var metricValue = group
+                    .Select(row => new AircloakValueCount<int>(row.GroupingValue, row.Count, row.CountNoise));
                 PublishMetric(new UntypedMetric(name: $"dates_cyclical.{label}", metric: DatetimeMetric(
-                    counts.TotalCount, counts.SuppressedCount, valueCounts)));
+                    counts.TotalCount, counts.SuppressedCount, metricValue)));
             }
         }
 

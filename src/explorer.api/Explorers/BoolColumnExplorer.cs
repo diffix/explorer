@@ -27,7 +27,7 @@ namespace Explorer
                 new DistinctColumnValues(TableName, ColumnName),
                 cancellationToken);
 
-            var counts = distinctValuesQ.ResultRows.CountTotalAndSuppressed();
+            var counts = ValueCounts.Compute(distinctValuesQ.ResultRows);
 
             PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
 

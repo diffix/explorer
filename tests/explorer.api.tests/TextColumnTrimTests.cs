@@ -25,7 +25,7 @@ namespace Explorer.Api.Tests
                 TestDataSource,
                 nameof(TextColumnTrimTests));
 
-            var counts = query.ResultRows.CountTotalAndSuppressed();
+            var counts = ValueCounts.Compute(query.ResultRows);
 
             var isEmail = counts.TotalCount == query.ResultRows
                 .Where(r => r.TrimmedText == "@")
@@ -42,7 +42,7 @@ namespace Explorer.Api.Tests
                 TestDataSource,
                 nameof(TextColumnTrimTests));
 
-            var counts = query.ResultRows.CountTotalAndSuppressed();
+            var counts = ValueCounts.Compute(query.ResultRows);
 
             var isEmail = counts.TotalCount == query.ResultRows
                 .Where(r => r.TrimmedText == "@")

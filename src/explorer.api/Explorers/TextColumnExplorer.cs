@@ -30,7 +30,7 @@ namespace Explorer
                 new DistinctColumnValues(TableName, ColumnName),
                 cancellationToken);
 
-            var counts = distinctValuesQ.ResultRows.CountTotalAndSuppressed();
+            var counts = ValueCounts.Compute(distinctValuesQ.ResultRows);
 
             PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
 
@@ -73,7 +73,7 @@ namespace Explorer
                     new TextColumnPrefix(TableName, ColumnName, length),
                     cancellationToken);
 
-                var counts = prefixesQ.ResultRows.CountTotalAndSuppressed();
+                var counts = ValueCounts.Compute(prefixesQ.ResultRows);
                 var avgCount = (double)counts.NonSuppressedCount / counts.NonSuppressedRows;
 
                 var prefixes =
