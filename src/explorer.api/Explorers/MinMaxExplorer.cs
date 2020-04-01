@@ -52,10 +52,10 @@ namespace Explorer
                 // Constrained min/max query to get an improved estimate
                 var estimate = await estimator(result, cancellationToken);
 
-                // If there are no longer enough values in the constrained range to compute an anonymised min/max, 
+                // If there are no longer enough values in the constrained range to compute an anonymised min/max,
                 // the query will return `null` => we can't improve further on the result.
+                // Same thing if the results start to diverge (second part of if condition).
                 if ((!estimate.HasValue) ||
-                    // Same thing if the results start to diverge.
                     (isMin ? estimate >= result : estimate <= result))
                 {
                     break;

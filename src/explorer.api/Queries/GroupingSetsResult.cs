@@ -8,7 +8,7 @@
     using Explorer.Diffix.Extensions;
     using Explorer.Diffix.Interfaces;
 
-    internal abstract class GroupingSetsResult<T> : ICountAggregate, IGroupingSetsAggregate<T>
+    internal abstract class GroupingSetsResult<T> : ICountAggregate, ISuppressible, IGroupingSetsAggregate<T>
     {
         protected GroupingSetsResult(ref Utf8JsonReader reader, int groupSize)
         {
@@ -26,5 +26,7 @@
         public long Count { get; }
 
         public double? CountNoise { get; }
+
+        public bool IsSuppressed => GroupingValue.IsSuppressed;
     }
 }
