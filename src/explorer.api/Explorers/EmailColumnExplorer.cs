@@ -30,9 +30,9 @@ namespace Explorer
                 new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Both, EmailAddressChars),
                 cancellationToken);
 
-            var (totalValueCount, suppressedValueCount) = emailCheckQ.ResultRows.CountTotalAndSuppressed();
+            var counts = emailCheckQ.ResultRows.CountTotalAndSuppressed();
 
-            var isEmail = totalValueCount == emailCheckQ.ResultRows
+            var isEmail = counts.TotalCount == emailCheckQ.ResultRows
                 .Where(r => r.TrimmedText == "@" || r.IsNull)
                 .Sum(r => r.Count);
 
