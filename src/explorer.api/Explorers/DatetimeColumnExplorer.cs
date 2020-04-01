@@ -69,7 +69,7 @@
                 // considered categorical or quasi-categorical.
                 var distinctValues =
                     from row in distinctValueQ.ResultRows
-                    where !row.DistinctData.IsSuppressed
+                    where row.DistinctData.HasValue
                     orderby row.Count descending
                     select new
                     {
@@ -101,7 +101,7 @@
                 Suppressed = suppressed,
                 Counts =
                     from valueCount in valueCounts
-                    where !valueCount.IsSuppressed
+                    where !valueCount.IsSuppressed && !valueCount.IsNull
                     orderby valueCount.Value ascending
                     select new
                     {
@@ -146,17 +146,15 @@
                 var valueCounts = group
                     .Select(row => new AircloakValueCount<DateTime>(row.GroupingValue, row.Count, row.CountNoise));
 
-                var (totalCount, suppressedCount) = valueCounts.CountTotalAndSuppressed();
+                var counts = valueCounts.CountTotalAndSuppressed();
 
-                var suppressedRatio = (double)suppressedCount / totalCount;
-
-                if (suppressedRatio > SuppressedRatioThreshold)
+                if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
                 {
                     break;
                 }
 
                 PublishMetric(new UntypedMetric(name: $"dates_linear.{label}", metric: DatetimeMetric(
-                    totalCount, suppressedCount, valueCounts)));
+                    counts.TotalCount, counts.SuppressedCount, valueCounts)));
             }
         }
 
@@ -189,17 +187,15 @@
                 var valueCounts = group
                     .Select(row => new AircloakValueCount<int>(row.GroupingValue, row.Count, row.CountNoise));
 
-                var (totalCount, suppressedCount) = valueCounts.CountTotalAndSuppressed();
+                var counts = valueCounts.CountTotalAndSuppressed();
 
-                var suppressedRatio = (double)suppressedCount / totalCount;
-
-                if (suppressedRatio > SuppressedRatioThreshold)
+                if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
                 {
                     break;
                 }
 
                 PublishMetric(new UntypedMetric(name: $"dates_cyclical.{label}", metric: DatetimeMetric(
-                    totalCount, suppressedCount, valueCounts)));
+                    counts.TotalCount, counts.SuppressedCount, valueCounts)));
             }
         }
 

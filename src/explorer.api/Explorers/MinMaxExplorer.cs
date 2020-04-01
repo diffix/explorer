@@ -10,6 +10,8 @@ namespace Explorer
 
     internal class MinMaxExplorer : ExplorerBase
     {
+        private const int MaxIterations = 10;
+
         public MinMaxExplorer(IQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)
         {
@@ -35,15 +37,30 @@ namespace Explorer
         {
             var estimator = isMin ? (Estimator)GetMinEstimate : (Estimator)GetMaxEstimate;
 
-            decimal? estimate;
-            decimal? result = null;
+            // initial unconstrained min or max
+            var result = await estimator(null, cancellationToken);
 
-            estimate = await estimator(result, cancellationToken);
-
-            while (estimate.HasValue && estimate != result)
+            // limit the number of iterations
+            for (var i = 0; i < MaxIterations; i++)
             {
+                // If it'a a minimum and we have a zero result, it can't be improved upon anyway.
+                if (isMin && result == decimal.Zero)
+                {
+                    break;
+                }
+
+                // Constrained min/max query to get an improved estimate
+                var estimate = await estimator(result, cancellationToken);
+
+                // If there are no longer enough values in the constrained range to compute an anonymised min/max, 
+                // the query will return `null` => we can't improve further on the result.
+                if ((!estimate.HasValue) ||
+                    // Same thing if the results start to diverge.
+                    (isMin ? estimate >= result : estimate <= result))
+                {
+                    break;
+                }
                 result = estimate;
-                estimate = await estimator(result, cancellationToken);
             }
 
             Debug.Assert(result.HasValue, $"Unexpected null result when refining {(isMin ? "Min" : "Max")} estimate.");

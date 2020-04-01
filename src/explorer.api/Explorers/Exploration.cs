@@ -5,6 +5,7 @@ namespace Explorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Aircloak.JsonApi.ResponseTypes;
 
     internal class Exploration : IDisposable
     {
@@ -31,18 +32,69 @@ namespace Explorer
         public Task Completion { get; }
 
         public ExploreResult.ExploreStatus Status =>
-                Completion.Status switch
+            Completion.Status switch
+            {
+                TaskStatus.Canceled => ExploreResult.ExploreStatus.Canceled,
+                TaskStatus.Created => ExploreResult.ExploreStatus.New,
+                TaskStatus.Faulted => ExploreResult.ExploreStatus.Error,
+                TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
+                TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
+                TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.Processing,
+                TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.Processing,
+                TaskStatus.WaitingForChildrenToComplete => ExploreResult.ExploreStatus.Processing,
+                _ => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
+            };
+
+        public static Exploration? Create(
+            AircloakQueryResolver resolver,
+            AircloakType columnType,
+            string tableName,
+            string columnName)
+        {
+            var components = columnType switch
+            {
+                AircloakType.Integer => new ExplorerBase[]
                 {
-                    TaskStatus.Canceled => ExploreResult.ExploreStatus.Canceled,
-                    TaskStatus.Created => ExploreResult.ExploreStatus.New,
-                    TaskStatus.Faulted => ExploreResult.ExploreStatus.Error,
-                    TaskStatus.RanToCompletion => ExploreResult.ExploreStatus.Complete,
-                    TaskStatus.Running => ExploreResult.ExploreStatus.Processing,
-                    TaskStatus.WaitingForActivation => ExploreResult.ExploreStatus.Processing,
-                    TaskStatus.WaitingToRun => ExploreResult.ExploreStatus.Processing,
-                    TaskStatus.WaitingForChildrenToComplete => ExploreResult.ExploreStatus.Processing,
-                    _ => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
-                };
+                    new IntegerColumnExplorer(resolver, tableName, columnName, string.Empty),
+                    new MinMaxExplorer(resolver, tableName, columnName),
+                },
+                AircloakType.Real => new ExplorerBase[]
+                {
+                    new RealColumnExplorer(resolver, tableName, columnName),
+                    new MinMaxExplorer(resolver, tableName, columnName),
+                },
+                AircloakType.Text => new ExplorerBase[]
+                {
+                    new TextColumnExplorer(resolver, tableName, columnName),
+                    new EmailColumnExplorer(resolver, tableName, columnName),
+                    new IntegerColumnExplorer(resolver, tableName, $"length({columnName})", "text.length"),
+                },
+                AircloakType.Bool => new ExplorerBase[]
+                {
+                    new CategoricalColumnExplorer(resolver, tableName, columnName),
+                },
+                AircloakType.Datetime => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
+                },
+                AircloakType.Timestamp => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
+                },
+                AircloakType.Date => new ExplorerBase[]
+                {
+                    new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
+                },
+                _ => System.Array.Empty<ExplorerBase>(),
+            };
+
+            if (components.Length == 0)
+            {
+                return null;
+            }
+
+            return new Exploration(components);
+        }
 
         public void Cancel()
         {

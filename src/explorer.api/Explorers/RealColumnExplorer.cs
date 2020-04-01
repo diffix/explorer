@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -59,7 +60,7 @@ namespace Explorer
                 // considered categorical or quasi-categorical.
                 var distinctValues =
                     from row in distinctValueQ.ResultRows
-                    where !row.DistinctData.IsSuppressed
+                    where row.DistinctData.HasValue
                     orderby row.Count descending
                     select new
                     {
@@ -68,6 +69,9 @@ namespace Explorer
                     };
 
                 PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
+                PublishMetric(new UntypedMetric(
+                    name: "distinct.null_count",
+                    metric: distinctValueQ.ResultRows.Sum(row => row.DistinctData.IsNull ? row.Count : 0)));
                 PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: suppressedValueCount));
 
                 return;
@@ -98,7 +102,7 @@ namespace Explorer
             var histogramBuckets =
                 from row in histogramQ.ResultRows
                 where row.BucketIndex == optimumBucket.Index
-                    && !row.LowerBound.IsSuppressed
+                    && row.LowerBound.HasValue
                 let lowerBound = row.LowerBound.Value
                 let bucketSize = bucketsToSample[row.BucketIndex]
                 orderby lowerBound
@@ -109,28 +113,60 @@ namespace Explorer
                     row.Count,
                 };
 
-            PublishMetric(new UntypedMetric(name: "histogram_buckets", metric: histogramBuckets));
+            PublishMetric(new UntypedMetric(name: "histogram.buckets", metric: histogramBuckets));
+            PublishMetric(new UntypedMetric(name: "histogram.suppressed_count", metric: optimumBucket.SuppressedCount));
+            PublishMetric(new UntypedMetric(name: "histogram.suppressed_ratio", metric: optimumBucket.Ratio));
 
-            // Estimate Median
+            // Estimate Quartiles
             var processed = 0L;
-            var target = (double)totalValueCount / 2;
-            var medianEstimate = 0.0;
+            var quartileCount = totalValueCount / 4;
+            var quartile = 1;
+            var quartileEstimates = new List<double>();
             foreach (var bucket in histogramBuckets)
             {
-                if (processed + bucket.Count < target)
+                if (processed + bucket.Count < quartileCount * quartile)
                 {
+                    // no quartiles in this bucket
                     processed += bucket.Count;
                 }
                 else
                 {
-                    var ratio = (target - processed) / bucket.Count;
-                    medianEstimate =
-                        (double)bucket.LowerBound + (ratio * (double)bucket.BucketSize);
-                    break;
+                    // one or more quartiles in this bucket
+                    var remaining = bucket.Count;
+                    var lowerBound = (double)bucket.LowerBound;
+                    var range = (double)bucket.BucketSize;
+
+                    do
+                    {
+                        var toProcess = (quartileCount * quartile) - processed;
+
+                        if (toProcess > remaining)
+                        {
+                            processed += remaining;
+                            break;
+                        }
+
+                        var subRange = (double)toProcess / remaining * range;
+                        var quartileEstimate = lowerBound + subRange;
+
+                        quartileEstimates.Add(quartileEstimate);
+
+                        lowerBound = quartileEstimate;
+                        range -= subRange;
+                        processed += toProcess;
+                        remaining -= toProcess;
+                        quartile++;
+                    }
+                    while (remaining > 0 && quartile <= 3);
+
+                    if (quartile > 3)
+                    {
+                        break;
+                    }
                 }
             }
 
-            PublishMetric(new UntypedMetric(name: "median_estimate", metric: medianEstimate));
+            PublishMetric(new UntypedMetric(name: "quartile_estimates", metric: quartileEstimates));
 
             // Estimate Average
             var averageEstimate = histogramBuckets

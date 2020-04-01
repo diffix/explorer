@@ -27,24 +27,22 @@ namespace Explorer
                 new DistinctColumnValues(TableName, ColumnName),
                 cancellationToken);
 
-            var (totalValueCount, suppressedValueCount) = distinctValuesQ.ResultRows.CountTotalAndSuppressed();
+            var counts = distinctValuesQ.ResultRows.CountTotalAndSuppressed();
 
-            PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: suppressedValueCount));
+            PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
 
             // This shouldn't happen, but check anyway.
-            if (totalValueCount == 0)
+            if (counts.TotalCount == 0)
             {
                 throw new Exception(
                     $"Total value count for {TableName}, {ColumnName} is zero.");
             }
 
-            PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: totalValueCount));
-
-            var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
+            PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: counts.TotalCount));
 
             var distinctValueCounts =
                 from row in distinctValuesQ.ResultRows
-                where !row.DistinctData.IsSuppressed
+                where row.DistinctData.HasValue
                 orderby row.Count descending
                 select new
                 {
@@ -52,7 +50,7 @@ namespace Explorer
                     row.Count,
                 };
 
-            PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValueCounts));
+            PublishMetric(new UntypedMetric(name: "distinct.top_values", metric: distinctValueCounts.Take(10)));
         }
     }
 }
