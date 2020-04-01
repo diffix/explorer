@@ -30,17 +30,22 @@ namespace Explorer.Diffix.Extensions
             return rows.Aggregate(new ValueCounts(), AccumulateCounts);
         }
 
-        private static ValueCounts AccumulateCounts<T>(ValueCounts vc, T row)
+        private static ValueCounts AccumulateRow<T>(ValueCounts vc, T row)
             where T : ICountAggregate, ISuppressible
         {
-            vc.TotalCount += row.Count;
-            vc.TotalRows++;
+            vc.AccumulateRow<T>(ValueCounts vc, T row);
+            return vc;
+        }
+        
+        public void AccumulateRow<T>(T row)
+        {
+            TotalCount += row.Count;
+            TotalRows++;
             if (row.IsSuppressed)
             {
-                vc.SuppressedCount += row.Count;
-                vc.SuppressedRows++;
+                SuppressedCount += row.Count;
+                SuppressedRows++;
             }
-            return vc;
         }
     }
 }
