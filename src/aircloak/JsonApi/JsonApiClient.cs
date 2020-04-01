@@ -10,6 +10,7 @@ namespace Aircloak.JsonApi
 
     using Aircloak.JsonApi.JsonConversion;
     using Aircloak.JsonApi.ResponseTypes;
+    using Diffix;
 
     /// <summary>
     /// Convenience class providing GET and POST methods adapted to the
@@ -133,7 +134,11 @@ namespace Aircloak.JsonApi
             var jsonDeserializeOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
-                Converters = { new JsonArrayConverter<IQuerySpec<TRow>, TRow>(querySpec) },
+                Converters =
+                {
+                    new JsonArrayConverter<IQuerySpec<TRow>, TRow>(querySpec),
+                    new DiffixTypeEnumConverter(),
+                },
             };
 
             var queryCompleted = false;

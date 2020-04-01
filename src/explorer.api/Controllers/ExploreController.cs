@@ -7,7 +7,7 @@ namespace Explorer.Api.Controllers
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
+    using Explorer;
     using Explorer.Api.Authentication;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -81,7 +81,7 @@ namespace Explorer.Api.Controllers
                 throw new System.Exception("Failed to store exploration in Dict - This should never happen!");
             }
 
-            return Ok(new ExploreResult(exploration.ExplorationGuid, ExploreResult.ExploreStatus.New));
+            return Ok(new ExploreResult(exploration.ExplorationGuid, ExplorationStatus.New));
         }
 
         [HttpGet]

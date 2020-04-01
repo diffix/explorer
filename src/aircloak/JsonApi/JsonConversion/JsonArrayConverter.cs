@@ -3,6 +3,7 @@ namespace Aircloak.JsonApi.JsonConversion
     using System;
     using System.Text.Json;
     using System.Text.Json.Serialization;
+    using Diffix;
 
     /// <summary>
     /// Implements a <see cref="JsonConverter"/> for deserializing Aircloak rows from json array contents.

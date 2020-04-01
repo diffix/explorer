@@ -2,8 +2,8 @@ namespace Aircloak.JsonApi.JsonConversion
 {
     using System.Collections.Generic;
     using System.Text.Json;
-
     using Aircloak.JsonApi.ResponseTypes;
+    using Diffix;
 
     /// <summary>
     /// Extension methods for <see cref="Utf8JsonReader"/>.
@@ -80,6 +80,29 @@ namespace Aircloak.JsonApi.JsonConversion
         public static int ParseGroupingId(this ref Utf8JsonReader reader)
         {
             return ParseNonNullableMetric<int>(ref reader);
+        }
+
+        public static (int, IDiffixValue<T>) ParseGroupingSet<T>(this ref Utf8JsonReader reader, int groupSize)
+        {
+            var groupingId = reader.ParseGroupingId();
+            var converter = Diffix.Utils.GroupingIdConverter.GetConverter(groupSize);
+            IDiffixValue<T>? groupValue = null;
+
+            for (var i = 0; i < groupSize; i++)
+            {
+                if (converter.SingleIndexFromGroupingId(groupingId) == i)
+                {
+                    groupValue = reader.ParseAircloakResultValue<T>();
+                }
+                else
+                {
+                    reader.Read();
+                }
+            }
+
+            return (
+                groupingId,
+                groupValue ?? throw new System.Exception("Unable to Parse result from grouping set."));
         }
 
         /// <summary>
@@ -200,8 +223,8 @@ namespace Aircloak.JsonApi.JsonConversion
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
         /// <typeparam name="T">Type of the parsed value.</typeparam>
-        /// <returns>The parsed value wrapped in an <see cref="AircloakValue{T}"/>.</returns>
-        public static AircloakValue<T> ParseAircloakResultValue<T>(this ref Utf8JsonReader reader)
+        /// <returns>The parsed value wrapped in an <see cref="IDiffixValue{T}"/>.</returns>
+        public static IDiffixValue<T> ParseAircloakResultValue<T>(this ref Utf8JsonReader reader)
         {
             return ParseAircloakResultValue(ref reader, DefaultParser<T>());
         }
@@ -212,8 +235,8 @@ namespace Aircloak.JsonApi.JsonConversion
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
         /// <param name="parseRawValue">A parser to use if the value is not suppressed and non-null.</param>
         /// <typeparam name="T">Type of the parsed value.</typeparam>
-        /// <returns>The parsed value wrapped in an <see cref="AircloakValue{T}"/>.</returns>
-        public static AircloakValue<T> ParseAircloakResultValue<T>(
+        /// <returns>The parsed value wrapped in an <see cref="IDiffixValue{T}"/>.</returns>
+        public static IDiffixValue<T> ParseAircloakResultValue<T>(
             this ref Utf8JsonReader reader,
             Utf8JsonValueParser<T> parseRawValue)
         {

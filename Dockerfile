@@ -6,8 +6,10 @@ ENV SLN_FILE explorer.deploy.sln
 # copy the sln and csproj files and restore as distinct layers
 # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
 COPY $SLN_FILE /
-COPY src/explorer.api/*.csproj /src/explorer.api/
+COPY src/diffix/*.csproj /src/diffix/
 COPY src/aircloak/*.csproj /src/aircloak/
+COPY src/explorer/*.csproj /src/explorer/
+COPY src/explorer.api/*.csproj /src/explorer.api/
 RUN dotnet restore $SLN_FILE
 
 # copy everything else

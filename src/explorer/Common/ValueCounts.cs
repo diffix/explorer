@@ -1,0 +1,55 @@
+namespace Explorer.Common
+{
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using Diffix;
+
+    internal sealed class ValueCounts
+    {
+        private ValueCounts()
+        {
+        }
+
+        public long TotalCount { get; private set; } = 0;
+
+        public long SuppressedCount { get; private set; } = 0;
+
+        public long TotalRows { get; private set; } = 0;
+
+        public long SuppressedRows { get; private set; } = 0;
+
+        public long NonSuppressedRows => TotalRows - SuppressedRows;
+
+        public long NonSuppressedCount => TotalCount - SuppressedCount;
+
+        public double SuppressedCountRatio => (double)SuppressedCount / TotalCount;
+
+        public static ValueCounts Compute<T>(IEnumerable<T> rows)
+            where T : ICountAggregate, IDiffixValue<T>
+        {
+            return rows.Aggregate(new ValueCounts(), AccumulateRow);
+        }
+
+        public ValueCounts AccumulateRow<T>(T row)
+            where T : ICountAggregate, IDiffixValue<T>
+        {
+            TotalCount += row.Count;
+            TotalRows++;
+            if (row.IsSuppressed)
+            {
+                SuppressedCount += row.Count;
+                SuppressedRows++;
+            }
+
+            return this;
+        }
+
+        private static ValueCounts AccumulateRow<T>(ValueCounts vc, T row)
+            where T : ICountAggregate, IDiffixValue<T>
+        {
+            vc.AccumulateRow(row);
+            return vc;
+        }
+    }
+}
