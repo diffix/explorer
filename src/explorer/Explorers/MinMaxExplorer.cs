@@ -12,8 +12,8 @@ namespace Explorer.Explorers
     {
         private const int MaxIterations = 10;
 
-        public MinMaxExplorer(DQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public MinMaxExplorer(DConnection connection, string tableName, string columnName)
+            : base(connection)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -70,14 +70,14 @@ namespace Explorer.Explorers
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound)
         {
-            var minQ = await ResolveQuery<Min.Result<decimal>>(
+            var minQ = await Exec<Min.Result<decimal>>(
                 new Min(TableName, ColumnName, upperBound));
             return minQ.Rows.Single().Min;
         }
 
         private async Task<decimal?> GetMaxEstimate(decimal? lowerBound)
         {
-            var maxQ = await ResolveQuery<Max.Result<decimal>>(
+            var maxQ = await Exec<Max.Result<decimal>>(
                 new Max(TableName, ColumnName, lowerBound));
             return maxQ.Rows.Single().Max;
         }

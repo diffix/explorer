@@ -2,9 +2,9 @@ namespace Diffix
 {
     using System.Threading.Tasks;
 
-    public interface DQueryResolver
+    public interface DConnection
     {
-        Task<DResult<TRow>> Resolve<TRow>(DQuery<TRow> query);
+        Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query);
 
         void Cancel();
 

@@ -12,8 +12,8 @@ namespace Explorer.Explorers
     {
         public const string EmailAddressChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
 
-        public EmailColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public EmailColumnExplorer(DConnection connection, string tableName, string columnName)
+            : base(connection)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -25,7 +25,7 @@ namespace Explorer.Explorers
 
         public override async Task Explore()
         {
-            var emailCheckQ = await ResolveQuery(
+            var emailCheckQ = await Exec(
                 new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Both, EmailAddressChars));
 
             var counts = ValueCounts.Compute(emailCheckQ.Rows);
@@ -41,7 +41,7 @@ namespace Explorer.Explorers
                 return;
             }
 
-            var tldQ = await ResolveQuery(
+            var tldQ = await Exec(
                 new TextColumnSuffix(TableName, ColumnName, 3, 7));
 
             var tldList =
@@ -56,7 +56,7 @@ namespace Explorer.Explorers
 
             PublishMetric(new UntypedMetric(name: "email.top_level_domains", metric: tldList));
 
-            var domainQ = await ResolveQuery(
+            var domainQ = await Exec(
                 new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Leading, EmailAddressChars));
 
             var domainList =

@@ -13,8 +13,8 @@ namespace Explorer.Explorers
     {
         private const double SuppressedRatioThreshold = 0.1;
 
-        public TextColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public TextColumnExplorer(DConnection connection, string tableName, string columnName)
+            : base(connection)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -26,7 +26,7 @@ namespace Explorer.Explorers
 
         public override async Task Explore()
         {
-            var distinctValuesQ = await ResolveQuery(
+            var distinctValuesQ = await Exec(
                 new DistinctColumnValues(TableName, ColumnName));
 
             var counts = ValueCounts.Compute(distinctValuesQ.Rows);
@@ -68,7 +68,7 @@ namespace Explorer.Explorers
             while (true)
             {
                 length++;
-                var prefixesQ = await ResolveQuery(
+                var prefixesQ = await Exec(
                     new TextColumnPrefix(TableName, ColumnName, length));
 
                 var counts = ValueCounts.Compute(prefixesQ.Rows);

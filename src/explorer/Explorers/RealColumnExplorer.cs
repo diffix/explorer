@@ -16,8 +16,8 @@ namespace Explorer.Explorers
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public RealColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public RealColumnExplorer(DConnection connection, string tableName, string columnName)
+            : base(connection)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -29,7 +29,7 @@ namespace Explorer.Explorers
 
         public override async Task Explore()
         {
-            var statsQ = await ResolveQuery<NumericColumnStats.Result<double>>(
+            var statsQ = await Exec<NumericColumnStats.Result<double>>(
                 new NumericColumnStats(TableName, ColumnName));
 
             var stats = statsQ.Rows.Single();
@@ -37,7 +37,7 @@ namespace Explorer.Explorers
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await ResolveQuery(
+            var distinctValueQ = await Exec(
                 new DistinctColumnValues(TableName, ColumnName));
 
             var counts = ValueCounts.Compute(distinctValueQ.Rows);
@@ -72,7 +72,7 @@ namespace Explorer.Explorers
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
-            var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
+            var histogramQ = await Exec<SingleColumnHistogram.Result>(
                 new SingleColumnHistogram(TableName, ColumnName, bucketsToSample));
 
             var optimumBucket = (

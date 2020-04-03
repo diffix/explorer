@@ -10,8 +10,8 @@ namespace Explorer.Explorers
 
     internal class BoolColumnExplorer : ExplorerBase
     {
-        public BoolColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public BoolColumnExplorer(DConnection connection, string tableName, string columnName)
+            : base(connection)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -23,7 +23,7 @@ namespace Explorer.Explorers
 
         public override async Task Explore()
         {
-            var distinctValuesQ = await ResolveQuery(
+            var distinctValuesQ = await Exec(
                 new DistinctColumnValues(TableName, ColumnName));
 
             var counts = ValueCounts.Compute(distinctValuesQ.Rows);

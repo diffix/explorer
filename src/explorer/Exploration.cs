@@ -12,10 +12,10 @@ namespace Explorer
 
     public class Exploration : IDisposable
     {
-        internal Exploration(DQueryResolver queryResolver, IEnumerable<ExplorerBase> explorers)
+        internal Exploration(DConnection connection, IEnumerable<ExplorerBase> explorers)
         {
             Explorers = explorers;
-            QueryResolver = queryResolver;
+            Connection = connection;
             IsDisposed = false;
             ExplorationGuid = Guid.NewGuid();
             Completion = Task.WhenAll(explorers.Select(e => e.Explore()));
@@ -33,12 +33,12 @@ namespace Explorer
 
         private IEnumerable<ExplorerBase> Explorers { get; }
 
-        private DQueryResolver QueryResolver { get; }
+        private DConnection Connection { get; }
 
         private bool IsDisposed { get; set; }
 
         public static Exploration? Create(
-            DQueryResolver resolver,
+            DConnection conn,
             DValueType columnType,
             string tableName,
             string columnName)
@@ -47,35 +47,35 @@ namespace Explorer
             {
                 DValueType.Integer => new ExplorerBase[]
                 {
-                    new IntegerColumnExplorer(resolver, tableName, columnName, string.Empty),
-                    new MinMaxExplorer(resolver, tableName, columnName),
+                    new IntegerColumnExplorer(conn, tableName, columnName, string.Empty),
+                    new MinMaxExplorer(conn, tableName, columnName),
                 },
                 DValueType.Real => new ExplorerBase[]
                 {
-                    new RealColumnExplorer(resolver, tableName, columnName),
-                    new MinMaxExplorer(resolver, tableName, columnName),
+                    new RealColumnExplorer(conn, tableName, columnName),
+                    new MinMaxExplorer(conn, tableName, columnName),
                 },
                 DValueType.Text => new ExplorerBase[]
                 {
-                    new TextColumnExplorer(resolver, tableName, columnName),
-                    new EmailColumnExplorer(resolver, tableName, columnName),
-                    new IntegerColumnExplorer(resolver, tableName, $"length({columnName})", "text.length"),
+                    new TextColumnExplorer(conn, tableName, columnName),
+                    new EmailColumnExplorer(conn, tableName, columnName),
+                    new IntegerColumnExplorer(conn, tableName, $"length({columnName})", "text.length"),
                 },
                 DValueType.Bool => new ExplorerBase[]
                 {
-                    new CategoricalColumnExplorer(resolver, tableName, columnName),
+                    new CategoricalColumnExplorer(conn, tableName, columnName),
                 },
                 DValueType.Datetime => new ExplorerBase[]
                 {
-                    new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
+                    new DatetimeColumnExplorer(conn, tableName, columnName, columnType),
                 },
                 DValueType.Timestamp => new ExplorerBase[]
                 {
-                    new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
+                    new DatetimeColumnExplorer(conn, tableName, columnName, columnType),
                 },
                 DValueType.Date => new ExplorerBase[]
                 {
-                    new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
+                    new DatetimeColumnExplorer(conn, tableName, columnName, columnType),
                 },
                 _ => System.Array.Empty<ExplorerBase>(),
             };
@@ -85,12 +85,12 @@ namespace Explorer
                 return null;
             }
 
-            return new Exploration(resolver, components);
+            return new Exploration(conn, components);
         }
 
         public void Cancel()
         {
-            QueryResolver.Cancel();
+            Connection.Cancel();
         }
 
         public void Dispose()
@@ -105,9 +105,9 @@ namespace Explorer
             {
                 if (disposing)
                 {
-                    if (QueryResolver is IDisposable dispResolver)
+                    if (Connection is IDisposable disp)
                     {
-                        dispResolver.Dispose();
+                        disp.Dispose();
                     }
                 }
                 IsDisposed = true;

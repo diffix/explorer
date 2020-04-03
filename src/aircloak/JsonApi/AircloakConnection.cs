@@ -6,7 +6,7 @@ namespace Aircloak.JsonApi
 
     using Diffix;
 
-    public class AircloakQueryResolver : DQueryResolver, IDisposable
+    public class AircloakConnection : DConnection, IDisposable
     {
         private readonly string dataSourceName;
 
@@ -18,7 +18,7 @@ namespace Aircloak.JsonApi
 
         private bool isDisposed;
 
-        public AircloakQueryResolver(JsonApiClient apiClient, string dataSourceName, TimeSpan pollFrequency)
+        public AircloakConnection(JsonApiClient apiClient, string dataSourceName, TimeSpan pollFrequency)
         {
             this.apiClient = apiClient;
             this.dataSourceName = dataSourceName;
@@ -26,7 +26,7 @@ namespace Aircloak.JsonApi
             this.cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public async Task<DResult<TRow>> Resolve<TRow>(DQuery<TRow> query)
+        public async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
         {
             return await apiClient.Query<TRow>(
                 dataSourceName,

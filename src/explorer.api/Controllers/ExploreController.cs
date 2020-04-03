@@ -63,10 +63,10 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
+            var conn = new AircloakConnection(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
 
 #pragma warning disable CA2000 // call IDisposable.Dispose
-            var exploration = Exploration.Create(resolver, explorerColumnMeta.Type, data.TableName, data.ColumnName);
+            var exploration = Exploration.Create(conn, explorerColumnMeta.Type, data.TableName, data.ColumnName);
 #pragma warning restore CA2000 // call IDisposable.Dispose
             if (exploration == null)
             {

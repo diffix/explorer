@@ -9,13 +9,13 @@ namespace Explorer.Common
     {
         private readonly ConcurrentBag<IExploreMetric> metrics;
 
-        private readonly DQueryResolver queryResolver;
+        private readonly DConnection connection;
 
         private readonly string metricNamePrefix;
 
-        protected ExplorerBase(DQueryResolver queryResolver, string metricNamePrefix = "")
+        protected ExplorerBase(DConnection connection, string metricNamePrefix = "")
         {
-            this.queryResolver = queryResolver;
+            this.connection = connection;
             this.metricNamePrefix = metricNamePrefix;
             metrics = new ConcurrentBag<IExploreMetric>();
         }
@@ -36,14 +36,14 @@ namespace Explorer.Common
             metrics.Add(metric);
         }
 
-        protected async Task<DResult<TRow>> ResolveQuery<TRow>(DQuery<TRow> query)
+        protected async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
         {
-            return await queryResolver.Resolve(query);
+            return await connection.Exec(query);
         }
 
         protected void ThrowIfCancellationRequested()
         {
-            queryResolver.ThrowIfCancellationRequested();
+            connection.ThrowIfCancellationRequested();
         }
     }
 }

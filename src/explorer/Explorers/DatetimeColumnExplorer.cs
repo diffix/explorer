@@ -15,11 +15,11 @@ namespace Explorer.Explorers
         private const double SuppressedRatioThreshold = 0.1;
 
         public DatetimeColumnExplorer(
-            DQueryResolver queryResolver,
+            DConnection connection,
             string tableName,
             string columnName,
             DValueType columnType = DValueType.Datetime)
-            : base(queryResolver)
+            : base(connection)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -34,7 +34,7 @@ namespace Explorer.Explorers
 
         public override async Task Explore()
         {
-            var statsQ = await ResolveQuery<NumericColumnStats.Result<DateTime>>(
+            var statsQ = await Exec<NumericColumnStats.Result<DateTime>>(
                 new NumericColumnStats(TableName, ColumnName));
 
             var stats = statsQ.Rows.Single();
@@ -42,7 +42,7 @@ namespace Explorer.Explorers
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await ResolveQuery(
+            var distinctValueQ = await Exec(
                 new DistinctColumnValues(TableName, ColumnName));
 
             var counts = ValueCounts.Compute(distinctValueQ.Rows);
@@ -104,7 +104,7 @@ namespace Explorer.Explorers
 
         private async Task LinearBuckets()
         {
-            var queryResult = await ResolveQuery(
+            var queryResult = await Exec(
                 new BucketedDatetimes(TableName, ColumnName, ColumnType));
 
             await Task.Run(() => ProcessLinearBuckets(queryResult.Rows));
@@ -112,7 +112,7 @@ namespace Explorer.Explorers
 
         private async Task CyclicalBuckets()
         {
-            var queryResult = await ResolveQuery(
+            var queryResult = await Exec(
                 new CyclicalDatetimes(TableName, ColumnName, ColumnType));
 
             await Task.Run(() => ProcessCyclicalBuckets(queryResult.Rows));

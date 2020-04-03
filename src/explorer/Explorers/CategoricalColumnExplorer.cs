@@ -10,8 +10,8 @@ namespace Explorer.Explorers
 
     internal class CategoricalColumnExplorer : ExplorerBase
     {
-        public CategoricalColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName)
-            : base(queryResolver)
+        public CategoricalColumnExplorer(DConnection connection, string tableName, string columnName)
+            : base(connection)
         {
             TableName = tableName;
             ColumnName = columnName;
@@ -23,7 +23,7 @@ namespace Explorer.Explorers
 
         public override async Task Explore()
         {
-            var distinctValues = await ResolveQuery(
+            var distinctValues = await Exec(
                 new DistinctColumnValues(TableName, ColumnName));
 
             var counts = ValueCounts.Compute(distinctValues.Rows);
