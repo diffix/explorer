@@ -2,7 +2,7 @@ namespace Explorer.Common
 {
     using System.Diagnostics;
 
-    internal static class DiffixUtilities
+    internal static class BucketUtils
     {
         internal static decimal[] EstimateBucketResolutions(
             long numSamples,

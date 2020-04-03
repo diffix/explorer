@@ -3,8 +3,6 @@ namespace Explorer.Common
     using System.Collections.Generic;
     using System.Linq;
 
-    using Diffix;
-
     internal sealed class ValueCounts
     {
         private ValueCounts()
@@ -15,9 +13,13 @@ namespace Explorer.Common
 
         public long SuppressedCount { get; private set; } = 0;
 
+        public long NullCount { get; private set; } = 0;
+
         public long TotalRows { get; private set; } = 0;
 
         public long SuppressedRows { get; private set; } = 0;
+
+        public long NullRows { get; private set; } = 0;
 
         public long NonSuppressedRows => TotalRows - SuppressedRows;
 
@@ -25,28 +27,31 @@ namespace Explorer.Common
 
         public double SuppressedCountRatio => (double)SuppressedCount / TotalCount;
 
-        public static ValueCounts Compute<T>(IEnumerable<T> rows)
-            where T : ICountAggregate, IDiffixValue<T>
+        public static ValueCounts Compute<T>(IEnumerable<ValueWithCount<T>> rows)
         {
             return rows.Aggregate(new ValueCounts(), AccumulateRow);
         }
 
-        public ValueCounts AccumulateRow<T>(T row)
-            where T : ICountAggregate, IDiffixValue<T>
+        public ValueCounts AccumulateRow<T>(ValueWithCount<T> row)
         {
             TotalCount += row.Count;
             TotalRows++;
+
             if (row.IsSuppressed)
             {
                 SuppressedCount += row.Count;
                 SuppressedRows++;
             }
+            if (row.IsNull)
+            {
+                NullCount += row.Count;
+                NullRows++;
+            }
 
             return this;
         }
 
-        private static ValueCounts AccumulateRow<T>(ValueCounts vc, T row)
-            where T : ICountAggregate, IDiffixValue<T>
+        private static ValueCounts AccumulateRow<T>(ValueCounts vc, ValueWithCount<T> row)
         {
             vc.AccumulateRow(row);
             return vc;

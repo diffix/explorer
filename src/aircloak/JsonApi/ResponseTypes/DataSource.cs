@@ -55,7 +55,7 @@ namespace Aircloak.JsonApi.ResponseTypes
             {
                 public string Name { get; set; }
 
-                public DiffixValueType Type { get; set; }
+                public DValueType Type { get; set; }
             }
         }
     }

@@ -5,47 +5,22 @@ namespace Explorer.Queries
     using Diffix;
     using Explorer.Common;
 
-    internal class DistinctColumnValues :
-        IQuerySpec<DistinctColumnValues.Result>
+    internal class DistinctColumnValues : DQuery<ValueWithCount<JsonElement>>
     {
         public DistinctColumnValues(string tableName, string columnName)
         {
-            TableName = tableName;
-            ColumnName = columnName;
+            QueryStatement = $@"
+                select
+                    {columnName},
+                    count(*),
+                    count_noise(*)
+                from {tableName}
+                group by {columnName}";
         }
 
-        public string QueryStatement => $@"
-                        select
-                            {ColumnName},
-                            count(*),
-                            count_noise(*)
-                        from {TableName}
-                        group by {ColumnName}";
+        public string QueryStatement { get; }
 
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader);
-
-        public class Result : ICountAggregate, IDiffixValue
-        {
-            public Result(ref Utf8JsonReader reader)
-            {
-                DistinctData = reader.ParseAircloakResultValue<JsonElement>();
-                Count = reader.ParseCount();
-                CountNoise = reader.ParseCountNoise();
-            }
-
-            public IDiffixValue<JsonElement> DistinctData { get; set; }
-
-            public long Count { get; set; }
-
-            public double? CountNoise { get; set; }
-
-            public bool IsNull => DistinctData.IsNull;
-
-            public bool IsSuppressed => DistinctData.IsSuppressed;
-        }
+        public ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
+            ValueWithCount<JsonElement>.Parse(ref reader);
     }
 }

@@ -1,9 +1,7 @@
 namespace Explorer.Explorers
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -14,7 +12,7 @@ namespace Explorer.Explorers
     {
         public const string EmailAddressChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
 
-        public EmailColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+        public EmailColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)
         {
             TableName = tableName;
@@ -25,16 +23,15 @@ namespace Explorer.Explorers
 
         private string ColumnName { get; }
 
-        public override async Task Explore(CancellationToken cancellationToken)
+        public override async Task Explore()
         {
-            var emailCheckQ = await ResolveQuery<TextColumnTrim.Result>(
-                new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Both, EmailAddressChars),
-                cancellationToken);
+            var emailCheckQ = await ResolveQuery(
+                new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Both, EmailAddressChars));
 
-            var counts = ValueCounts.Compute(emailCheckQ.ResultRows);
+            var counts = ValueCounts.Compute(emailCheckQ.Rows);
 
-            var isEmail = counts.TotalCount == emailCheckQ.ResultRows
-                .Where(r => r.TrimmedText == "@" || r.IsNull)
+            var isEmail = counts.TotalCount == emailCheckQ.Rows
+                .Where(r => r.IsNull || r.Value == "@")
                 .Sum(r => r.Count);
 
             PublishMetric(new UntypedMetric(name: "is_email", metric: isEmail));
@@ -44,33 +41,31 @@ namespace Explorer.Explorers
                 return;
             }
 
-            var tldQ = await ResolveQuery<TextColumnSuffix.Result>(
-                new TextColumnSuffix(TableName, ColumnName, 3, 7),
-                cancellationToken);
+            var tldQ = await ResolveQuery(
+                new TextColumnSuffix(TableName, ColumnName, 3, 7));
 
             var tldList =
-                from row in tldQ.ResultRows
-                where row.Suffix.StartsWith(".", StringComparison.InvariantCulture)
+                from row in tldQ.Rows
+                where row.Value.StartsWith(".", StringComparison.InvariantCulture)
                 orderby row.Count descending
                 select new
                 {
-                    name = row.Suffix,
+                    name = row.Value,
                     row.Count,
                 };
 
             PublishMetric(new UntypedMetric(name: "email.top_level_domains", metric: tldList));
 
-            var domainQ = await ResolveQuery<TextColumnTrim.Result>(
-                new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Leading, EmailAddressChars),
-                cancellationToken);
+            var domainQ = await ResolveQuery(
+                new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Leading, EmailAddressChars));
 
             var domainList =
-                from row in domainQ.ResultRows
+                from row in domainQ.Rows
                 where !row.IsSuppressed && !row.IsNull
                 orderby row.Count descending
                 select new
                 {
-                    name = row.TrimmedText,
+                    name = row.Value,
                     row.Count,
                 };
 

@@ -1,12 +1,10 @@
-namespace Aircloak.JsonApi.ResponseTypes
+namespace Diffix.Values
 {
-    using Diffix;
-
     /// <summary>
     /// Represents an unsuppressed column value.
     /// </summary>
     /// <typeparam name="T">The type of the column value.</typeparam>
-    public class DataValue<T> : IDiffixValue<T>
+    internal class DataValue<T> : DValue<T>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DataValue{T}"/> class.

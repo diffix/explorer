@@ -7,7 +7,7 @@ namespace Diffix
     /// <summary>
     /// Represents the different data types an Aircloak column can take.
     /// </summary>
-    public enum DiffixValueType
+    public enum DValueType
     {
         Integer,
         Real,

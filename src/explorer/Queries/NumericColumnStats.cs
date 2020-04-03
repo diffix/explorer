@@ -3,31 +3,27 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
+    using Explorer.JsonExtensions;
 
     internal class NumericColumnStats :
-        IQuerySpec<NumericColumnStats.Result<long>>,
-        IQuerySpec<NumericColumnStats.Result<double>>,
-        IQuerySpec<NumericColumnStats.Result<System.DateTime>>
+        DQuery<NumericColumnStats.Result<long>>,
+        DQuery<NumericColumnStats.Result<double>>,
+        DQuery<NumericColumnStats.Result<System.DateTime>>
     {
         public NumericColumnStats(string tableName, string columnName)
         {
-            TableName = tableName;
-            ColumnName = columnName;
+            QueryStatement = $@"
+                select
+                    min({columnName}),
+                    max({columnName}),
+                    count(*),
+                    count_noise(*)
+                from {tableName}";
         }
 
-        public string QueryStatement => $@"
-                        select
-                            min({ColumnName}),
-                            max({ColumnName}),
-                            count(*),
-                            count_noise(*)
-                        from {TableName}";
+        public string QueryStatement { get; }
 
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        Result<long> IQuerySpec<Result<long>>.FromJsonArray(ref Utf8JsonReader reader)
+        Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<long>
             {
@@ -38,7 +34,7 @@ namespace Explorer.Queries
             };
         }
 
-        Result<double> IQuerySpec<Result<double>>.FromJsonArray(ref Utf8JsonReader reader)
+        Result<double> DQuery<Result<double>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<double>
             {
@@ -49,7 +45,7 @@ namespace Explorer.Queries
             };
         }
 
-        Result<System.DateTime> IQuerySpec<Result<System.DateTime>>.FromJsonArray(ref Utf8JsonReader reader)
+        Result<System.DateTime> DQuery<Result<System.DateTime>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<System.DateTime>
             {

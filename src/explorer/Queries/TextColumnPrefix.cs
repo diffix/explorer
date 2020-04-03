@@ -1,61 +1,29 @@
 namespace Explorer.Queries
 {
-    using System.Linq;
     using System.Text.Json;
 
     using Diffix;
     using Explorer.Common;
 
     internal class TextColumnPrefix :
-        IQuerySpec<TextColumnPrefix.Result>
+        DQuery<ValueWithCount<string>>
     {
         public TextColumnPrefix(string tableName, string columnName, int length)
         {
             // TODO: determine prefix length dynamically
-            TableName = tableName;
-            ColumnName = columnName;
-            Length = length;
+            QueryStatement = $@"
+                select 
+                    left({columnName}, {length}),
+                    count(*),
+                    count_noise(*)
+                from {tableName}
+                group by 1
+                having length(left({columnName}, {length})) = {length}";
         }
 
-        public string QueryStatement => $@"
-select 
-    left({ColumnName}, {Length}),
-    count(*),
-    count_noise(*)
-from {TableName}
-group by 1
-having length(left({ColumnName}, {Length})) = {Length}";
+        public string QueryStatement { get; }
 
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        private int Length { get; }
-
-        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader);
-
-        public class Result : ICountAggregate, IDiffixValue
-        {
-            private readonly IDiffixValue<string> prefixColumn;
-
-            public Result(ref Utf8JsonReader reader)
-            {
-                prefixColumn = reader.ParseAircloakResultValue<string>();
-                Count = reader.ParseCount();
-                CountNoise = reader.ParseCountNoise();
-            }
-
-            public string Prefix => prefixColumn.HasValue ? prefixColumn.Value : string.Empty;
-
-            public long Count { get; set; }
-
-            public double? CountNoise { get; set; }
-
-            public bool IsNull => prefixColumn.IsNull;
-
-            public bool IsSuppressed => prefixColumn.IsSuppressed;
-
-            public bool HasValue => prefixColumn.HasValue;
-        }
+        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+            ValueWithCount<string>.Parse(ref reader);
     }
 }

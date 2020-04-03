@@ -1,12 +1,14 @@
 namespace Explorer.Queries
 {
+    using System;
     using System.Linq;
     using System.Text.Json;
 
     using Diffix;
+    using Explorer.Common;
 
     internal class BucketedDatetimes :
-        IQuerySpec<BucketedDatetimes.Result>
+        DQuery<GroupingSetsResult<DateTime>>
     {
         public static readonly string[] DateComponents = new[]
         {
@@ -26,27 +28,19 @@ namespace Explorer.Queries
         public BucketedDatetimes(
             string tableName,
             string columnName,
-            DiffixValueType columnType = DiffixValueType.Datetime)
+            DValueType columnType = DValueType.Datetime)
         {
-            TableName = tableName;
-            ColumnName = columnName;
             QueryComponents = columnType switch
             {
-                DiffixValueType.Datetime => DateComponents.Concat(TimeComponents).ToArray(),
-                DiffixValueType.Timestamp => TimeComponents,
-                DiffixValueType.Date => DateComponents,
+                DValueType.Datetime => DateComponents.Concat(TimeComponents).ToArray(),
+                DValueType.Timestamp => TimeComponents,
+                DValueType.Date => DateComponents,
                 _ => throw new System.ArgumentException($"Expected Datetime, Date or Time, got {columnType}."),
             };
-        }
+            var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"date_trunc('{s}', {columnName})"));
+            var groupingSets = string.Join(", ", Enumerable.Range(2, QueryComponents.Length));
 
-        public string QueryStatement
-        {
-            get
-            {
-                var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"date_trunc('{s}', {ColumnName})"));
-                var groupingSets = string.Join(", ", Enumerable.Range(2, QueryComponents.Length));
-
-                return $@"
+            QueryStatement = $@"
                 select
                     grouping_id(
                         {groupsFragment}
@@ -54,29 +48,15 @@ namespace Explorer.Queries
                     {groupsFragment},
                     count(*),
                     count_noise(*)
-                from {TableName}
-                group by grouping sets ({groupingSets})
-                ";
-            }
+                from {tableName}
+                group by grouping sets ({groupingSets})";
         }
 
         public string[] QueryComponents { get; }
 
-        private string TableName { get; }
+        public string QueryStatement { get; }
 
-        private string ColumnName { get; }
-
-        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader, QueryComponents);
-
-        public class Result : GroupingSetsResult<System.DateTime>
-        {
-            public Result(ref Utf8JsonReader reader, string[] groupingLabels)
-                : base(ref reader, groupingLabels.Length)
-            {
-                GroupingLabels = groupingLabels;
-            }
-
-            public override string[] GroupingLabels { get; }
-        }
+        public GroupingSetsResult<DateTime> ParseRow(ref Utf8JsonReader reader) =>
+            GroupingSetsResult<DateTime>.Create(ref reader, QueryComponents);
     }
 }

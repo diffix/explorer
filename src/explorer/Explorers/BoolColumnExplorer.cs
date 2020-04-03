@@ -2,7 +2,6 @@ namespace Explorer.Explorers
 {
     using System;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -11,7 +10,7 @@ namespace Explorer.Explorers
 
     internal class BoolColumnExplorer : ExplorerBase
     {
-        public BoolColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName)
+        public BoolColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName)
             : base(queryResolver)
         {
             TableName = tableName;
@@ -22,13 +21,12 @@ namespace Explorer.Explorers
 
         private string ColumnName { get; }
 
-        public override async Task Explore(CancellationToken cancellationToken)
+        public override async Task Explore()
         {
             var distinctValuesQ = await ResolveQuery(
-                new DistinctColumnValues(TableName, ColumnName),
-                cancellationToken);
+                new DistinctColumnValues(TableName, ColumnName));
 
-            var counts = ValueCounts.Compute(distinctValuesQ.ResultRows);
+            var counts = ValueCounts.Compute(distinctValuesQ.Rows);
 
             PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
 
@@ -42,12 +40,12 @@ namespace Explorer.Explorers
             PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: counts.TotalCount));
 
             var distinctValueCounts =
-                from row in distinctValuesQ.ResultRows
-                where row.DistinctData.HasValue
+                from row in distinctValuesQ.Rows
+                where row.HasValue
                 orderby row.Count descending
                 select new
                 {
-                    row.DistinctData.Value,
+                    row.Value,
                     row.Count,
                 };
 

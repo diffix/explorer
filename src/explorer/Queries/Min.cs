@@ -3,56 +3,43 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
+    using Explorer.JsonExtensions;
 
     internal class Min :
-        IQuerySpec<Min.Result<long>>,
-        IQuerySpec<Min.Result<double>>,
-        IQuerySpec<Min.Result<decimal>>
+        DQuery<Min.Result<long>>,
+        DQuery<Min.Result<double>>,
+        DQuery<Min.Result<decimal>>
     {
         public Min(string tableName, string columnName, decimal? upperBound = null)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-            UpperBound = upperBound;
-        }
-
-        public string QueryStatement
-        {
-            get
+            var whereFragment = string.Empty;
+            if (upperBound.HasValue)
             {
-                var whereFragment = string.Empty;
-                if (UpperBound.HasValue)
-                {
-                    whereFragment = $"where {ColumnName} between 0 and {UpperBound.Value}";
-                }
-
-                return $@"
-                    select
-                        min({ColumnName})
-                    from {TableName}
-                    {whereFragment}";
+                whereFragment = $"where {columnName} between 0 and {upperBound.Value}";
             }
+
+            QueryStatement = $@"
+                select
+                    min({columnName})
+                from {tableName}
+                {whereFragment}";
         }
 
-        private string TableName { get; }
+        public string QueryStatement { get; }
 
-        private string ColumnName { get; }
-
-        private decimal? UpperBound { get; }
-
-        Result<long> IQuerySpec<Result<long>>.FromJsonArray(ref Utf8JsonReader reader) =>
+        Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<long>
             {
                 Min = reader.ParseNullableMetric<long>(),
             };
 
-        Result<double> IQuerySpec<Result<double>>.FromJsonArray(ref Utf8JsonReader reader) =>
+        Result<double> DQuery<Result<double>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<double>
             {
                 Min = reader.ParseNullableMetric<double>(),
             };
 
-        Result<decimal> IQuerySpec<Result<decimal>>.FromJsonArray(ref Utf8JsonReader reader) =>
+        Result<decimal> DQuery<Result<decimal>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<decimal>
             {
                 Min = reader.ParseNullableMetric<decimal>(),

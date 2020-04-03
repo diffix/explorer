@@ -1,6 +1,6 @@
-#pragma warning disable CA1812 // DiffixTypeEnumConverter is an internal class that is apparently never instantiated.
+#pragma warning disable CA1812 // DValueTypeEnumConverter is an internal class that is apparently never instantiated.
 
-namespace Aircloak.JsonApi.ResponseTypes
+namespace Aircloak.JsonApi.JsonConversion
 {
     using System;
     using System.Text.Json;
@@ -11,7 +11,7 @@ namespace Aircloak.JsonApi.ResponseTypes
     /// <summary>
     /// <c>JsonConverter</c> for (de)serializing the <see cref="ValueType" /> enum as a string.
     /// </summary>
-    internal class DiffixTypeEnumConverter : JsonConverter<ValueType>
+    internal class DValueTypeEnumConverter : JsonConverter<ValueType>
     {
         private const string Integer = "integer";
         private const string Real = "real";
@@ -25,14 +25,14 @@ namespace Aircloak.JsonApi.ResponseTypes
         {
             return reader.GetString() switch
             {
-                Integer => DiffixValueType.Integer,
-                Real => DiffixValueType.Real,
-                Text => DiffixValueType.Text,
-                Timestamp => DiffixValueType.Timestamp,
-                Date => DiffixValueType.Date,
-                Datetime => DiffixValueType.Datetime,
-                Bool => DiffixValueType.Bool,
-                _ => DiffixValueType.Unknown,
+                Integer => DValueType.Integer,
+                Real => DValueType.Real,
+                Text => DValueType.Text,
+                Timestamp => DValueType.Timestamp,
+                Date => DValueType.Date,
+                Datetime => DValueType.Datetime,
+                Bool => DValueType.Bool,
+                _ => DValueType.Unknown,
             };
         }
 
@@ -40,13 +40,13 @@ namespace Aircloak.JsonApi.ResponseTypes
         {
             var s = aircloakType switch
             {
-                DiffixValueType.Integer => Integer,
-                DiffixValueType.Real => Real,
-                DiffixValueType.Text => Text,
-                DiffixValueType.Timestamp => Timestamp,
-                DiffixValueType.Date => Date,
-                DiffixValueType.Datetime => Datetime,
-                DiffixValueType.Bool => Bool,
+                DValueType.Integer => Integer,
+                DValueType.Real => Real,
+                DValueType.Text => Text,
+                DValueType.Timestamp => Timestamp,
+                DValueType.Date => Date,
+                DValueType.Datetime => Datetime,
+                DValueType.Bool => Bool,
                 _ => "unknown",
             };
             writer.WriteStringValue(s);

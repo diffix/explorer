@@ -3,56 +3,43 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
+    using Explorer.JsonExtensions;
 
     internal class Max :
-        IQuerySpec<Max.Result<long>>,
-        IQuerySpec<Max.Result<double>>,
-        IQuerySpec<Max.Result<decimal>>
+        DQuery<Max.Result<long>>,
+        DQuery<Max.Result<double>>,
+        DQuery<Max.Result<decimal>>
     {
         public Max(string tableName, string columnName, decimal? lowerBound = null)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-            LowerBound = lowerBound;
-        }
-
-        public string QueryStatement
-        {
-            get
+            var whereFragment = string.Empty;
+            if (lowerBound.HasValue)
             {
-                var whereFragment = string.Empty;
-                if (LowerBound.HasValue)
-                {
-                    whereFragment = $"where {ColumnName} between {LowerBound.Value} and {LowerBound.Value * 2}";
-                }
-
-                return $@"
-                    select
-                        max({ColumnName})
-                    from {TableName}
-                    {whereFragment}";
+                whereFragment = $"where {columnName} between {lowerBound.Value} and {lowerBound.Value * 2}";
             }
+
+            QueryStatement = $@"
+                select
+                    max({columnName})
+                from {tableName}
+                {whereFragment}";
         }
 
-        private string TableName { get; }
+        public string QueryStatement { get; }
 
-        private string ColumnName { get; }
-
-        private decimal? LowerBound { get; }
-
-        Result<long> IQuerySpec<Result<long>>.FromJsonArray(ref Utf8JsonReader reader) =>
+        Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<long>
             {
                 Max = reader.ParseNullableMetric<long>(),
             };
 
-        Result<double> IQuerySpec<Result<double>>.FromJsonArray(ref Utf8JsonReader reader) =>
+        Result<double> DQuery<Result<double>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<double>
             {
                 Max = reader.ParseNullableMetric<double>(),
             };
 
-        Result<decimal> IQuerySpec<Result<decimal>>.FromJsonArray(ref Utf8JsonReader reader) =>
+        Result<decimal> DQuery<Result<decimal>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<decimal>
             {
                 Max = reader.ParseNullableMetric<decimal>(),

@@ -1,10 +1,10 @@
-﻿namespace Diffix.Utils
+﻿namespace Explorer.Common
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
 
-    public sealed class GroupingIdConverter
+    internal sealed class GroupingIdConverter
     {
         private static ImmutableDictionary<int, GroupingIdConverter> converters =
             ImmutableDictionary.Create<int, GroupingIdConverter>();

@@ -3,7 +3,6 @@ namespace Explorer.Explorers
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -16,10 +15,10 @@ namespace Explorer.Explorers
         private const double SuppressedRatioThreshold = 0.1;
 
         public DatetimeColumnExplorer(
-            IQueryResolver queryResolver,
+            DQueryResolver queryResolver,
             string tableName,
             string columnName,
-            DiffixValueType columnType = DiffixValueType.Datetime)
+            DValueType columnType = DValueType.Datetime)
             : base(queryResolver)
         {
             TableName = tableName;
@@ -31,57 +30,50 @@ namespace Explorer.Explorers
 
         private string ColumnName { get; }
 
-        private DiffixValueType ColumnType { get; }
+        private DValueType ColumnType { get; }
 
-        public override async Task Explore(CancellationToken cancellationToken)
+        public override async Task Explore()
         {
             var statsQ = await ResolveQuery<NumericColumnStats.Result<DateTime>>(
-                new NumericColumnStats(TableName, ColumnName),
-                cancellationToken);
+                new NumericColumnStats(TableName, ColumnName));
 
-            var stats = statsQ.ResultRows.Single();
+            var stats = statsQ.Rows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result>(
-                new DistinctColumnValues(TableName, ColumnName),
-                cancellationToken);
+            var distinctValueQ = await ResolveQuery(
+                new DistinctColumnValues(TableName, ColumnName));
 
-            var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
-                    row.DistinctData.IsSuppressed ? row.Count : 0);
+            var counts = ValueCounts.Compute(distinctValueQ.Rows);
 
-            var totalValueCount = stats.Count;
-
-            if (totalValueCount == 0)
+            if (counts.TotalCount == 0)
             {
                 throw new Exception(
                     $"Total value count for {TableName}, {ColumnName} is zero.");
             }
 
-            var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
-
-            if (suppressedValueRatio < SuppressedRatioThreshold)
+            if (counts.SuppressedCountRatio < SuppressedRatioThreshold)
             {
                 // Only few of the values are suppressed. This means the data is already well-segmented and can be
                 // considered categorical or quasi-categorical.
                 var distinctValues =
-                    from row in distinctValueQ.ResultRows
-                    where row.DistinctData.HasValue
+                    from row in distinctValueQ.Rows
+                    where row.HasValue
                     orderby row.Count descending
                     select new
                     {
-                        row.DistinctData.Value,
+                        row.Value,
                         row.Count,
                     };
 
                 PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
-                PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: suppressedValueCount));
+                PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
             }
 
             await Task.WhenAll(
-                LinearBuckets(cancellationToken),
-                CyclicalBuckets(cancellationToken));
+                LinearBuckets(),
+                CyclicalBuckets());
 
             // Other metrics?
             // Median
@@ -91,54 +83,46 @@ namespace Explorer.Explorers
         private static object DatetimeMetric<T>(
             long total,
             long suppressed,
-            IEnumerable<AircloakValueCount<T>> valueCounts)
+            IEnumerable<ValueWithCount<T>> valueCounts)
         {
             return new
             {
                 Total = total,
                 Suppressed = suppressed,
                 Counts =
-                    from valueCount in valueCounts
-                    where !valueCount.IsSuppressed && !valueCount.IsNull
-                    orderby valueCount.Value ascending
+                    from row in valueCounts
+                    where row.HasValue
+                    orderby row.Value ascending
                     select new
                     {
-                        valueCount.Value,
-                        valueCount.Count,
-                        valueCount.CountNoise,
+                        row.Value,
+                        row.Count,
+                        row.CountNoise,
                     },
             };
         }
 
-        private async Task LinearBuckets(CancellationToken cancellationToken)
+        private async Task LinearBuckets()
         {
             var queryResult = await ResolveQuery(
-                new BucketedDatetimes(TableName, ColumnName, ColumnType),
-                cancellationToken);
+                new BucketedDatetimes(TableName, ColumnName, ColumnType));
 
-            await Task.Run(
-                () => ProcessLinearBuckets(queryResult.ResultRows, cancellationToken),
-                cancellationToken);
+            await Task.Run(() => ProcessLinearBuckets(queryResult.Rows));
         }
 
-        private async Task CyclicalBuckets(CancellationToken cancellationToken)
+        private async Task CyclicalBuckets()
         {
             var queryResult = await ResolveQuery(
-                new CyclicalDatetimes(TableName, ColumnName, ColumnType),
-                cancellationToken);
+                new CyclicalDatetimes(TableName, ColumnName, ColumnType));
 
-            await Task.Run(
-                () => ProcessCyclicalBuckets(queryResult.ResultRows, cancellationToken),
-                cancellationToken);
+            await Task.Run(() => ProcessCyclicalBuckets(queryResult.Rows));
         }
 
-        private void ProcessLinearBuckets(
-            IEnumerable<BucketedDatetimes.Result> queryResult,
-            CancellationToken cancellationToken)
+        private void ProcessLinearBuckets(IEnumerable<GroupingSetsResult<DateTime>> queryResult)
         {
             foreach (var group in GroupByLabel(queryResult))
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                ThrowIfCancellationRequested();
 
                 var counts = ValueCounts.Compute(group);
                 if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
@@ -147,27 +131,23 @@ namespace Explorer.Explorers
                 }
 
                 var label = group.Key;
-                var metricValue = group
-                    .Select(row => new AircloakValueCount<DateTime>(row.GroupingValue, row.Count, row.CountNoise));
                 PublishMetric(new UntypedMetric(name: $"dates_linear.{label}", metric: DatetimeMetric(
-                    counts.TotalCount, counts.SuppressedCount, metricValue)));
+                    counts.TotalCount, counts.SuppressedCount, group)));
             }
         }
 
-        private void ProcessCyclicalBuckets(
-            IEnumerable<CyclicalDatetimes.Result> queryResult,
-            CancellationToken cancellationToken)
+        private void ProcessCyclicalBuckets(IEnumerable<GroupingSetsResult<int>> queryResult)
         {
             var includeRest = false;
             foreach (var group in GroupByLabel(queryResult))
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                ThrowIfCancellationRequested();
 
                 var label = group.Key;
 
                 if (!includeRest)
                 {
-                    var distinctValueCount = group.Count(row => row.GroupingValue.HasValue);
+                    var distinctValueCount = group.Count(row => row.HasValue);
 
                     includeRest = (label, distinctValueCount) switch
                     {
@@ -186,39 +166,15 @@ namespace Explorer.Explorers
                     break;
                 }
 
-                var metricValue = group
-                    .Select(row => new AircloakValueCount<int>(row.GroupingValue, row.Count, row.CountNoise));
                 PublishMetric(new UntypedMetric(name: $"dates_cyclical.{label}", metric: DatetimeMetric(
-                    counts.TotalCount, counts.SuppressedCount, metricValue)));
+                    counts.TotalCount, counts.SuppressedCount, group)));
             }
         }
 
-        private IEnumerable<IGrouping<string, T>> GroupByLabel<T>(IEnumerable<T> queryResult)
-            where T : IGroupingSetsAggregate
+        private IEnumerable<IGrouping<string, GroupingSetsResult<T>>> GroupByLabel<T>(
+            IEnumerable<GroupingSetsResult<T>> queryResult)
         {
             return queryResult.GroupBy(row => row.GroupingLabel);
-        }
-
-        private class AircloakValueCount<T> : ICountAggregate, INullable, ISuppressible
-        {
-            private readonly IDiffixValue<T> av;
-
-            public AircloakValueCount(IDiffixValue<T> av, long count, double? countNoise)
-            {
-                this.av = av;
-                Count = count;
-                CountNoise = countNoise;
-            }
-
-            public T Value => av.Value;
-
-            public bool IsSuppressed => av.IsSuppressed;
-
-            public bool IsNull => av.IsNull;
-
-            public long Count { get; }
-
-            public double? CountNoise { get; }
         }
     }
 }

@@ -10,81 +10,70 @@ namespace Explorer
     using Explorer.Common;
     using Explorer.Explorers;
 
-    internal class Exploration : IDisposable
+    public class Exploration : IDisposable
     {
-        private readonly IEnumerable<ExplorerBase> explorers;
-
-        private readonly CancellationTokenSource cancellationTokenSource;
-
-        private bool isDisposed;
-
-        public Exploration(IEnumerable<ExplorerBase> explorers)
+        internal Exploration(DQueryResolver queryResolver, IEnumerable<ExplorerBase> explorers)
         {
-            this.explorers = explorers;
-            isDisposed = false;
-            cancellationTokenSource = new CancellationTokenSource();
+            Explorers = explorers;
+            QueryResolver = queryResolver;
+            IsDisposed = false;
             ExplorationGuid = Guid.NewGuid();
-            Completion = Task.WhenAll(explorers.Select(e => e.Explore(cancellationTokenSource.Token)));
+            Completion = Task.WhenAll(explorers.Select(e => e.Explore()));
         }
+
+        public Task Completion { get; }
 
         public Guid ExplorationGuid { get; }
 
         public IEnumerable<IExploreMetric> ExploreMetrics =>
-            explorers.SelectMany(explorer => explorer.Metrics);
-
-        public Task Completion { get; }
+            Explorers.SelectMany(explorer => explorer.Metrics);
 
         public ExplorationStatus Status =>
-            Completion.Status switch
-            {
-                TaskStatus.Canceled => ExplorationStatus.Canceled,
-                TaskStatus.Created => ExplorationStatus.New,
-                TaskStatus.Faulted => ExplorationStatus.Error,
-                TaskStatus.RanToCompletion => ExplorationStatus.Complete,
-                TaskStatus.Running => ExplorationStatus.Processing,
-                TaskStatus.WaitingForActivation => ExplorationStatus.Processing,
-                TaskStatus.WaitingToRun => ExplorationStatus.Processing,
-                TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
-                _ => throw new System.Exception("Unexpected TaskStatus: '{status}'."),
-            };
+            ConvertToExplorationStatus(Completion.Status);
+
+        private IEnumerable<ExplorerBase> Explorers { get; }
+
+        private DQueryResolver QueryResolver { get; }
+
+        private bool IsDisposed { get; set; }
 
         public static Exploration? Create(
-            IQueryResolver resolver,
-            DiffixValueType columnType,
+            DQueryResolver resolver,
+            DValueType columnType,
             string tableName,
             string columnName)
         {
             var components = columnType switch
             {
-                DiffixValueType.Integer => new ExplorerBase[]
+                DValueType.Integer => new ExplorerBase[]
                 {
                     new IntegerColumnExplorer(resolver, tableName, columnName, string.Empty),
                     new MinMaxExplorer(resolver, tableName, columnName),
                 },
-                DiffixValueType.Real => new ExplorerBase[]
+                DValueType.Real => new ExplorerBase[]
                 {
                     new RealColumnExplorer(resolver, tableName, columnName),
                     new MinMaxExplorer(resolver, tableName, columnName),
                 },
-                DiffixValueType.Text => new ExplorerBase[]
+                DValueType.Text => new ExplorerBase[]
                 {
                     new TextColumnExplorer(resolver, tableName, columnName),
                     new EmailColumnExplorer(resolver, tableName, columnName),
                     new IntegerColumnExplorer(resolver, tableName, $"length({columnName})", "text.length"),
                 },
-                DiffixValueType.Bool => new ExplorerBase[]
+                DValueType.Bool => new ExplorerBase[]
                 {
                     new CategoricalColumnExplorer(resolver, tableName, columnName),
                 },
-                DiffixValueType.Datetime => new ExplorerBase[]
+                DValueType.Datetime => new ExplorerBase[]
                 {
                     new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
                 },
-                DiffixValueType.Timestamp => new ExplorerBase[]
+                DValueType.Timestamp => new ExplorerBase[]
                 {
                     new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
                 },
-                DiffixValueType.Date => new ExplorerBase[]
+                DValueType.Date => new ExplorerBase[]
                 {
                     new DatetimeColumnExplorer(resolver, tableName, columnName, columnType),
                 },
@@ -96,12 +85,12 @@ namespace Explorer
                 return null;
             }
 
-            return new Exploration(components);
+            return new Exploration(resolver, components);
         }
 
         public void Cancel()
         {
-            cancellationTokenSource.Cancel();
+            QueryResolver.Cancel();
         }
 
         public void Dispose()
@@ -112,14 +101,33 @@ namespace Explorer
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!isDisposed)
+            if (!IsDisposed)
             {
                 if (disposing)
                 {
-                    cancellationTokenSource.Dispose();
+                    if (QueryResolver is IDisposable dispResolver)
+                    {
+                        dispResolver.Dispose();
+                    }
                 }
-                isDisposed = true;
+                IsDisposed = true;
             }
+        }
+
+        private static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
+        {
+            return status switch
+            {
+                TaskStatus.Canceled => ExplorationStatus.Canceled,
+                TaskStatus.Created => ExplorationStatus.New,
+                TaskStatus.Faulted => ExplorationStatus.Error,
+                TaskStatus.RanToCompletion => ExplorationStatus.Complete,
+                TaskStatus.Running => ExplorationStatus.Processing,
+                TaskStatus.WaitingForActivation => ExplorationStatus.Processing,
+                TaskStatus.WaitingToRun => ExplorationStatus.Processing,
+                TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
+                _ => throw new Exception("Unexpected TaskStatus: '{status}'."),
+            };
         }
     }
 }

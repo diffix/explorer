@@ -6,7 +6,7 @@
     /// Interface for Aircloak query submission and parsing.
     /// </summary>
     /// <typeparam name="TRow">A type representing a result row of the query.</typeparam>
-    public interface IQuerySpec<TRow>
+    public interface DQuery<TRow>
     {
         /// <summary>
         /// Gets the query statement that will generate rows that can be read into instances of <c>TRow</c>.
@@ -15,10 +15,10 @@
         public string QueryStatement { get; }
 
         /// <summary>
-        /// Read the contents of a json array and return an instance of type <c>TRow</c>.
+        /// Parses a row instance.
         /// </summary>
-        /// <param name="reader">A ref to the <see cref="Utf8JsonReader"/> instance to read from.</param>
-        /// <returns>An instance of <c>TRow</c>.</returns>
-        public TRow FromJsonArray(ref Utf8JsonReader reader);
+        /// <param name="reader">The <see cref="Utf8JsonReader"/> instance to use for parsing the result.</param>
+        /// <returns>The parsed value.</returns>
+        TRow ParseRow(ref Utf8JsonReader reader);
     }
 }

@@ -3,7 +3,6 @@ namespace Explorer.Explorers
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -17,7 +16,7 @@ namespace Explorer.Explorers
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public IntegerColumnExplorer(IQueryResolver queryResolver, string tableName, string columnName, string metricNamePrefix)
+        public IntegerColumnExplorer(DQueryResolver queryResolver, string tableName, string columnName, string metricNamePrefix)
             : base(queryResolver, metricNamePrefix)
         {
             TableName = tableName;
@@ -28,67 +27,57 @@ namespace Explorer.Explorers
 
         private string ColumnName { get; }
 
-        public override async Task Explore(CancellationToken cancellationToken)
+        public override async Task Explore()
         {
             var statsQ = await ResolveQuery<NumericColumnStats.Result<long>>(
-                new NumericColumnStats(TableName, ColumnName),
-                cancellationToken);
+                new NumericColumnStats(TableName, ColumnName));
 
-            var stats = statsQ.ResultRows.Single();
+            var stats = statsQ.Rows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await ResolveQuery<DistinctColumnValues.Result>(
-                new DistinctColumnValues(TableName, ColumnName),
-                cancellationToken);
+            var distinctValueQ = await ResolveQuery(
+                new DistinctColumnValues(TableName, ColumnName));
 
-            var suppressedValueCount = distinctValueQ.ResultRows.Sum(row =>
-                row.DistinctData.IsSuppressed ? row.Count : 0);
+            var counts = ValueCounts.Compute(distinctValueQ.Rows);
 
-            var totalValueCount = stats.Count;
-
-            if (totalValueCount == 0)
+            if (counts.TotalCount == 0)
             {
                 throw new Exception(
                     $"Total value count for {TableName}, {ColumnName} is zero.");
             }
 
-            var suppressedValueRatio = (double)suppressedValueCount / totalValueCount;
-
-            if (suppressedValueRatio < SuppressedRatioThreshold)
+            if (counts.SuppressedCountRatio < SuppressedRatioThreshold)
             {
                 // Only few of the values are suppressed. This means the data is already well-segmented and can be
                 // considered categorical or quasi-categorical.
                 var distinctValues =
-                    from row in distinctValueQ.ResultRows
-                    where row.DistinctData.HasValue
+                    from row in distinctValueQ.Rows
+                    where row.HasValue
                     orderby row.Count descending
                     select new
                     {
-                        row.DistinctData.Value,
+                        row.Value,
                         row.Count,
                     };
 
                 PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
-                PublishMetric(new UntypedMetric(
-                    name: "distinct.null_count",
-                    metric: distinctValueQ.ResultRows.Sum(row => row.DistinctData.IsNull ? row.Count : 0)));
-                PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: suppressedValueCount));
+                PublishMetric(new UntypedMetric(name: "distinct.null_count", metric: counts.NullCount));
+                PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
 
                 return;
             }
 
-            var bucketsToSample = DiffixUtilities.EstimateBucketResolutions(
+            var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
             var histogramQ = await ResolveQuery<SingleColumnHistogram.Result>(
-                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample),
-                cancellationToken);
+                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample));
 
             var optimumBucket = (
-                from row in histogramQ.ResultRows
-                let suppressedRatio = (double)row.Count / totalValueCount
+                from row in histogramQ.Rows
+                let suppressedRatio = (double)row.Count / counts.TotalCount
                 let suppressedBucketSize = bucketsToSample[row.BucketIndex]
                 where row.LowerBound.IsSuppressed
                     && suppressedRatio < SuppressedRatioThreshold
@@ -102,7 +91,7 @@ namespace Explorer.Explorers
                 }).First();
 
             var histogramBuckets =
-                from row in histogramQ.ResultRows
+                from row in histogramQ.Rows
                 where row.BucketIndex == optimumBucket.Index
                     && row.LowerBound.HasValue
                 let lowerBound = row.LowerBound.Value
@@ -121,7 +110,7 @@ namespace Explorer.Explorers
 
             // Estimate Quartiles
             var processed = 0L;
-            var quartileCount = totalValueCount / 4;
+            var quartileCount = counts.TotalCount / 4;
             var quartile = 1;
             var quartileEstimates = new List<double>();
             foreach (var bucket in histogramBuckets)
@@ -173,7 +162,7 @@ namespace Explorer.Explorers
             // Estimate Average
             var averageEstimate = histogramBuckets
                 .Sum(bucket => bucket.Count * (bucket.LowerBound + (bucket.BucketSize / 2)))
-                / totalValueCount;
+                / counts.TotalCount;
 
             PublishMetric(new UntypedMetric(name: "avg_estimate", metric: decimal.Round(averageEstimate, 2)));
         }

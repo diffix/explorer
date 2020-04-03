@@ -1,37 +1,37 @@
-namespace Aircloak.JsonApi.ResponseTypes
+namespace Diffix.Values
 {
     using Diffix;
 
     /// <summary>
-    /// Represents an unsuppressed NULL column value.
+    /// Represents a column value that has been suppressed by Diffix anonymization.
     /// </summary>
     /// <typeparam name="T">The expected type of the column value.</typeparam>
-    public sealed class NullValue<T> : IDiffixValue<T>
+    internal sealed class SuppressedValue<T> : DValue<T>
     {
         /// <summary>
         /// Singleton instance.
         /// </summary>
-        public static readonly IDiffixValue<T> Instance = new NullValue<T>();
+        public static readonly DValue<T> Instance = new SuppressedValue<T>();
 
-        private NullValue()
+        private SuppressedValue()
         {
         }
 
         /// <summary>
         /// Gets a value indicating whether the column value was suppressed.
-        /// Always returns false because the column has not been suppressed by Diffix anonymization.
+        /// Always returns true since this particular column has been suppressed.
         /// </summary>
-        public bool IsSuppressed => false;
+        public bool IsSuppressed => true;
 
         /// <summary>
         /// Gets a value indicating whether the column value was NULL.
-        /// Always returns true because the returned value is NULL.
+        /// Always returns false since this particular column has been suppressed.
         /// </summary>
-        public bool IsNull => true;
+        public bool IsNull => false;
 
         /// <summary>
         /// Gets a value indicating whether the column contained a valid value.
-        /// Always returns false since the returned value is NULL.
+        /// Always returns false since the column is suppressed.
         /// </summary>
         public bool HasValue => false;
 

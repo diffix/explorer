@@ -9,6 +9,7 @@ namespace Explorer.Api.Controllers
     using Aircloak.JsonApi;
     using Explorer;
     using Explorer.Api.Authentication;
+    using Explorer.Api.Models;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;

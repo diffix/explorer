@@ -1,7 +1,6 @@
 namespace Explorer.Common
 {
     using System.Collections.Concurrent;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -10,11 +9,11 @@ namespace Explorer.Common
     {
         private readonly ConcurrentBag<IExploreMetric> metrics;
 
-        private readonly IQueryResolver queryResolver;
+        private readonly DQueryResolver queryResolver;
 
         private readonly string metricNamePrefix;
 
-        protected ExplorerBase(IQueryResolver queryResolver, string metricNamePrefix = "")
+        protected ExplorerBase(DQueryResolver queryResolver, string metricNamePrefix = "")
         {
             this.queryResolver = queryResolver;
             this.metricNamePrefix = metricNamePrefix;
@@ -26,7 +25,7 @@ namespace Explorer.Common
             get => metrics.ToArray();
         }
 
-        public abstract Task Explore(CancellationToken cancellationToken);
+        public abstract Task Explore();
 
         protected void PublishMetric(IExploreMetric metric)
         {
@@ -37,11 +36,14 @@ namespace Explorer.Common
             metrics.Add(metric);
         }
 
-        protected async Task<IQueryResult<TResult>> ResolveQuery<TResult>(
-            IQuerySpec<TResult> query,
-            CancellationToken cancellationToken)
+        protected async Task<DResult<TRow>> ResolveQuery<TRow>(DQuery<TRow> query)
         {
-            return await queryResolver.ResolveQuery(query, cancellationToken);
+            return await queryResolver.Resolve(query);
+        }
+
+        protected void ThrowIfCancellationRequested()
+        {
+            queryResolver.ThrowIfCancellationRequested();
         }
     }
 }

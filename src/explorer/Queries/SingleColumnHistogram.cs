@@ -5,71 +5,58 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
+    using Explorer.JsonExtensions;
 
     internal class SingleColumnHistogram :
-        IQuerySpec<SingleColumnHistogram.Result>
+        DQuery<SingleColumnHistogram.Result>
     {
         public SingleColumnHistogram(
             string tableName,
             string columnName,
             IList<decimal> buckets)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-            Buckets = buckets;
+            var bucketsFragment = string.Join(
+                ",",
+                from bucket in buckets select $"bucket({columnName} by {bucket}) as bucket_{(int)bucket}");
+
+            var groupingIdArgs = string.Join(
+                ",",
+                from bucket in buckets select $"bucket({columnName} by {bucket})");
+
+            QueryStatement = $@"
+                select
+                    grouping_id(
+                        {groupingIdArgs}
+                    ),
+                    {buckets.Count} as num_buckets,
+                    {bucketsFragment},
+                    count(*),
+                    count_noise(*)
+                from {tableName}
+                group by grouping sets ({string.Join(",", Enumerable.Range(3, buckets.Count))})";
         }
 
-        public string QueryStatement
-        {
-            get
-            {
-                var bucketsFragment = string.Join(
-                    ",",
-                    from bucket in Buckets select $"bucket({ColumnName} by {bucket}) as bucket_{(int)bucket}");
+        public string QueryStatement { get; }
 
-                var groupingIdArgs = string.Join(
-                    ",",
-                    from bucket in Buckets select $"bucket({ColumnName} by {bucket})");
-
-                return $@"
-                        select
-                            grouping_id(
-                                {groupingIdArgs}
-                            ),
-                            {Buckets.Count} as num_buckets,
-                            {bucketsFragment},
-                            count(*),
-                            count_noise(*)
-                        from {TableName}
-                        group by grouping sets ({string.Join(",", Enumerable.Range(3, Buckets.Count))})";
-            }
-        }
-
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        private IList<decimal> Buckets { get; }
-
-        public Result FromJsonArray(ref Utf8JsonReader reader)
+        public Result ParseRow(ref Utf8JsonReader reader)
         {
             var groupingFlags = reader.ParseNonNullableMetric<int>();
             var numBuckets = reader.ParseNonNullableMetric<int>();
 
             int? bucketIndex = null;
-            IDiffixValue<decimal>? lowerBound = null;
+            DValue<decimal>? lowerBound = null;
 
             for (var i = numBuckets - 1; i >= 0; i--)
             {
                 if (((groupingFlags >> i) & 1) == 0)
                 {
                     bucketIndex = numBuckets - 1 - i;
-                    lowerBound = reader.ParseAircloakResultValue<decimal>();
+                    lowerBound = reader.ParseValue<decimal>();
                 }
                 else
                 {
                     // discard value
-                    reader.ParseAircloakResultValue<decimal>();
+                    reader.ParseValue<decimal>();
                 }
             }
 
@@ -93,12 +80,12 @@ namespace Explorer.Queries
         {
             public Result()
             {
-                LowerBound = NullValue<decimal>.Instance;
+                LowerBound = DValue<decimal>.Null;
             }
 
             public int BucketIndex { get; set; }
 
-            public IDiffixValue<decimal> LowerBound { get; set; }
+            public DValue<decimal> LowerBound { get; set; }
 
             public long Count { get; set; }
 

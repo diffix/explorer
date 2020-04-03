@@ -5,7 +5,7 @@ namespace Explorer.Queries
     using Diffix;
     using Explorer.Common;
 
-    public enum TextColumnTrimType
+    internal enum TextColumnTrimType
     {
         /// <summary>
         /// Trim chars from the beginning.
@@ -24,54 +24,24 @@ namespace Explorer.Queries
     }
 
     internal class TextColumnTrim :
-        IQuerySpec<TextColumnTrim.Result>
+        DQuery<ValueWithCount<string>>
     {
         public TextColumnTrim(string tableName, string columnName, TextColumnTrimType trimType, string trimChars)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-            TrimPosition = trimType.ToString().ToUpperInvariant();
-            TrimChars = trimChars;
+            var trimPosition = trimType.ToString().ToUpperInvariant();
+
+            QueryStatement = $@"
+                select 
+                    trim({trimPosition} '{trimChars}' FROM {columnName}),
+                    count(*),
+                    count_noise(*)
+                from {tableName}
+                group by 1";
         }
 
-        public string QueryStatement => $@"
-            select 
-                trim({TrimPosition} '{TrimChars}' FROM {ColumnName}),
-                count(*),
-                count_noise(*)
-            from {TableName}
-            group by 1";
+        public string QueryStatement { get; }
 
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        private string TrimPosition { get; }
-
-        private string TrimChars { get; }
-
-        public Result FromJsonArray(ref Utf8JsonReader reader) => new Result(ref reader);
-
-        public class Result : ICountAggregate, IDiffixValue
-        {
-            private readonly IDiffixValue<string> trimmedText;
-
-            public Result(ref Utf8JsonReader reader)
-            {
-                trimmedText = reader.ParseAircloakResultValue<string>();
-                Count = reader.ParseCount();
-                CountNoise = reader.ParseCountNoise();
-            }
-
-            public string? TrimmedText => trimmedText.HasValue ? trimmedText.Value : null;
-
-            public long Count { get; set; }
-
-            public double? CountNoise { get; set; }
-
-            public bool IsNull => trimmedText.IsNull;
-
-            public bool IsSuppressed => trimmedText.IsSuppressed;
-        }
+        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+            ValueWithCount<string>.Parse(ref reader);
     }
 }
