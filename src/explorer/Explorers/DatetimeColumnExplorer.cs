@@ -9,48 +9,30 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class DatetimeColumnExplorer : ExplorerBase
+    internal class DatetimeColumnExplorer : ExplorerBase<ColumnExplorerContext>
     {
         // TODO: The following should be configuration items (?)
         private const double SuppressedRatioThreshold = 0.1;
 
-        public DatetimeColumnExplorer(
-            DConnection connection,
-            string tableName,
-            string columnName,
-            DValueType columnType = DValueType.Datetime)
-            : base(connection)
+        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-            ColumnType = columnType;
-        }
-
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        private DValueType ColumnType { get; }
-
-        public override async Task Explore()
-        {
-            var statsQ = await Exec<NumericColumnStats.Result<DateTime>>(
-                new NumericColumnStats(TableName, ColumnName));
+            var statsQ = await conn.Exec<NumericColumnStats.Result<DateTime>>(
+                new NumericColumnStats(ctx.Table, ctx.Column));
 
             var stats = statsQ.Rows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await Exec(
-                new DistinctColumnValues(TableName, ColumnName));
+            var distinctValueQ = await conn.Exec(
+                new DistinctColumnValues(ctx.Table, ctx.Column));
 
             var counts = ValueCounts.Compute(distinctValueQ.Rows);
 
             if (counts.TotalCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {TableName}, {ColumnName} is zero.");
+                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
             }
 
             if (counts.SuppressedCountRatio < SuppressedRatioThreshold)
@@ -72,8 +54,8 @@ namespace Explorer.Explorers
             }
 
             await Task.WhenAll(
-                LinearBuckets(),
-                CyclicalBuckets());
+                LinearBuckets(conn, ctx),
+                CyclicalBuckets(conn, ctx));
 
             // Other metrics?
             // Median
@@ -102,27 +84,27 @@ namespace Explorer.Explorers
             };
         }
 
-        private async Task LinearBuckets()
+        private async Task LinearBuckets(DConnection conn, ColumnExplorerContext ctx)
         {
-            var queryResult = await Exec(
-                new BucketedDatetimes(TableName, ColumnName, ColumnType));
+            var queryResult = await conn.Exec(
+                new BucketedDatetimes(ctx.Table, ctx.Column, ctx.ColumnType));
 
-            await Task.Run(() => ProcessLinearBuckets(queryResult.Rows));
+            await Task.Run(() => ProcessLinearBuckets(conn, queryResult.Rows));
         }
 
-        private async Task CyclicalBuckets()
+        private async Task CyclicalBuckets(DConnection conn, ColumnExplorerContext ctx)
         {
-            var queryResult = await Exec(
-                new CyclicalDatetimes(TableName, ColumnName, ColumnType));
+            var queryResult = await conn.Exec(
+                new CyclicalDatetimes(ctx.Table, ctx.Column, ctx.ColumnType));
 
-            await Task.Run(() => ProcessCyclicalBuckets(queryResult.Rows));
+            await Task.Run(() => ProcessCyclicalBuckets(conn, queryResult.Rows));
         }
 
-        private void ProcessLinearBuckets(IEnumerable<GroupingSetsResult<DateTime>> queryResult)
+        private void ProcessLinearBuckets(DConnection conn, IEnumerable<GroupingSetsResult<DateTime>> queryResult)
         {
             foreach (var group in GroupByLabel(queryResult))
             {
-                ThrowIfCancellationRequested();
+                conn.ThrowIfCancellationRequested();
 
                 var counts = ValueCounts.Compute(group);
                 if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
@@ -136,12 +118,12 @@ namespace Explorer.Explorers
             }
         }
 
-        private void ProcessCyclicalBuckets(IEnumerable<GroupingSetsResult<int>> queryResult)
+        private void ProcessCyclicalBuckets(DConnection conn, IEnumerable<GroupingSetsResult<int>> queryResult)
         {
             var includeRest = false;
             foreach (var group in GroupByLabel(queryResult))
             {
-                ThrowIfCancellationRequested();
+                conn.ThrowIfCancellationRequested();
 
                 var label = group.Key;
 

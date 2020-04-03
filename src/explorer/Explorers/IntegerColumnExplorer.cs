@@ -9,43 +9,39 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class IntegerColumnExplorer : ExplorerBase
+    internal class IntegerColumnExplorer : ExplorerBase<ColumnExplorerContext>
     {
         // TODO: The following should be configuration items (?)
         private const long ValuesPerBucketTarget = 20;
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public IntegerColumnExplorer(DConnection connection, string tableName, string columnName, string metricNamePrefix)
-            : base(connection, metricNamePrefix)
+        private readonly string metricNamePrefix;
+
+        public IntegerColumnExplorer(string metricNamePrefix = "")
         {
-            TableName = tableName;
-            ColumnName = columnName;
+            this.metricNamePrefix = metricNamePrefix;
         }
 
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        public override async Task Explore()
+        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
         {
-            var statsQ = await Exec<NumericColumnStats.Result<long>>(
-                new NumericColumnStats(TableName, ColumnName));
+            var statsQ = await conn.Exec<NumericColumnStats.Result<long>>(
+                new NumericColumnStats(ctx.Table, ctx.Column));
 
             var stats = statsQ.Rows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await Exec(
-                new DistinctColumnValues(TableName, ColumnName));
+            var distinctValueQ = await conn.Exec(
+                new DistinctColumnValues(ctx.Table, ctx.Column));
 
             var counts = ValueCounts.Compute(distinctValueQ.Rows);
 
             if (counts.TotalCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {TableName}, {ColumnName} is zero.");
+                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
             }
 
             if (counts.SuppressedCountRatio < SuppressedRatioThreshold)
@@ -72,8 +68,8 @@ namespace Explorer.Explorers
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
-            var histogramQ = await Exec<SingleColumnHistogram.Result>(
-                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample));
+            var histogramQ = await conn.Exec<SingleColumnHistogram.Result>(
+                new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 
             var optimumBucket = (
                 from row in histogramQ.Rows
@@ -165,6 +161,15 @@ namespace Explorer.Explorers
                 / counts.TotalCount;
 
             PublishMetric(new UntypedMetric(name: "avg_estimate", metric: decimal.Round(averageEstimate, 2)));
+        }
+
+        private void PublishMetric(UntypedMetric metric)
+        {
+            if (!string.IsNullOrEmpty(metricNamePrefix))
+            {
+                metric = new UntypedMetric(metricNamePrefix + "." + metric.Name, metric.Metric);
+            }
+            base.PublishMetric(metric);
         }
     }
 }

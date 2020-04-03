@@ -8,25 +8,14 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class EmailColumnExplorer : ExplorerBase
+    internal class EmailColumnExplorer : ExplorerBase<ColumnExplorerContext>
     {
         public const string EmailAddressChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
 
-        public EmailColumnExplorer(DConnection connection, string tableName, string columnName)
-            : base(connection)
+        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-        }
-
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        public override async Task Explore()
-        {
-            var emailCheckQ = await Exec(
-                new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Both, EmailAddressChars));
+            var emailCheckQ = await conn.Exec(
+                new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, EmailAddressChars));
 
             var counts = ValueCounts.Compute(emailCheckQ.Rows);
 
@@ -41,8 +30,8 @@ namespace Explorer.Explorers
                 return;
             }
 
-            var tldQ = await Exec(
-                new TextColumnSuffix(TableName, ColumnName, 3, 7));
+            var tldQ = await conn.Exec(
+                new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
 
             var tldList =
                 from row in tldQ.Rows
@@ -56,8 +45,8 @@ namespace Explorer.Explorers
 
             PublishMetric(new UntypedMetric(name: "email.top_level_domains", metric: tldList));
 
-            var domainQ = await Exec(
-                new TextColumnTrim(TableName, ColumnName, TextColumnTrimType.Leading, EmailAddressChars));
+            var domainQ = await conn.Exec(
+                new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Leading, EmailAddressChars));
 
             var domainList =
                 from row in domainQ.Rows

@@ -8,23 +8,12 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class BoolColumnExplorer : ExplorerBase
+    internal class BoolColumnExplorer : ExplorerBase<ColumnExplorerContext>
     {
-        public BoolColumnExplorer(DConnection connection, string tableName, string columnName)
-            : base(connection)
+        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-        }
-
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        public override async Task Explore()
-        {
-            var distinctValuesQ = await Exec(
-                new DistinctColumnValues(TableName, ColumnName));
+            var distinctValuesQ = await conn.Exec(
+                new DistinctColumnValues(ctx.Table, ctx.Column));
 
             var counts = ValueCounts.Compute(distinctValuesQ.Rows);
 
@@ -34,7 +23,7 @@ namespace Explorer.Explorers
             if (counts.TotalCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {TableName}, {ColumnName} is zero.");
+                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
             }
 
             PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: counts.TotalCount));

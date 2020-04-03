@@ -9,43 +9,32 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class RealColumnExplorer : ExplorerBase
+    internal class RealColumnExplorer : ExplorerBase<ColumnExplorerContext>
     {
         // TODO: The following should be configuration items (?)
         private const long ValuesPerBucketTarget = 20;
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public RealColumnExplorer(DConnection connection, string tableName, string columnName)
-            : base(connection)
+        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-        }
-
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        public override async Task Explore()
-        {
-            var statsQ = await Exec<NumericColumnStats.Result<double>>(
-                new NumericColumnStats(TableName, ColumnName));
+            var statsQ = await conn.Exec<NumericColumnStats.Result<double>>(
+                new NumericColumnStats(ctx.Table, ctx.Column));
 
             var stats = statsQ.Rows.Single();
 
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await Exec(
-                new DistinctColumnValues(TableName, ColumnName));
+            var distinctValueQ = await conn.Exec(
+                new DistinctColumnValues(ctx.Table, ctx.Column));
 
             var counts = ValueCounts.Compute(distinctValueQ.Rows);
 
             if (counts.TotalCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {TableName}, {ColumnName} is zero.");
+                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
             }
 
             if (counts.SuppressedCountRatio < SuppressedRatioThreshold)
@@ -72,8 +61,8 @@ namespace Explorer.Explorers
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
-            var histogramQ = await Exec<SingleColumnHistogram.Result>(
-                new SingleColumnHistogram(TableName, ColumnName, bucketsToSample));
+            var histogramQ = await conn.Exec<SingleColumnHistogram.Result>(
+                new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 
             var optimumBucket = (
                 from row in histogramQ.Rows

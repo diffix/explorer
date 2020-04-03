@@ -1,49 +1,31 @@
+#pragma warning disable SA1402 // File may only contain a single type
 namespace Explorer.Common
 {
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
 
     using Diffix;
 
     internal abstract class ExplorerBase
     {
-        private readonly ConcurrentBag<IExploreMetric> metrics;
+        private readonly ConcurrentBag<ExploreMetric> metrics = new ConcurrentBag<ExploreMetric>();
 
-        private readonly DConnection connection;
+        public IEnumerable<ExploreMetric> Metrics => metrics.ToArray();
 
-        private readonly string metricNamePrefix;
+        public abstract Task Explore(DConnection conn, ExplorerContext ctx);
 
-        protected ExplorerBase(DConnection connection, string metricNamePrefix = "")
-        {
-            this.connection = connection;
-            this.metricNamePrefix = metricNamePrefix;
-            metrics = new ConcurrentBag<IExploreMetric>();
-        }
-
-        public IExploreMetric[] Metrics
-        {
-            get => metrics.ToArray();
-        }
-
-        public abstract Task Explore();
-
-        protected void PublishMetric(IExploreMetric metric)
-        {
-            if (!string.IsNullOrEmpty(metricNamePrefix))
-            {
-                metric.Name = metricNamePrefix + "." + metric.Name;
-            }
+        protected void PublishMetric(ExploreMetric metric) =>
             metrics.Add(metric);
-        }
+    }
 
-        protected async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
-        {
-            return await connection.Exec(query);
-        }
+    internal abstract class ExplorerBase<Tctx> : ExplorerBase
+        where Tctx : ExplorerContext
+    {
+        public abstract Task Explore(DConnection conn, Tctx ctx);
 
-        protected void ThrowIfCancellationRequested()
-        {
-            connection.ThrowIfCancellationRequested();
-        }
+        public override Task Explore(DConnection conn, ExplorerContext ctx) =>
+            this.Explore(conn, (Tctx)ctx);
     }
 }
+#pragma warning restore SA1402 // File may only contain a single type

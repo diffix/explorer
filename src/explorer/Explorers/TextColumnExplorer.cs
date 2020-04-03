@@ -9,25 +9,14 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class TextColumnExplorer : ExplorerBase
+    internal class TextColumnExplorer : ExplorerBase<ColumnExplorerContext>
     {
         private const double SuppressedRatioThreshold = 0.1;
 
-        public TextColumnExplorer(DConnection connection, string tableName, string columnName)
-            : base(connection)
+        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
         {
-            TableName = tableName;
-            ColumnName = columnName;
-        }
-
-        private string TableName { get; }
-
-        private string ColumnName { get; }
-
-        public override async Task Explore()
-        {
-            var distinctValuesQ = await Exec(
-                new DistinctColumnValues(TableName, ColumnName));
+            var distinctValuesQ = await conn.Exec(
+                new DistinctColumnValues(ctx.Table, ctx.Column));
 
             var counts = ValueCounts.Compute(distinctValuesQ.Rows);
 
@@ -37,7 +26,7 @@ namespace Explorer.Explorers
             if (counts.TotalCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {TableName}, {ColumnName} is zero.");
+                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
             }
 
             PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: counts.TotalCount));
@@ -57,19 +46,19 @@ namespace Explorer.Explorers
             if (counts.SuppressedCountRatio >= SuppressedRatioThreshold)
             {
                 // we compute the common prefixes only if the row is not categorical
-                await ExplorePrefixes();
+                await ExplorePrefixes(conn, ctx);
             }
         }
 
-        private async Task<IEnumerable<Prefix>> ExplorePrefixes()
+        private async Task<IEnumerable<Prefix>> ExplorePrefixes(DConnection conn, ColumnExplorerContext ctx)
         {
             var allPrefixes = new List<Prefix>();
             var length = 0;
             while (true)
             {
                 length++;
-                var prefixesQ = await Exec(
-                    new TextColumnPrefix(TableName, ColumnName, length));
+                var prefixesQ = await conn.Exec(
+                    new TextColumnPrefix(ctx.Table, ctx.Column, length));
 
                 var counts = ValueCounts.Compute(prefixesQ.Rows);
                 var avgCount = (double)counts.NonSuppressedCount / counts.NonSuppressedRows;

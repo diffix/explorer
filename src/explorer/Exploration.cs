@@ -12,20 +12,22 @@ namespace Explorer
 
     public class Exploration : IDisposable
     {
-        internal Exploration(DConnection connection, IEnumerable<ExplorerBase> explorers)
+        internal Exploration(
+            DConnection conn,
+            IEnumerable<(ExplorerBase Explorer, ExplorerContext Context)> components)
         {
-            Explorers = explorers;
-            Connection = connection;
+            Explorers = components.Select(c => c.Explorer);
+            Connection = conn;
             IsDisposed = false;
             ExplorationGuid = Guid.NewGuid();
-            Completion = Task.WhenAll(explorers.Select(e => e.Explore()));
+            Completion = Task.WhenAll(components.Select(c => c.Explorer.Explore(conn, c.Context)));
         }
 
         public Task Completion { get; }
 
         public Guid ExplorationGuid { get; }
 
-        public IEnumerable<IExploreMetric> ExploreMetrics =>
+        public IEnumerable<ExploreMetric> ExploreMetrics =>
             Explorers.SelectMany(explorer => explorer.Metrics);
 
         public ExplorationStatus Status =>
@@ -43,41 +45,42 @@ namespace Explorer
             string tableName,
             string columnName)
         {
+            var ctx = new ColumnExplorerContext(tableName, columnName, columnType);
             var components = columnType switch
             {
-                DValueType.Integer => new ExplorerBase[]
+                DValueType.Integer => new (ExplorerBase, ExplorerContext)[]
                 {
-                    new IntegerColumnExplorer(conn, tableName, columnName, string.Empty),
-                    new MinMaxExplorer(conn, tableName, columnName),
+                    (new IntegerColumnExplorer(), ctx),
+                    (new MinMaxExplorer(), ctx),
                 },
-                DValueType.Real => new ExplorerBase[]
+                DValueType.Real => new (ExplorerBase, ExplorerContext)[]
                 {
-                    new RealColumnExplorer(conn, tableName, columnName),
-                    new MinMaxExplorer(conn, tableName, columnName),
+                    (new RealColumnExplorer(), ctx),
+                    (new MinMaxExplorer(), ctx),
                 },
-                DValueType.Text => new ExplorerBase[]
+                DValueType.Text => new (ExplorerBase, ExplorerContext)[]
                 {
-                    new TextColumnExplorer(conn, tableName, columnName),
-                    new EmailColumnExplorer(conn, tableName, columnName),
-                    new IntegerColumnExplorer(conn, tableName, $"length({columnName})", "text.length"),
+                    (new TextColumnExplorer(), ctx),
+                    (new EmailColumnExplorer(), ctx),
+                    (new IntegerColumnExplorer("text.length"), new ColumnExplorerContext(tableName, $"length({columnName})", columnType)),
                 },
-                DValueType.Bool => new ExplorerBase[]
+                DValueType.Bool => new (ExplorerBase, ExplorerContext)[]
                 {
-                    new CategoricalColumnExplorer(conn, tableName, columnName),
+                    (new CategoricalColumnExplorer(), ctx),
                 },
-                DValueType.Datetime => new ExplorerBase[]
+                DValueType.Datetime => new (ExplorerBase, ExplorerContext)[]
                 {
-                    new DatetimeColumnExplorer(conn, tableName, columnName, columnType),
+                    (new DatetimeColumnExplorer(), ctx),
                 },
-                DValueType.Timestamp => new ExplorerBase[]
+                DValueType.Timestamp => new (ExplorerBase, ExplorerContext)[]
                 {
-                    new DatetimeColumnExplorer(conn, tableName, columnName, columnType),
+                    (new DatetimeColumnExplorer(), ctx),
                 },
-                DValueType.Date => new ExplorerBase[]
+                DValueType.Date => new (ExplorerBase, ExplorerContext)[]
                 {
-                    new DatetimeColumnExplorer(conn, tableName, columnName, columnType),
+                    (new DatetimeColumnExplorer(), ctx),
                 },
-                _ => System.Array.Empty<ExplorerBase>(),
+                _ => System.Array.Empty<(ExplorerBase, ExplorerContext)>(),
             };
 
             if (components.Length == 0)

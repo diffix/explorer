@@ -63,9 +63,10 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
+            // the connection is owned by the exploration and the exploration is disposed on completion/cancellation
+#pragma warning disable CA2000 // call IDisposable.Dispose
             var conn = new AircloakConnection(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
 
-#pragma warning disable CA2000 // call IDisposable.Dispose
             var exploration = Exploration.Create(conn, explorerColumnMeta.Type, data.TableName, data.ColumnName);
 #pragma warning restore CA2000 // call IDisposable.Dispose
             if (exploration == null)

@@ -1,6 +1,6 @@
 namespace Explorer.Common
 {
-    internal struct UntypedMetric : IExploreMetric
+    internal struct UntypedMetric : ExploreMetric
     {
         public UntypedMetric(string name, object metric)
         {
@@ -8,8 +8,8 @@ namespace Explorer.Common
             Metric = metric;
         }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public object Metric { get; set; }
+        public object Metric { get; }
     }
 }
