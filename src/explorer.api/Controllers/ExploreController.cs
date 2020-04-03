@@ -67,7 +67,7 @@ namespace Explorer.Api.Controllers
 #pragma warning disable CA2000 // call IDisposable.Dispose
             var conn = new AircloakConnection(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
 
-            var exploration = Exploration.Create(conn, explorerColumnMeta.Type, data.TableName, data.ColumnName);
+            var exploration = Exploration.Create(conn, data.TableName, data.ColumnName, explorerColumnMeta.Type);
 #pragma warning restore CA2000 // call IDisposable.Dispose
             if (exploration == null)
             {

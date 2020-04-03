@@ -1,5 +1,3 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("explorer.api.tests")]
-
 namespace Explorer.Api
 {
     using Microsoft.AspNetCore;

@@ -12,7 +12,7 @@ namespace Explorer
 
     public class Exploration : IDisposable
     {
-        internal Exploration(
+        private Exploration(
             DConnection conn,
             IEnumerable<(ExplorerBase Explorer, ExplorerContext Context)> components)
         {
@@ -41,9 +41,9 @@ namespace Explorer
 
         public static Exploration? Create(
             DConnection conn,
-            DValueType columnType,
             string tableName,
-            string columnName)
+            string columnName,
+            DValueType columnType)
         {
             var ctx = new ColumnExplorerContext(tableName, columnName, columnType);
             var components = columnType switch
@@ -100,6 +100,18 @@ namespace Explorer
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        internal static Exploration Create(
+            DConnection conn,
+            ExplorerBase<ColumnExplorerContext> explorer,
+            string tableName,
+            string columnName,
+            DValueType columnType)
+        {
+            var ctx = new ColumnExplorerContext(tableName, columnName, columnType);
+            var components = new (ExplorerBase, ExplorerContext)[] { (explorer, ctx) };
+            return new Exploration(conn, components);
         }
 
         protected virtual void Dispose(bool disposing)

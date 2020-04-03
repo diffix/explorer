@@ -12,8 +12,10 @@
 
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
+    using Diffix;
     using Explorer.Api;
     using Explorer.Api.Authentication;
+    using Explorer.Common;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +47,7 @@
         }
 
         public async Task<QueryResult<TResult>> QueryResult<TResult>(
-            IQuerySpec<TResult> query,
+            DQuery<TResult> query,
             string dataSourceName,
             string testClassName,
             [CallerMemberName] string vcrSessionName = "")
@@ -106,18 +108,21 @@
             Dispose(true);
         }
 
-        internal async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
+        internal async Task<IEnumerable<ExploreMetric>> GetExplorerMetrics(
+            ExplorerBase<ColumnExplorerContext> explorer,
             string dataSourceName,
-            Func<IQueryResolver, ExplorerBase> explorerFactory,
+            string tableName,
+            string columnName,
+            DValueType columnType,
             string testClassName,
             [CallerMemberName] string vcrSessionName = "")
         {
             var testConfig = GetTestConfig(testClassName, vcrSessionName);
             var jsonApiClient = CreateJsonApiClient(testConfig.VcrCassettePath);
 
-            var queryResolver = new AircloakQueryResolver(jsonApiClient, dataSourceName, testConfig.PollFrequency);
+            using var conn = new AircloakConnection(jsonApiClient, dataSourceName, testConfig.PollFrequency);
 
-            using var exploration = new Exploration(new[] { explorerFactory(queryResolver), });
+            using var exploration = Exploration.Create(conn, explorer, tableName, columnName, columnType);
 
             await exploration.Completion;
 
