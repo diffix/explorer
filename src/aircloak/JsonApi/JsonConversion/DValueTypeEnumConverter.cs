@@ -11,7 +11,7 @@ namespace Aircloak.JsonApi.JsonConversion
     /// <summary>
     /// <c>JsonConverter</c> for (de)serializing the <see cref="ValueType" /> enum as a string.
     /// </summary>
-    internal class DValueTypeEnumConverter : JsonConverter<ValueType>
+    internal class DValueTypeEnumConverter : JsonConverter<DValueType>
     {
         private const string Integer = "integer";
         private const string Real = "real";
@@ -21,7 +21,7 @@ namespace Aircloak.JsonApi.JsonConversion
         private const string Datetime = "datetime";
         private const string Bool = "boolean";
 
-        public override ValueType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override DValueType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             return reader.GetString() switch
             {
@@ -36,7 +36,7 @@ namespace Aircloak.JsonApi.JsonConversion
             };
         }
 
-        public override void Write(Utf8JsonWriter writer, ValueType aircloakType, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, DValueType aircloakType, JsonSerializerOptions options)
         {
             var s = aircloakType switch
             {

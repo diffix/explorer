@@ -32,6 +32,7 @@ namespace Aircloak.JsonApi
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
+            Converters = { new DValueTypeEnumConverter() },
         };
 
         private readonly HttpClient httpClient;
