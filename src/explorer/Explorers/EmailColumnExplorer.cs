@@ -35,7 +35,7 @@ namespace Explorer.Explorers
 
             var tldList =
                 from row in tldQ.Rows
-                where row.Value.StartsWith(".", StringComparison.InvariantCulture)
+                where row.HasValue && row.Value.StartsWith(".", StringComparison.InvariantCulture)
                 orderby row.Count descending
                 select new
                 {
