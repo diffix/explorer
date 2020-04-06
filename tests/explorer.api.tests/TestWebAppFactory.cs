@@ -40,10 +40,8 @@
             var variableName = Config.ApiKeyEnvironmentVariable ??
                 throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
 
-            var apiKey = Environment.GetEnvironmentVariable(variableName) ??
+            return Environment.GetEnvironmentVariable(variableName) ??
                 throw new Exception($"Environment variable {variableName} not set.");
-
-            return apiKey;
         }
 
         public async Task<QueryResult<TResult>> QueryResult<TResult>(
@@ -96,7 +94,7 @@
             var vcrOptions = expectFail ? VcrSharp.RecordingOptions.FailureOnly : VcrSharp.RecordingOptions.SuccessOnly;
             var vcrCassette = LoadCassette(vcrCassettePath);
             var vcrHandler = new VcrSharp.ReplayingHandler(new HttpClientHandler(), VcrSharp.VCRMode.Cache, vcrCassette, vcrOptions);
-            var httpClient = new HttpClient(vcrHandler, true) { BaseAddress = Config.AircloakApiUrl };
+            var httpClient = new HttpClient(vcrHandler, true) { BaseAddress = Config.AircloakApiUrl() };
             var variableName = Config.ApiKeyEnvironmentVariable ?? throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
             var authProvider = StaticApiKeyAuthProvider.FromEnvironmentVariable(variableName);
             return new JsonApiClient(httpClient, authProvider);
@@ -152,8 +150,7 @@
             builder.ConfigureServices(services =>
             {
                 services
-                    .AddAircloakJsonApiServices<ExplorerApiAuthProvider>(Config.AircloakApiUrl ??
-                        throw new Exception("No Aircloak Api base Url provided in Explorer config."))
+                    .AddAircloakJsonApiServices<ExplorerApiAuthProvider>(Config.AircloakApiUrl())
                     .AddHttpMessageHandler(_ => new VcrSharp.ReplayingHandler(
                             testConfig.VcrMode,
                             LoadCassette(testConfig.VcrCassettePath),
