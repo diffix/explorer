@@ -24,16 +24,28 @@ variable in your environment.
 
 ### Running
 
-Building and running can be simply done using Docker:
+Building and running can be simply done using Docker. The http api is exposed on port 5000. 
+
+You will need specify two environment variables: 
+- `AIRCLOAK_API_KEY`: The api key mentioned above.
+- `AIRCLOAK_API_URL`: The base url for the api, for example `https://attack.aircloak.com`
+
+It is recommended to define `AIRCLOAK_API_KEY` in the host environment and to specify the `AIRCLOAK_API_URL` explicitly on startup. For example:
 
 ```
 docker build -t explorer .
-docker run -it --rm  -e AIRCLOAK_API_KEY -p 5000:80 explorer
+docker run -it --rm  -e AIRCLOAK_API_KEY -e AIRCLOAK_API_URL:"https://attack.airclaoak.com" -p 5000:80 explorer
 ```
 
-If you are running in a unix-like environment, you use or adapt the `build.sh` and `run.sh` scripts.
+If you are running in a unix-like environment, you use or adapt the `build.sh` and `run.sh` scripts:
 
-### Development
+```
+./build.sh
+./run.sh "https://attack.aircloak.com/api"
+```
+
+
+## Development
 
 The simplest way to get started is with VS Code's remote containers feature.
 
