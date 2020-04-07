@@ -37,11 +37,8 @@
 
         public static string GetAircloakApiKeyFromEnvironment()
         {
-            var variableName = Config.ApiKeyEnvironmentVariable ??
-                throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
-
-            return Environment.GetEnvironmentVariable(variableName) ??
-                throw new Exception($"Environment variable {variableName} not set.");
+            return Environment.GetEnvironmentVariable(ExplorerConfig.ApiKeyEnvironmentVariable) ??
+                throw new Exception($"Environment variable {ExplorerConfig.ApiKeyEnvironmentVariable} not set.");
         }
 
         public async Task<QueryResult<TResult>> QueryResult<TResult>(
@@ -95,8 +92,7 @@
             var vcrCassette = LoadCassette(vcrCassettePath);
             var vcrHandler = new VcrSharp.ReplayingHandler(new HttpClientHandler(), VcrSharp.VCRMode.Cache, vcrCassette, vcrOptions);
             var httpClient = new HttpClient(vcrHandler, true) { BaseAddress = Config.AircloakApiUrl() };
-            var variableName = Config.ApiKeyEnvironmentVariable ?? throw new Exception("ApiKeyEnvironmentVariable config item is missing.");
-            var authProvider = StaticApiKeyAuthProvider.FromEnvironmentVariable(variableName);
+            var authProvider = StaticApiKeyAuthProvider.FromEnvironmentVariable(ExplorerConfig.ApiKeyEnvironmentVariable);
             return new JsonApiClient(httpClient, authProvider);
         }
 #pragma warning restore CA2000 // call IDisposable.Dispose on handler object
