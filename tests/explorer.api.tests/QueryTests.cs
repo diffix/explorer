@@ -125,7 +125,6 @@ namespace Explorer.Api.Tests
                             row.LowerBound.IsSuppressed ||
                             row.LowerBound.Value >= 0);
                 Assert.True(row.Count > 0);
-                Assert.True(row.CountNoise.HasValue);
             });
         }
 
@@ -180,8 +179,8 @@ namespace Explorer.Api.Tests
         {
             var metrics = await GetExplorerMetrics(new MinMaxExplorer(), "gda_banking", "loans", "amount");
 
-            const decimal expectedMin = 3288M;
-            const decimal expectedMax = 495725M;
+            const decimal expectedMin = 3303;
+            const decimal expectedMax = 495_103;
             var actualMin = (decimal)metrics.Single(m => m.Name == "refined_min").Metric;
             Assert.True(actualMin == expectedMin, $"Expected {expectedMin}, got {actualMin}");
             var actualMax = (decimal)metrics.Single(m => m.Name == "refined_max").Metric;
@@ -191,12 +190,12 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "gda_banking", "loans", "SeriousDlqin2yrs");
+            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "Clinic", "addresses", "isaddressvalid");
 
             var expectedValues = new List<object>
             {
-                new { Value = false, Count = 139_974L },
-                new { Value = true, Count = 10_028L },
+                new { Value = true, Count = 15_367 },
+                new { Value = false, Count = 19 },
             };
 
             CheckDistinctCategories(metrics, expectedValues, el => el.GetBoolean());
@@ -209,10 +208,10 @@ namespace Explorer.Api.Tests
 
             var expectedValues = new List<object>
             {
-                new { Value = "C", Count = 493L },
-                new { Value = "A", Count = 260L },
-                new { Value = "D", Count = 42L },
-                new { Value = "B", Count = 32L },
+                new { Value = "C", Count = 491L },
+                new { Value = "A", Count = 258L },
+                new { Value = "D", Count = 45L },
+                new { Value = "B", Count = 30L },
             };
 
             CheckDistinctCategories(metrics, expectedValues, el => el.GetString());
