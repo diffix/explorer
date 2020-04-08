@@ -56,7 +56,8 @@ namespace Aircloak.JsonApi
         /// Aircloak instance.</returns>
         public async Task<DataSourceCollection> GetDataSources(CancellationToken cancellationToken)
         {
-            return await ApiGetRequest<DataSourceCollection>("data_sources", DefaultJsonOptions, cancellationToken);
+            using var httpResponse = await ApiGetRequest("data_sources", cancellationToken);
+            return await ParseJson<DataSourceCollection>(httpResponse, DefaultJsonOptions, cancellationToken);
         }
 
         /// <summary>
@@ -99,8 +100,9 @@ namespace Aircloak.JsonApi
                 },
             };
             var requestContent = JsonSerializer.Serialize(queryBody);
-            var queryResponse = await ApiPostRequest<QueryResponse>(
-                "queries", requestContent, DefaultJsonOptions, cancellationToken);
+            using var httpResponse = await ApiPostRequest("queries", requestContent, cancellationToken);
+            var queryResponse = await ParseJson<QueryResponse>(httpResponse, DefaultJsonOptions, cancellationToken);
+
             if (!queryResponse.Success)
             {
                 throw new Exception($"Unhandled Aircloak error returned for query to {dataSource}. Query Statement:" +
@@ -145,8 +147,8 @@ namespace Aircloak.JsonApi
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var queryResult = await ApiGetRequest<QueryResult<TRow>>(
-                        $"queries/{queryId}", jsonDeserializeOptions, cancellationToken);
+                    using var httpResponse = await ApiGetRequest($"queries/{queryId}", cancellationToken);
+                    var queryResult = await ParseJson<QueryResult<TRow>>(httpResponse, jsonDeserializeOptions, cancellationToken);
 
                     if (queryResult.Query.Completed)
                     {
@@ -218,32 +220,24 @@ namespace Aircloak.JsonApi
         /// </returns>
         private async Task<CancelResponse> CancelQuery(string queryId)
         {
-            return await ApiPostRequest<CancelResponse>(
-                $"queries/{queryId}/cancel", null, DefaultJsonOptions, CancellationToken.None);
+            using var httpResponse = await ApiPostRequest($"queries/{queryId}/cancel", null, CancellationToken.None);
+            return await ParseJson<CancelResponse>(httpResponse, DefaultJsonOptions, CancellationToken.None);
         }
 
         /// <summary>
         /// Send a GET request to the Aircloak API. Handles authentication.
         /// </summary>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
-        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
-        /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
-        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
-        /// to the provided return type.</returns>
+        /// <returns>A <c>Task&lt;HttpResponseMessage&gt;</c> which, upon completion, contains the API response.</returns>
         /// <exception cref="HttpRequestException">The request failed due to an underlying issue
         /// such as network connectivity, DNS failure, server certificate validation or timeout.
         /// </exception>
-        /// <exception cref="JsonException">The JSON is invalid.
-        /// -or- <c>T</c> is not compatible with the JSON.
-        /// -or- There is remaining data in the stream.
-        /// </exception>
-        private async Task<T> ApiGetRequest<T>(
+        private async Task<HttpResponseMessage> ApiGetRequest(
             string apiEndpoint,
-            JsonSerializerOptions options,
             CancellationToken cancellationToken)
         {
-            return await ApiRequest<T>(HttpMethod.Get, apiEndpoint, null, options, cancellationToken);
+            return await ApiRequest(HttpMethod.Get, apiEndpoint, null, cancellationToken);
         }
 
         /// <summary>
@@ -251,25 +245,17 @@ namespace Aircloak.JsonApi
         /// </summary>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="requestContent">JSON-encoded request message (optional).</param>
-        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
-        /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
-        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
-        /// to the provided return type.</returns>
+        /// <returns>A <c>Task&lt;HttpResponseMessage&gt;</c> which, upon completion, contains the API response.</returns>
         /// <exception cref="HttpRequestException">The request failed due to an underlying issue
         /// such as network connectivity, DNS failure, server certificate validation or timeout.
         /// </exception>
-        /// <exception cref="JsonException">The JSON is invalid.
-        /// -or- <c>T</c> is not compatible with the JSON.
-        /// -or- There is remaining data in the stream.
-        /// </exception>
-        private async Task<T> ApiPostRequest<T>(
+        private async Task<HttpResponseMessage> ApiPostRequest(
             string apiEndpoint,
             string? requestContent,
-            JsonSerializerOptions options,
             CancellationToken cancellationToken)
         {
-            return await ApiRequest<T>(HttpMethod.Post, apiEndpoint, requestContent, options, cancellationToken);
+            return await ApiRequest(HttpMethod.Post, apiEndpoint, requestContent, cancellationToken);
         }
 
         /// <summary>
@@ -278,23 +264,15 @@ namespace Aircloak.JsonApi
         /// <param name="requestMethod">The HTTP method to use in the request.</param>
         /// <param name="apiEndpoint">The API endpoint to target.</param>
         /// <param name="requestContent">JSON-encoded request message (optional).</param>
-        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
-        /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
-        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
-        /// to the provided return type.</returns>
+        /// <returns>A <c>Task&lt;HttpResponseMessage&gt;</c> which, upon completion, contains the API response.</returns>
         /// <exception cref="HttpRequestException">The request failed due to an underlying issue
         /// such as network connectivity, DNS failure, server certificate validation or timeout.
         /// </exception>
-        /// <exception cref="JsonException">The JSON is invalid.
-        /// -or- <c>T</c> is not compatible with the JSON.
-        /// -or- There is remaining data in the stream.
-        /// </exception>
-        private async Task<T> ApiRequest<T>(
+        private async Task<HttpResponseMessage> ApiRequest(
             HttpMethod requestMethod,
             string apiEndpoint,
             string? requestContent,
-            JsonSerializerOptions options,
             CancellationToken cancellationToken)
         {
             using var requestMessage = new HttpRequestMessage(requestMethod, apiEndpoint);
@@ -311,24 +289,37 @@ namespace Aircloak.JsonApi
                 throw new Exception("Failed to add auth-token header!");
             }
 
-            using var response = await httpClient.SendAsync(
+            var response = await httpClient.SendAsync(
                 requestMessage,
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
 
-            if (response.IsSuccessStatusCode)
-            {
-                using var contentStream = await Task.Run(response.Content.ReadAsStreamAsync, cancellationToken);
-                return await JsonSerializer.DeserializeAsync<T>(
-                    contentStream,
-                    options,
-                    cancellationToken);
-            }
-            else
+            if (!response.IsSuccessStatusCode)
             {
                 var responseContent = await Task.Run(response.Content.ReadAsStringAsync, cancellationToken);
                 throw new HttpRequestException($"Request Error: {ServiceError(response)}.\n{requestMessage}\n{requestContent}\n{responseContent}");
             }
+
+            return response;
+        }
+
+        /// <summary>
+        /// Parses JSON data into an object.
+        /// </summary>
+        /// <param name="httpResponse">A <see cref="HttpResponseMessage" /> object containing the JSON data to be parsed.</param>
+        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
+        /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
+        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
+        /// to the provided return type.</returns>
+        /// <exception cref="JsonException">The JSON is invalid.
+        /// -or- <c>T</c> is not compatible with the JSON.
+        /// -or- There is remaining data in the stream.
+        /// </exception>
+        private async Task<T> ParseJson<T>(HttpResponseMessage httpResponse, JsonSerializerOptions options, CancellationToken cancellationToken)
+        {
+            var stream = await Task.Run(httpResponse.Content.ReadAsStreamAsync, cancellationToken);
+            return await JsonSerializer.DeserializeAsync<T>(stream, options, cancellationToken);
         }
     }
 }
