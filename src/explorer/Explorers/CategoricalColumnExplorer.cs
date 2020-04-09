@@ -8,9 +8,9 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class CategoricalColumnExplorer : ExplorerBase<ColumnExplorerContext>
+    internal class CategoricalColumnExplorer : ExplorerBase
     {
-        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
+        public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var distinctValues = await conn.Exec(
                 new DistinctColumnValues(ctx.Table, ctx.Column));

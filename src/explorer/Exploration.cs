@@ -45,7 +45,7 @@ namespace Explorer
             string columnName,
             DValueType columnType)
         {
-            var ctx = new ColumnExplorerContext(tableName, columnName, columnType);
+            var ctx = new ExplorerContext(tableName, columnName, columnType);
             var components = columnType switch
             {
                 DValueType.Integer => new (ExplorerBase, ExplorerContext)[]
@@ -62,7 +62,7 @@ namespace Explorer
                 {
                     (new TextColumnExplorer(), ctx),
                     (new EmailColumnExplorer(), ctx),
-                    (new IntegerColumnExplorer("text.length"), new ColumnExplorerContext(tableName, $"length({columnName})", columnType)),
+                    (new IntegerColumnExplorer("text.length"), new ExplorerContext(tableName, $"length({columnName})", columnType)),
                 },
                 DValueType.Bool => new (ExplorerBase, ExplorerContext)[]
                 {
@@ -104,12 +104,12 @@ namespace Explorer
 
         internal static Exploration Create(
             DConnection conn,
-            ExplorerBase<ColumnExplorerContext> explorer,
+            ExplorerBase explorer,
             string tableName,
             string columnName,
             DValueType columnType)
         {
-            var ctx = new ColumnExplorerContext(tableName, columnName, columnType);
+            var ctx = new ExplorerContext(tableName, columnName, columnType);
             var components = new (ExplorerBase, ExplorerContext)[] { (explorer, ctx) };
             return new Exploration(conn, components);
         }

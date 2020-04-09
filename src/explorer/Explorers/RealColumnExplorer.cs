@@ -9,14 +9,14 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class RealColumnExplorer : ExplorerBase<ColumnExplorerContext>
+    internal class RealColumnExplorer : ExplorerBase
     {
         // TODO: The following should be configuration items (?)
         private const long ValuesPerBucketTarget = 20;
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
+        public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var statsQ = await conn.Exec<NumericColumnStats.Result<double>>(
                 new NumericColumnStats(ctx.Table, ctx.Column));

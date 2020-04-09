@@ -109,7 +109,7 @@
         }
 
         internal async Task<IEnumerable<ExploreMetric>> GetExplorerMetrics(
-            ExplorerBase<ColumnExplorerContext> explorer,
+            ExplorerBase explorer,
             string dataSourceName,
             string tableName,
             string columnName,

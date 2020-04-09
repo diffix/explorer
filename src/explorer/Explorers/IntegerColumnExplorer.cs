@@ -9,7 +9,7 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class IntegerColumnExplorer : ExplorerBase<ColumnExplorerContext>
+    internal class IntegerColumnExplorer : ExplorerBase
     {
         // TODO: The following should be configuration items (?)
         private const long ValuesPerBucketTarget = 20;
@@ -23,7 +23,7 @@ namespace Explorer.Explorers
             this.metricNamePrefix = metricNamePrefix;
         }
 
-        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
+        public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var statsQ = await conn.Exec<NumericColumnStats.Result<long>>(
                 new NumericColumnStats(ctx.Table, ctx.Column));

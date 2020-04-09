@@ -1,4 +1,3 @@
-#pragma warning disable SA1402 // File may only contain a single type
 namespace Explorer.Common
 {
     using System.Collections.Concurrent;
@@ -18,14 +17,4 @@ namespace Explorer.Common
         protected void PublishMetric(ExploreMetric metric) =>
             metrics.Add(metric);
     }
-
-    internal abstract class ExplorerBase<Tctx> : ExplorerBase
-        where Tctx : ExplorerContext
-    {
-        public abstract Task Explore(DConnection conn, Tctx ctx);
-
-        public override Task Explore(DConnection conn, ExplorerContext ctx) =>
-            this.Explore(conn, (Tctx)ctx);
-    }
 }
-#pragma warning restore SA1402 // File may only contain a single type

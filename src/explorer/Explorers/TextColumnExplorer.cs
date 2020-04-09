@@ -9,11 +9,11 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class TextColumnExplorer : ExplorerBase<ColumnExplorerContext>
+    internal class TextColumnExplorer : ExplorerBase
     {
         private const double SuppressedRatioThreshold = 0.1;
 
-        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
+        public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var distinctValuesQ = await conn.Exec(
                 new DistinctColumnValues(ctx.Table, ctx.Column));
@@ -50,7 +50,7 @@ namespace Explorer.Explorers
             }
         }
 
-        private async Task<IEnumerable<Prefix>> ExplorePrefixes(DConnection conn, ColumnExplorerContext ctx)
+        private async Task<IEnumerable<Prefix>> ExplorePrefixes(DConnection conn, ExplorerContext ctx)
         {
             var allPrefixes = new List<Prefix>();
             var length = 0;

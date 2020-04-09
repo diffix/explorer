@@ -8,13 +8,13 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class MinMaxExplorer : ExplorerBase<ColumnExplorerContext>
+    internal class MinMaxExplorer : ExplorerBase
     {
         private const int MaxIterations = 10;
 
-        private delegate Task<decimal?> Estimator(DConnection conn, ColumnExplorerContext ctx, decimal? bound);
+        private delegate Task<decimal?> Estimator(DConnection conn, ExplorerContext ctx, decimal? bound);
 
-        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
+        public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var minTask = RefinedEstimate(conn, ctx, isMin: true);
             var maxTask = RefinedEstimate(conn, ctx, isMin: false);
@@ -22,7 +22,7 @@ namespace Explorer.Explorers
             await Task.WhenAll(minTask, maxTask);
         }
 
-        private async Task RefinedEstimate(DConnection conn, ColumnExplorerContext ctx, bool isMin)
+        private async Task RefinedEstimate(DConnection conn, ExplorerContext ctx, bool isMin)
         {
             var estimator = isMin ? (Estimator)GetMinEstimate : (Estimator)GetMaxEstimate;
 
@@ -57,14 +57,14 @@ namespace Explorer.Explorers
             PublishMetric(new UntypedMetric(name: isMin ? "refined_min" : "refined_max", metric: result.Value));
         }
 
-        private async Task<decimal?> GetMinEstimate(DConnection conn, ColumnExplorerContext ctx, decimal? upperBound)
+        private async Task<decimal?> GetMinEstimate(DConnection conn, ExplorerContext ctx, decimal? upperBound)
         {
             var minQ = await conn.Exec<Min.Result<decimal>>(
                 new Min(ctx.Table, ctx.Column, upperBound));
             return minQ.Rows.Single().Min;
         }
 
-        private async Task<decimal?> GetMaxEstimate(DConnection conn, ColumnExplorerContext ctx, decimal? lowerBound)
+        private async Task<decimal?> GetMaxEstimate(DConnection conn, ExplorerContext ctx, decimal? lowerBound)
         {
             var maxQ = await conn.Exec<Max.Result<decimal>>(
                 new Max(ctx.Table, ctx.Column, lowerBound));

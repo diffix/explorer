@@ -33,7 +33,7 @@ namespace Explorer.Api.Tests
         }
 
         private async Task<IEnumerable<ExploreMetric>> GetExplorerMetrics(
-            ExplorerBase<ColumnExplorerContext> explorer,
+            ExplorerBase explorer,
             string dataSourceName,
             string tableName,
             string columnName,

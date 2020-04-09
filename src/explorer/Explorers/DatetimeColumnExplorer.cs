@@ -9,12 +9,12 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class DatetimeColumnExplorer : ExplorerBase<ColumnExplorerContext>
+    internal class DatetimeColumnExplorer : ExplorerBase
     {
         // TODO: The following should be configuration items (?)
         private const double SuppressedRatioThreshold = 0.1;
 
-        public override async Task Explore(DConnection conn, ColumnExplorerContext ctx)
+        public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var statsQ = await conn.Exec<NumericColumnStats.Result<DateTime>>(
                 new NumericColumnStats(ctx.Table, ctx.Column));
@@ -84,7 +84,7 @@ namespace Explorer.Explorers
             };
         }
 
-        private async Task LinearBuckets(DConnection conn, ColumnExplorerContext ctx)
+        private async Task LinearBuckets(DConnection conn, ExplorerContext ctx)
         {
             var queryResult = await conn.Exec(
                 new BucketedDatetimes(ctx.Table, ctx.Column, ctx.ColumnType));
@@ -92,7 +92,7 @@ namespace Explorer.Explorers
             await Task.Run(() => ProcessLinearBuckets(conn, queryResult.Rows));
         }
 
-        private async Task CyclicalBuckets(DConnection conn, ColumnExplorerContext ctx)
+        private async Task CyclicalBuckets(DConnection conn, ExplorerContext ctx)
         {
             var queryResult = await conn.Exec(
                 new CyclicalDatetimes(ctx.Table, ctx.Column, ctx.ColumnType));
