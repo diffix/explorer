@@ -11,6 +11,12 @@ namespace Diffix
 
         void Cancel();
 
-        void ThrowIfCancellationRequested() => throw new OperationCanceledException("Query operation was cancelled.");
+        void ThrowIfCancellationRequested() 
+        {
+            if (IsCancellationRequested)
+            {
+                throw new OperationCanceledException("Query operation was cancelled.");
+            }
+        }
     }
 }
