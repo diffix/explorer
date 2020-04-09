@@ -26,6 +26,8 @@ namespace Aircloak.JsonApi
             this.cancellationTokenSource = new CancellationTokenSource();
         }
 
+        public bool IsCancellationRequested => cancellationTokenSource.IsCancellationRequested;
+
         public async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
         {
             return await apiClient.Query<TRow>(
