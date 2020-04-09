@@ -3,7 +3,7 @@
     using System.Text.Json;
 
     using Diffix;
-    using global::Explorer.JsonExtensions;
+    using Explorer.JsonExtensions;
 
     internal class GroupingSetsResult<T> : ValueWithCount<T>
     {
