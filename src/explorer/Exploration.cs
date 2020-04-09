@@ -39,7 +39,7 @@ namespace Explorer
 
         private bool IsDisposed { get; set; }
 
-        public static Exploration? Create(
+        public static Exploration Create(
             DConnection conn,
             string tableName,
             string columnName,
@@ -80,13 +80,8 @@ namespace Explorer
                 {
                     (new DatetimeColumnExplorer(), ctx),
                 },
-                _ => System.Array.Empty<(ExplorerBase, ExplorerContext)>(),
+                _ => throw new ExplorerException($"No exploration strategy implemented for {columnType} columns.")
             };
-
-            if (components.Length == 0)
-            {
-                return null;
-            }
 
             return new Exploration(conn, components);
         }

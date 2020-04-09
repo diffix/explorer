@@ -69,14 +69,6 @@ namespace Explorer.Api.Controllers
 
             var exploration = Exploration.Create(conn, data.TableName, data.ColumnName, explorerColumnMeta.Type);
 #pragma warning restore CA2000 // call IDisposable.Dispose
-            if (exploration == null)
-            {
-                return Ok(new Models.NotImplementedError
-                {
-                    Description = $"No exploration strategy implemented for {explorerColumnMeta.Type} columns.",
-                    Data = data,
-                });
-            }
 
             if (!Explorations.TryAdd(exploration.ExplorationGuid, exploration))
             {
