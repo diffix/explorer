@@ -27,12 +27,12 @@ namespace Explorer.Common
 
         public double SuppressedCountRatio => (double)SuppressedCount / TotalCount;
 
-        public static ValueCounts Compute<T>(IEnumerable<ValueWithCount<T>> rows)
+        public static ValueCounts Compute(IEnumerable<CountableRow> rows)
         {
             return rows.Aggregate(new ValueCounts(), AccumulateRow);
         }
 
-        public ValueCounts AccumulateRow<T>(ValueWithCount<T> row)
+        public ValueCounts AccumulateRow(CountableRow row)
         {
             TotalCount += row.Count;
             TotalRows++;
@@ -51,7 +51,7 @@ namespace Explorer.Common
             return this;
         }
 
-        private static ValueCounts AccumulateRow<T>(ValueCounts vc, ValueWithCount<T> row)
+        private static ValueCounts AccumulateRow(ValueCounts vc, CountableRow row)
         {
             vc.AccumulateRow(row);
             return vc;

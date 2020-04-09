@@ -5,7 +5,7 @@ namespace Explorer.Common
     using Diffix;
     using Explorer.JsonExtensions;
 
-    internal class ValueWithCount<T>
+    internal class ValueWithCount<T> : CountableRow
     {
         public ValueWithCount(DValue<T> value, long count, double? countNoise)
         {
