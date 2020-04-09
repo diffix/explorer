@@ -30,7 +30,7 @@ namespace Explorer.Common
 
         public static ValueWithCount<T> Parse(ref Utf8JsonReader reader)
         {
-            var value = reader.ParseValue<T>();
+            var value = reader.ParseDValue<T>();
             var count = reader.ParseCount();
             var countNoise = reader.ParseCountNoise();
             return new ValueWithCount<T>(value, count, countNoise);

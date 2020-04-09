@@ -51,12 +51,12 @@ namespace Explorer.Queries
                 if (((groupingFlags >> i) & 1) == 0)
                 {
                     bucketIndex = numBuckets - 1 - i;
-                    lowerBound = reader.ParseValue<decimal>();
+                    lowerBound = reader.ParseDValue<decimal>();
                 }
                 else
                 {
                     // discard value
-                    reader.ParseValue<decimal>();
+                    reader.ParseDValue<decimal>();
                 }
             }
 

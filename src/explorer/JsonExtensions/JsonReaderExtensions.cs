@@ -93,7 +93,7 @@ namespace Explorer.JsonExtensions
             {
                 if (converter.SingleIndexFromGroupingId(groupingId) == i)
                 {
-                    groupValue = reader.ParseValue<T>();
+                    groupValue = reader.ParseDValue<T>();
                 }
                 else
                 {
@@ -225,9 +225,9 @@ namespace Explorer.JsonExtensions
         /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
         /// <typeparam name="T">Type of the parsed value.</typeparam>
         /// <returns>The parsed value wrapped in an <see cref="DValue{T}"/>.</returns>
-        public static DValue<T> ParseValue<T>(this ref Utf8JsonReader reader)
+        public static DValue<T> ParseDValue<T>(this ref Utf8JsonReader reader)
         {
-            return ParseValue(ref reader, DefaultParser<T>());
+            return ParseDValue(ref reader, DefaultParser<T>());
         }
 
         /// <summary>
@@ -237,7 +237,7 @@ namespace Explorer.JsonExtensions
         /// <param name="parseRawValue">A parser to use if the value is not suppressed and non-null.</param>
         /// <typeparam name="T">Type of the parsed value.</typeparam>
         /// <returns>The parsed value wrapped in an <see cref="DValue{T}"/>.</returns>
-        public static DValue<T> ParseValue<T>(
+        public static DValue<T> ParseDValue<T>(
             this ref Utf8JsonReader reader,
             Utf8JsonValueParser<T> parseRawValue)
         {
