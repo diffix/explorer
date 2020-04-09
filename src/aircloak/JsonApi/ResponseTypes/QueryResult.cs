@@ -10,11 +10,13 @@ namespace Aircloak.JsonApi.ResponseTypes
     using System.Text.Json;
     using System.Text.Json.Serialization;
 
+    using Diffix;
+
     /// <summary>
     /// Represents the JSON response from a request to /api/queries/{query_id}.
     /// </summary>
     /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
-    public struct QueryResult<TRow>
+    public struct QueryResult<TRow> : DResult<TRow>
     {
         public QueryResultInner<TRow> Query { get; set; }
 
@@ -23,7 +25,7 @@ namespace Aircloak.JsonApi.ResponseTypes
         /// </summary>
         /// <returns>An <c>IEnumerable</c> that can be used to iterate over the rows.</returns>
         [JsonIgnore]
-        public IEnumerable<TRow> ResultRows
+        public IEnumerable<TRow> Rows
         {
             get
             {
@@ -110,7 +112,7 @@ namespace Aircloak.JsonApi.ResponseTypes
 
         public int RowCount { get; set; }
 
-        public IList<AircloakType> Types { get; set; }
+        public IList<DValueType> Types { get; set; }
 
         public IList<QueryRowsWithCount> Rows { get; set; }
 

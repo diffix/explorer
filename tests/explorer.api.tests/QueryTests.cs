@@ -8,8 +8,11 @@ namespace Explorer.Api.Tests
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
-    using Aircloak.JsonApi;
+
     using Aircloak.JsonApi.ResponseTypes;
+    using Diffix;
+    using Explorer.Common;
+    using Explorer.Explorers;
     using Explorer.Queries;
     using Xunit;
 
@@ -27,18 +30,18 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            var intResult = await QueryResult<DistinctColumnValues.Result>(
+            var intResult = await QueryResult(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "duration"));
 
             Assert.True(intResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(intResult.Query.Error), intResult.Query.Error);
-            Assert.All(intResult.ResultRows, row =>
+            Assert.All(intResult.Rows, row =>
             {
-                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    (row.DistinctData.Value.ValueKind == JsonValueKind.Number &&
-                    row.DistinctData.Value.GetInt32() >= 0));
+                Assert.True(row.IsNull || row.IsSuppressed ||
+                    (row.Value.ValueKind == JsonValueKind.Number &&
+                    row.Value.GetInt32() >= 0));
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
@@ -47,18 +50,18 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            var realResult = await QueryResult<DistinctColumnValues.Result>(
+            var realResult = await QueryResult(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "payments"));
 
             Assert.True(realResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(realResult.Query.Error), realResult.Query.Error);
-            Assert.All(realResult.ResultRows, row =>
+            Assert.All(realResult.Rows, row =>
             {
-                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    (row.DistinctData.Value.ValueKind == JsonValueKind.Number &&
-                    row.DistinctData.Value.GetDouble() >= 0));
+                Assert.True(row.IsNull || row.IsSuppressed ||
+                    (row.Value.ValueKind == JsonValueKind.Number &&
+                    row.Value.GetDouble() >= 0));
                 Assert.True(row.Count > 0);
             });
         }
@@ -66,39 +69,39 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            var textResult = await QueryResult<DistinctColumnValues.Result>(
+            var textResult = await QueryResult(
                 new DistinctColumnValues(
                     tableName: "loans",
                     columnName: "gender"));
 
             Assert.True(textResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(textResult.Query.Error), textResult.Query.Error);
-            Assert.All(textResult.ResultRows, row =>
+            Assert.All(textResult.Rows, row =>
             {
-                Assert.True(row.DistinctData.Value.ValueKind == JsonValueKind.String);
-                Assert.True(row.DistinctData.Value.GetString() == "Male" ||
-                            row.DistinctData.Value.GetString() == "Female");
+                Assert.True(row.Value.ValueKind == JsonValueKind.String);
+                Assert.True(row.Value.GetString() == "Male" ||
+                            row.Value.GetString() == "Female");
                 Assert.True(row.Count > 0);
                 Assert.True(row.CountNoise.HasValue);
             });
 
-            Assert.True(textResult.ResultRows.Count() == 2);
+            Assert.True(textResult.Rows.Count() == 2);
         }
 
         [Fact]
         public async void TestDistinctDatetimes()
         {
-            var datetimeResult = await QueryResult<DistinctColumnValues.Result>(
+            var datetimeResult = await QueryResult(
                 new DistinctColumnValues(tableName: "patients", columnName: "date_of_birth"),
                 dataSourceName: "Clinic");
 
             Assert.True(datetimeResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(datetimeResult.Query.Error), datetimeResult.Query.Error);
-            Assert.True(datetimeResult.ResultRows.Any());
-            Assert.All(datetimeResult.ResultRows, row =>
+            Assert.True(datetimeResult.Rows.Any());
+            Assert.All(datetimeResult.Rows, row =>
             {
-                Assert.True(row.DistinctData.IsNull || row.DistinctData.IsSuppressed ||
-                    row.DistinctData.Value.ValueKind == JsonValueKind.String);
+                Assert.True(row.IsNull || row.IsSuppressed ||
+                    row.Value.ValueKind == JsonValueKind.String);
                 Assert.True(row.Count > 0);
             });
         }
@@ -107,7 +110,7 @@ namespace Explorer.Api.Tests
         public async void TestHistogramLoansAmount()
         {
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
-            var result = await QueryResult<SingleColumnHistogram.Result>(
+            var result = await QueryResult(
                 new SingleColumnHistogram(
                     "loans",
                     "amount",
@@ -115,21 +118,20 @@ namespace Explorer.Api.Tests
 
             Assert.True(result.Query.Completed);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.ResultRows, row =>
+            Assert.All(result.Rows, row =>
             {
                 Assert.True(row.BucketIndex < bucketSizes.Count);
                 Assert.True(row.LowerBound.IsNull ||
                             row.LowerBound.IsSuppressed ||
                             row.LowerBound.Value >= 0);
                 Assert.True(row.Count > 0);
-                Assert.True(row.CountNoise.HasValue);
             });
         }
 
         [Fact]
         public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
         {
-            var result = await QueryResult<CyclicalDatetimes.Result>(
+            var result = await QueryResult(
                 dataSourceName: "gda_taxi",
                 query: new CyclicalDatetimes(
                     "rides",
@@ -138,29 +140,29 @@ namespace Explorer.Api.Tests
             Assert.True(result.Query.Completed);
             Assert.Equal("completed", result.Query.QueryState);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
+            Assert.All(result.Rows, row => Assert.True(row.Count > 0));
         }
 
         [Fact]
         public async void TestCyclicalDateQueryTaxiBirthdates()
         {
-            var result = await QueryResult<CyclicalDatetimes.Result>(
+            var result = await QueryResult(
                 dataSourceName: "gda_taxi",
                 query: new CyclicalDatetimes(
                     "rides",
                     "birthdate",
-                    AircloakType.Date));
+                    DValueType.Date));
 
             Assert.True(result.Query.Completed);
             Assert.Equal("completed", result.Query.QueryState);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
+            Assert.All(result.Rows, row => Assert.True(row.Count > 0));
         }
 
         [Fact]
         public async void TestBucketedDatetimeQueryTaxiPickupTimes()
         {
-            var result = await QueryResult<BucketedDatetimes.Result>(
+            var result = await QueryResult(
                 dataSourceName: "gda_taxi",
                 query: new BucketedDatetimes(
                     "rides",
@@ -169,17 +171,16 @@ namespace Explorer.Api.Tests
             Assert.True(result.Query.Completed);
             Assert.Equal("completed", result.Query.QueryState);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.ResultRows, row => Assert.True(row.Count > 0));
+            Assert.All(result.Rows, row => Assert.True(row.Count > 0));
         }
 
         [Fact]
         public async void TestMinMaxExplorer()
         {
-            var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new MinMaxExplorer(queryResolver, "loans", "amount"));
+            var metrics = await GetExplorerMetrics(new MinMaxExplorer(), "gda_banking", "loans", "amount");
 
-            const decimal expectedMin = 3288M;
-            const decimal expectedMax = 495725M;
+            const decimal expectedMin = 3303;
+            const decimal expectedMax = 495_103;
             var actualMin = (decimal)metrics.Single(m => m.Name == "refined_min").Metric;
             Assert.True(actualMin == expectedMin, $"Expected {expectedMin}, got {actualMin}");
             var actualMax = (decimal)metrics.Single(m => m.Name == "refined_max").Metric;
@@ -189,13 +190,12 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            var metrics = await GetExplorerMetrics("GiveMeSomeCredit", queryResolver =>
-                new CategoricalColumnExplorer(queryResolver, "loans", "SeriousDlqin2yrs"));
+            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "Clinic", "addresses", "isaddressvalid");
 
             var expectedValues = new List<object>
             {
-                new { Value = false, Count = 139_974L },
-                new { Value = true, Count = 10_028L },
+                new { Value = true, Count = 15_367 },
+                new { Value = false, Count = 19 },
             };
 
             CheckDistinctCategories(metrics, expectedValues, el => el.GetBoolean());
@@ -204,15 +204,14 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalTextExplorer()
         {
-            var metrics = await GetExplorerMetrics("gda_banking", queryResolver =>
-                new CategoricalColumnExplorer(queryResolver, "loans", "status"));
+            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "gda_banking", "loans", "status");
 
             var expectedValues = new List<object>
             {
-                new { Value = "C", Count = 493L },
-                new { Value = "A", Count = 260L },
-                new { Value = "D", Count = 42L },
-                new { Value = "B", Count = 32L },
+                new { Value = "C", Count = 491L },
+                new { Value = "A", Count = 258L },
+                new { Value = "D", Count = 45L },
+                new { Value = "B", Count = 30L },
             };
 
             CheckDistinctCategories(metrics, expectedValues, el => el.GetString());
@@ -221,8 +220,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDateTimeColumnExplorer()
         {
-            var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
-                new DatetimeColumnExplorer(queryResolver, "rides", "pickup_datetime"));
+            var metrics = await GetExplorerMetrics(new DatetimeColumnExplorer(), "gda_taxi", "rides", "pickup_datetime", DValueType.Datetime);
 
             Assert.Single(metrics, m => m.Name == "dates_linear.minute");
             Assert.Single(metrics, m => m.Name == "dates_linear.hour");
@@ -233,8 +231,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestDateColumnExplorer()
         {
-            var metrics = await GetExplorerMetrics("gda_taxi", queryResolver =>
-                new DatetimeColumnExplorer(queryResolver, "rides", "birthdate", AircloakType.Date));
+            var metrics = await GetExplorerMetrics(new DatetimeColumnExplorer(), "gda_taxi", "rides", "birthdate", DValueType.Date);
 
             Assert.Single(metrics, m => m.Name == "dates_linear.year");
             Assert.Single(metrics, m => m.Name == "dates_linear.month");
@@ -251,8 +248,8 @@ namespace Explorer.Api.Tests
 
             Assert.True(queryResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(queryResult.Query.Error), queryResult.Query.Error);
-            Assert.True(queryResult.ResultRows.Count() == 5);
-            Assert.All(queryResult.ResultRows, row =>
+            Assert.True(queryResult.Rows.Count() == 5);
+            Assert.All(queryResult.Rows, row =>
             {
                 Assert.True(row.One == 1);
                 Assert.True(row.Two == 2);
@@ -284,7 +281,7 @@ namespace Explorer.Api.Tests
         }
 
         private void CheckDistinctCategories(
-            IEnumerable<IExploreMetric> distinctMetrics,
+            IEnumerable<ExploreMetric> distinctMetrics,
             IEnumerable<dynamic> expectedValues,
             Func<JsonElement, dynamic> parseElement)
         {
@@ -312,22 +309,32 @@ namespace Explorer.Api.Tests
         }
 
         private async Task<QueryResult<TResult>> QueryResult<TResult>(
-            IQuerySpec<TResult> query,
+            DQuery<TResult> query,
             string dataSourceName = TestDataSource,
             [CallerMemberName] string vcrSessionName = "")
         {
             return await factory.QueryResult(query, dataSourceName, nameof(QueryTests), vcrSessionName);
         }
 
-        private async Task<IEnumerable<IExploreMetric>> GetExplorerMetrics(
+        private async Task<IEnumerable<ExploreMetric>> GetExplorerMetrics(
+            ExplorerBase explorer,
             string dataSourceName,
-            Func<IQueryResolver, ExplorerBase> explorerFactory,
+            string tableName,
+            string columnName,
+            DValueType columnType = DValueType.Unknown,
             [CallerMemberName] string vcrSessionName = "")
         {
-            return await factory.GetExplorerMetrics(dataSourceName, explorerFactory, nameof(QueryTests), vcrSessionName);
+            return await factory.GetExplorerMetrics(
+                explorer,
+                dataSourceName,
+                tableName,
+                columnName,
+                columnType,
+                nameof(QueryTests),
+                vcrSessionName);
         }
 
-        private class RepeatingRowsQuery : IQuerySpec<RepeatingRowsQuery.Result>
+        private class RepeatingRowsQuery : DQuery<RepeatingRowsQuery.Result>
         {
             public string QueryStatement =>
                 @"select 1, 2, 3
@@ -335,7 +342,7 @@ namespace Explorer.Api.Tests
                     GROUP BY duration
                     having count_noise(*) > 0";
 
-            public Result FromJsonArray(ref Utf8JsonReader reader)
+            public Result ParseRow(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 var one = reader.GetInt32();
@@ -355,7 +362,7 @@ namespace Explorer.Api.Tests
             }
         }
 
-        private class LongRunningQuery : IQuerySpec<LongRunningQuery.Result>
+        private class LongRunningQuery : DQuery<LongRunningQuery.Result>
         {
             public const string DataSet = "gda_taxi";
 
@@ -382,7 +389,7 @@ namespace Explorer.Api.Tests
                     from rides
                     group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
 
-            public Result FromJsonArray(ref Utf8JsonReader reader)
+            public Result ParseRow(ref Utf8JsonReader reader)
             {
                 while (reader.TokenType != JsonTokenType.EndArray)
                 {

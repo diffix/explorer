@@ -1,8 +1,8 @@
 namespace Explorer.Api.Tests
 {
-    using System;
     using System.Linq;
-    using Explorer.Diffix.Extensions;
+    using Explorer.Common;
+    using Explorer.Explorers;
     using Explorer.Queries;
     using Xunit;
 
@@ -25,10 +25,10 @@ namespace Explorer.Api.Tests
                 TestDataSource,
                 nameof(TextColumnTrimTests));
 
-            var counts = ValueCounts.Compute(query.ResultRows);
+            var counts = ValueCounts.Compute(query.Rows);
 
-            var isEmail = counts.TotalCount == query.ResultRows
-                .Where(r => r.TrimmedText == "@")
+            var isEmail = counts.TotalCount == query.Rows
+                .Where(r => r.IsNull || r.Value == "@")
                 .Sum(r => r.Count);
 
             Assert.True(isEmail);
@@ -42,10 +42,10 @@ namespace Explorer.Api.Tests
                 TestDataSource,
                 nameof(TextColumnTrimTests));
 
-            var counts = ValueCounts.Compute(query.ResultRows);
+            var counts = ValueCounts.Compute(query.Rows);
 
-            var isEmail = counts.TotalCount == query.ResultRows
-                .Where(r => r.TrimmedText == "@")
+            var isEmail = counts.TotalCount == query.Rows
+                .Where(r => r.IsNull || r.Value == "@")
                 .Sum(r => r.Count);
 
             Assert.False(isEmail);

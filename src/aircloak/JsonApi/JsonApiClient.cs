@@ -10,6 +10,7 @@ namespace Aircloak.JsonApi
 
     using Aircloak.JsonApi.JsonConversion;
     using Aircloak.JsonApi.ResponseTypes;
+    using Diffix;
 
     /// <summary>
     /// Convenience class providing GET and POST methods adapted to the
@@ -31,6 +32,7 @@ namespace Aircloak.JsonApi
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
+            Converters = { new DValueTypeEnumConverter() },
         };
 
         private readonly HttpClient httpClient;
@@ -63,19 +65,19 @@ namespace Aircloak.JsonApi
         /// Posts a query to the Aircloak server, retrieves the query ID, and then polls for the result.
         /// </summary>
         /// <param name="dataSource">The data source to run the query against.</param>
-        /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
+        /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <returns>A <see cref="QueryResult{TRow}"/> instance containing the success status and query Id.</returns>
         /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
         public async Task<QueryResult<TRow>> Query<TRow>(
             string dataSource,
-            IQuerySpec<TRow> querySpec,
+            DQuery<TRow> query,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
-            var queryResponse = await SubmitQuery(dataSource, querySpec.QueryStatement, cancellationToken);
-            return await PollQueryUntilComplete(queryResponse.QueryId, querySpec, pollFrequency, cancellationToken);
+            var queryResponse = await SubmitQuery(dataSource, query.QueryStatement, cancellationToken);
+            return await PollQueryUntilComplete(queryResponse.QueryId, query, pollFrequency, cancellationToken);
         }
 
         /// <summary>
@@ -117,7 +119,7 @@ namespace Aircloak.JsonApi
         /// automatically cancels the query execution by calling <c>/api/queries/{query_id}/cancel</c>.
         /// </remarks>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
-        /// <param name="querySpec">An instance of the <see cref="IQuerySpec{TRow}"/> interface.</param>
+        /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
         /// <param name="cancellationToken">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <typeparam name="TRow">The type to use to deserialise each row returned in the query results.</typeparam>
@@ -125,7 +127,7 @@ namespace Aircloak.JsonApi
         /// row seralised to type <c>TRow</c>.</returns>
         public async Task<QueryResult<TRow>> PollQueryUntilComplete<TRow>(
             string queryId,
-            IQuerySpec<TRow> querySpec,
+            DQuery<TRow> query,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
@@ -133,7 +135,11 @@ namespace Aircloak.JsonApi
             var jsonDeserializeOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
-                Converters = { new JsonArrayConverter<IQuerySpec<TRow>, TRow>(querySpec) },
+                Converters =
+                {
+                    new JsonArrayConverter<DQuery<TRow>, TRow>(query),
+                    new DValueTypeEnumConverter(),
+                },
             };
 
             var queryCompleted = false;
@@ -157,10 +163,10 @@ namespace Aircloak.JsonApi
                                 return queryResult;
                             case "error":
                                 throw new Exception("Aircloak API query error.\n" +
-                                    GetQueryResultDetails(querySpec, queryResult));
+                                    GetQueryResultDetails(query, queryResult));
                             case "cancelled":
                                 throw new OperationCanceledException("Aircloak API query canceled.\n" +
-                                    GetQueryResultDetails(querySpec, queryResult));
+                                    GetQueryResultDetails(query, queryResult));
                         }
                     }
 
@@ -177,11 +183,11 @@ namespace Aircloak.JsonApi
                 throw;
             }
 
-            static string GetQueryResultDetails(IQuerySpec<TRow> querySpec, QueryResult<TRow> queryResult)
+            static string GetQueryResultDetails(DQuery<TRow> query, QueryResult<TRow> queryResult)
             {
                 return $"DataSource: {queryResult.Query.DataSource.Name}.\n" +
                     $"Error: {queryResult.Query.Error}\n" +
-                    $"Query Statement: {querySpec.QueryStatement}";
+                    $"Query Statement: {query.QueryStatement}";
             }
         }
 

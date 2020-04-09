@@ -7,8 +7,9 @@ namespace Explorer.Api.Controllers
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
+    using Explorer;
     using Explorer.Api.Authentication;
+    using Explorer.Api.Models;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -62,26 +63,19 @@ namespace Explorer.Api.Controllers
                 return BadRequest($"Could not find column '{data.ColumnName}'.");
             }
 
-            var resolver = new AircloakQueryResolver(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
-
+            // the connection is owned by the exploration and the exploration is disposed on completion/cancellation
 #pragma warning disable CA2000 // call IDisposable.Dispose
-            var exploration = Exploration.Create(resolver, explorerColumnMeta.Type, data.TableName, data.ColumnName);
+            var conn = new AircloakConnection(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
+
+            var exploration = Exploration.Create(conn, data.TableName, data.ColumnName, explorerColumnMeta.Type);
 #pragma warning restore CA2000 // call IDisposable.Dispose
-            if (exploration == null)
-            {
-                return Ok(new Models.NotImplementedError
-                {
-                    Description = $"No exploration strategy implemented for {explorerColumnMeta.Type} columns.",
-                    Data = data,
-                });
-            }
 
             if (!Explorations.TryAdd(exploration.ExplorationGuid, exploration))
             {
                 throw new System.Exception("Failed to store exploration in Dict - This should never happen!");
             }
 
-            return Ok(new ExploreResult(exploration.ExplorationGuid, ExploreResult.ExploreStatus.New));
+            return Ok(new ExploreResult(exploration.ExplorationGuid, ExplorationStatus.New));
         }
 
         [HttpGet]
