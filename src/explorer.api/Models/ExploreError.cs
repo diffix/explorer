@@ -3,7 +3,7 @@ namespace Explorer.Api.Models
     internal class ExploreError : ExploreResult
     {
         public ExploreError(System.Guid explorationId, string description)
-            : base(explorationId, ExploreStatus.Error)
+            : base(explorationId, Explorer.ExplorationStatus.Error)
         {
             Description = description;
         }

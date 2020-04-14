@@ -8,6 +8,8 @@ namespace Aircloak.JsonApi.ResponseTypes
     using System.Linq;
     using System.Text.Json.Serialization;
 
+    using Diffix;
+
     /// <summary>
     /// Represents an individual data_source item in the JSON response from a request to /api/data_sources.
     /// </summary>
@@ -53,7 +55,7 @@ namespace Aircloak.JsonApi.ResponseTypes
             {
                 public string Name { get; set; }
 
-                public AircloakType Type { get; set; }
+                public DValueType Type { get; set; }
             }
         }
     }

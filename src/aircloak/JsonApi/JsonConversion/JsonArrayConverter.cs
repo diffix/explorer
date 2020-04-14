@@ -4,24 +4,26 @@ namespace Aircloak.JsonApi.JsonConversion
     using System.Text.Json;
     using System.Text.Json.Serialization;
 
+    using Diffix;
+
     /// <summary>
     /// Implements a <see cref="JsonConverter"/> for deserializing Aircloak rows from json array contents.
     /// </summary>
-    /// <typeparam name="TQuerySpec">A type that implements <see cref="IQuerySpec{T}"/> for T.</typeparam>
-    /// <typeparam name="T">The type that the json array will be converted to.</typeparam>
+    /// <typeparam name="TQuery">A type that implements <see cref="DQuery{T}"/> for T.</typeparam>
+    /// <typeparam name="TRow">The type that the json array will be converted to.</typeparam>
     /// <remarks>Note that this is meant for reading JSON only: the Write method is intentionally
     /// left unimplemented.</remarks>
-    internal class JsonArrayConverter<TQuerySpec, T> : JsonConverter<T>
-        where TQuerySpec : IQuerySpec<T>
+    internal class JsonArrayConverter<TQuery, TRow> : JsonConverter<TRow>
+        where TQuery : DQuery<TRow>
     {
-        private readonly IQuerySpec<T> querySpec;
+        private readonly DQuery<TRow> query;
 
-        public JsonArrayConverter(IQuerySpec<T> querySpec)
+        public JsonArrayConverter(DQuery<TRow> query)
         {
-            this.querySpec = querySpec;
+            this.query = query;
         }
 
-        public override T Read(
+        public override TRow Read(
             ref Utf8JsonReader reader,
             Type typeToConvert,
             JsonSerializerOptions options)
@@ -31,13 +33,13 @@ namespace Aircloak.JsonApi.JsonConversion
                 throw new JsonException("Expected an array.");
             }
 
-            var value = querySpec.FromJsonArray(ref reader);
+            var value = query.ParseRow(ref reader);
 
             // Read ']' Token
             reader.Read();
             if (reader.TokenType != JsonTokenType.EndArray)
             {
-                throw new JsonException($"Expected end of {typeof(T)} array.");
+                throw new JsonException($"Expected end of {typeof(TRow)} array.");
             }
 
             return value;
@@ -45,7 +47,7 @@ namespace Aircloak.JsonApi.JsonConversion
 
         public override void Write(
             Utf8JsonWriter writer,
-            T value,
+            TRow value,
             JsonSerializerOptions options)
         {
             throw new InvalidOperationException("This Type is for deserializing only!");

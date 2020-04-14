@@ -1,7 +1,7 @@
 namespace Explorer.Api.Tests
 {
     using System;
-    using Explorer.Queries;
+    using Explorer.Common;
     using Xunit;
 
     public sealed class BucketSizesTests
