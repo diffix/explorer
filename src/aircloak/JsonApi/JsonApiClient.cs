@@ -189,6 +189,7 @@ namespace Aircloak.JsonApi
             {
                 return $"DataSource: {queryResult.Query.DataSource.Name}.\n" +
                     $"Error: {queryResult.Query.Error}\n" +
+                    $"Query Id: {queryResult.Query.Id}\n" +
                     $"Query Statement: {query.QueryStatement}";
             }
         }
