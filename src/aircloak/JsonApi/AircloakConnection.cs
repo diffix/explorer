@@ -35,17 +35,10 @@ namespace Aircloak.JsonApi
             this.cancellationTokenSource = new CancellationTokenSource();
         }
 
-        /// <summary>
-        /// Gets a value indicating whether a cancellation was requested for this connection.
-        /// </summary>
+        /// <inheritdoc />
         public bool IsCancellationRequested => cancellationTokenSource.IsCancellationRequested;
 
-        /// <summary>
-        /// Executes the query.
-        /// </summary>
-        /// <param name="query">An object defining the query to be executed.</param>
-        /// <typeparam name="TRow">The type of the rows returned by the query.</typeparam>
-        /// <returns>An object containing a collection with the rows returned by the query.</returns>
+        /// <inheritdoc />
         public async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
         {
             return await apiClient.Query<TRow>(
@@ -55,17 +48,13 @@ namespace Aircloak.JsonApi
                 cancellationTokenSource.Token);
         }
 
-        /// <summary>
-        /// Requests the cancellation of the still executing queries, started using this connection.
-        /// </summary>
+        /// <inheritdoc />
         public void Cancel()
         {
             cancellationTokenSource.Cancel();
         }
 
-        /// <summary>
-        /// Helper method that throws a <see ref="OperationCanceledException" /> if cancellation was requested using <see cref="Cancel" />.
-        /// </summary>
+        /// <inheritdoc />
         public void ThrowIfCancellationRequested()
         {
             cancellationTokenSource.Token.ThrowIfCancellationRequested();
