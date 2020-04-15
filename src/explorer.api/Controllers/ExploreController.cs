@@ -103,6 +103,12 @@ namespace Explorer.Api.Controllers
                         // await the completion task to trigger any inner exceptions
                         await exploration.Completion;
                     }
+                    catch (TaskCanceledException e)
+                    {
+                        // Do nothing, just log the occurence.
+                        // A TaskCanceledException is expected when the client cancels an exploration. 
+                        logger.LogInformation($"Exploration {exploration.ExplorationGuid} was canceled.", null);
+                    }
                     finally
                     {
                         Explorations.TryRemove(explorationId, out _);
