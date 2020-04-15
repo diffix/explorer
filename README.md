@@ -80,24 +80,25 @@ The body of the response should again contain a json payload with an indication 
   "status":"Processing",
   "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf",
   "metrics":[
-    {'name': 'text.length.distinct.suppressed_count', 'value': 16},
-    {'name': 'text.length.distinct.values',
-      'value': [{'value': 24, 'count': 256},
-      {'value': 25, 'count': 254},
-      {'value': 27, 'count': 242},
-      [...]
-      {'value': 51, 'count': 6},
-      {'value': 9, 'count': 4},
-      {'value': 8, 'count': 2}]},
-    {'name': 'text.length.naive_max', 'value': 49},
-    {'name': 'text.length.naive_min', 'value': 15}
+    {"name": "text.length.distinct.suppressed_count", "value": 16},
+    {"name": "text.length.distinct.values",
+      "value": [
+        {"value": 24, "count": 256},
+        {"value": 25, "count": 254},
+        {"value": 27, "count": 242},
+        {"..."},
+        {"value": 51, "count": 6},
+        {"value": 9, "count": 4},
+        {"value": 8, "count": 2}]},
+    {"name": "text.length.naive_max", "value": 49},
+    {"name": "text.length.naive_min", "value": 15}
   ]
 }
 ```
 
 When exploration is complete, this is indicated with `"status": "Complete"`.
 
-### Cancelation
+### Cancellation
 
 You can cancel an ongoing exploration using the (you guessed it) `/cancel` endpoint:
 
