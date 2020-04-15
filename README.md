@@ -68,7 +68,7 @@ This launches the column exploration and, if all goes well, returns a successful
 
 ### Polling for results
 
-You can use the id to poll for results on the `/results` endpoint:
+You can use the id to poll for results on the `/result` endpoint:
 ```bash
 curl -k http://localhost:5000/result/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
