@@ -47,7 +47,7 @@ namespace Aircloak.JsonApi.ResponseTypes
             {
                 get
                 {
-                    return Columns.ToDictionary(column => column.Name);
+                    return Columns.Distinct().ToDictionary(column => column.Name);
                 }
             }
 
