@@ -1,7 +1,7 @@
 namespace Diffix
 {
     /// <summary>
-    /// Base class for Diffix column values which can be suppressed, NULL or contain some data.
+    /// The interface for Diffix column values which can be suppressed, NULL or contain some data.
     /// </summary>
     /// <typeparam name="T">The expected type of the column value.</typeparam>
     public interface DValue<T>
