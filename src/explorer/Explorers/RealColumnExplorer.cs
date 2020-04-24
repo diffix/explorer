@@ -26,37 +26,37 @@ namespace Explorer.Explorers
             PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
             PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
-            var distinctValueQ = await conn.Exec(
-                new DistinctColumnValues(ctx.Table, ctx.Column));
+            // var distinctValueQ = await conn.Exec(
+            //     new DistinctColumnValues(ctx.Table, ctx.Column));
 
-            var counts = ValueCounts.Compute(distinctValueQ.Rows);
+            // var counts = ValueCounts.Compute(distinctValueQ.Rows);
 
-            if (counts.TotalCount == 0)
-            {
-                throw new Exception(
-                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
-            }
+            // if (counts.TotalCount == 0)
+            // {
+            //     throw new Exception(
+            //         $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
+            // }
 
-            if (counts.SuppressedCountRatio < SuppressedRatioThreshold)
-            {
-                // Only few of the values are suppressed. This means the data is already well-segmented and can be
-                // considered categorical or quasi-categorical.
-                var distinctValues =
-                    from row in distinctValueQ.Rows
-                    where row.HasValue
-                    orderby row.Count descending
-                    select new
-                    {
-                        row.Value,
-                        row.Count,
-                    };
+            // if (counts.SuppressedCountRatio < SuppressedRatioThreshold)
+            // {
+            //     // Only few of the values are suppressed. This means the data is already well-segmented and can be
+            //     // considered categorical or quasi-categorical.
+            //     var distinctValues =
+            //         from row in distinctValueQ.Rows
+            //         where row.HasValue
+            //         orderby row.Count descending
+            //         select new
+            //         {
+            //             row.Value,
+            //             row.Count,
+            //         };
 
-                PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
-                PublishMetric(new UntypedMetric(name: "distinct.null_count", metric: counts.NullCount));
-                PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
+            //     PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
+            //     PublishMetric(new UntypedMetric(name: "distinct.null_count", metric: counts.NullCount));
+            //     PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
 
-                return;
-            }
+            //     return;
+            // }
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
