@@ -25,7 +25,14 @@ namespace Explorer.Common
 
         public long NonSuppressedCount => TotalCount - SuppressedCount;
 
+        public long NonSuppressedNonNullCount => TotalCount - SuppressedCount - NullCount;
+
         public double SuppressedCountRatio => (double)SuppressedCount / TotalCount;
+
+        // Note the `SuppressedCount` can be seen as a proxy for the number of suppressed rows in the original dataset.
+        // We can use this to estimate the proportion of unqiue values that have been suppressed. This may be a better
+        // metric for estimating the cardinality of a column than the `SuppressedCountRatio`
+        public double SuppressedRowRatio => (double)SuppressedCount / TotalRows;
 
         public static ValueCounts Compute(IEnumerable<CountableRow> rows)
         {
