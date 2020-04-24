@@ -61,48 +61,45 @@ namespace Explorer.Explorers
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
-            var histogramQ = await conn.Exec<SingleColumnHistogram.Result>(
-                new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
+            var histogramQ = await conn.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 
-            var optimumBucket = (
-                from row in histogramQ.Rows
-                let suppressedRatio = (double)row.Count / counts.TotalCount
-                let suppressedBucketSize = bucketsToSample[row.BucketIndex]
-                where row.LowerBound.IsSuppressed
-                    && suppressedRatio < SuppressedRatioThreshold
-                orderby suppressedBucketSize
-                select new
-                {
-                    Index = row.BucketIndex,
-                    Size = suppressedBucketSize,
-                    SuppressedCount = row.Count,
-                    Ratio = suppressedRatio,
-                }).First();
+            var histograms = histogramQ.Rows
+                .GroupBy(
+                    result => result.GroupingLabel,
+                    (label, result) => new
+                    {
+                        BucketSize = label,
+                        ValueCounts = ValueCounts.Compute(result),
+                        Buckets = result,
+                    });
 
-            var histogramBuckets =
-                from row in histogramQ.Rows
-                where row.BucketIndex == optimumBucket.Index
-                    && row.LowerBound.HasValue
-                let lowerBound = row.LowerBound.Value
-                let bucketSize = bucketsToSample[row.BucketIndex]
-                orderby lowerBound
-                select new
-                {
-                    BucketSize = bucketSize,
-                    LowerBound = lowerBound,
-                    row.Count,
-                };
+            var selectedHistogram = histograms
+                .OrderBy(h => h.ValueCounts.SuppressedCount)
+                .ThenBy(h => h.BucketSize)
+                .First();
 
-            PublishMetric(new UntypedMetric(name: "histogram.buckets", metric: histogramBuckets));
-            PublishMetric(new UntypedMetric(name: "histogram.suppressed_count", metric: optimumBucket.SuppressedCount));
-            PublishMetric(new UntypedMetric(name: "histogram.suppressed_ratio", metric: optimumBucket.Ratio));
+            PublishMetric(new UntypedMetric(
+                name: "histogram.buckets",
+                metric: selectedHistogram
+                            .Buckets
+                            .Where(b => b.HasValue)
+                            .Select(b => new
+                            {
+                                selectedHistogram.BucketSize,
+                                LowerBound = b.GroupingValue,
+                                b.Count,
+                            })));
+            PublishMetric(new UntypedMetric(name: "histogram.suppressed_count", metric: selectedHistogram.ValueCounts.SuppressedCount));
+            PublishMetric(new UntypedMetric(name: "histogram.suppressed_ratio", metric: selectedHistogram.ValueCounts.SuppressedCountRatio));
+            PublishMetric(new UntypedMetric(name: "histogram.value_counts", metric: selectedHistogram.ValueCounts));
 
             // Estimate Quartiles
-            var processed = 0L;
-            var quartileCount = counts.TotalCount / 4;
-            var quartile = 1;
             var quartileEstimates = new List<double>();
-            foreach (var bucket in histogramBuckets)
+            var processed = 0L;
+            var quartileCount = selectedHistogram.ValueCounts.NonSuppressedNonNullCount / 4;
+            var quartile = 1;
+            var buckets = selectedHistogram.Buckets.Where(b => b.HasValue);
+            foreach (var bucket in buckets)
             {
                 if (processed + bucket.Count < quartileCount * quartile)
                 {
@@ -113,8 +110,8 @@ namespace Explorer.Explorers
                 {
                     // one or more quartiles in this bucket
                     var remaining = bucket.Count;
-                    var lowerBound = (double)bucket.LowerBound;
-                    var range = (double)bucket.BucketSize;
+                    var lowerBound = bucket.GroupingValue;
+                    var range = (double)selectedHistogram.BucketSize;
 
                     do
                     {
@@ -149,9 +146,9 @@ namespace Explorer.Explorers
             PublishMetric(new UntypedMetric(name: "quartile_estimates", metric: quartileEstimates));
 
             // Estimate Average
-            var averageEstimate = histogramBuckets
-                .Sum(bucket => bucket.Count * (bucket.LowerBound + (bucket.BucketSize / 2)))
-                / counts.TotalCount;
+            var averageEstimate = buckets
+                .Sum(bucket => bucket.Count * ((decimal)bucket.GroupingValue + (selectedHistogram.BucketSize / 2)))
+                / selectedHistogram.ValueCounts.NonSuppressedNonNullCount;
 
             PublishMetric(new UntypedMetric(name: "avg_estimate", metric: decimal.Round(averageEstimate, 2)));
         }
