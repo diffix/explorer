@@ -118,12 +118,12 @@ namespace Explorer.Api.Tests
 
             Assert.True(result.Query.Completed);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All<IndexedGroupingSetsResult<decimal, double>>(result.Rows, row =>
+            Assert.All<SingleColumnHistogram.Result>(result.Rows, row =>
             {
                 Assert.True(row.GroupingIndex < bucketSizes.Count);
                 Assert.True(row.IsNull ||
                             row.IsSuppressed ||
-                            row.Value >= 0);
+                            row.LowerBound.Value >= 0);
                 Assert.True(row.Count > 0);
             });
         }
@@ -260,7 +260,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCancelQuery()
         {
-            var testConfig = factory.GetTestConfig(nameof(QueryTests), "TestCancelQuery");
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), nameof(TestCancelQuery));
             var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
             var query = new LongRunningQuery();
 

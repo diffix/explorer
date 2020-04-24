@@ -70,7 +70,7 @@ namespace Explorer.Explorers
                     {
                         BucketSize = label,
                         ValueCounts = ValueCounts.Compute(result),
-                        Buckets = result,
+                        Buckets = result.Where(b => b.HasValue).OrderBy(b => b.Value),
                     });
 
             var selectedHistogram = histograms
@@ -86,7 +86,7 @@ namespace Explorer.Explorers
                             .Select(b => new
                             {
                                 selectedHistogram.BucketSize,
-                                LowerBound = b.GroupingValue,
+                                LowerBound = b.LowerBound.Value,
                                 b.Count,
                             })));
             PublishMetric(new UntypedMetric(name: "histogram.suppressed_count", metric: selectedHistogram.ValueCounts.SuppressedCount));
@@ -98,8 +98,8 @@ namespace Explorer.Explorers
             var processed = 0L;
             var quartileCount = selectedHistogram.ValueCounts.NonSuppressedNonNullCount / 4;
             var quartile = 1;
-            var buckets = selectedHistogram.Buckets.Where(b => b.HasValue);
-            foreach (var bucket in buckets)
+            var valueBuckets = selectedHistogram.Buckets.Where(b => b.HasValue);
+            foreach (var bucket in valueBuckets)
             {
                 if (processed + bucket.Count < quartileCount * quartile)
                 {
@@ -110,7 +110,7 @@ namespace Explorer.Explorers
                 {
                     // one or more quartiles in this bucket
                     var remaining = bucket.Count;
-                    var lowerBound = bucket.GroupingValue;
+                    var lowerBound = bucket.Value;
                     var range = (double)selectedHistogram.BucketSize;
 
                     do
@@ -146,8 +146,8 @@ namespace Explorer.Explorers
             PublishMetric(new UntypedMetric(name: "quartile_estimates", metric: quartileEstimates));
 
             // Estimate Average
-            var averageEstimate = buckets
-                .Sum(bucket => bucket.Count * ((decimal)bucket.GroupingValue + (selectedHistogram.BucketSize / 2)))
+            var averageEstimate = valueBuckets
+                .Sum(bucket => bucket.Count * ((decimal)bucket.Value + (selectedHistogram.BucketSize / 2)))
                 / selectedHistogram.ValueCounts.NonSuppressedNonNullCount;
 
             PublishMetric(new UntypedMetric(name: "avg_estimate", metric: decimal.Round(averageEstimate, 2)));

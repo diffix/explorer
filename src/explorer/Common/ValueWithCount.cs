@@ -14,11 +14,24 @@ namespace Explorer.Common
             CountNoise = countNoise;
         }
 
+        public ValueWithCount(ref Utf8JsonReader reader)
+        {
+            DValue = reader.ParseDValue<T>();
+            Count = reader.ParseCount();
+            CountNoise = reader.ParseCountNoise();
+        }
+
+#pragma warning disable CS8618 // Non-nullable property 'DValue' is uninitialized.
+        protected ValueWithCount()
+        {
+        }
+#pragma warning restore CS8618 // Non-nullable property 'DValue' is uninitialized.
+
         public T Value => DValue.Value;
 
-        public long Count { get; }
+        public long Count { get; protected set; }
 
-        public double? CountNoise { get; }
+        public double? CountNoise { get; protected set; }
 
         public bool IsNull => DValue.IsNull;
 
@@ -26,7 +39,7 @@ namespace Explorer.Common
 
         public bool HasValue => DValue.HasValue;
 
-        private DValue<T> DValue { get; }
+        protected DValue<T> DValue { get; set; }
 
         public static ValueWithCount<T> Parse(ref Utf8JsonReader reader)
         {

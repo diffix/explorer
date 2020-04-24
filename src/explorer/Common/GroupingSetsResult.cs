@@ -7,6 +7,11 @@
 
     internal class GroupingSetsResult<T> : IndexedGroupingSetsResult<string, T>
     {
+        internal GroupingSetsResult(ref Utf8JsonReader reader, string[] groupingLabels)
+        : base(ref reader, groupingLabels)
+        {
+        }
+
         protected GroupingSetsResult(int id, string[] labels, DValue<T> value, long count, double? countNoise)
             : base(id, labels, value, count, countNoise)
         {

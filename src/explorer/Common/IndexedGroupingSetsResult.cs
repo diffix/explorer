@@ -19,11 +19,23 @@
             GroupingLabels = labels;
         }
 
+        internal IndexedGroupingSetsResult(ref Utf8JsonReader reader, TIndex[] groupingLabels)
+        {
+            (GroupingId, GroupingValue) = reader.ParseGroupingSet<TGroupedValue>(groupingLabels.Length);
+            Count = reader.ParseCount();
+            CountNoise = reader.ParseNoise();
+            GroupingLabels = groupingLabels;
+        }
+
         public int GroupingId { get; }
 
         public TIndex[] GroupingLabels { get; }
 
-        public TGroupedValue GroupingValue => Value;
+        public DValue<TGroupedValue> GroupingValue
+        {
+            get => DValue;
+            set => DValue = value;
+        }
 
         public TIndex GroupingLabel => GroupingLabels[GroupingIndex];
 

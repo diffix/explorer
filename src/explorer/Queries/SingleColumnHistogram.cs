@@ -8,7 +8,7 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class SingleColumnHistogram :
-        DQuery<IndexedGroupingSetsResult<decimal, double>>
+        DQuery<SingleColumnHistogram.Result>
     {
         public SingleColumnHistogram(
             string tableName,
@@ -37,7 +37,19 @@ namespace Explorer.Queries
 
         public decimal[] Buckets { get; }
 
-        public IndexedGroupingSetsResult<decimal, double> ParseRow(ref Utf8JsonReader reader) =>
-            IndexedGroupingSetsResult<decimal, double>.Create(ref reader, Buckets);
+        public Result ParseRow(ref Utf8JsonReader reader) =>
+            new Result(ref reader, Buckets);
+
+        public class Result : IndexedGroupingSetsResult<decimal, double>
+        {
+            public Result(ref Utf8JsonReader reader, decimal[] buckets)
+            : base(ref reader, buckets)
+            {
+            }
+
+            public decimal BucketSize => GroupingLabel;
+
+            public DValue<double> LowerBound => GroupingValue;
+        }
     }
 }
