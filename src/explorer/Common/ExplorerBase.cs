@@ -14,7 +14,7 @@ namespace Explorer.Common
 
         public abstract Task Explore(DConnection conn, ExplorerContext ctx);
 
-        protected void PublishMetric(ExploreMetric metric) =>
+        public virtual void PublishMetric(ExploreMetric metric) =>
             metrics.Add(metric);
     }
 }
