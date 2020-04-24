@@ -118,12 +118,12 @@ namespace Explorer.Api.Tests
 
             Assert.True(result.Query.Completed);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.Rows, row =>
+            Assert.All<IndexedGroupingSetsResult<decimal, double>>(result.Rows, row =>
             {
-                Assert.True(row.BucketIndex < bucketSizes.Count);
-                Assert.True(row.LowerBound.IsNull ||
-                            row.LowerBound.IsSuppressed ||
-                            row.LowerBound.Value >= 0);
+                Assert.True(row.GroupingIndex < bucketSizes.Count);
+                Assert.True(row.IsNull ||
+                            row.IsSuppressed ||
+                            row.Value >= 0);
                 Assert.True(row.Count > 0);
             });
         }
