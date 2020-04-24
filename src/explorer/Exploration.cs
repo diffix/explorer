@@ -3,7 +3,6 @@ namespace Explorer
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -50,8 +49,9 @@ namespace Explorer
             {
                 DValueType.Integer => new (ExplorerBase, ExplorerContext)[]
                 {
-                    (new IntegerColumnExplorer(), ctx),
-                    (new MinMaxExplorer(), ctx),
+                    (new NumericColumnExplorer(conn, ctx), ctx),
+                    // (new IntegerColumnExplorer(), ctx),
+                    // (new MinMaxExplorer(), ctx),
                 },
                 DValueType.Real => new (ExplorerBase, ExplorerContext)[]
                 {
