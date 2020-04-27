@@ -92,8 +92,8 @@ namespace Explorer.Api.Tests
         public async void TestDistinctDatetimes()
         {
             var datetimeResult = await QueryResult(
-                new DistinctColumnValues(tableName: "patients", columnName: "date_of_birth"),
-                dataSourceName: "Clinic");
+                new DistinctColumnValues(tableName: "survey", columnName: "first_caught"),
+                dataSourceName: "cov_clear");
 
             Assert.True(datetimeResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(datetimeResult.Query.Error), datetimeResult.Query.Error);
@@ -190,12 +190,12 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "Clinic", "addresses", "isaddressvalid");
+            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "cov_clear", "survey", "fever");
 
             var expectedValues = new List<object>
             {
-                new { Value = true, Count = 15_367 },
-                new { Value = false, Count = 19 },
+                new { Value = false, Count = 3_468 },
+                new { Value = true, Count = 592 },
             };
 
             CheckDistinctCategories(metrics, expectedValues, el => el.GetBoolean());
