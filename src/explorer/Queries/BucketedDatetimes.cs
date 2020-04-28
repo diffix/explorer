@@ -57,6 +57,6 @@ namespace Explorer.Queries
         public string QueryStatement { get; }
 
         public GroupingSetsResult<DateTime> ParseRow(ref Utf8JsonReader reader) =>
-            GroupingSetsResult<DateTime>.Create(ref reader, QueryComponents);
+            new GroupingSetsResult<DateTime>(ref reader, QueryComponents);
     }
 }

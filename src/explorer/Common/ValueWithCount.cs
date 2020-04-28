@@ -7,11 +7,11 @@ namespace Explorer.Common
 
     internal class ValueWithCount<T> : CountableRow
     {
-        public ValueWithCount(DValue<T> value, long count, double? countNoise)
+        public ValueWithCount(ref Utf8JsonReader reader)
         {
-            DValue = value;
-            Count = count;
-            CountNoise = countNoise;
+            DValue = reader.ParseDValue<T>();
+            Count = reader.ParseCount();
+            CountNoise = reader.ParseCountNoise();
         }
 
         public T Value => DValue.Value;
@@ -26,14 +26,6 @@ namespace Explorer.Common
 
         public bool HasValue => DValue.HasValue;
 
-        private DValue<T> DValue { get; }
-
-        public static ValueWithCount<T> Parse(ref Utf8JsonReader reader)
-        {
-            var value = reader.ParseDValue<T>();
-            var count = reader.ParseCount();
-            var countNoise = reader.ParseCountNoise();
-            return new ValueWithCount<T>(value, count, countNoise);
-        }
+        protected DValue<T> DValue { get; }
     }
 }

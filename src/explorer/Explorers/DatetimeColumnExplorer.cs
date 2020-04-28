@@ -65,14 +65,14 @@ namespace Explorer.Explorers
         private static object DatetimeMetric<T>(
             long total,
             long suppressed,
-            IEnumerable<ValueWithCount<T>> valueCounts)
+            IEnumerable<GroupingSetsResult<T>> rows)
         {
             return new
             {
                 Total = total,
                 Suppressed = suppressed,
                 Counts =
-                    from row in valueCounts
+                    from row in rows
                     where row.HasValue
                     orderby row.Value ascending
                     select new
