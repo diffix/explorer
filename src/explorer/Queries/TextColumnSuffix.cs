@@ -36,6 +36,6 @@ namespace Explorer.Queries
         public string QueryStatement { get; }
 
         public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
-            ValueWithCount<string>.Parse(ref reader);
+            new ValueWithCount<string>(ref reader);
     }
 }

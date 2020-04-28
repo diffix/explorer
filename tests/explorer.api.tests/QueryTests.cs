@@ -123,7 +123,7 @@ namespace Explorer.Api.Tests
                 Assert.True(row.GroupingIndex < bucketSizes.Count);
                 Assert.True(row.IsNull ||
                             row.IsSuppressed ||
-                            row.LowerBound.Value >= 0);
+                            row.LowerBound >= 0);
                 Assert.True(row.Count > 0);
             });
         }

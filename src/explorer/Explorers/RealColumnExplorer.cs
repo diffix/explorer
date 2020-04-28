@@ -86,7 +86,7 @@ namespace Explorer.Explorers
                             .Select(b => new
                             {
                                 selectedHistogram.BucketSize,
-                                LowerBound = b.LowerBound.Value,
+                                b.LowerBound,
                                 b.Count,
                             })));
             PublishMetric(new UntypedMetric(name: "histogram.suppressed_count", metric: selectedHistogram.ValueCounts.SuppressedCount));

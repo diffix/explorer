@@ -86,7 +86,7 @@ namespace Explorer.Explorers
                             .Select(b => new
                             {
                                 selectedHistogram.BucketSize,
-                                LowerBound = b.LowerBound.Value,
+                                b.LowerBound,
                                 b.Count,
                             })));
             PublishMetric(new UntypedMetric(name: "histogram.suppressed_count", metric: selectedHistogram.ValueCounts.SuppressedCount));
@@ -110,7 +110,7 @@ namespace Explorer.Explorers
                 {
                     // one or more quartiles in this bucket
                     var remaining = bucket.Count;
-                    var lowerBound = bucket.LowerBound.Value;
+                    var lowerBound = bucket.LowerBound;
                     var range = (double)selectedHistogram.BucketSize;
 
                     do

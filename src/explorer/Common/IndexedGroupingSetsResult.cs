@@ -5,37 +5,25 @@
     using Diffix;
     using Explorer.JsonExtensions;
 
-    internal class IndexedGroupingSetsResult<TIndex, TGroupedValue> : ValueWithCount<TGroupedValue>
+    internal class IndexedGroupingSetsResult<TIndex, TGroupedValue> : CountableRow
     {
-        internal IndexedGroupingSetsResult(
-            int id,
-            TIndex[] labels,
-            DValue<TGroupedValue> value,
-            long count,
-            double? countNoise)
-            : base(value, count, countNoise)
-        {
-            GroupingId = id;
-            GroupingLabels = labels;
-        }
-
         internal IndexedGroupingSetsResult(ref Utf8JsonReader reader, TIndex[] groupingLabels)
         {
-            (GroupingId, GroupingValue) = reader.ParseGroupingSet<TGroupedValue>(groupingLabels.Length);
-            Count = reader.ParseCount();
-            CountNoise = reader.ParseNoise();
             GroupingLabels = groupingLabels;
+            (GroupingId, DValue) = reader.ParseGroupingSet<TGroupedValue>(groupingLabels.Length);
+            Count = reader.ParseCount();
+            CountNoise = reader.ParseCountNoise();
         }
 
         public int GroupingId { get; }
 
-        public TIndex[] GroupingLabels { get; }
+        public TGroupedValue Value => DValue.Value;
 
-        public DValue<TGroupedValue> GroupingValue
-        {
-            get => DValue;
-            set => DValue = value;
-        }
+        public long Count { get; }
+
+        public double? CountNoise { get; }
+
+        public TIndex[] GroupingLabels { get; }
 
         public TIndex GroupingLabel => GroupingLabels[GroupingIndex];
 
@@ -44,15 +32,12 @@
         public int GroupingIndex =>
             GroupingIdConverter.GetConverter(GroupSize).SingleIndexFromGroupingId(GroupingId);
 
-        public static IndexedGroupingSetsResult<TIndex, TGroupedValue> Create(
-            ref Utf8JsonReader reader,
-            TIndex[] groupingLabels)
-        {
-            var (groupingId, groupingValue) = reader.ParseGroupingSet<TGroupedValue>(groupingLabels.Length);
-            var count = reader.ParseCount();
-            var countNoise = reader.ParseNoise();
-            return new IndexedGroupingSetsResult<TIndex, TGroupedValue>(
-                groupingId, groupingLabels, groupingValue, count, countNoise);
-        }
+        public bool IsNull => DValue.IsNull;
+
+        public bool IsSuppressed => DValue.IsSuppressed;
+
+        public bool HasValue => DValue.HasValue;
+
+        protected DValue<TGroupedValue> DValue { get; }
     }
 }

@@ -49,7 +49,7 @@ namespace Explorer.Queries
 
             public decimal BucketSize => GroupingLabel;
 
-            public DValue<double> LowerBound => GroupingValue;
+            public double LowerBound => Value;
         }
     }
 }

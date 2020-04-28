@@ -7,13 +7,6 @@ namespace Explorer.Common
 
     internal class ValueWithCount<T> : CountableRow
     {
-        public ValueWithCount(DValue<T> value, long count, double? countNoise)
-        {
-            DValue = value;
-            Count = count;
-            CountNoise = countNoise;
-        }
-
         public ValueWithCount(ref Utf8JsonReader reader)
         {
             DValue = reader.ParseDValue<T>();
@@ -21,17 +14,11 @@ namespace Explorer.Common
             CountNoise = reader.ParseCountNoise();
         }
 
-#pragma warning disable CS8618 // Non-nullable property 'DValue' is uninitialized.
-        protected ValueWithCount()
-        {
-        }
-#pragma warning restore CS8618 // Non-nullable property 'DValue' is uninitialized.
-
         public T Value => DValue.Value;
 
-        public long Count { get; protected set; }
+        public long Count { get; }
 
-        public double? CountNoise { get; protected set; }
+        public double? CountNoise { get; }
 
         public bool IsNull => DValue.IsNull;
 
@@ -39,14 +26,6 @@ namespace Explorer.Common
 
         public bool HasValue => DValue.HasValue;
 
-        protected DValue<T> DValue { get; set; }
-
-        public static ValueWithCount<T> Parse(ref Utf8JsonReader reader)
-        {
-            var value = reader.ParseDValue<T>();
-            var count = reader.ParseCount();
-            var countNoise = reader.ParseCountNoise();
-            return new ValueWithCount<T>(value, count, countNoise);
-        }
+        protected DValue<T> DValue { get; }
     }
 }
