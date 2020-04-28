@@ -16,13 +16,6 @@ namespace Explorer.Explorers
 
         private const double SuppressedRatioThreshold = 0.1;
 
-        private readonly string metricNamePrefix;
-
-        public IntegerColumnExplorer(string metricNamePrefix = "")
-        {
-            this.metricNamePrefix = metricNamePrefix;
-        }
-
         public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var statsQ = await conn.Exec<NumericColumnStats.Result<long>>(
@@ -161,15 +154,6 @@ namespace Explorer.Explorers
                 / counts.TotalCount;
 
             PublishMetric(new UntypedMetric(name: "avg_estimate", metric: decimal.Round(averageEstimate, 2)));
-        }
-
-        private void PublishMetric(UntypedMetric metric)
-        {
-            if (!string.IsNullOrEmpty(metricNamePrefix))
-            {
-                metric = new UntypedMetric(metricNamePrefix + "." + metric.Name, metric.Metric);
-            }
-            base.PublishMetric(metric);
         }
     }
 }
