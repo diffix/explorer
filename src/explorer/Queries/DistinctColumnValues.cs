@@ -21,6 +21,6 @@ namespace Explorer.Queries
         public string QueryStatement { get; }
 
         public ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
-            ValueWithCount<JsonElement>.Parse(ref reader);
+            new ValueWithCount<JsonElement>(ref reader);
     }
 }

@@ -5,6 +5,7 @@
     <CodeAnalysisRuleSet>../../explorer.ruleset</CodeAnalysisRuleSet>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
+    <OutputType>library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -92,8 +92,8 @@ namespace Explorer.Api.Tests
         public async void TestDistinctDatetimes()
         {
             var datetimeResult = await QueryResult(
-                new DistinctColumnValues(tableName: "patients", columnName: "date_of_birth"),
-                dataSourceName: "Clinic");
+                new DistinctColumnValues(tableName: "survey", columnName: "first_caught"),
+                dataSourceName: "cov_clear");
 
             Assert.True(datetimeResult.Query.Completed);
             Assert.True(string.IsNullOrEmpty(datetimeResult.Query.Error), datetimeResult.Query.Error);
@@ -118,12 +118,12 @@ namespace Explorer.Api.Tests
 
             Assert.True(result.Query.Completed);
             Assert.True(string.IsNullOrEmpty(result.Query.Error), result.Query.Error);
-            Assert.All(result.Rows, row =>
+            Assert.All<SingleColumnHistogram.Result>(result.Rows, row =>
             {
-                Assert.True(row.BucketIndex < bucketSizes.Count);
-                Assert.True(row.LowerBound.IsNull ||
-                            row.LowerBound.IsSuppressed ||
-                            row.LowerBound.Value >= 0);
+                Assert.True(row.GroupingIndex < bucketSizes.Count);
+                Assert.True(row.IsNull ||
+                            row.IsSuppressed ||
+                            row.LowerBound >= 0);
                 Assert.True(row.Count > 0);
             });
         }
@@ -190,12 +190,12 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCategoricalBoolExplorer()
         {
-            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "Clinic", "addresses", "isaddressvalid");
+            var metrics = await GetExplorerMetrics(new CategoricalColumnExplorer(), "cov_clear", "survey", "fever");
 
             var expectedValues = new List<object>
             {
-                new { Value = true, Count = 15_367 },
-                new { Value = false, Count = 19 },
+                new { Value = false, Count = 3_468 },
+                new { Value = true, Count = 592 },
             };
 
             CheckDistinctCategories(metrics, expectedValues, el => el.GetBoolean());
@@ -260,7 +260,7 @@ namespace Explorer.Api.Tests
         [Fact]
         public async void TestCancelQuery()
         {
-            var testConfig = factory.GetTestConfig(nameof(QueryTests), "TestCancelQuery");
+            var testConfig = factory.GetTestConfig(nameof(QueryTests), nameof(TestCancelQuery));
             var jsonApiClient = factory.CreateJsonApiClient(testConfig.VcrCassettePath);
             var query = new LongRunningQuery();
 

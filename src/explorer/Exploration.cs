@@ -62,7 +62,7 @@ namespace Explorer
                 {
                     (new TextColumnExplorer(), ctx),
                     (new EmailColumnExplorer(), ctx),
-                    (new IntegerColumnExplorer("text.length"), new ExplorerContext(tableName, $"length({columnName})", columnType)),
+                    (new TextLengthExplorer(), ctx),
                 },
                 DValueType.Bool => new (ExplorerBase, ExplorerContext)[]
                 {
