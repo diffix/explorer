@@ -40,21 +40,15 @@ namespace Explorer.Queries
 
         public string QueryStatement { get; }
 
-        public Result ParseRow(ref Utf8JsonReader reader)
-        {
-            var value = reader.ParseDValue<string>();
-            var count = reader.ParseCount();
-            var countNoise = reader.ParseCountNoise();
-            var index = reader.ParseDValue<int>();
-            return new Result(value, count, countNoise, index.HasValue ? index.Value : -1);
-        }
+        public Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 
         public class Result : ValueWithCount<string>
         {
-            public Result(DValue<string> value, long count, double? countNoise, int index)
-                : base(value, count, countNoise)
+            public Result(ref Utf8JsonReader reader)
+                : base(ref reader)
             {
-                Index = index;
+                var index = reader.ParseDValue<int>();
+                Index = index.HasValue ? index.Value : -1;
             }
 
             public int Index { get; }
