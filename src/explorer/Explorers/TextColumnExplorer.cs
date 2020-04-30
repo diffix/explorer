@@ -3,15 +3,22 @@ namespace Explorer.Explorers
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
 
     using Diffix;
     using Explorer.Common;
     using Explorer.Queries;
 
+    using LongList = System.Collections.Generic.List<long>;
+    using StringList = System.Collections.Generic.List<string>;
+    using SubstringsDictionary = System.Collections.Generic.Dictionary<string, long>;
+
     internal class TextColumnExplorer : ExplorerBase
     {
         private const double SuppressedRatioThreshold = 0.1;
+        private const int SubstringQueryColumnCount = 5;
+        private const int GeneratedValuesCount = 10;
 
         public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
@@ -43,67 +50,172 @@ namespace Explorer.Explorers
 
             PublishMetric(new UntypedMetric(name: "distinct.top_values", metric: distinctValueCounts.Take(10)));
 
-            if (counts.SuppressedCountRatio >= SuppressedRatioThreshold)
+            if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
             {
                 // we compute the common prefixes only if the row is not categorical
-                await ExplorePrefixes(conn, ctx);
+                // await ExplorePrefixes(conn, ctx);
+                var values = await GenerateValues(conn, ctx, counts);
+                PublishMetric(new UntypedMetric(name: "synthetic_values", metric: values));
             }
         }
 
-        private async Task<IEnumerable<Prefix>> ExplorePrefixes(DConnection conn, ExplorerContext ctx)
+        private async Task<IEnumerable<string>> GenerateValues(DConnection conn, ExplorerContext ctx, ValueCounts counts)
         {
-            var allPrefixes = new List<Prefix>();
-            var length = 0;
+            var allSubstringsDict = new List<SubstringsDictionary>();
+
+            await ExploreSubstrings(conn, ctx, 1, allSubstringsDict);
+            var isEmail = CheckIsEmail(allSubstringsDict, counts);
+            PublishMetric(new UntypedMetric(name: "is_email", metric: isEmail));
+
+            // TODO emails: use query to get top level domains; generate values according to email pattern
+            await ExploreSubstrings(conn, ctx, 2, allSubstringsDict);
+            await ExploreSubstrings(conn, ctx, 3, allSubstringsDict);
+            await ExploreSubstrings(conn, ctx, 4, allSubstringsDict);
+
+            // convert the Dictionary to separate lists
+            // one with the substrings and one with the running total for counts
+            var allSubstringsList = new List<StringList>(allSubstringsDict.Count);
+            var allCountsList = new List<LongList>(allSubstringsDict.Count);
+            foreach (var substringsDict in allSubstringsDict)
+            {
+                var substringsList = new StringList(substringsDict.Count);
+                var countsList = new LongList(substringsDict.Count);
+                var totalSubstringsCount = 0L;
+                foreach (var kv in substringsDict)
+                {
+                    // TODO: determine better heuristics and optimize exploration to get the useful substrings only
+                    // this condition was determined empirically to work for column containing names
+                    if (kv.Key.Length == 4 || kv.Key.Length == 3)
+                    {
+                        totalSubstringsCount += kv.Value;
+                        substringsList.Add(kv.Key);
+                        countsList.Add(totalSubstringsCount);
+                    }
+                }
+                allSubstringsList.Add(substringsList);
+                allCountsList.Add(countsList);
+            }
+
+            var rand = new Random(Environment.TickCount);
+            return Enumerable.Range(0, GeneratedValuesCount * 3).Select(_
+                => GenerateString(allSubstringsList, allCountsList, rand));
+        }
+
+        private string GenerateString(List<StringList> substrings, List<LongList> counts, Random rand)
+        {
+            var sb = new StringBuilder();
+            var len = rand.Next(3, substrings.Count);
+            for (var pos = 0; pos < substrings.Count && sb.Length < len; pos++)
+            {
+                var str = FindSubstring(substrings[pos], counts[pos], rand);
+                sb.Append(str);
+                pos += str.Length;
+            }
+            return sb.ToString();
+        }
+
+        private string FindSubstring(StringList substrings, LongList counts, Random rand)
+        {
+            if (substrings.Count == 0)
+            {
+                return string.Empty;
+            }
+            var totalSubstringsCount = counts[^1];
+            var rcount = rand.NextLong(totalSubstringsCount + 1);
+            var left = 0;
+            var right = substrings.Count - 1;
             while (true)
             {
-                length++;
-                var prefixesQ = await conn.Exec(
-                    new TextColumnPrefix(ctx.Table, ctx.Column, length));
-
-                var counts = ValueCounts.Compute(prefixesQ.Rows);
-                var avgCount = (double)counts.NonSuppressedCount / counts.NonSuppressedRows;
-
-                var prefixes =
-                    from row in prefixesQ.Rows
-                    let frequency = (double)row.Count / counts.NonSuppressedCount
-                    where row.HasValue && row.Count > avgCount
-                    orderby frequency descending
-                    select new Prefix(row.Value, frequency);
-
-                if (!prefixes.Any())
+                var middle = (left + right) / 2;
+                if (middle == 0 || middle == substrings.Count - 1)
                 {
-                    break;
+                    return substrings[middle];
                 }
-
-                if (length > prefixes.Max(p => p.Value.Length))
+                if (rcount < counts[middle])
                 {
-                    break;
+                    if (rcount >= counts[middle - 1])
+                    {
+                        return substrings[middle - 1];
+                    }
+                    right = middle;
                 }
-
-                allPrefixes.AddRange(prefixes);
+                else if (rcount > counts[middle])
+                {
+                    if (rcount <= counts[middle + 1])
+                    {
+                        return substrings[middle];
+                    }
+                    left = middle;
+                }
+                else
+                {
+                    return substrings[middle];
+                }
             }
-
-            var ret =
-                from row in allPrefixes
-                orderby row.Value.Length ascending, row.Frequency descending
-                select row;
-
-            PublishMetric(new UntypedMetric(name: "text.prefixes", metric: ret));
-
-            return ret;
         }
 
-        private struct Prefix
+        /// <summary>
+        /// Finds common substrings for each position in the texts of the specified column.
+        /// It uses a batch approach to query for several positions (specified by SubstringQueryColumnCount)
+        /// using a single query. For each position in the string we create a Dictionary with the substring
+        /// as key and the number of occurences of the substring as value. The dictionaries are stored in the
+        /// allSubstrings parameter, the index in the list corresponding with the substring position in the
+        /// column value.
+        /// </summary>
+        private async Task ExploreSubstrings(DConnection conn, ExplorerContext ctx, int length, List<SubstringsDictionary> allSubstrings)
         {
-            public Prefix(string value, double frequency)
+            var hasRows = true;
+            for (var pos = 0; hasRows; pos += SubstringQueryColumnCount)
             {
-                Value = value;
-                Frequency = frequency;
+                for (var i = 0; i < SubstringQueryColumnCount; i++)
+                {
+                    if (pos + i >= allSubstrings.Count)
+                    {
+                        allSubstrings.Add(new SubstringsDictionary());
+                    }
+                }
+                var sstrResult = await conn.Exec(new TextColumnSubstring(ctx.Table, ctx.Column, pos, length, SubstringQueryColumnCount));
+                hasRows = false;
+                foreach (var row in sstrResult.Rows)
+                {
+                    if (row.HasValue)
+                    {
+                        hasRows = true;
+                        var substrings = allSubstrings[pos + row.Index];
+                        substrings.TryGetValue(row.Value, out var count);
+                        substrings[row.Value] = count + row.Count;
+                    }
+                }
             }
+        }
 
-            public string Value { get; }
-
-            public double Frequency { get; }
+        private bool CheckIsEmail(IList<SubstringsDictionary> allSubstrings, ValueCounts counts)
+        {
+            var atsCount = 0L;
+            var dotsCount = 0L;
+            foreach (var substrings in allSubstrings)
+            {
+                foreach (var sskv in substrings)
+                {
+                    if (sskv.Key == "@")
+                    {
+                        atsCount += sskv.Value;
+                    }
+                    else if (sskv.Key == ".")
+                    {
+                        dotsCount += sskv.Value;
+                    }
+                }
+            }
+            if (atsCount / (double)counts.TotalCount < 0.99)
+            {
+                return false;
+            }
+            if (dotsCount / (double)counts.TotalCount < 0.99)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }
