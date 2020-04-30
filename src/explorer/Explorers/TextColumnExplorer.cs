@@ -50,7 +50,7 @@ namespace Explorer.Explorers
 
             PublishMetric(new UntypedMetric(name: "distinct.top_values", metric: distinctValueCounts.Take(10)));
 
-            if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
+            if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
             {
                 // we compute the common prefixes only if the row is not categorical
                 // await ExplorePrefixes(conn, ctx);
