@@ -17,32 +17,65 @@ Anonymized data from the Diffix-protected datasets is inherently restricted. The
 
 ### Prerequisites
 
-#### Aircloak API Key
+- [] Aircloak API Key
 
-You will need an authorization key for the Aircloak API. This should be assigned to the `AIRCLOAK_API_KEY`
+  You will need an authorization token for the Aircloak API. This should be assigned to the `AIRCLOAK_API_KEY`
 variable in your environment. 
 
-### Running
+- [] Docker
 
-The simplest way to get started is using Docker. The http api is exposed on port 5000. 
+  Not a strict requirement, but the easiest way to get started is with [Docker](https://www.docker.com/get-started).
 
-You will need to assign the Aircloak Api endpoint to the `AIRCLOAK_API_URL` environment variable, for example the following exposes the api on port `5000` using the Aircloak Api at `https://attack.aircloak.com/api/`:
+### Docker Image from github registry
+
+A latest release is published as a docker image in the github registry. 
+
+In order to pull from the github registry you need to authenticate with a github access token:
+1. Go [here](https://github.com/settings/tokens) and create a new token with the `read:packages` permission.
+2. Save it in a file, for example `github_registry_token.txt`
+3. Authenticate with docker login using the generated token for your github username: 
+    ```
+    cat github_registry_token.txt | docker login docker.pkg.github.com -u $GITHUB_USERNAME --password-stdin
+    ```
+See [here](https://help.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages) for further information. 
+
+
+With the above out of the way, you can download and run the latest image with a single docker command. 
+
+You will need to assign the Aircloak Api endpoint to the `AIRCLOAK_API_URL` environment variable in the docker 
+container. For example, the following exposes the explorer api on port `5000` and targets the Aircloak Api at
+`https://attack.aircloak.com/api/`:
 
 ```
-docker build -t explorer .
+docker run -it --rm \
+    -e AIRCLOAK_API_URL="https://attack.aircloak.com/api/" \
+    -p 5000:80 \
+    docker.pkg.github.com/diffix/explorer/explorer-api:latest
+```
+
+
+### Docker build
+
+You can also build and run the docker image locally.
+
+As above, we need to assign the Aircloak Api endpoint to an environment variable in the container.
+
+```
+# 1. Clone this repo
+git clone https://github.com/diffix/explorer.git 
+
+# 2. Build the docker image
+docker build -t explorer explorer
+
+# 3. Run the application in a new container
 docker run -it --rm -e AIRCLOAK_API_URL="https://attack.aircloak.com/api/" -p 5000:80 explorer
 ```
 
-If you are running in a unix-like environment, you can use or adapt the `build.sh` and `run.sh` scripts. The following is equivalent to the above command.
-
-```
-./build.sh
-./run.sh https://attack.aircloak.com/api/ 5000
-```
-
-> Note you will also need an access token for the Aircloak Api. This token is passed with the request to the `/explore` endpoint.
 
 ## Usage
+
+> Note you will need an access token for the Aircloak Api. This token is passed as part of the request payload
+> to the `/explore` endpoint.
 
 ### Launching an exploration
 
@@ -115,7 +148,7 @@ For further examples, check out the basic [client implementations](src/clients).
 
 The simplest way to get a development environment up and running is with VS Code's remote containers feature. 
 
-> Detailed information on setting this up can be found 
+> Detailed information on setting up remote containers for VS Code can be found 
 [here](https://code.visualstudio.com/docs/remote/containers#_getting-started).
 
 The short version:
