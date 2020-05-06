@@ -10,33 +10,31 @@ namespace Explorer.Explorers.Components
     using Explorer.Queries;
 
     internal class NumericHistogramComponent :
-        ExplorerComponent<NumericHistogramComponent.Result>,
-        DependsOn<SimpleStats<double>.Result>
+        ExplorerComponent<NumericHistogramComponent.Result>
     {
         private const long ValuesPerBucketTarget = 20;
+        private readonly DConnection conn;
+        private readonly ExplorerContext ctx;
+        private readonly ResultProvider<SimpleStats<double>.Result> statsResultProvider;
 
-        private ExplorerComponent<SimpleStats<double>.Result>? statsComponent;
-
-        public NumericHistogramComponent(DConnection conn, ExplorerContext ctx)
-        : base(conn, ctx)
+        public NumericHistogramComponent(
+            DConnection conn,
+            ExplorerContext ctx,
+            ResultProvider<SimpleStats<double>.Result> statsResultProvider)
         {
-        }
-
-        public void LinkToSourceComponent(ExplorerComponent<SimpleStats<double>.Result> component)
-        {
-            statsComponent = component;
+            this.conn = conn;
+            this.ctx = ctx;
+            this.statsResultProvider = statsResultProvider;
         }
 
         protected async override Task<Result> Explore()
         {
-            statsComponent ??= new SimpleStats<double>(Conn, Ctx);
-
-            var stats = await statsComponent.ResultAsync;
+            var stats = await statsResultProvider.ResultAsync;
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
 
-            var histogramQ = await Conn.Exec(new SingleColumnHistogram(Ctx.Table, Ctx.Column, bucketsToSample));
+            var histogramQ = await conn.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 
             var histograms = histogramQ.Rows
                 .GroupBy(

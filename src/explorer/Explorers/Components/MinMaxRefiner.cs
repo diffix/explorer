@@ -12,10 +12,13 @@ namespace Explorer.Explorers.Components
     internal class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>
     {
         private const int MaxIterations = 10;
+        private readonly DConnection conn;
+        private readonly ExplorerContext ctx;
 
         public MinMaxRefiner(DConnection conn, ExplorerContext ctx)
-        : base(conn, ctx)
         {
+            this.ctx = ctx;
+            this.conn = conn;
         }
 
         protected override async Task<Result> Explore()
@@ -83,15 +86,15 @@ namespace Explorer.Explorers.Components
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound)
         {
-            var minQ = await Conn.Exec<Min.Result<decimal>>(
-                new Min(Ctx.Table, Ctx.Column, upperBound));
+            var minQ = await conn.Exec<Min.Result<decimal>>(
+                new Min(ctx.Table, ctx.Column, upperBound));
             return minQ.Rows.Single().Min;
         }
 
         private async Task<decimal?> GetMaxEstimate(decimal? lowerBound)
         {
-            var maxQ = await Conn.Exec<Max.Result<decimal>>(
-                new Max(Ctx.Table, Ctx.Column, lowerBound));
+            var maxQ = await conn.Exec<Max.Result<decimal>>(
+                new Max(ctx.Table, ctx.Column, lowerBound));
             return maxQ.Rows.Single().Max;
         }
 

@@ -10,14 +10,19 @@ namespace Explorer.Explorers.Components
 
     internal class SimpleStats<T> : ExplorerComponent<SimpleStats<T>.Result>
     {
+        private readonly DConnection conn;
+
+        private readonly ExplorerContext ctx;
+
         public SimpleStats(DConnection conn, ExplorerContext ctx)
-        : base(conn, ctx)
         {
+            this.conn = conn;
+            this.ctx = ctx;
         }
 
         protected override async Task<SimpleStats<T>.Result> Explore()
         {
-            var statsQ = await Conn.Exec(new BasicColumnStats<T>(Ctx.Table, Ctx.Column));
+            var statsQ = await conn.Exec(new BasicColumnStats<T>(ctx.Table, ctx.Column));
 
             return new Result(statsQ.Rows.Single());
         }

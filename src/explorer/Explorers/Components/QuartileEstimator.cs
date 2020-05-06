@@ -3,31 +3,23 @@ namespace Explorer.Explorers.Components
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Diffix;
     using Explorer.Common;
     using Explorer.Explorers.Metrics;
 
     internal class QuartileEstimator :
-        ExplorerComponent<QuartileEstimator.Result>,
-        DependsOn<NumericHistogramComponent.Result>
+        ExplorerComponent<QuartileEstimator.Result>
     {
-        private ExplorerComponent<NumericHistogramComponent.Result>? histogramComponent;
+        private readonly ResultProvider<NumericHistogramComponent.Result> histogramResult;
 
-        public QuartileEstimator(DConnection conn, ExplorerContext ctx)
-        : base(conn, ctx)
+        public QuartileEstimator(
+            ResultProvider<NumericHistogramComponent.Result> histogramResult)
         {
-        }
-
-        public void LinkToSourceComponent(ExplorerComponent<NumericHistogramComponent.Result> component)
-        {
-            histogramComponent = component;
+            this.histogramResult = histogramResult;
         }
 
         protected override async Task<Result> Explore()
         {
-            histogramComponent ??= new NumericHistogramComponent(Conn, Ctx);
-
-            var selectedHistogram = await histogramComponent.ResultAsync;
+            var selectedHistogram = await histogramResult.ResultAsync;
 
             var quartileEstimates = new List<double>();
             var quartileCount = selectedHistogram.ValueCounts.NonSuppressedNonNullCount / 4;

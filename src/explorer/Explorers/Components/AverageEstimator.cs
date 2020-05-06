@@ -7,25 +7,19 @@ namespace Explorer.Explorers.Components
     using Explorer.Common;
     using Explorer.Explorers.Metrics;
 
-    internal class AverageEstimator : ExplorerComponent<AverageEstimator.Result>, DependsOn<NumericHistogramComponent.Result>
+    internal class AverageEstimator :
+        ExplorerComponent<AverageEstimator.Result>
     {
-        private ExplorerComponent<NumericHistogramComponent.Result>? histogramComponent;
+        private readonly ResultProvider<NumericHistogramComponent.Result> histogramResultProvider;
 
-        public AverageEstimator(DConnection conn, ExplorerContext ctx)
-        : base(conn, ctx)
+        public AverageEstimator(ResultProvider<NumericHistogramComponent.Result> histogramResultProvider)
         {
-        }
-
-        public void LinkToSourceComponent(ExplorerComponent<NumericHistogramComponent.Result> component)
-        {
-            histogramComponent = component;
+            this.histogramResultProvider = histogramResultProvider;
         }
 
         protected override async Task<Result> Explore()
         {
-            histogramComponent ??= new NumericHistogramComponent(Conn, Ctx);
-
-            var histogram = await histogramComponent.ResultAsync;
+            var histogram = await histogramResultProvider.ResultAsync;
 
             var averageEstimate = await Task.Run(() =>
             {

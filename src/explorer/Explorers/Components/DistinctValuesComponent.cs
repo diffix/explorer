@@ -13,22 +13,26 @@ namespace Explorer.Explorers.Components
     internal class DistinctValuesComponent
         : ExplorerComponent<DistinctValuesComponent.Result>
     {
+        private readonly DConnection conn;
+        private readonly ExplorerContext ctx;
+
         public DistinctValuesComponent(DConnection conn, ExplorerContext ctx)
-        : base(conn, ctx)
         {
+            this.ctx = ctx;
+            this.conn = conn;
         }
 
         protected override async Task<Result> Explore()
         {
-            var distinctValueQ = await Conn.Exec(
-                new DistinctColumnValues(Ctx.Table, Ctx.Column));
+            var distinctValueQ = await conn.Exec(
+                new DistinctColumnValues(ctx.Table, ctx.Column));
 
             var counts = ValueCounts.Compute(distinctValueQ.Rows);
 
             if (counts.TotalCount == 0)
             {
                 throw new Exception(
-                    $"Total value count for {Ctx.Table}, {Ctx.Column} is zero.");
+                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
             }
 
             return new Result(distinctValueQ.Rows, counts);
