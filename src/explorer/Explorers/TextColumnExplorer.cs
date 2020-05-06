@@ -10,15 +10,14 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    using LongList = System.Collections.Generic.List<long>;
-    using StringList = System.Collections.Generic.List<string>;
-    using SubstringsDictionary = System.Collections.Generic.Dictionary<string, long>;
+    using SubstringWithCountList = System.Collections.Generic.List<(string Value, long Count)>;
 
     internal class TextColumnExplorer : ExplorerBase
     {
+        public const string EmailAddressChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
         private const double SuppressedRatioThreshold = 0.1;
         private const int SubstringQueryColumnCount = 5;
-        private const int GeneratedValuesCount = 10;
+        private const int GeneratedValuesCount = 30;
 
         public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
@@ -52,128 +51,44 @@ namespace Explorer.Explorers
 
             if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
             {
-                // we compute the common prefixes only if the row is not categorical
-                // await ExplorePrefixes(conn, ctx);
-                var values = await GenerateValues(conn, ctx, counts);
+                // we generate synthetic values if the row is not categorical
+                var isEmail = await CheckIsEmail(conn, ctx);
+                PublishMetric(new UntypedMetric(name: "is_email", metric: isEmail));
+                var values = isEmail ? await GenerateEmails(conn, ctx) : await GenerateStrings(conn, ctx);
                 PublishMetric(new UntypedMetric(name: "synthetic_values", metric: values));
             }
         }
 
-        private async Task<IEnumerable<string>> GenerateValues(DConnection conn, ExplorerContext ctx, ValueCounts counts)
+        private static async Task<IEnumerable<string>> GenerateStrings(DConnection conn, ExplorerContext ctx)
         {
-            var allSubstringsDict = new List<SubstringsDictionary>();
-
-            await ExploreSubstrings(conn, ctx, 1, allSubstringsDict);
-            var isEmail = CheckIsEmail(allSubstringsDict, counts);
-            PublishMetric(new UntypedMetric(name: "is_email", metric: isEmail));
-
-            // TODO emails: use query to get top level domains; generate values according to email pattern
-            await ExploreSubstrings(conn, ctx, 2, allSubstringsDict);
-            await ExploreSubstrings(conn, ctx, 3, allSubstringsDict);
-            await ExploreSubstrings(conn, ctx, 4, allSubstringsDict);
-
-            // convert the Dictionary to separate lists
-            // one with the substrings and one with the running total for counts
-            var allSubstringsList = new List<StringList>(allSubstringsDict.Count);
-            var allCountsList = new List<LongList>(allSubstringsDict.Count);
-            foreach (var substringsDict in allSubstringsDict)
-            {
-                var substringsList = new StringList(substringsDict.Count);
-                var countsList = new LongList(substringsDict.Count);
-                var totalSubstringsCount = 0L;
-                foreach (var kv in substringsDict)
-                {
-                    // TODO: determine better heuristics and optimize exploration to get the useful substrings only
-                    // this condition was determined empirically to work for column containing names
-                    if (kv.Key.Length == 4 || kv.Key.Length == 3)
-                    {
-                        totalSubstringsCount += kv.Value;
-                        substringsList.Add(kv.Key);
-                        countsList.Add(totalSubstringsCount);
-                    }
-                }
-                allSubstringsList.Add(substringsList);
-                allCountsList.Add(countsList);
-            }
-
+            // the substring lengths 3 and 4 were determined empirically to work for column containing names
+            var substrings = new SubstringDataCollection(maxSubstringLength: 4);
+            await ExploreSubstrings(conn, ctx, 3, substrings);
+            await ExploreSubstrings(conn, ctx, 4, substrings);
             var rand = new Random(Environment.TickCount);
-            return Enumerable.Range(0, GeneratedValuesCount * 3).Select(_
-                => GenerateString(allSubstringsList, allCountsList, rand));
+            return Enumerable.Range(0, GeneratedValuesCount).Select(_
+                => substrings.GenerateString(
+                        minLength: 3,
+                        minSubstringLength: 3,
+                        maxSubstringLength: 4,
+                        rand));
         }
 
-        private string GenerateString(List<StringList> substrings, List<LongList> counts, Random rand)
+        private static async Task<IEnumerable<string>> GenerateEmails(DConnection conn, ExplorerContext ctx)
         {
-            var sb = new StringBuilder();
-            var len = rand.Next(3, substrings.Count);
-            for (var pos = 0; pos < substrings.Count && sb.Length < len; pos++)
-            {
-                var str = FindSubstring(substrings[pos], counts[pos], rand);
-                sb.Append(str);
-                pos += str.Length;
-            }
-            return sb.ToString();
-        }
-
-        private string FindSubstring(StringList substrings, LongList counts, Random rand)
-        {
-            if (substrings.Count == 0)
-            {
-                return string.Empty;
-            }
-            var totalSubstringsCount = counts[^1];
-            var rcount = rand.NextLong(totalSubstringsCount + 1);
-            var left = 0;
-            var right = substrings.Count - 1;
-            while (true)
-            {
-                var middle = (left + right) / 2;
-                if (middle == 0 || middle == substrings.Count - 1)
-                {
-                    return substrings[middle];
-                }
-                if (rcount < counts[middle])
-                {
-                    if (rcount >= counts[middle - 1])
-                    {
-                        return substrings[middle - 1];
-                    }
-                    right = middle;
-                }
-                else if (rcount > counts[middle])
-                {
-                    if (rcount <= counts[middle + 1])
-                    {
-                        return substrings[middle];
-                    }
-                    left = middle;
-                }
-                else
-                {
-                    return substrings[middle];
-                }
-            }
+            return Enumerable.Empty<string>();
         }
 
         /// <summary>
         /// Finds common substrings for each position in the texts of the specified column.
-        /// It uses a batch approach to query for several positions (specified by SubstringQueryColumnCount)
-        /// using a single query. For each position in the string we create a Dictionary with the substring
-        /// as key and the number of occurences of the substring as value. The dictionaries are stored in the
-        /// allSubstrings parameter, the index in the list corresponding with the substring position in the
-        /// column value.
+        /// It uses a batch approach to query for several positions (specified using SubstringQueryColumnCount)
+        /// using a single query.
         /// </summary>
-        private async Task ExploreSubstrings(DConnection conn, ExplorerContext ctx, int length, List<SubstringsDictionary> allSubstrings)
+        private static async Task ExploreSubstrings(DConnection conn, ExplorerContext ctx, int length, SubstringDataCollection substrings)
         {
             var hasRows = true;
             for (var pos = 0; hasRows; pos += SubstringQueryColumnCount)
             {
-                for (var i = 0; i < SubstringQueryColumnCount; i++)
-                {
-                    if (pos + i >= allSubstrings.Count)
-                    {
-                        allSubstrings.Add(new SubstringsDictionary());
-                    }
-                }
                 var sstrResult = await conn.Exec(new TextColumnSubstring(ctx.Table, ctx.Column, pos, length, SubstringQueryColumnCount));
                 hasRows = false;
                 foreach (var row in sstrResult.Rows)
@@ -181,41 +96,139 @@ namespace Explorer.Explorers
                     if (row.HasValue)
                     {
                         hasRows = true;
-                        var substrings = allSubstrings[pos + row.Index];
-                        substrings.TryGetValue(row.Value, out var count);
-                        substrings[row.Value] = count + row.Count;
+                        substrings.Add(pos + row.Index, row.Value, row.Count);
                     }
                 }
             }
         }
 
-        private bool CheckIsEmail(IList<SubstringsDictionary> allSubstrings, ValueCounts counts)
+        private static async Task<bool> CheckIsEmail(DConnection conn, ExplorerContext ctx)
         {
-            var atsCount = 0L;
-            var dotsCount = 0L;
-            foreach (var substrings in allSubstrings)
-            {
-                foreach (var sskv in substrings)
-                {
-                    if (sskv.Key == "@")
-                    {
-                        atsCount += sskv.Value;
-                    }
-                    else if (sskv.Key == ".")
-                    {
-                        dotsCount += sskv.Value;
-                    }
-                }
-            }
-            if (atsCount / (double)counts.TotalCount < 0.99)
-            {
-                return false;
-            }
-            if (dotsCount / (double)counts.TotalCount < 0.99)
-            {
-                return false;
-            }
-            return true;
+            var emailCheck = await conn.Exec(
+                new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, EmailAddressChars));
+
+            var counts = ValueCounts.Compute(emailCheck.Rows);
+
+            return counts.TotalCount == emailCheck.Rows
+                .Where(r => r.IsNull || r.Value == "@")
+                .Sum(r => r.Count);
         }
     }
+
+    /// <summary>
+    /// Stores the substrings from a certain position in a column,
+    /// together with the number of occurences (counts) for each substring.
+    /// The substrings are grouped separately by length.
+    /// </summary>
+    internal class SubstringsData
+    {
+        public SubstringsData(int maxSubstringLength)
+        {
+            Data = new List<SubstringWithCountList>(maxSubstringLength)
+            {
+                new SubstringWithCountList() { (string.Empty, 0) },
+            };
+            for (var i = 1; i <= maxSubstringLength; i++)
+            {
+                Data.Add(new SubstringWithCountList());
+            }
+        }
+
+        private List<SubstringWithCountList> Data { get; }
+
+        public void Add(string s, long count)
+        {
+            var substrings = Data[s.Length];
+            var totalCount = substrings.Count == 0 ? 0 : substrings[^1].Count;
+            substrings.Add((s, totalCount + count));
+        }
+
+        public string GetSubstring(int minLength, int maxLength, Random rand)
+        {
+            if (maxLength >= Data.Count)
+            {
+                throw new ArgumentException($"{nameof(maxLength)} should be smaller than {Data.Count}.", nameof(maxLength));
+            }
+            // TODO: distribute value over all alternatives according to counts (not with the same probability)
+            var sslen = rand.Next(minLength, maxLength + 1);
+            var substrings = Data[sslen];
+            if (substrings.Count == 0)
+            {
+                return string.Empty;
+            }
+            var rcount = rand.NextLong(substrings[^1].Count);
+            return FindSubstring(substrings, rcount);
+        }
+
+        private static string FindSubstring(SubstringWithCountList substrings, long count)
+        {
+            var left = 0;
+            var right = substrings.Count - 1;
+            while (true)
+            {
+                var middle = (left + right) / 2;
+                if (middle == 0 || middle == substrings.Count - 1)
+                {
+                    return substrings[middle].Value;
+                }
+                if (count < substrings[middle].Count)
+                {
+                    if (count >= substrings[middle - 1].Count)
+                    {
+                        return substrings[middle - 1].Value;
+                    }
+                    right = middle;
+                }
+                else if (count > substrings[middle].Count)
+                {
+                    if (count <= substrings[middle + 1].Count)
+                    {
+                        return substrings[middle].Value;
+                    }
+                    left = middle;
+                }
+                else
+                {
+                    return substrings[middle].Value;
+                }
+            }
+        }
+
+    }
+
+    internal class SubstringDataCollection
+    {
+        public SubstringDataCollection(int maxSubstringLength)
+        {
+            MaxSubstringLength = maxSubstringLength;
+            Substrings = new List<SubstringsData>();
+        }
+
+        private List<SubstringsData> Substrings { get; }
+
+        private int MaxSubstringLength { get; }
+
+        public void Add(int pos, string s, long count)
+        {
+            while (Substrings.Count <= pos)
+            {
+                Substrings.Add(new SubstringsData(MaxSubstringLength));
+            }
+            Substrings[pos].Add(s, count);
+        }
+
+        public string GenerateString(int minLength, int minSubstringLength, int maxSubstringLength, Random rand)
+        {
+            var sb = new StringBuilder();
+            var len = rand.Next(minLength, Substrings.Count);
+            for (var pos = 0; pos < Substrings.Count && sb.Length < len; pos++)
+            {
+                var str = Substrings[pos].GetSubstring(minSubstringLength, maxSubstringLength, rand);
+                sb.Append(str);
+                pos += str.Length;
+            }
+            return sb.ToString();
+        }
+    }
+
 }
