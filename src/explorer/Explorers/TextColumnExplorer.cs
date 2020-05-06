@@ -10,8 +10,6 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    using SubstringWithCountList = System.Collections.Generic.List<(string Value, long Count)>;
-
     internal class TextColumnExplorer : ExplorerBase
     {
         public const string EmailAddressChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
@@ -113,6 +111,54 @@ namespace Explorer.Explorers
                 .Where(r => r.IsNull || r.Value == "@")
                 .Sum(r => r.Count);
         }
+
+    }
+
+    internal class SubstringWithCountList : List<(string Value, long Count)>
+    {
+        public string GetSubstring(Random rand)
+        {
+            if (Count == 0)
+            {
+                return string.Empty;
+            }
+            var rcount = rand.NextLong(this[^1].Count);
+            return FindSubstring(rcount);
+    }
+
+        private string FindSubstring(long count)
+        {
+            var left = 0;
+            var right = Count - 1;
+            while (true)
+            {
+                var middle = (left + right) / 2;
+                if (middle == 0 || middle == Count - 1)
+                {
+                    return this[middle].Value;
+                }
+                if (count < this[middle].Count)
+                {
+                    if (count >= this[middle - 1].Count)
+                    {
+                        return this[middle - 1].Value;
+                    }
+                    right = middle;
+                }
+                else if (count > this[middle].Count)
+                {
+                    if (count <= this[middle + 1].Count)
+                    {
+                        return this[middle].Value;
+                    }
+                    left = middle;
+                }
+                else
+                {
+                    return this[middle].Value;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -152,48 +198,8 @@ namespace Explorer.Explorers
             // TODO: distribute value over all alternatives according to counts (not with the same probability)
             var sslen = rand.Next(minLength, maxLength + 1);
             var substrings = Data[sslen];
-            if (substrings.Count == 0)
-            {
-                return string.Empty;
-            }
-            var rcount = rand.NextLong(substrings[^1].Count);
-            return FindSubstring(substrings, rcount);
+            return substrings.GetSubstring(rand);
         }
-
-        private static string FindSubstring(SubstringWithCountList substrings, long count)
-        {
-            var left = 0;
-            var right = substrings.Count - 1;
-            while (true)
-            {
-                var middle = (left + right) / 2;
-                if (middle == 0 || middle == substrings.Count - 1)
-                {
-                    return substrings[middle].Value;
-                }
-                if (count < substrings[middle].Count)
-                {
-                    if (count >= substrings[middle - 1].Count)
-                    {
-                        return substrings[middle - 1].Value;
-                    }
-                    right = middle;
-                }
-                else if (count > substrings[middle].Count)
-                {
-                    if (count <= substrings[middle + 1].Count)
-                    {
-                        return substrings[middle].Value;
-                    }
-                    left = middle;
-                }
-                else
-                {
-                    return substrings[middle].Value;
-                }
-            }
-        }
-
     }
 
     internal class SubstringDataCollection
