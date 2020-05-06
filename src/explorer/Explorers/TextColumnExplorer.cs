@@ -116,13 +116,15 @@ namespace Explorer.Explorers
 
     internal class SubstringWithCountList : List<(string Value, long Count)>
     {
+        public long TotalCount => Count == 0 ? 0 : this[^1].Count;
+
         public string GetSubstring(Random rand)
         {
             if (Count == 0)
             {
                 return string.Empty;
             }
-            var rcount = rand.NextLong(this[^1].Count);
+            var rcount = rand.NextLong(TotalCount);
             return FindSubstring(rcount);
     }
 
@@ -185,8 +187,7 @@ namespace Explorer.Explorers
         public void Add(string s, long count)
         {
             var substrings = Data[s.Length];
-            var totalCount = substrings.Count == 0 ? 0 : substrings[^1].Count;
-            substrings.Add((s, totalCount + count));
+            substrings.Add((s, substrings.TotalCount + count));
         }
 
         public string GetSubstring(int minLength, int maxLength, Random rand)
