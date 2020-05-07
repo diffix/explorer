@@ -20,9 +20,20 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
-        public async void TestEmail()
+        public async void TestClientsEmail()
         {
             var metrics = await GetExplorerMetrics(new TextColumnExplorer(), "gda_banking", "clients", "email");
+            var isEmail = metrics.First(m => m.Name == "is_email");
+            Assert.True((bool)isEmail.Metric);
+            var metric_svalues = metrics.First(m => m.Name == "synthetic_values");
+            var values = metric_svalues.Metric as IEnumerable<string>;
+            Assert.True(values.All(v => v.Length >= 3));
+        }
+
+        [Fact]
+        public async void TestCardsEmail()
+        {
+            var metrics = await GetExplorerMetrics(new TextColumnExplorer(), "gda_banking", "cards", "email");
             var isEmail = metrics.First(m => m.Name == "is_email");
             Assert.True((bool)isEmail.Metric);
             var metric_svalues = metrics.First(m => m.Name == "synthetic_values");
