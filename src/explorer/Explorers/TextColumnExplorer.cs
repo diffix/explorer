@@ -61,9 +61,7 @@ namespace Explorer.Explorers
         private static async Task<IEnumerable<string>> GenerateStrings(DConnection conn, ExplorerContext ctx)
         {
             // the substring lengths 3 and 4 were determined empirically to work for column containing names
-            var substrings = new SubstringDataCollection(maxSubstringLength: 4);
-            await ExploreSubstrings(conn, ctx, 3, substrings);
-            await ExploreSubstrings(conn, ctx, 4, substrings);
+            var substrings = await ExploreSubstrings(conn, ctx, substringLengths: new int[] { 3, 4 });
             var rand = new Random(Environment.TickCount);
             return Enumerable.Range(0, GeneratedValuesCount).Select(_
                 => substrings.GenerateString(
@@ -77,9 +75,7 @@ namespace Explorer.Explorers
         {
             var domains = await ExploreEmailDomains(conn, ctx);
             var tlds = await ExploreEmailTopLevelDomains(conn, ctx);
-            var substrings = new SubstringDataCollection(maxSubstringLength: 4);
-            await ExploreSubstrings(conn, ctx, 3, substrings);
-            await ExploreSubstrings(conn, ctx, 4, substrings);
+            var substrings = await ExploreSubstrings(conn, ctx, substringLengths: new int[] { 3, 4 });
             var rand = new Random(Environment.TickCount);
             var emails = new List<string>(GeneratedValuesCount);
             for (var i = 0; emails.Count < GeneratedValuesCount && i < GeneratedValuesCount * 100; i++)
@@ -157,22 +153,28 @@ namespace Explorer.Explorers
         /// It uses a batch approach to query for several positions (specified using SubstringQueryColumnCount)
         /// using a single query.
         /// </summary>
-        private static async Task ExploreSubstrings(DConnection conn, ExplorerContext ctx, int length, SubstringDataCollection substrings)
+        private static async Task<SubstringDataCollection> ExploreSubstrings(DConnection conn, ExplorerContext ctx, params int[] substringLengths)
         {
-            var hasRows = true;
-            for (var pos = 0; hasRows; pos += SubstringQueryColumnCount)
+            var substrings = new SubstringDataCollection(maxSubstringLength: substringLengths.Max());
+            foreach (var length in substringLengths)
             {
-                var sstrResult = await conn.Exec(new TextColumnSubstring(ctx.Table, ctx.Column, pos, length, SubstringQueryColumnCount));
-                hasRows = false;
-                foreach (var row in sstrResult.Rows)
+                var hasRows = true;
+                for (var pos = 0; hasRows; pos += SubstringQueryColumnCount)
                 {
-                    if (row.HasValue)
+                    var query = new TextColumnSubstring(ctx.Table, ctx.Column, pos, length, SubstringQueryColumnCount);
+                    var sstrResult = await conn.Exec(query);
+                    hasRows = false;
+                    foreach (var row in sstrResult.Rows)
                     {
-                        hasRows = true;
-                        substrings.Add(pos + row.Index, row.Value, row.Count);
+                        if (row.HasValue)
+                        {
+                            hasRows = true;
+                            substrings.Add(pos + row.Index, row.Value, row.Count);
+                        }
                     }
                 }
             }
+            return substrings;
         }
 
         private static async Task<bool> CheckIsEmail(DConnection conn, ExplorerContext ctx)
