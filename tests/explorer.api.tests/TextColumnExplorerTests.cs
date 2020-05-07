@@ -30,6 +30,8 @@ namespace Explorer.Api.Tests
             Assert.True(values.All(v => v.Length >= 3));
             Assert.True(values.All(v => v.Contains('@', StringComparison.InvariantCulture)));
             Assert.True(values.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("@@", StringComparison.InvariantCulture)));
         }
 
         [Fact]
@@ -43,6 +45,8 @@ namespace Explorer.Api.Tests
             Assert.True(values.All(v => v.Length >= 3));
             Assert.True(values.All(v => v.Contains('@', StringComparison.InvariantCulture)));
             Assert.True(values.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("@@", StringComparison.InvariantCulture)));
         }
 
         [Fact]
