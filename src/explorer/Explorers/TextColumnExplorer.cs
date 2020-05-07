@@ -242,39 +242,6 @@ namespace Explorer.Explorers
             {
                 return Substrings[pos].GetRandomValue(rand, string.Empty);
             }
-
-            internal class Item
-            {
-                public Item(int maxSubstringLength)
-                {
-                    Data = new List<SubstringWithCountList>(maxSubstringLength)
-                {
-                    new SubstringWithCountList() { (string.Empty, 0) },
-                };
-
-                    for (var i = 1; i <= maxSubstringLength; i++)
-                    {
-                        Data.Add(new SubstringWithCountList());
-                    }
-                }
-
-                private List<SubstringWithCountList> Data { get; }
-
-                public void Add(string s, long count)
-                {
-                    Data[s.Length].AddValueCount(s, count);
-                }
-
-                public string GetSubstring(int minLength, int maxLength, Random rand)
-                {
-                    if (maxLength >= Data.Count)
-                    {
-                        throw new ArgumentException($"{nameof(maxLength)} should be smaller than {Data.Count}.", nameof(maxLength));
-                    }
-                    // TODO: distribute value over all alternatives according to counts (not with the same probability)
-                    var sslen = rand.Next(minLength, maxLength + 1);
-                    var substrings = Data[sslen];
-                    return substrings.GetRandomValue(rand, string.Empty);
-                }
-            }
         }
+    }
+}
