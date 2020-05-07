@@ -118,12 +118,6 @@ namespace Explorer.Explorers
                 pnext /= 2;
                 partIndex++;
             }
-            for (var replaced = 1; replaced != 0;)
-            {
-                var oldlen = sb.Length;
-                sb.Replace("..", ".");
-                replaced = oldlen - sb.Length;
-            }
             var localParts = sb.ToString()
                 .Split('.', StringSplitOptions.RemoveEmptyEntries)
                 .Where(s => s.Length == 1 || s.Length > 3)
