@@ -182,49 +182,46 @@ namespace Explorer.Explorers
             var emailCheck = await conn.Exec(
                 new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, EmailAddressChars));
 
-            var counts = ValueCounts.Compute(emailCheck.Rows);
-
-            return counts.TotalCount == emailCheck.Rows
-                .Where(r => r.IsNull || r.Value == "@")
-                .Sum(r => r.Count);
+            return emailCheck.Rows.All(r => r.IsNull || r.Value == "@");
         }
 
         private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
         {
             var domains = await conn.Exec(new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Leading, EmailAddressChars));
-            var totalCount = 0L;
-            var domain = new SubstringWithCountList();
-            foreach (var row in domains.Rows)
-            {
-                if (row.HasValue && row.Value.StartsWith("@", StringComparison.InvariantCulture))
-                {
-                    totalCount += row.Count;
-                    domain.Add((row.Value, totalCount));
-                }
-            }
-            return domain;
+
+            return SubstringWithCountList.FromValueWithCountEnum(
+                domains.Rows
+                    .Where(r => r.HasValue && r.Value.StartsWith("@", StringComparison.InvariantCulture)));
         }
 
         private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(DConnection conn, ExplorerContext ctx)
         {
             var suffixes = await conn.Exec(new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
-            var totalCount = 0L;
-            var tlds = new SubstringWithCountList();
-            foreach (var row in suffixes.Rows)
-            {
-                if (row.HasValue && row.Value.StartsWith(".", StringComparison.InvariantCulture))
-                {
-                    totalCount += row.Count;
-                    tlds.Add((row.Value, totalCount));
-                }
-            }
-            return tlds;
+
+            return SubstringWithCountList.FromValueWithCountEnum(
+                suffixes.Rows
+                    .Where(r => r.HasValue && r.Value.StartsWith(".", StringComparison.InvariantCulture)));
         }
     }
 
     internal class SubstringWithCountList : List<(string Value, long Count)>
     {
         public long TotalCount => Count == 0 ? 0 : this[^1].Count;
+
+        public static SubstringWithCountList FromValueWithCountEnum(IEnumerable<ValueWithCount<string>> valueCounts)
+        {
+            var sscl = new SubstringWithCountList();
+            foreach (var vc in valueCounts)
+            {
+                sscl.AddValueCount(vc.Value, vc.Count);
+            }
+            return sscl;
+        }
+
+        public void AddValueCount(string value, long count)
+        {
+            Add((value, TotalCount + count));
+        }
 
         public string GetSubstring(Random rand)
         {
@@ -328,8 +325,7 @@ namespace Explorer.Explorers
 
             public void Add(string s, long count)
             {
-                var substrings = Data[s.Length];
-                substrings.Add((s, substrings.TotalCount + count));
+                Data[s.Length].AddValueCount(s, count);
             }
 
             public string GetSubstring(int minLength, int maxLength, Random rand)
