@@ -16,6 +16,7 @@ namespace Explorer.Explorers
         private const double SuppressedRatioThreshold = 0.1;
         private const int SubstringQueryColumnCount = 5;
         private const int GeneratedValuesCount = 30;
+        private const int EmailDomainsCountThreshold = 5 * GeneratedValuesCount;
 
         public override async Task Explore(DConnection conn, ExplorerContext ctx)
         {
@@ -74,7 +75,81 @@ namespace Explorer.Explorers
 
         private static async Task<IEnumerable<string>> GenerateEmails(DConnection conn, ExplorerContext ctx)
         {
-            return Enumerable.Empty<string>();
+            var domains = await ExploreEmailDomains(conn, ctx);
+            var tlds = await ExploreEmailTopLevelDomains(conn, ctx);
+            var substrings = new SubstringDataCollection(maxSubstringLength: 4);
+            await ExploreSubstrings(conn, ctx, 3, substrings);
+            await ExploreSubstrings(conn, ctx, 4, substrings);
+            var rand = new Random(Environment.TickCount);
+            var emails = new List<string>(GeneratedValuesCount);
+            for (var i = 0; emails.Count < GeneratedValuesCount && i < GeneratedValuesCount * 100; i++)
+            {
+                var s = substrings.GenerateString(
+                    minLength: 3,
+                    minSubstringLength: 3,
+                    maxSubstringLength: 4,
+                    rand);
+                var email = GenerateEmail(s, domains, tlds, rand);
+                if (!string.IsNullOrEmpty(email))
+                {
+                    emails.Add(email);
+                }
+            }
+            return emails;
+        }
+
+        private static string GenerateEmail(string str, SubstringWithCountList domains, SubstringWithCountList tlds, Random rand)
+        {
+            // create local-part section
+            var allParts = str.Split('@', StringSplitOptions.RemoveEmptyEntries);
+            var sb = new StringBuilder();
+            var partIndex = 0;
+            var pnext = 1;
+            while (partIndex < allParts.Length && rand.NextDouble() <= pnext)
+            {
+                sb.Append(allParts[partIndex]);
+                pnext /= 2;
+                partIndex++;
+            }
+            for (var replaced = 1; replaced != 0;)
+            {
+                var oldlen = sb.Length;
+                sb.Replace("..", ".");
+                replaced = oldlen - sb.Length;
+            }
+            var localParts = sb.ToString()
+                .Split('.', StringSplitOptions.RemoveEmptyEntries)
+                .Where(s => s.Length == 1 || s.Length > 3)
+                .Take(rand.Next(1, 3));
+            var localPart = string.Join('.', localParts);
+            if (string.IsNullOrEmpty(localPart))
+            {
+                return string.Empty;
+            }
+            if (domains.Count >= EmailDomainsCountThreshold)
+            {
+                // if the number of distinct domains is big enough we select one from the extracted list
+                return localPart + domains.GetSubstring(rand);
+            }
+
+            // create domain section
+            sb.Clear();
+            while (partIndex < allParts.Length)
+            {
+                sb.Append(allParts[partIndex]);
+                partIndex++;
+            }
+            var domainParts = sb.ToString()
+                .Split('.', StringSplitOptions.RemoveEmptyEntries)
+                .Where(p => p.Length > 3);
+            var domain = rand.NextDouble() > 0.15 ?
+                domainParts.Aggregate(string.Empty, (max, cur) => max.Length > cur.Length ? max : cur) :
+                string.Join('.', domainParts);
+            if (string.IsNullOrEmpty(domain) || domain.Length < 4)
+            {
+                return string.Empty;
+            }
+            return localPart + "@" + domain + tlds.GetSubstring(rand);
         }
 
         /// <summary>
@@ -112,6 +187,37 @@ namespace Explorer.Explorers
                 .Sum(r => r.Count);
         }
 
+        private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
+        {
+            var domains = await conn.Exec(new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Leading, EmailAddressChars));
+            var totalCount = 0L;
+            var domain = new SubstringWithCountList();
+            foreach (var row in domains.Rows)
+            {
+                if (row.HasValue && row.Value.StartsWith("@", StringComparison.InvariantCulture))
+                {
+                    totalCount += row.Count;
+                    domain.Add((row.Value, totalCount));
+                }
+            }
+            return domain;
+        }
+
+        private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(DConnection conn, ExplorerContext ctx)
+        {
+            var suffixes = await conn.Exec(new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
+            var totalCount = 0L;
+            var tlds = new SubstringWithCountList();
+            foreach (var row in suffixes.Rows)
+            {
+                if (row.HasValue && row.Value.StartsWith(".", StringComparison.InvariantCulture))
+                {
+                    totalCount += row.Count;
+                    tlds.Add((row.Value, totalCount));
+                }
+            }
+            return tlds;
+        }
     }
 
     internal class SubstringWithCountList : List<(string Value, long Count)>
@@ -126,7 +232,7 @@ namespace Explorer.Explorers
             }
             var rcount = rand.NextLong(TotalCount);
             return FindSubstring(rcount);
-    }
+        }
 
         private string FindSubstring(long count)
         {
