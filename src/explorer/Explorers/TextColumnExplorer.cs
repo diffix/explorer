@@ -10,6 +10,8 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
+    using SubstringWithCountList = Explorer.Common.ValueWithCountList<string>;
+
     internal class TextColumnExplorer : ExplorerBase
     {
         public const string EmailAddressChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
@@ -91,7 +93,7 @@ namespace Explorer.Explorers
             var len = rand.Next(minLength, substrings.Count);
             for (var pos = 0; pos < substrings.Count && sb.Length < len; pos++)
             {
-                var str = substrings.GetSubstring(pos, rand);
+                var str = substrings.GetRandomSubstring(pos, rand);
                 sb.Append(str);
                 pos += str.Length;
             }
@@ -134,7 +136,7 @@ namespace Explorer.Explorers
             if (domains.Count >= EmailDomainsCountThreshold)
             {
                 // if the number of distinct domains is big enough we select one from the extracted list
-                return localPart + domains.GetSubstring(rand);
+                return localPart + domains.GetRandomValue(rand, @default: string.Empty);
             }
 
             // create domain section
@@ -154,7 +156,7 @@ namespace Explorer.Explorers
             {
                 return string.Empty;
             }
-            return localPart + "@" + domain + tlds.GetSubstring(rand);
+            return localPart + "@" + domain + tlds.GetRandomValue(rand, @default: string.Empty);
         }
 
         /// <summary>
@@ -211,134 +213,68 @@ namespace Explorer.Explorers
                 suffixes.Rows
                     .Where(r => r.HasValue && r.Value.StartsWith(".", StringComparison.InvariantCulture)));
         }
-    }
 
-    internal class SubstringWithCountList : List<(string Value, long Count)>
-    {
-        public long TotalCount => Count == 0 ? 0 : this[^1].Count;
-
-        public static SubstringWithCountList FromValueWithCountEnum(IEnumerable<ValueWithCount<string>> valueCounts)
+        /// <summary>
+        /// Stores the substrings at each position in a column,
+        /// together with the number of occurences (counts) for each substring.
+        /// </summary>
+        internal class SubstringsData
         {
-            var sscl = new SubstringWithCountList();
-            foreach (var vc in valueCounts)
+            public SubstringsData()
             {
-                sscl.AddValueCount(vc.Value, vc.Count);
+                Substrings = new List<SubstringWithCountList>();
             }
-            return sscl;
-        }
 
-        public void AddValueCount(string value, long count)
-        {
-            Add((value, TotalCount + count));
-        }
+            public int Count => Substrings.Count;
 
-        public string GetSubstring(Random rand)
-        {
-            if (Count == 0)
+            private List<SubstringWithCountList> Substrings { get; }
+
+            public void Add(int pos, string s, long count)
             {
-                return string.Empty;
+                while (Substrings.Count <= pos)
+                {
+                    Substrings.Add(new SubstringWithCountList());
+                }
+                Substrings[pos].AddValueCount(s, count);
             }
-            var rcount = rand.NextLong(TotalCount);
-            return FindSubstring(rcount);
-        }
 
-        private string FindSubstring(long count)
-        {
-            var left = 0;
-            var right = Count - 1;
-            while (true)
+            public string GetRandomSubstring(int pos, Random rand)
             {
-                var middle = (left + right) / 2;
-                if (middle == 0 || middle == Count - 1)
-                {
-                    return this[middle].Value;
-                }
-                if (count < this[middle].Count)
-                {
-                    if (count >= this[middle - 1].Count)
-                    {
-                        return this[middle - 1].Value;
-                    }
-                    right = middle;
-                }
-                else if (count > this[middle].Count)
-                {
-                    if (count <= this[middle + 1].Count)
-                    {
-                        return this[middle].Value;
-                    }
-                    left = middle;
-                }
-                else
-                {
-                    return this[middle].Value;
-                }
+                return Substrings[pos].GetRandomValue(rand, string.Empty);
             }
-        }
-    }
 
-    /// <summary>
-    /// Stores the substrings at each position in a column,
-    /// together with the number of occurences (counts) for each substring.
-    /// </summary>
-    internal class SubstringsData
-    {
-        public SubstringsData()
-        {
-            Substrings = new List<SubstringWithCountList>();
-        }
-
-        public int Count => Substrings.Count;
-
-        private List<SubstringWithCountList> Substrings { get; }
-
-        public void Add(int pos, string s, long count)
-        {
-            while (Substrings.Count <= pos)
+            internal class Item
             {
-                Substrings.Add(new SubstringWithCountList());
-            }
-            Substrings[pos].AddValueCount(s, count);
-        }
-
-        public string GetSubstring(int pos, Random rand)
-        {
-            return Substrings[pos].GetSubstring(rand);
-        }
-
-        internal class Item
-        {
-            public Item(int maxSubstringLength)
-            {
-                Data = new List<SubstringWithCountList>(maxSubstringLength)
+                public Item(int maxSubstringLength)
+                {
+                    Data = new List<SubstringWithCountList>(maxSubstringLength)
                 {
                     new SubstringWithCountList() { (string.Empty, 0) },
                 };
 
-                for (var i = 1; i <= maxSubstringLength; i++)
-                {
-                    Data.Add(new SubstringWithCountList());
+                    for (var i = 1; i <= maxSubstringLength; i++)
+                    {
+                        Data.Add(new SubstringWithCountList());
+                    }
                 }
-            }
 
-            private List<SubstringWithCountList> Data { get; }
+                private List<SubstringWithCountList> Data { get; }
 
-            public void Add(string s, long count)
-            {
-                Data[s.Length].AddValueCount(s, count);
-            }
-
-            public string GetSubstring(int minLength, int maxLength, Random rand)
-            {
-                if (maxLength >= Data.Count)
+                public void Add(string s, long count)
                 {
-                    throw new ArgumentException($"{nameof(maxLength)} should be smaller than {Data.Count}.", nameof(maxLength));
+                    Data[s.Length].AddValueCount(s, count);
                 }
-                // TODO: distribute value over all alternatives according to counts (not with the same probability)
-                var sslen = rand.Next(minLength, maxLength + 1);
-                var substrings = Data[sslen];
-                return substrings.GetSubstring(rand);
+
+                public string GetSubstring(int minLength, int maxLength, Random rand)
+                {
+                    if (maxLength >= Data.Count)
+                    {
+                        throw new ArgumentException($"{nameof(maxLength)} should be smaller than {Data.Count}.", nameof(maxLength));
+                    }
+                    // TODO: distribute value over all alternatives according to counts (not with the same probability)
+                    var sslen = rand.Next(minLength, maxLength + 1);
+                    var substrings = Data[sslen];
+                    return substrings.GetRandomValue(rand, string.Empty);
+                }
             }
         }
-    }
-}
