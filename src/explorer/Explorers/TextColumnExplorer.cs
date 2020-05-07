@@ -64,11 +64,7 @@ namespace Explorer.Explorers
             var substrings = await ExploreSubstrings(conn, ctx, substringLengths: new int[] { 3, 4 });
             var rand = new Random(Environment.TickCount);
             return Enumerable.Range(0, GeneratedValuesCount).Select(_
-                => substrings.GenerateString(
-                        minLength: 3,
-                        minSubstringLength: 3,
-                        maxSubstringLength: 4,
-                        rand));
+                => GenerateString(substrings, minLength: 3, rand));
         }
 
         private static async Task<IEnumerable<string>> GenerateEmails(DConnection conn, ExplorerContext ctx)
@@ -80,12 +76,7 @@ namespace Explorer.Explorers
             var emails = new List<string>(GeneratedValuesCount);
             for (var i = 0; emails.Count < GeneratedValuesCount && i < GeneratedValuesCount * 100; i++)
             {
-                var s = substrings.GenerateString(
-                    minLength: 3,
-                    minSubstringLength: 3,
-                    maxSubstringLength: 4,
-                    rand);
-                var email = GenerateEmail(s, domains, tlds, rand);
+                var email = GenerateEmail(substrings, domains, tlds, rand);
                 if (!string.IsNullOrEmpty(email))
                 {
                     emails.Add(email);
@@ -94,9 +85,27 @@ namespace Explorer.Explorers
             return emails;
         }
 
-        private static string GenerateEmail(string str, SubstringWithCountList domains, SubstringWithCountList tlds, Random rand)
+        private static string GenerateString(SubstringsData substrings, int minLength, Random rand)
+        {
+            var sb = new StringBuilder();
+            var len = rand.Next(minLength, substrings.Count);
+            for (var pos = 0; pos < substrings.Count && sb.Length < len; pos++)
+            {
+                var str = substrings.GetSubstring(pos, rand);
+                sb.Append(str);
+                pos += str.Length;
+            }
+            return sb.ToString();
+        }
+
+        private static string GenerateEmail(
+            SubstringsData substrings,
+            SubstringWithCountList domains,
+            SubstringWithCountList tlds,
+            Random rand)
         {
             // create local-part section
+            var str = GenerateString(substrings, minLength: 6, rand);
             var allParts = str.Split('@', StringSplitOptions.RemoveEmptyEntries);
             var sb = new StringBuilder();
             var partIndex = 0;
@@ -153,9 +162,9 @@ namespace Explorer.Explorers
         /// It uses a batch approach to query for several positions (specified using SubstringQueryColumnCount)
         /// using a single query.
         /// </summary>
-        private static async Task<SubstringDataCollection> ExploreSubstrings(DConnection conn, ExplorerContext ctx, params int[] substringLengths)
+        private static async Task<SubstringsData> ExploreSubstrings(DConnection conn, ExplorerContext ctx, params int[] substringLengths)
         {
-            var substrings = new SubstringDataCollection(maxSubstringLength: substringLengths.Max());
+            var substrings = new SubstringsData();
             foreach (var length in substringLengths)
             {
                 var hasRows = true;
@@ -268,53 +277,44 @@ namespace Explorer.Explorers
         }
     }
 
-    internal class SubstringDataCollection
+    /// <summary>
+    /// Stores the substrings at each position in a column,
+    /// together with the number of occurences (counts) for each substring.
+    /// </summary>
+    internal class SubstringsData
     {
-        public SubstringDataCollection(int maxSubstringLength)
+        public SubstringsData()
         {
-            MaxSubstringLength = maxSubstringLength;
-            Substrings = new List<Item>();
+            Substrings = new List<SubstringWithCountList>();
         }
 
-        private List<Item> Substrings { get; }
+        public int Count => Substrings.Count;
 
-        private int MaxSubstringLength { get; }
+        private List<SubstringWithCountList> Substrings { get; }
 
         public void Add(int pos, string s, long count)
         {
             while (Substrings.Count <= pos)
             {
-                Substrings.Add(new Item(MaxSubstringLength));
+                Substrings.Add(new SubstringWithCountList());
             }
-            Substrings[pos].Add(s, count);
+            Substrings[pos].AddValueCount(s, count);
         }
 
-        public string GenerateString(int minLength, int minSubstringLength, int maxSubstringLength, Random rand)
+        public string GetSubstring(int pos, Random rand)
         {
-            var sb = new StringBuilder();
-            var len = rand.Next(minLength, Substrings.Count);
-            for (var pos = 0; pos < Substrings.Count && sb.Length < len; pos++)
-            {
-                var str = Substrings[pos].GetSubstring(minSubstringLength, maxSubstringLength, rand);
-                sb.Append(str);
-                pos += str.Length;
-            }
-            return sb.ToString();
+            return Substrings[pos].GetSubstring(rand);
         }
 
-        /// <summary>
-        /// Stores the substrings from a certain position in a column,
-        /// together with the number of occurences (counts) for each substring.
-        /// The substrings are grouped separately by length.
-        /// </summary>
         internal class Item
         {
             public Item(int maxSubstringLength)
             {
                 Data = new List<SubstringWithCountList>(maxSubstringLength)
-            {
-                new SubstringWithCountList() { (string.Empty, 0) },
-            };
+                {
+                    new SubstringWithCountList() { (string.Empty, 0) },
+                };
+
                 for (var i = 1; i <= maxSubstringLength; i++)
                 {
                     Data.Add(new SubstringWithCountList());
