@@ -4,23 +4,33 @@ namespace Explorer.Explorers.Metrics
     using System.Linq;
     using System.Threading.Tasks;
 
-    internal interface MetricsPublisher
+    public interface MetricsPublisher
     {
-        public IEnumerable<ExploreMetric> PublishedMetrics { get; }
+        public bool PublishedMetrics(System.Guid id, out IEnumerable<ExploreMetric> metrics);
 
-        public void PublishMetric(ExploreMetric metric);
+        public IEnumerable<ExploreMetric> PublishedMetrics(System.Guid id)
+        {
+            if (PublishedMetrics(id, out var metrics))
+            {
+                return metrics;
+            }
+            throw new KeyNotFoundException($"No Metrics available for id {id}.");
+        }
 
-        public void PublishMetrics(MetricsProvider provider)
+        public void PublishMetric(System.Guid id, ExploreMetric metric);
+
+        public void PublishMetrics(System.Guid id, MetricsProvider provider)
         {
             foreach (var metric in provider.Metrics())
             {
-                PublishMetric(metric);
+                PublishMetric(id, metric);
             }
         }
 
-        public Task PublishMetricAsync(ExploreMetric metric) => Task.Run(() => PublishMetric(metric));
+        public Task PublishMetricAsync(System.Guid id, ExploreMetric metric) =>
+            Task.Run(() => PublishMetric(id, metric));
 
-        public Task PublishMetricsAsync(MetricsProvider provider) =>
-            Task.WhenAll(provider.Metrics().Select(PublishMetricAsync));
+        public Task PublishMetricsAsync(System.Guid id, MetricsProvider provider) =>
+            Task.WhenAll(provider.Metrics().Select(m => PublishMetricAsync(id, m)));
     }
 }
