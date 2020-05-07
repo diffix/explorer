@@ -269,55 +269,15 @@ namespace Explorer.Explorers
         }
     }
 
-    /// <summary>
-    /// Stores the substrings from a certain position in a column,
-    /// together with the number of occurences (counts) for each substring.
-    /// The substrings are grouped separately by length.
-    /// </summary>
-    internal class SubstringsData
-    {
-        public SubstringsData(int maxSubstringLength)
-        {
-            Data = new List<SubstringWithCountList>(maxSubstringLength)
-            {
-                new SubstringWithCountList() { (string.Empty, 0) },
-            };
-            for (var i = 1; i <= maxSubstringLength; i++)
-            {
-                Data.Add(new SubstringWithCountList());
-            }
-        }
-
-        private List<SubstringWithCountList> Data { get; }
-
-        public void Add(string s, long count)
-        {
-            var substrings = Data[s.Length];
-            substrings.Add((s, substrings.TotalCount + count));
-        }
-
-        public string GetSubstring(int minLength, int maxLength, Random rand)
-        {
-            if (maxLength >= Data.Count)
-            {
-                throw new ArgumentException($"{nameof(maxLength)} should be smaller than {Data.Count}.", nameof(maxLength));
-            }
-            // TODO: distribute value over all alternatives according to counts (not with the same probability)
-            var sslen = rand.Next(minLength, maxLength + 1);
-            var substrings = Data[sslen];
-            return substrings.GetSubstring(rand);
-        }
-    }
-
     internal class SubstringDataCollection
     {
         public SubstringDataCollection(int maxSubstringLength)
         {
             MaxSubstringLength = maxSubstringLength;
-            Substrings = new List<SubstringsData>();
+            Substrings = new List<Item>();
         }
 
-        private List<SubstringsData> Substrings { get; }
+        private List<Item> Substrings { get; }
 
         private int MaxSubstringLength { get; }
 
@@ -325,7 +285,7 @@ namespace Explorer.Explorers
         {
             while (Substrings.Count <= pos)
             {
-                Substrings.Add(new SubstringsData(MaxSubstringLength));
+                Substrings.Add(new Item(MaxSubstringLength));
             }
             Substrings[pos].Add(s, count);
         }
@@ -342,6 +302,45 @@ namespace Explorer.Explorers
             }
             return sb.ToString();
         }
-    }
 
+        /// <summary>
+        /// Stores the substrings from a certain position in a column,
+        /// together with the number of occurences (counts) for each substring.
+        /// The substrings are grouped separately by length.
+        /// </summary>
+        internal class Item
+        {
+            public Item(int maxSubstringLength)
+            {
+                Data = new List<SubstringWithCountList>(maxSubstringLength)
+            {
+                new SubstringWithCountList() { (string.Empty, 0) },
+            };
+                for (var i = 1; i <= maxSubstringLength; i++)
+                {
+                    Data.Add(new SubstringWithCountList());
+                }
+            }
+
+            private List<SubstringWithCountList> Data { get; }
+
+            public void Add(string s, long count)
+            {
+                var substrings = Data[s.Length];
+                substrings.Add((s, substrings.TotalCount + count));
+            }
+
+            public string GetSubstring(int minLength, int maxLength, Random rand)
+            {
+                if (maxLength >= Data.Count)
+                {
+                    throw new ArgumentException($"{nameof(maxLength)} should be smaller than {Data.Count}.", nameof(maxLength));
+                }
+                // TODO: distribute value over all alternatives according to counts (not with the same probability)
+                var sslen = rand.Next(minLength, maxLength + 1);
+                var substrings = Data[sslen];
+                return substrings.GetSubstring(rand);
+            }
+        }
+    }
 }
