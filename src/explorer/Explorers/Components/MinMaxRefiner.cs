@@ -9,7 +9,7 @@ namespace Explorer.Explorers.Components
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>
+    public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>
     {
         private const int MaxIterations = 10;
         private readonly DConnection conn;

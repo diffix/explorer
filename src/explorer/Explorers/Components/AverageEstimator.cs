@@ -7,7 +7,7 @@ namespace Explorer.Explorers.Components
     using Explorer.Common;
     using Explorer.Explorers.Metrics;
 
-    internal class AverageEstimator :
+    public class AverageEstimator :
         ExplorerComponent<AverageEstimator.Result>
     {
         private readonly ResultProvider<NumericHistogramComponent.Result> histogramResultProvider;

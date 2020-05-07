@@ -9,7 +9,7 @@ namespace Explorer.Explorers.Components
     using Explorer.Explorers.Metrics;
     using Explorer.Queries;
 
-    internal class NumericHistogramComponent :
+    public class NumericHistogramComponent :
         ExplorerComponent<NumericHistogramComponent.Result>
     {
         private const long ValuesPerBucketTarget = 20;
@@ -52,7 +52,7 @@ namespace Explorer.Explorers.Components
 
         public class Result : MetricsProvider
         {
-            public Result(
+            internal Result(
                 decimal bucketSize,
                 ValueCounts valueCounts,
                 IEnumerable<SingleColumnHistogram.Result> buckets)

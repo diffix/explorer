@@ -5,9 +5,9 @@ namespace Explorer.Common
     using Diffix;
     using Explorer.JsonExtensions;
 
-    internal class ValueWithCount<T> : CountableRow
+    public class ValueWithCount<T> : CountableRow
     {
-        public ValueWithCount(ref Utf8JsonReader reader)
+        internal ValueWithCount(ref Utf8JsonReader reader)
         {
             DValue = reader.ParseDValue<T>();
             Count = reader.ParseCount();

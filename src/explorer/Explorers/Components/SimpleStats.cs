@@ -8,7 +8,7 @@ namespace Explorer.Explorers.Components
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class SimpleStats<T> : ExplorerComponent<SimpleStats<T>.Result>
+    public class SimpleStats<T> : ExplorerComponent<SimpleStats<T>.Result>
     {
         private readonly DConnection conn;
 

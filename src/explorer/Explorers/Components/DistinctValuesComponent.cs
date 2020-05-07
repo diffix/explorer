@@ -10,7 +10,7 @@ namespace Explorer.Explorers.Components
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class DistinctValuesComponent
+    public class DistinctValuesComponent
         : ExplorerComponent<DistinctValuesComponent.Result>
     {
         private readonly DConnection conn;

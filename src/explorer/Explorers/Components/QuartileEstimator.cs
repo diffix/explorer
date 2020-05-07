@@ -6,7 +6,7 @@ namespace Explorer.Explorers.Components
     using Explorer.Common;
     using Explorer.Explorers.Metrics;
 
-    internal class QuartileEstimator :
+    public class QuartileEstimator :
         ExplorerComponent<QuartileEstimator.Result>
     {
         private readonly ResultProvider<NumericHistogramComponent.Result> histogramResult;

@@ -2,7 +2,7 @@ namespace Explorer.Explorers.Components
 {
     using System.Threading.Tasks;
 
-    internal abstract class ExplorerComponent<TResult> : ResultProvider<TResult>
+    public abstract class ExplorerComponent<TResult> : ResultProvider<TResult>
     {
         private Task<TResult>? componentTask;
 

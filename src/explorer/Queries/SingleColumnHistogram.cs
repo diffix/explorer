@@ -7,7 +7,7 @@ namespace Explorer.Queries
     using Diffix;
     using Explorer.Common;
 
-    internal class SingleColumnHistogram :
+    public class SingleColumnHistogram :
         DQuery<SingleColumnHistogram.Result>
     {
         public SingleColumnHistogram(
@@ -42,7 +42,7 @@ namespace Explorer.Queries
 
         public class Result : IndexedGroupingSetsResult<decimal, double>
         {
-            public Result(ref Utf8JsonReader reader, decimal[] buckets)
+            internal Result(ref Utf8JsonReader reader, decimal[] buckets)
             : base(ref reader, buckets)
             {
             }
