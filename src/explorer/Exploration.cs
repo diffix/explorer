@@ -61,7 +61,6 @@ namespace Explorer
                 DValueType.Text => new (ExplorerBase, ExplorerContext)[]
                 {
                     (new TextColumnExplorer(), ctx),
-                    (new EmailColumnExplorer(), ctx),
                     (new TextLengthExplorer(), ctx),
                 },
                 DValueType.Bool => new (ExplorerBase, ExplorerContext)[]

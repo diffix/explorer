@@ -20,7 +20,7 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
-        public async void TestEmail()
+        public async void TestClientsEmail()
         {
             var metrics = await GetExplorerMetrics(new TextColumnExplorer(), "gda_banking", "clients", "email");
             var isEmail = metrics.First(m => m.Name == "is_email");
@@ -28,6 +28,23 @@ namespace Explorer.Api.Tests
             var metric_svalues = metrics.First(m => m.Name == "synthetic_values");
             var values = metric_svalues.Metric as IEnumerable<string>;
             Assert.True(values.All(v => v.Length >= 3));
+            Assert.True(values.All(v => v.Count(c => c == '@') == 1));
+            Assert.True(values.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
+        }
+
+        [Fact]
+        public async void TestCardsEmail()
+        {
+            var metrics = await GetExplorerMetrics(new TextColumnExplorer(), "gda_banking", "cards", "email");
+            var isEmail = metrics.First(m => m.Name == "is_email");
+            Assert.True((bool)isEmail.Metric);
+            var metric_svalues = metrics.First(m => m.Name == "synthetic_values");
+            var values = metric_svalues.Metric as IEnumerable<string>;
+            Assert.True(values.All(v => v.Length >= 3));
+            Assert.True(values.All(v => v.Count(c => c == '@') == 1));
+            Assert.True(values.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
         }
 
         [Fact]

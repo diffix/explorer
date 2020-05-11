@@ -21,7 +21,7 @@ namespace Explorer.Api.Tests
         public async void TestEmailPositive()
         {
             var query = await factory.QueryResult(
-                new TextColumnTrim("clients", "email", TextColumnTrimType.Both, EmailColumnExplorer.EmailAddressChars),
+                new TextColumnTrim("clients", "email", TextColumnTrimType.Both, TextColumnExplorer.EmailAddressChars),
                 TestDataSource,
                 nameof(TextColumnTrimTests));
 
@@ -38,7 +38,7 @@ namespace Explorer.Api.Tests
         public async void TestEmailNegative()
         {
             var query = await factory.QueryResult(
-                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, EmailColumnExplorer.EmailAddressChars),
+                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, TextColumnExplorer.EmailAddressChars),
                 TestDataSource,
                 nameof(TextColumnTrimTests));
 
