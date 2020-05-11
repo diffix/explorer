@@ -28,8 +28,9 @@ namespace Explorer.Api.Tests
             var metric_svalues = metrics.First(m => m.Name == "synthetic_values");
             var values = metric_svalues.Metric as IEnumerable<string>;
             Assert.True(values.All(v => v.Length >= 3));
-            Assert.True(values.All(v => v.Contains('@', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => v.Count(c => c == '@') == 1));
             Assert.True(values.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
         }
 
         [Fact]
@@ -41,8 +42,9 @@ namespace Explorer.Api.Tests
             var metric_svalues = metrics.First(m => m.Name == "synthetic_values");
             var values = metric_svalues.Metric as IEnumerable<string>;
             Assert.True(values.All(v => v.Length >= 3));
-            Assert.True(values.All(v => v.Contains('@', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => v.Count(c => c == '@') == 1));
             Assert.True(values.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+            Assert.True(values.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
         }
 
         [Fact]
