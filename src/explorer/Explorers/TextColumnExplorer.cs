@@ -187,7 +187,7 @@ namespace Explorer.Explorers
             var emailCheck = await conn.Exec(
                 new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, EmailAddressChars));
 
-            return emailCheck.Rows.All(r => r.IsNull || r.Value == "@");
+            return emailCheck.Rows.All(r => r.IsNull || (!r.IsSuppressed && r.Value == "@"));
         }
 
         private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
