@@ -9,20 +9,17 @@ namespace Explorer.Explorers
     using Explorer.Common;
     using Explorer.Queries;
 
-    internal class DatetimeColumnExplorer : ExplorerBase
+    internal class DatetimeColumnExplorer
     {
         // TODO: The following should be configuration items (?)
         private const double SuppressedRatioThreshold = 0.1;
 
-        public override async Task Explore(DConnection conn, ExplorerContext ctx)
+        public async Task Explore(DConnection conn, ExplorerContext ctx)
         {
             var statsQ = await conn.Exec<NumericColumnStats.Result<DateTime>>(
                 new NumericColumnStats(ctx.Table, ctx.Column));
 
             var stats = statsQ.Rows.Single();
-
-            PublishMetric(new UntypedMetric(name: "naive_min", metric: stats.Min));
-            PublishMetric(new UntypedMetric(name: "naive_max", metric: stats.Max));
 
             var distinctValueQ = await conn.Exec(
                 new DistinctColumnValues(ctx.Table, ctx.Column));
@@ -49,8 +46,6 @@ namespace Explorer.Explorers
                         row.Count,
                     };
 
-                PublishMetric(new UntypedMetric(name: "distinct.values", metric: distinctValues));
-                PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
             }
 
             await Task.WhenAll(
@@ -104,7 +99,6 @@ namespace Explorer.Explorers
         {
             foreach (var group in GroupByLabel(queryResult))
             {
-                conn.ThrowIfCancellationRequested();
 
                 var counts = ValueCounts.Compute(group);
                 if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
@@ -113,8 +107,6 @@ namespace Explorer.Explorers
                 }
 
                 var label = group.Key;
-                PublishMetric(new UntypedMetric(name: $"dates_linear.{label}", metric: DatetimeMetric(
-                    counts.TotalCount, counts.SuppressedCount, group)));
             }
         }
 
@@ -123,7 +115,6 @@ namespace Explorer.Explorers
             var includeRest = false;
             foreach (var group in GroupByLabel(queryResult))
             {
-                conn.ThrowIfCancellationRequested();
 
                 var label = group.Key;
 
@@ -148,8 +139,6 @@ namespace Explorer.Explorers
                     break;
                 }
 
-                PublishMetric(new UntypedMetric(name: $"dates_cyclical.{label}", metric: DatetimeMetric(
-                    counts.TotalCount, counts.SuppressedCount, group)));
             }
         }
 
