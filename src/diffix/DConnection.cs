@@ -1,6 +1,7 @@
 namespace Diffix
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -9,9 +10,9 @@ namespace Diffix
     public interface DConnection
     {
         /// <summary>
-        /// Gets a value indicating whether a cancellation was requested for this connection.
+        /// Gets a <see ref="CancellationToken"/> that can be used to cancel a running query.
         /// </summary>
-        bool IsCancellationRequested { get; }
+        CancellationToken CancellationToken { get; }
 
         /// <summary>
         /// Executes the query.
@@ -20,21 +21,5 @@ namespace Diffix
         /// <typeparam name="TRow">The type of the rows returned by the query.</typeparam>
         /// <returns>An object containing a collection with the rows returned by the query.</returns>
         Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query);
-
-        /// <summary>
-        /// Requests the cancellation of the still executing queries, started using this connection.
-        /// </summary>
-        void Cancel();
-
-        /// <summary>
-        /// Helper method that throws a <see ref="OperationCanceledException" /> if cancellation was requested using <see cref="Cancel" />.
-        /// </summary>
-        void ThrowIfCancellationRequested()
-        {
-            if (IsCancellationRequested)
-            {
-                throw new OperationCanceledException("Query operation was cancelled.");
-            }
-        }
     }
 }
