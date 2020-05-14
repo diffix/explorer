@@ -1,7 +1,13 @@
 namespace Explorer.Api
 {
     using Aircloak.JsonApi;
+    using Diffix;
     using Explorer.Api.Authentication;
+    using Explorer.Common;
+    using Explorer.Components;
+    using Explorer.Metrics;
+    using Lamar;
+
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -21,14 +27,43 @@ namespace Explorer.Api
         public IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public virtual void ConfigureServices(IServiceCollection services)
+        public void ConfigureContainer(ServiceRegistry services)
         {
             services.AddControllers();
 
             var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
+            services.AddSingleton(config);
 
             services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>(config.AircloakApiUrl());
-            services.AddSingleton(config);
+
+            // Singleton services
+            services
+                .AddSingleton<MetricsPublisher, SimpleMetricsPublisher>()
+                .AddSingleton<ExplorationRegistry>()
+                .AddSingleton<ExplorationLauncher>();
+
+            // Scoped services
+            services
+                .AddScoped<ContextBuilder>()
+                .AddScoped<AircloakConnectionBuilder>();
+
+            // Scan for Components
+            services.Scan(_ =>
+            {
+                _.Assembly("explorer");
+                _.IncludeNamespace("Explorer.Components");
+                _.AddAllTypesOf<PublisherComponent>(ServiceLifetime.Scoped);
+                _.ConnectImplementationsToTypesClosing(typeof(ResultProvider<>), ServiceLifetime.Scoped);
+                _.ConnectImplementationsToTypesClosing(typeof(ExplorerComponent<>), ServiceLifetime.Scoped);
+            });
+
+            // The following are not picked up by the scan for some reason.
+            services.AddScoped<SimpleStats<double>>();
+            services.AddScoped<SimpleStats<long>>();
+
+            // Services to be injected at runtime
+            services.Injectable<ExplorerContext>();
+            services.Injectable<DConnection>();
 
             if (Environment.IsDevelopment())
             {
@@ -43,6 +78,13 @@ namespace Explorer.Api
         {
             if (env.IsDevelopment())
             {
+                var container = (IContainer)app.ApplicationServices;
+
+                System.Console.WriteLine(container.WhatDoIHave());
+                System.Console.WriteLine(container.WhatDidIScan());
+
+                container.AssertConfigurationIsValid();
+
                 app.UseDeveloperExceptionPage();
             }
 
