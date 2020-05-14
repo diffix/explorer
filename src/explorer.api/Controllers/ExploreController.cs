@@ -1,6 +1,5 @@
 namespace Explorer.Api.Controllers
 {
-    using System.Collections.Concurrent;
     using System.Linq;
     using System.Net.Mime;
     using System.Threading;
@@ -10,6 +9,7 @@ namespace Explorer.Api.Controllers
     using Explorer;
     using Explorer.Api.Authentication;
     using Explorer.Api.Models;
+    using Explorer.Metrics;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -18,110 +18,74 @@ namespace Explorer.Api.Controllers
     [Produces(MediaTypeNames.Application.Json)]
     public class ExploreController : ControllerBase
     {
-        private static readonly ConcurrentDictionary<System.Guid, Exploration> Explorations
-            = new ConcurrentDictionary<System.Guid, Exploration>();
-
         private readonly ILogger<ExploreController> logger;
-        private readonly JsonApiClient apiClient;
-        private readonly ExplorerApiAuthProvider authProvider;
-        private readonly ExplorerConfig config;
+        private readonly ExplorationRegistry explorationRegistry;
 
         public ExploreController(
             ILogger<ExploreController> logger,
-            JsonApiClient apiClient,
-            IAircloakAuthenticationProvider authProvider,
-            ExplorerConfig config)
+            ExplorationRegistry explorationRegistry)
         {
-            this.config = config;
             this.logger = logger;
-            this.apiClient = apiClient;
-            this.authProvider = (ExplorerApiAuthProvider)authProvider;
+            this.explorationRegistry = explorationRegistry;
         }
 
         [HttpPost]
         [Route("explore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Explore(Models.ExploreParams data)
+        public IActionResult Explore(
+            ExploreParams data,
+            [FromServices] ExplorationLauncher launcher)
         {
-            authProvider.RegisterApiKey(data.ApiKey);
+            var cts = new CancellationTokenSource();
+            var exploreTask = launcher.LaunchExploration(data, cts.Token);
+            var id = explorationRegistry.Register(exploreTask, cts);
 
-            var dataSources = await apiClient.GetDataSources(CancellationToken.None);
-
-            if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
-            {
-                return BadRequest($"Could not find datasource '{data.DataSourceName}'.");
-            }
-
-            if (!exploreDataSource.TableDict.TryGetValue(data.TableName, out var exploreTableMeta))
-            {
-                return BadRequest($"Could not find table '{data.TableName}'.");
-            }
-
-            if (!exploreTableMeta.ColumnDict.TryGetValue(data.ColumnName, out var explorerColumnMeta))
-            {
-                return BadRequest($"Could not find column '{data.ColumnName}'.");
-            }
-
-            // the connection is owned by the exploration and the exploration is disposed on completion/cancellation
-#pragma warning disable CA2000 // call IDisposable.Dispose
-            var conn = new AircloakConnection(apiClient, data.DataSourceName, config.PollFrequencyTimeSpan);
-
-            var exploration = Exploration.Create(conn, data.TableName, data.ColumnName, explorerColumnMeta.Type);
-#pragma warning restore CA2000 // call IDisposable.Dispose
-
-            if (!Explorations.TryAdd(exploration.ExplorationGuid, exploration))
-            {
-                throw new System.Exception("Failed to store exploration in Dict - This should never happen!");
-            }
-
-            return Ok(new ExploreResult(exploration.ExplorationGuid, ExplorationStatus.New));
+            return Ok(new ExploreResult(id, ExplorationStatus.New));
         }
 
         [HttpGet]
         [Route("result/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Result(System.Guid explorationId)
+        public async Task<IActionResult> Result(
+            System.Guid explorationId,
+            [FromServices] MetricsPublisher metricsPublisher)
         {
-            if (Explorations.TryGetValue(explorationId, out var exploration))
-            {
-                var exploreStatus = exploration.Status;
+            var explorationStatus = ExplorationStatus.Error;
 
-                var metrics = exploration.ExploreMetrics
+            try
+            {
+                explorationStatus = explorationRegistry.GetStatus(explorationId);
+            }
+            catch (System.Collections.Generic.KeyNotFoundException)
+            {
+                return NotFound($"Couldn't find exploration with id {explorationId}.");
+            }
+
+            var metrics = metricsPublisher.PublishedMetrics
                     .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
 
-                var result = new ExploreResult(
-                            exploration.ExplorationGuid,
-                            exploreStatus,
-                            metrics);
+            var result = new ExploreResult(
+                        explorationId,
+                        explorationStatus,
+                        metrics);
 
-                if (exploration.Completion.IsCompleted)
-                {
-                    try
-                    {
-                        // await the completion task to trigger any inner exceptions
-                        await exploration.Completion;
-                    }
-                    catch (TaskCanceledException e)
-                    {
-                        // Do nothing, just log the occurence.
-                        // A TaskCanceledException is expected when the client cancels an exploration. 
-                        logger.LogInformation($"Exploration {exploration.ExplorationGuid} was canceled.", null);
-                    }
-                    finally
-                    {
-                        Explorations.TryRemove(explorationId, out _);
-                        exploration.Dispose();
-                    }
-                }
-
-                return Ok(result);
-            }
-            else
+            if (explorationStatus != ExplorationStatus.New && explorationStatus != ExplorationStatus.Processing)
             {
-                return NotFound($"Couldn't find explorer with id {explorationId}");
+                try
+                {
+                    await explorationRegistry.Remove(explorationId);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Do nothing, just log the occurrence.
+                    // A TaskCanceledException is expected when the client cancels an exploration.
+                    logger.LogInformation($"Exploration {explorationId} was canceled.", null);
+                }
             }
+
+            return Ok(result);
         }
 
         [HttpGet]
@@ -130,12 +94,15 @@ namespace Explorer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Cancel(System.Guid explorationId)
         {
-            if (!Explorations.TryGetValue(explorationId, out var exploration))
+            try
+            {
+                explorationRegistry.CancelExploration(explorationId);
+                return Ok(true);
+            }
+            catch (System.Collections.Generic.KeyNotFoundException)
             {
                 return BadRequest($"Couldn't find exploration with id {explorationId}");
             }
-            exploration.Cancel();
-            return Ok(true);
         }
 
         [Route("/{**catchall}")]
