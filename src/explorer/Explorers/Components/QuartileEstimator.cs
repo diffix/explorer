@@ -1,10 +1,8 @@
-namespace Explorer.Explorers.Components
+namespace Explorer.Components
 {
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Explorer.Common;
-    using Explorer.Explorers.Metrics;
 
     public class QuartileEstimator :
         ExplorerComponent<QuartileEstimator.Result>
@@ -73,7 +71,7 @@ namespace Explorer.Explorers.Components
             return new Result(quartileEstimates);
         }
 
-        public class Result : MetricsProvider
+        public class Result
         {
             public Result(List<double> quartiles)
             {
@@ -93,11 +91,6 @@ namespace Explorer.Explorers.Components
             public double Q2 { get => AsList[1]; }
 
             public double Q3 { get => AsList[2]; }
-
-            public IEnumerable<ExploreMetric> Metrics()
-            {
-                yield return new UntypedMetric(name: "quartile_estimates", metric: AsList);
-            }
         }
     }
 }

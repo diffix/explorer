@@ -1,6 +1,5 @@
-namespace Explorer.Explorers.Components
+namespace Explorer.Components
 {
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
@@ -98,7 +97,7 @@ namespace Explorer.Explorers.Components
             return maxQ.Rows.Single().Max;
         }
 
-        public class Result : Metrics.MetricsProvider
+        public class Result
         {
             public Result(decimal min, decimal max)
             {
@@ -109,12 +108,6 @@ namespace Explorer.Explorers.Components
             public decimal Min { get; }
 
             public decimal Max { get; }
-
-            public IEnumerable<ExploreMetric> Metrics()
-            {
-                yield return new UntypedMetric("refined_min", Min);
-                yield return new UntypedMetric("refined_max", Max);
-            }
         }
     }
 }

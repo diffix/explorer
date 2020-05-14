@@ -1,6 +1,7 @@
-namespace Explorer.Explorers.Metrics
+namespace Explorer.Metrics
 {
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
 
     using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,8 @@ namespace Explorer.Explorers.Metrics
             this.logger = logger;
             store = new ConcurrentDictionary<string, ExploreMetric>();
         }
+
+        public IEnumerable<ExploreMetric> PublishedMetrics => store.Values;
 
         public void PublishMetric(ExploreMetric metric)
         {

@@ -1,24 +1,15 @@
-namespace Explorer.Explorers.Metrics
+namespace Explorer.Metrics
 {
-    using System.Linq;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
 
     public interface MetricsPublisher
     {
-        public void PublishMetric(ExploreMetric metric);
+        public IEnumerable<ExploreMetric> PublishedMetrics { get; }
 
-        public void PublishMetrics(MetricsProvider provider)
-        {
-            foreach (var metric in provider.Metrics())
-            {
-                PublishMetric(metric);
-            }
-        }
+        public void PublishMetric(ExploreMetric metric);
 
         public Task PublishMetricAsync(ExploreMetric metric) =>
             Task.Run(() => PublishMetric(metric));
-
-        public Task PublishMetricsAsync(MetricsProvider provider) =>
-            Task.WhenAll(provider.Metrics().Select(PublishMetricAsync));
     }
 }

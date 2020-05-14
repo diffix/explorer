@@ -1,4 +1,4 @@
-namespace Explorer
+namespace Explorer.Metrics
 {
     public interface ExploreMetric
     {

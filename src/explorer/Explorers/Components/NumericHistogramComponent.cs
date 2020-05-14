@@ -1,4 +1,4 @@
-namespace Explorer.Explorers.Components
+namespace Explorer.Components
 {
     using System.Collections.Generic;
     using System.Linq;
@@ -6,7 +6,6 @@ namespace Explorer.Explorers.Components
 
     using Diffix;
     using Explorer.Common;
-    using Explorer.Explorers.Metrics;
     using Explorer.Queries;
 
     public class NumericHistogramComponent :
@@ -50,7 +49,7 @@ namespace Explorer.Explorers.Components
                 .First();
         }
 
-        public class Result : MetricsProvider
+        public class Result
         {
             internal Result(
                 decimal bucketSize,
@@ -67,26 +66,6 @@ namespace Explorer.Explorers.Components
             public ValueCounts ValueCounts { get; set; }
 
             public IEnumerable<SingleColumnHistogram.Result> Buckets { get; set; }
-
-            public IEnumerable<ExploreMetric> Metrics()
-            {
-                var buckets = Buckets
-                    .Where(b => b.HasValue)
-                    .Select(b => new
-                    {
-                        BucketSize,
-                        LowerBound = b.GroupingValue,
-                        b.Count,
-                    });
-
-                return new List<ExploreMetric>
-                {
-                    new UntypedMetric("histogram.buckets", buckets),
-                    new UntypedMetric("histogram.suppressed_count", ValueCounts.SuppressedCount),
-                    new UntypedMetric("histogram.suppressed_ratio", ValueCounts.SuppressedCountRatio),
-                    new UntypedMetric("histogram.value_counts", ValueCounts),
-                };
-            }
         }
     }
 }

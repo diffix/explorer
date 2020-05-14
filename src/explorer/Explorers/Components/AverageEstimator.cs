@@ -1,11 +1,7 @@
-namespace Explorer.Explorers.Components
+namespace Explorer.Components
 {
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Diffix;
-    using Explorer.Common;
-    using Explorer.Explorers.Metrics;
 
     public class AverageEstimator :
         ExplorerComponent<AverageEstimator.Result>
@@ -32,7 +28,7 @@ namespace Explorer.Explorers.Components
             return new Result(averageEstimate);
         }
 
-        public class Result : MetricsProvider
+        public class Result
         {
             public Result(decimal value)
             {
@@ -40,11 +36,6 @@ namespace Explorer.Explorers.Components
             }
 
             public decimal Value { get; }
-
-            public IEnumerable<ExploreMetric> Metrics()
-            {
-                yield return new UntypedMetric(name: "average_estimate", metric: decimal.Round(Value, 4));
-            }
         }
     }
 }

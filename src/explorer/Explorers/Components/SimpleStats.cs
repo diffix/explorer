@@ -1,6 +1,5 @@
-namespace Explorer.Explorers.Components
+namespace Explorer.Components
 {
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -27,9 +26,9 @@ namespace Explorer.Explorers.Components
             return new Result(statsQ.Rows.Single());
         }
 
-        public class Result : Metrics.MetricsProvider
+        public class Result
         {
-            public Result(BasicColumnStats<T>.Result stats)
+            internal Result(BasicColumnStats<T>.Result stats)
             {
                 Stats = stats;
             }
@@ -41,13 +40,6 @@ namespace Explorer.Explorers.Components
             public T Min { get => Stats.Min; }
 
             public T Max { get => Stats.Max; }
-
-            public IEnumerable<ExploreMetric> Metrics()
-            {
-                yield return new UntypedMetric("count", Count);
-                yield return new UntypedMetric("naive_min", Min!);
-                yield return new UntypedMetric("naive_max", Max!);
-            }
         }
     }
 }
