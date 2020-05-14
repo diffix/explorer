@@ -1,8 +1,8 @@
-namespace Explorer.Common
+namespace Explorer.Metrics
 {
-    internal struct UntypedMetric : ExploreMetric
+    public struct UntypedMetric : ExploreMetric
     {
-        public UntypedMetric(string name, object metric)
+        internal UntypedMetric(string name, object metric)
         {
             Name = name;
             Metric = metric;
