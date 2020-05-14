@@ -5,7 +5,7 @@ namespace Explorer.Queries
     using Diffix;
     using Explorer.JsonExtensions;
 
-    internal class BasicColumnStats<T> :
+    public class BasicColumnStats<T> :
         DQuery<BasicColumnStats<T>.Result>
     {
         public BasicColumnStats(string tableName, string columnName)
