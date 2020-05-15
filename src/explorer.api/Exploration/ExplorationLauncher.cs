@@ -85,7 +85,9 @@ namespace Explorer.Api
             {
                 if (scope.GetInstance<T>() is PublisherComponent publisherComponent)
                 {
-                    Add(Task.Run(async () => await publisherComponent.PublishMetricsAsync()));
+                    var metricsPublisher = scope.GetInstance<Metrics.MetricsPublisher>();
+
+                    Add(Task.Run(async () => await publisherComponent.PublishMetricsAsync(metricsPublisher)));
                     return this;
                 }
                 else

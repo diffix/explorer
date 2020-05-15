@@ -9,9 +9,7 @@ namespace Explorer.Components
         private readonly ResultProvider<QuartileEstimator.Result> resultProvider;
 
         public QuartilesPublisher(
-            MetricsPublisher publisher,
             ResultProvider<QuartileEstimator.Result> resultProvider)
-        : base(publisher)
         {
             this.resultProvider = resultProvider;
         }

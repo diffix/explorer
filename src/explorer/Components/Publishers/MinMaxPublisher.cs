@@ -9,9 +9,7 @@ namespace Explorer.Components
         private readonly ResultProvider<MinMaxRefiner.Result> resultProvider;
 
         public MinMaxPublisher(
-            MetricsPublisher publisher,
             ResultProvider<MinMaxRefiner.Result> resultProvider)
-        : base(publisher)
         {
             this.resultProvider = resultProvider;
         }

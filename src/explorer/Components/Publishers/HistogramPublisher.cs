@@ -10,9 +10,7 @@ namespace Explorer.Components
         private readonly ResultProvider<NumericHistogramComponent.Result> resultProvider;
 
         public HistogramPublisher(
-            MetricsPublisher publisher,
             ResultProvider<NumericHistogramComponent.Result> resultProvider)
-        : base(publisher)
         {
             this.resultProvider = resultProvider;
         }

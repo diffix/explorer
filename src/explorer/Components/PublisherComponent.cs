@@ -7,16 +7,9 @@ namespace Explorer.Components
 
     public abstract class PublisherComponent
     {
-        private readonly MetricsPublisher publisher;
-
-        protected PublisherComponent(MetricsPublisher publisher)
-        {
-            this.publisher = publisher;
-        }
-
         public abstract IAsyncEnumerable<ExploreMetric> YieldMetrics();
 
-        public virtual async Task PublishMetricsAsync()
+        public virtual async Task PublishMetricsAsync(MetricsPublisher publisher)
         {
             await foreach (var metric in YieldMetrics())
             {

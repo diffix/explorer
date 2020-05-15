@@ -11,9 +11,7 @@ namespace Explorer.Components
         private readonly ResultProvider<LinearTimeBuckets.Result> resultProvider;
 
         public LinearTimeBucketsPublisher(
-            MetricsPublisher publisher,
             ResultProvider<LinearTimeBuckets.Result> resultProvider)
-        : base(publisher)
         {
             this.resultProvider = resultProvider;
         }

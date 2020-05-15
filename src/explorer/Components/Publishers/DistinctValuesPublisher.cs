@@ -12,9 +12,7 @@ namespace Explorer.Components
         private readonly ResultProvider<DistinctValuesComponent.Result> resultProvider;
 
         public DistinctValuesPublisher(
-            MetricsPublisher publisher,
             ResultProvider<DistinctValuesComponent.Result> resultProvider)
-        : base(publisher)
         {
             this.resultProvider = resultProvider;
         }

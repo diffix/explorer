@@ -9,9 +9,7 @@ namespace Explorer.Components
         private readonly ResultProvider<AverageEstimator.Result> resultProvider;
 
         public AveragePublisher(
-            MetricsPublisher publisher,
             ResultProvider<AverageEstimator.Result> resultProvider)
-        : base(publisher)
         {
             this.resultProvider = resultProvider;
         }

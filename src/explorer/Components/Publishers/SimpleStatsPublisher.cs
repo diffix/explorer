@@ -9,9 +9,7 @@ namespace Explorer.Components
         private readonly ResultProvider<SimpleStats<T>.Result> resultProvider;
 
         public SimpleStatsPublisher(
-            MetricsPublisher publisher,
             ResultProvider<SimpleStats<T>.Result> resultProvider)
-        : base(publisher)
         {
             this.resultProvider = resultProvider;
         }
