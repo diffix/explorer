@@ -41,7 +41,7 @@ namespace Explorer.Components
                     (bucketSize, buckets) => new Result(
                         bucketSize,
                         ValueCounts.Compute(buckets),
-                        buckets.Where(b => b.LowerBound.HasValue).OrderBy(b => b.LowerBound.Value)));
+                        buckets.Where(b => b.HasValue).OrderBy(b => b.LowerBound)));
 
             return histograms
                 .OrderBy(h => h.BucketSize)

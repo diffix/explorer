@@ -21,7 +21,7 @@ namespace Explorer.Components
             {
                 var sum = histogram.Buckets
                         .Where(b => b.HasValue)
-                        .Sum(bucket => bucket.Count * ((decimal)bucket.LowerBound.Value + (histogram.BucketSize / 2)));
+                        .Sum(bucket => bucket.Count * ((decimal)bucket.LowerBound + (histogram.BucketSize / 2)));
                 return sum / histogram.ValueCounts.NonSuppressedNonNullCount;
             });
 
