@@ -5,33 +5,28 @@ namespace Explorer.Components
 
     using Explorer.Metrics;
 
-    public class HistogramPublisher : PublisherComponent
+    public class HistogramPublisher : PublisherComponent<NumericHistogramComponent.Result>
     {
-        private readonly ResultProvider<NumericHistogramComponent.Result> resultProvider;
-
-        public HistogramPublisher(
-            ResultProvider<NumericHistogramComponent.Result> resultProvider)
+        public HistogramPublisher(ResultProvider<NumericHistogramComponent.Result> resultProvider)
+            : base(resultProvider)
         {
-            this.resultProvider = resultProvider;
         }
 
-        public override async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public override IEnumerable<ExploreMetric> YieldMetrics(NumericHistogramComponent.Result result)
         {
-            var histogramResult = await resultProvider.ResultAsync;
-
-            var buckets = histogramResult.Buckets
+            var buckets = result.Buckets
                     .Where(b => b.HasValue)
                     .Select(b => new
                     {
-                        histogramResult.BucketSize,
-                        LowerBound = b.GroupingValue,
+                        result.BucketSize,
+                        b.LowerBound,
                         b.Count,
                     });
 
             yield return new UntypedMetric("histogram.buckets", buckets);
-            yield return new UntypedMetric("histogram.suppressed_count", histogramResult.ValueCounts.SuppressedCount);
-            yield return new UntypedMetric("histogram.suppressed_ratio", histogramResult.ValueCounts.SuppressedCountRatio);
-            yield return new UntypedMetric("histogram.value_counts", histogramResult.ValueCounts);
+            yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
+            yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
+            yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
         }
     }
 }

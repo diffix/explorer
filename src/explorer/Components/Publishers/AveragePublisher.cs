@@ -4,22 +4,17 @@ namespace Explorer.Components
 
     using Explorer.Metrics;
 
-    public class AveragePublisher : PublisherComponent
+    public class AveragePublisher : PublisherComponent<AverageEstimator.Result>
     {
-        private readonly ResultProvider<AverageEstimator.Result> resultProvider;
-
-        public AveragePublisher(
-            ResultProvider<AverageEstimator.Result> resultProvider)
+        public AveragePublisher(ResultProvider<AverageEstimator.Result> resultProvider)
+        : base(resultProvider)
         {
-            this.resultProvider = resultProvider;
         }
 
         public int Precision { get; set; }
 
-        public override async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public override IEnumerable<ExploreMetric> YieldMetrics(AverageEstimator.Result result)
         {
-            var result = await resultProvider.ResultAsync;
-
             yield return new UntypedMetric(name: "average_estimate", metric: decimal.Round(result.Value, Precision));
         }
     }

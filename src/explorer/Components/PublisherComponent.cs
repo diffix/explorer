@@ -5,13 +5,25 @@ namespace Explorer.Components
 
     using Explorer.Metrics;
 
-    public abstract class PublisherComponent
+    public interface PublisherComponent
     {
-        public abstract IAsyncEnumerable<ExploreMetric> YieldMetrics();
+        public Task PublishMetricsAsync(MetricsPublisher publisher);
+    }
+
+    public abstract class PublisherComponent<TResult> : PublisherComponent
+    {
+        private readonly ResultProvider<TResult> resultProvider;
+
+        protected PublisherComponent(ResultProvider<TResult> resultProvider)
+        {
+            this.resultProvider = resultProvider;
+        }
+
+        public abstract IEnumerable<ExploreMetric> YieldMetrics(TResult result);
 
         public virtual async Task PublishMetricsAsync(MetricsPublisher publisher)
         {
-            await foreach (var metric in YieldMetrics())
+            foreach (var metric in YieldMetrics(await resultProvider.ResultAsync))
             {
                 await publisher.PublishMetricAsync(metric);
             }

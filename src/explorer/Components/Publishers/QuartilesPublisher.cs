@@ -4,20 +4,15 @@ namespace Explorer.Components
 
     using Explorer.Metrics;
 
-    public class QuartilesPublisher : PublisherComponent
+    public class QuartilesPublisher : PublisherComponent<QuartileEstimator.Result>
     {
-        private readonly ResultProvider<QuartileEstimator.Result> resultProvider;
-
-        public QuartilesPublisher(
-            ResultProvider<QuartileEstimator.Result> resultProvider)
+        public QuartilesPublisher(ResultProvider<QuartileEstimator.Result> resultProvider)
+        : base(resultProvider)
         {
-            this.resultProvider = resultProvider;
         }
 
-        public override async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public override IEnumerable<ExploreMetric> YieldMetrics(QuartileEstimator.Result result)
         {
-            var result = await resultProvider.ResultAsync;
-
             yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
         }
     }

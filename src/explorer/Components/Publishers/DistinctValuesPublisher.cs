@@ -5,21 +5,17 @@ namespace Explorer.Components
 
     using Explorer.Metrics;
 
-    public class DistinctValuesPublisher : PublisherComponent
+    public class DistinctValuesPublisher : PublisherComponent<DistinctValuesComponent.Result>
     {
         private const double SuppressedRatioThreshold = 0.1;
 
-        private readonly ResultProvider<DistinctValuesComponent.Result> resultProvider;
-
-        public DistinctValuesPublisher(
-            ResultProvider<DistinctValuesComponent.Result> resultProvider)
+        public DistinctValuesPublisher(ResultProvider<DistinctValuesComponent.Result> resultProvider)
+        : base(resultProvider)
         {
-            this.resultProvider = resultProvider;
         }
 
-        public override async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public override IEnumerable<ExploreMetric> YieldMetrics(DistinctValuesComponent.Result result)
         {
-            var result = await resultProvider.ResultAsync;
             var valueCounts = result.ValueCounts;
 
             if (valueCounts.SuppressedRowRatio < SuppressedRatioThreshold)

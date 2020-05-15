@@ -4,22 +4,17 @@ namespace Explorer.Components
 
     using Explorer.Metrics;
 
-    public class MinMaxPublisher : PublisherComponent
+    public class MinMaxPublisher : PublisherComponent<MinMaxRefiner.Result>
     {
-        private readonly ResultProvider<MinMaxRefiner.Result> resultProvider;
-
-        public MinMaxPublisher(
-            ResultProvider<MinMaxRefiner.Result> resultProvider)
+        public MinMaxPublisher(ResultProvider<MinMaxRefiner.Result> resultProvider)
+        : base(resultProvider)
         {
-            this.resultProvider = resultProvider;
         }
 
         public int Precision { get; set; }
 
-        public override async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public override IEnumerable<ExploreMetric> YieldMetrics(MinMaxRefiner.Result result)
         {
-            var result = await resultProvider.ResultAsync;
-
             yield return new UntypedMetric("refined_max", result.Max);
             yield return new UntypedMetric("refined_min", result.Min);
         }
