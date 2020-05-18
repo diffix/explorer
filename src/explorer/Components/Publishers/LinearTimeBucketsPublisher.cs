@@ -1,37 +1,33 @@
 namespace Explorer.Components
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class LinearTimeBucketsPublisher : PublisherComponent
+    public class LinearTimeBucketsPublisher : PublisherComponent<LinearTimeBuckets.Result>
     {
-        private readonly ResultProvider<LinearTimeBuckets.Result> resultProvider;
-
-        public LinearTimeBucketsPublisher(
-            ResultProvider<LinearTimeBuckets.Result> resultProvider)
+        public LinearTimeBucketsPublisher(ResultProvider<LinearTimeBuckets.Result> resultProvider)
+        : base(resultProvider)
         {
-            this.resultProvider = resultProvider;
         }
 
-        public override async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public override IEnumerable<ExploreMetric> YieldMetrics(LinearTimeBuckets.Result result)
         {
-            var result = await resultProvider.ResultAsync;
-
             foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
             {
                 yield return new UntypedMetric(
                     name: $"dates_linear.{row.Key}",
-                    metric: MetricBlob(valueCount.TotalCount, valueCount.SuppressedCount, row.Select(_ => _)));
+                    metric: MetricBlob<DateTime>(valueCount.TotalCount, valueCount.SuppressedCount, row.Select(_ => _)));
             }
         }
 
         private static object MetricBlob<T>(
             long total,
             long suppressed,
-            IEnumerable<ValueWithCount<T>> valueCounts)
+            IEnumerable<GroupingSetsResult<T>> valueCounts)
         {
             return new
             {
