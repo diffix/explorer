@@ -35,15 +35,20 @@ namespace Explorer.Components
 
             var histogramQ = await conn.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 
-            var histograms = histogramQ.Rows
-                .GroupBy(
-                    row => row.GroupingLabel,
-                    (bucketSize, buckets) => new Result(
-                        bucketSize,
-                        ValueCounts.Compute(buckets),
-                        buckets.Where(b => b.HasValue).OrderBy(b => b.LowerBound)));
+            var histograms = Histogram.FromQueryRows(histogramQ.Rows);
 
-            return histograms
+            var valueCounts = histogramQ.Rows
+                .GroupBy(
+                    row => row.BucketSize,
+                    (bs, rows) => (BucketSize: new BucketSize(bs), Rows: ValueCounts.Compute(rows)));
+
+            var results = valueCounts.Join(
+                histograms,
+                v => v.BucketSize.SnappedSize,
+                h => h.BucketSize.SnappedSize,
+                (v, h) => new Result(v.Rows, h));
+
+            return results
                 .OrderBy(h => h.BucketSize)
                 .ThenBy(h => h.ValueCounts.SuppressedCount)
                 .First();
@@ -51,21 +56,17 @@ namespace Explorer.Components
 
         public class Result
         {
-            internal Result(
-                decimal bucketSize,
-                ValueCounts valueCounts,
-                IEnumerable<SingleColumnHistogram.Result> buckets)
+            internal Result(ValueCounts valueCounts, Histogram histogram)
             {
-                BucketSize = bucketSize;
                 ValueCounts = valueCounts;
-                Buckets = buckets;
+                Histogram = histogram;
             }
 
-            public decimal BucketSize { get; set; }
+            public BucketSize BucketSize => Histogram.BucketSize;
 
-            public ValueCounts ValueCounts { get; set; }
+            public ValueCounts ValueCounts { get; }
 
-            public IEnumerable<SingleColumnHistogram.Result> Buckets { get; set; }
+            public Histogram Histogram { get; }
         }
     }
 }
