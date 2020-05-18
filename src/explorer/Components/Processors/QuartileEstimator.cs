@@ -4,6 +4,8 @@ namespace Explorer.Components
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Explorer.Common;
+
     public class QuartileEstimator :
         ExplorerComponent<QuartileEstimator.Result>
     {
@@ -15,16 +17,17 @@ namespace Explorer.Components
             this.histogramResult = histogramResult;
         }
 
-        protected override async Task<Result> Explore()
-        {
-            var selectedHistogram = await histogramResult.ResultAsync;
+        public static Task<List<double>> EstimateQuartiles(NumericHistogramComponent.Result result) =>
+            EstimateQuartiles(result.Histogram);
 
+        public static Task<List<double>> EstimateQuartiles(Histogram histogram) => Task.Run(() =>
+        {
             var quartileEstimates = new List<double>();
-            var quartileCount = selectedHistogram.ValueCounts.NonSuppressedNonNullCount / 4;
+            var quartileCount = histogram.Buckets.Sum(h => h.Value.Count) / 4;
             var quartile = 1;
             var processed = 0L;
 
-            foreach (var bucket in selectedHistogram.Buckets.Where(b => b.HasValue))
+            foreach (var (bucketSize, bucket) in histogram.Buckets)
             {
                 if (processed + bucket.Count < quartileCount * quartile)
                 {
@@ -35,8 +38,8 @@ namespace Explorer.Components
                 {
                     // one or more quartiles in this bucket
                     var remaining = bucket.Count;
-                    var lowerBound = bucket.LowerBound;
-                    var range = (double)selectedHistogram.BucketSize;
+                    var lowerBound = (double)bucket.LowerBound;
+                    var range = (double)bucketSize;
 
                     do
                     {
@@ -68,8 +71,11 @@ namespace Explorer.Components
                 }
             }
 
-            return new Result(quartileEstimates);
-        }
+            return quartileEstimates;
+        });
+
+        protected override async Task<Result> Explore() =>
+            new Result(await EstimateQuartiles(await histogramResult.ResultAsync));
 
         public class Result
         {

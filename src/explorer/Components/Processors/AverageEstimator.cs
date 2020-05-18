@@ -3,6 +3,8 @@ namespace Explorer.Components
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Explorer.Common;
+
     public class AverageEstimator :
         ExplorerComponent<AverageEstimator.Result>
     {
@@ -13,20 +15,24 @@ namespace Explorer.Components
             this.histogramResultProvider = histogramResultProvider;
         }
 
-        protected override async Task<Result> Explore()
+        public static Task<decimal> EstimateAverage(NumericHistogramComponent.Result result) =>
+            EstimateAverage(result.Histogram);
+
+        public static Task<decimal> EstimateAverage(Histogram histogram) => Task.Run(() =>
         {
-            var histogram = await histogramResultProvider.ResultAsync;
+            (decimal Sum, long Total) sumzero = (0M, 0L);
+            var (sum, total) = histogram.Buckets.Values
+                .Aggregate(
+                    sumzero,
+                    (sums, bucket) => (
+                            sums.Sum + (bucket.Count * (bucket.LowerBound + (histogram.BucketSize.SnappedSize / 2))),
+                            sums.Total + bucket.Count));
 
-            var averageEstimate = await Task.Run(() =>
-            {
-                var sum = histogram.Buckets
-                        .Where(b => b.HasValue)
-                        .Sum(bucket => bucket.Count * ((decimal)bucket.LowerBound + (histogram.BucketSize / 2)));
-                return sum / histogram.ValueCounts.NonSuppressedNonNullCount;
-            });
+            return sum / total;
+        });
 
-            return new Result(averageEstimate);
-        }
+        protected override async Task<Result> Explore() =>
+            new Result(await EstimateAverage(await histogramResultProvider.ResultAsync));
 
         public class Result
         {
