@@ -2,7 +2,7 @@ namespace Explorer.Common
 {
     using System.Linq;
 
-    internal class BucketSize
+    public class BucketSize
     {
 #pragma warning disable SA1137 // Elements should have the same indentation
         private static readonly decimal[] ValidSizes =
