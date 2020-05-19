@@ -24,10 +24,8 @@ namespace Explorer.Components
             this.conn = conn;
         }
 
-        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public static IEnumerable<ExploreMetric> YieldMetrics(Result result)
         {
-            var result = await ResultAsync;
-
             var valueCounts = result.ValueCounts;
 
             if (valueCounts.SuppressedRowRatio < SuppressedRatioThreshold)
@@ -56,31 +54,28 @@ namespace Explorer.Components
             }
         }
 
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            foreach (var m in YieldMetrics(await ResultAsync))
+            {
+                yield return m;
+            }
+        }
+
         protected override async Task<Result> Explore()
         {
             var distinctValueQ = await conn.Exec(
                 new DistinctColumnValues(ctx.Table, ctx.Column));
 
-            var counts = ValueCounts.Compute(distinctValueQ.Rows);
-
-            if (counts.TotalCount == 0)
-            {
-                throw new Exception(
-                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
-            }
-
-            return new Result(distinctValueQ.Rows, counts);
+            return new Result(distinctValueQ.Rows);
         }
 
         public class Result
         {
-
-            public Result(
-                IEnumerable<ValueWithCount<JsonElement>> distinctRows,
-                ValueCounts valueCounts)
+            public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
             {
                 DistinctRows = distinctRows;
-                ValueCounts = valueCounts;
+                ValueCounts = ValueCounts.Compute(distinctRows);
             }
 
             public IEnumerable<ValueWithCount<JsonElement>> DistinctRows { get; }

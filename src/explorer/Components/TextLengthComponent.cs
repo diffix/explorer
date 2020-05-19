@@ -35,14 +35,12 @@ namespace Explorer.Components
                 yield return new UntypedMetric("text.length.success", "true");
 
                 yield return new UntypedMetric(
-                    "text.length.histogram",
-                    result.Histogram!.Buckets.Values.Select(b => new
-                    {
-                        Length = b.LowerBound,
-                        b.Count,
-                    }));
-
-                yield return new UntypedMetric("text.length.quartiles", result.Quartiles!);
+                    "text.length.values",
+                    result.DistinctResult!.DistinctRows
+                        .Where(r => r.HasValue)
+                        .OrderBy(r => r.Value.GetInt32())
+                        .Select(r => new { r.Value, r.Count }));
+                yield return new UntypedMetric("text.length.counts", result.DistinctResult.ValueCounts);
             }
             else
             {
@@ -59,14 +57,10 @@ namespace Explorer.Components
                 return Result.Failed();
             }
 
-            var histogramQuery = new SingleColumnHistogram(
-                ctx.Table, $"length{ctx.Column}", new List<decimal> { 1 });
-            var histogramResult = await conn.Exec(histogramQuery);
+            var distinctResult = await conn.Exec(
+                new DistinctColumnValues(ctx.Table, $"length({ctx.Column})"));
 
-            var histogram = Histogram.FromQueryRows(histogramResult.Rows).First();
-            var quartiles = await QuartileEstimator.EstimateQuartiles(histogram);
-
-            return Result.Ok(histogram, quartiles);
+            return Result.Ok(new DistinctValuesComponent.Result(distinctResult.Rows));
         }
 
         public class Result
@@ -76,9 +70,7 @@ namespace Explorer.Components
                 Success = success;
             }
 
-            public Histogram? Histogram { get; private set; }
-
-            public List<double>? Quartiles { get; private set; }
+            public DistinctValuesComponent.Result? DistinctResult { get; private set; }
 
             public bool Success { get; }
 
@@ -87,14 +79,11 @@ namespace Explorer.Components
                 return new Result(false);
             }
 
-            public static Result Ok(
-                Histogram histogram,
-                List<double> quartiles)
+            public static Result Ok(DistinctValuesComponent.Result distinctResult)
             {
                 return new Result(true)
                 {
-                    Histogram = histogram,
-                    Quartiles = quartiles,
+                    DistinctResult = distinctResult,
                 };
             }
         }
