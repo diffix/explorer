@@ -1,14 +1,16 @@
 namespace Explorer.Components
 {
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
 
     using Diffix;
     using Explorer.Common;
+    using Explorer.Metrics;
     using Explorer.Queries;
 
-    public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>
+    public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>, PublisherComponent
     {
         private const int MaxIterations = 10;
         private readonly DConnection conn;
@@ -95,6 +97,14 @@ namespace Explorer.Components
             var maxQ = await conn.Exec<Max.Result<decimal>>(
                 new Max(ctx.Table, ctx.Column, lowerBound));
             return maxQ.Rows.Single().Max;
+        }
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            var result = await ResultAsync;
+
+            yield return new UntypedMetric("refined_max", result.Max);
+            yield return new UntypedMetric("refined_min", result.Min);
         }
 
         public class Result

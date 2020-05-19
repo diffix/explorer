@@ -1,12 +1,14 @@
 namespace Explorer.Components
 {
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
     using Explorer.Common;
+    using Explorer.Metrics;
 
     public class AverageEstimator :
-        ExplorerComponent<AverageEstimator.Result>
+        ExplorerComponent<AverageEstimator.Result>, PublisherComponent
     {
         private readonly ResultProvider<NumericHistogramComponent.Result> histogramResultProvider;
 
@@ -30,6 +32,14 @@ namespace Explorer.Components
 
             return sum / total;
         });
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            const int Precision = 6;
+            var result = await ResultAsync;
+
+            yield return new UntypedMetric(name: "average_estimate", metric: decimal.Round(result.Value, Precision));
+        }
 
         protected override async Task<Result> Explore() =>
             new Result(await EstimateAverage(await histogramResultProvider.ResultAsync));

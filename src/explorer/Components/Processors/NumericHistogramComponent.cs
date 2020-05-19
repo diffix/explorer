@@ -6,10 +6,11 @@ namespace Explorer.Components
 
     using Diffix;
     using Explorer.Common;
+    using Explorer.Metrics;
     using Explorer.Queries;
 
     public class NumericHistogramComponent :
-        ExplorerComponent<NumericHistogramComponent.Result>
+        ExplorerComponent<NumericHistogramComponent.Result>, PublisherComponent
     {
         private const long ValuesPerBucketTarget = 20;
         private readonly DConnection conn;
@@ -24,6 +25,16 @@ namespace Explorer.Components
             this.conn = conn;
             this.ctx = ctx;
             this.statsResultProvider = statsResultProvider;
+        }
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            var result = await ResultAsync;
+
+            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values);
+            yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
+            yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
+            yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
         }
 
         protected async override Task<Result> Explore()
@@ -49,7 +60,7 @@ namespace Explorer.Components
                 (v, h) => new Result(v.Rows, h));
 
             return results
-                .OrderBy(h => h.BucketSize)
+                .OrderBy(h => h.BucketSize.SnappedSize)
                 .ThenBy(h => h.ValueCounts.SuppressedCount)
                 .First();
         }

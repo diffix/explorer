@@ -7,9 +7,10 @@ namespace Explorer.Components
 
     using Diffix;
     using Explorer.Common;
+    using Explorer.Metrics;
     using Explorer.Queries;
 
-    public class LinearTimeBuckets : ExplorerComponent<LinearTimeBuckets.Result>
+    public class LinearTimeBuckets : ExplorerComponent<LinearTimeBuckets.Result>, PublisherComponent
     {
         private const double SuppressedRatioThreshold = 0.1;
 
@@ -20,6 +21,18 @@ namespace Explorer.Components
         {
             this.conn = conn;
             this.ctx = ctx;
+        }
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            var result = await ResultAsync;
+
+            foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
+            {
+                yield return new UntypedMetric(
+                    name: $"dates_linear.{row.Key}",
+                    metric: MetricBlob<DateTime>(valueCount.TotalCount, valueCount.SuppressedCount, row.Select(_ => _)));
+            }
         }
 
         protected override async Task<Result> Explore()
@@ -53,6 +66,28 @@ namespace Explorer.Components
             IEnumerable<GroupingSetsResult<T>> queryResult)
         {
             return queryResult.GroupBy(row => row.GroupingLabel);
+        }
+
+        private static object MetricBlob<T>(
+            long total,
+            long suppressed,
+            IEnumerable<GroupingSetsResult<T>> valueCounts)
+        {
+            return new
+            {
+                Total = total,
+                Suppressed = suppressed,
+                Counts =
+                    from row in valueCounts
+                    where row.HasValue
+                    orderby row.Value ascending
+                    select new
+                    {
+                        row.Value,
+                        row.Count,
+                        row.CountNoise,
+                    },
+            };
         }
 
         public class Result : GenericResult<DateTime>

@@ -5,9 +5,10 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
+    using Explorer.Metrics;
 
     public class QuartileEstimator :
-        ExplorerComponent<QuartileEstimator.Result>
+        ExplorerComponent<QuartileEstimator.Result>, PublisherComponent
     {
         private readonly ResultProvider<NumericHistogramComponent.Result> histogramResult;
 
@@ -73,6 +74,13 @@ namespace Explorer.Components
 
             return quartileEstimates;
         });
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            var result = await ResultAsync;
+
+            yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
+        }
 
         protected override async Task<Result> Explore() =>
             new Result(await EstimateQuartiles(await histogramResult.ResultAsync));
