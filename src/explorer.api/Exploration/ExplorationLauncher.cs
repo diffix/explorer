@@ -7,6 +7,7 @@ namespace Explorer.Api
 
     using Aircloak.JsonApi;
     using Diffix;
+    using Explorer;
     using Explorer.Api.Authentication;
     using Explorer.Components;
     using Lamar;
@@ -23,26 +24,40 @@ namespace Explorer.Api
         public Task LaunchExploration(Models.ExploreParams data, CancellationToken ct) =>
             Task.Run(async () => await Explore(data, ct));
 
-        private static ExplorationTasks SelectComponents(INestedContainer scope, DValueType columnType) =>
+        private static Exploration SelectComponents(INestedContainer scope, DValueType columnType) =>
             columnType switch
             {
-                DValueType.Integer => new ExplorationTasks(scope)
-                                        .AddNumericPublishers()
-                                        .AddCategoricalPublishers(),
-                DValueType.Real => new ExplorationTasks(scope)
-                                        .AddNumericPublishers()
-                                        .AddCategoricalPublishers(),
-                DValueType.Text => throw new NotImplementedException(),
-                DValueType.Timestamp => new ExplorationTasks(scope)
-                                        .AddDatetimePublishers(),
-                DValueType.Date => new ExplorationTasks(scope)
-                                        .AddDatetimePublishers(),
-                DValueType.Datetime => new ExplorationTasks(scope)
-                                        .AddDatetimePublishers(),
-                DValueType.Bool => new ExplorationTasks(scope)
-                                        .AddCategoricalPublishers(),
+                DValueType.Integer => NumericExploration(scope),
+                DValueType.Real => NumericExploration(scope),
+                DValueType.Text => TextExploration(scope),
+                DValueType.Timestamp => DatetimeExploration(scope),
+                DValueType.Date => DatetimeExploration(scope),
+                DValueType.Datetime => DatetimeExploration(scope),
+                DValueType.Bool => Exploration.Compose(scope, _ => _.AddPublisher<DistinctValuesComponent>()),
                 DValueType.Unknown => throw new NotImplementedException(),
             };
+
+        private static Exploration NumericExploration(INestedContainer scope) =>
+            Exploration.Compose(scope, _ =>
+            {
+                _.AddPublisher<NumericHistogramComponent>();
+                _.AddPublisher<QuartileEstimator>();
+                _.AddPublisher<AverageEstimator>();
+                _.AddPublisher<MinMaxRefiner>();
+                _.AddPublisher<DistinctValuesComponent>();
+            });
+
+        private static Exploration TextExploration(INestedContainer scope) =>
+            Exploration.Compose(scope, _ =>
+            {
+                _.AddPublisher<TextLengthComponent>();
+            });
+
+        private static Exploration DatetimeExploration(INestedContainer scope) =>
+            Exploration.Compose(scope, _ =>
+            {
+                _.AddPublisher<LinearTimeBuckets>();
+            });
 
         private async Task Explore(Models.ExploreParams data, CancellationToken ct)
         {
@@ -67,46 +82,6 @@ namespace Explorer.Api
 
             // Run and await completion of all components
             await explorationTasks.Completion;
-        }
-
-        private class ExplorationTasks : List<Task>
-        {
-            private readonly INestedContainer scope;
-
-            public ExplorationTasks(INestedContainer scope)
-            {
-                this.scope = scope;
-            }
-
-            public Task Completion => Task.WhenAll(this);
-
-            public ExplorationTasks AddPublisher<T>()
-                where T : PublisherComponent
-            {
-                if (scope.GetInstance<T>() is PublisherComponent publisherComponent)
-                {
-                    var metricsPublisher = scope.GetInstance<Metrics.MetricsPublisher>();
-
-                    Add(Task.Run(async () => await publisherComponent.PublishMetricsAsync(metricsPublisher)));
-                    return this;
-                }
-                else
-                {
-                    throw new Exception($"Unable to resolve {typeof(T)}");
-                }
-            }
-
-            public ExplorationTasks AddNumericPublishers() =>
-                AddPublisher<HistogramPublisher>()
-                .AddPublisher<QuartilesPublisher>()
-                .AddPublisher<AveragePublisher>()
-                .AddPublisher<MinMaxPublisher>();
-
-            public ExplorationTasks AddCategoricalPublishers() =>
-                AddPublisher<DistinctValuesPublisher>();
-
-            public ExplorationTasks AddDatetimePublishers() =>
-                AddPublisher<LinearTimeBucketsPublisher>();
         }
     }
 }

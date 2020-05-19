@@ -47,23 +47,8 @@ namespace Explorer.Api
                 .AddScoped<ContextBuilder>()
                 .AddScoped<AircloakConnectionBuilder>();
 
-            // Scan for Components
-            services.Scan(_ =>
-            {
-                _.Assembly("explorer");
-                _.IncludeNamespace("Explorer.Components");
-                _.AddAllTypesOf<PublisherComponent>(ServiceLifetime.Scoped);
-                _.ConnectImplementationsToTypesClosing(typeof(ResultProvider<>), ServiceLifetime.Scoped);
-                _.ConnectImplementationsToTypesClosing(typeof(ExplorerComponent<>), ServiceLifetime.Scoped);
-            });
-
-            // The following are not picked up by the scan for some reason.
-            services.AddScoped<SimpleStats<double>>();
-            services.AddScoped<SimpleStats<long>>();
-
-            // Services to be injected at runtime
-            services.Injectable<ExplorerContext>();
-            services.Injectable<DConnection>();
+            // Register Explorer Components
+            services.IncludeRegistry<ComponentRegistry>();
 
             if (Environment.IsDevelopment())
             {
@@ -78,12 +63,7 @@ namespace Explorer.Api
         {
             if (env.IsDevelopment())
             {
-                var container = (IContainer)app.ApplicationServices;
-
-                System.Console.WriteLine(container.WhatDoIHave());
-                System.Console.WriteLine(container.WhatDidIScan());
-
-                container.AssertConfigurationIsValid();
+                PrintLamarDiagnostics(app);
 
                 app.UseDeveloperExceptionPage();
             }
@@ -98,6 +78,16 @@ namespace Explorer.Api
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => endpoints.MapControllers());
+        }
+
+        private static void PrintLamarDiagnostics(IApplicationBuilder app)
+        {
+            var container = (IContainer)app.ApplicationServices;
+
+            System.Console.WriteLine(container.WhatDoIHave());
+            System.Console.WriteLine(container.WhatDidIScan());
+
+            container.AssertConfigurationIsValid();
         }
     }
 }
