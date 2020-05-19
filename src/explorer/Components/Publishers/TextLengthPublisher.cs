@@ -2,6 +2,8 @@
 namespace Explorer.Components
 {
     using System.Collections.Generic;
+    using System.Linq;
+
     using Explorer.Metrics;
 
     public class TextLengthPublisher : PublisherComponent<TextLengthComponent.Result>
@@ -15,13 +17,21 @@ namespace Explorer.Components
         {
             if (result.Success)
             {
-                var statsPublisher = new SimpleStatsPublisher<double>(result.Stats);
+                yield return new UntypedMetric("text.length.success", "true");
 
-                result.Hist
-                result.Quartiles
+                yield return new UntypedMetric(
+                    "text.length.histogram",
+                    result.Histogram!.Buckets.Values.Select(b => new
+                    {
+                        Length = b.LowerBound,
+                        b.Count,
+                    }));
 
-
-                return statsPublisher
+                yield return new UntypedMetric("text.length.quartiles", result.Quartiles!);
+            }
+            else
+            {
+                yield return new UntypedMetric("text.length.success", "false");
             }
         }
     }
