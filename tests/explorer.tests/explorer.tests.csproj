@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+    <CodeAnalysisRuleSet>../../explorer.ruleset</CodeAnalysisRuleSet>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/aircloak/aircloak.csproj" />
+    <ProjectReference Include="../../src/explorer/explorer.csproj" />
+    <ProjectReference Include="../../src/vcr-sharp/vcr-sharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lamar" Version="4.3.0" />
+    <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="4.3.0" />
+    <PackageReference Include="YamlDotNet" Version="8.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.0.1" />
+  </ItemGroup>
+
+</Project>
