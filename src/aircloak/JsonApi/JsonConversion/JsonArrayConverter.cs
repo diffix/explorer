@@ -39,7 +39,7 @@ namespace Aircloak.JsonApi.JsonConversion
             reader.Read();
             if (reader.TokenType != JsonTokenType.EndArray)
             {
-                throw new JsonException($"Expected end of {typeof(TRow)} array.");
+                throw new JsonException($"Expected end of {typeof(TRow)} array, got {reader.TokenType} token: `{reader.GetString()}`.");
             }
 
             return value;

@@ -13,6 +13,12 @@ namespace Explorer.Common
 
     public class RawExplorerContext : ExplorerContext
     {
+#nullable disable
+        public RawExplorerContext()
+        {
+        }
+#nullable enable
+
         public RawExplorerContext(ExplorerContext ctx)
         {
             Table = ctx.Table;
