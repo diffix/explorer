@@ -5,17 +5,12 @@
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
-    using System.Runtime.CompilerServices;
     using System.Text.Json;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
-    using Diffix;
     using Explorer.Api;
     using Explorer.Api.Authentication;
-    using Explorer.Common;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -39,22 +34,6 @@
         {
             return Environment.GetEnvironmentVariable(ExplorerConfig.ApiKeyEnvironmentVariable) ??
                 throw new Exception($"Environment variable {ExplorerConfig.ApiKeyEnvironmentVariable} not set.");
-        }
-
-        public async Task<QueryResult<TResult>> QueryResult<TResult>(
-            DQuery<TResult> query,
-            string dataSourceName,
-            string testClassName,
-            [CallerMemberName] string vcrSessionName = "")
-        {
-            var testConfig = GetTestConfig(testClassName, vcrSessionName);
-            var jsonApiClient = CreateJsonApiClient(testConfig.VcrCassettePath);
-
-            return await jsonApiClient.Query(
-                dataSourceName,
-                query,
-                testConfig.PollFrequency,
-                CancellationToken.None);
         }
 
         public async Task<HttpResponseMessage> SendExplorerApiRequest(HttpMethod method, string endpoint, object? data, string testClassName, string vcrSessionName)
@@ -85,42 +64,9 @@
             return await client.SendAsync(request);
         }
 
-#pragma warning disable CA2000 // call IDisposable.Dispose on handler object
-        public JsonApiClient CreateJsonApiClient(string vcrCassettePath, bool expectFail = false)
-        {
-            var vcrOptions = expectFail ? VcrSharp.RecordingOptions.FailureOnly : VcrSharp.RecordingOptions.SuccessOnly;
-            var vcrCassette = LoadCassette(vcrCassettePath);
-            var vcrHandler = new VcrSharp.ReplayingHandler(new HttpClientHandler(), VcrSharp.VCRMode.Cache, vcrCassette, vcrOptions);
-            var httpClient = new HttpClient(vcrHandler, true) { BaseAddress = Config.AircloakApiUrl() };
-            var authProvider = StaticApiKeyAuthProvider.FromEnvironmentVariable(ExplorerConfig.ApiKeyEnvironmentVariable);
-            return new JsonApiClient(httpClient, authProvider);
-        }
-#pragma warning restore CA2000 // call IDisposable.Dispose on handler object
-
         public new void Dispose()
         {
             Dispose(true);
-        }
-
-        internal async Task<IEnumerable<ExploreMetric>> GetExplorerMetrics(
-            ExplorerBase explorer,
-            string dataSourceName,
-            string tableName,
-            string columnName,
-            DValueType columnType,
-            string testClassName,
-            [CallerMemberName] string vcrSessionName = "")
-        {
-            var testConfig = GetTestConfig(testClassName, vcrSessionName);
-            var jsonApiClient = CreateJsonApiClient(testConfig.VcrCassettePath);
-
-            using var conn = new AircloakConnection(jsonApiClient, dataSourceName, testConfig.PollFrequency);
-
-            using var exploration = Exploration.Create(conn, explorer, tableName, columnName, columnType);
-
-            await exploration.Completion;
-
-            return exploration.ExploreMetrics;
         }
 
 #pragma warning disable CA1822 // method should be made static
@@ -141,7 +87,7 @@
 
         protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
         {
-            var testConfig = GetTestConfig(GetType().ToString(), "WebHost.OutgoingRequests");
+            var testConfig = GetTestConfig(GetType().ToString().Split(".")[^1], "WebHost.OutgoingRequests");
 
             builder.ConfigureServices(services =>
             {

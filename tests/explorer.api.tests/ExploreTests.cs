@@ -167,9 +167,9 @@ namespace Explorer.Api.Tests
         }
 
         [Fact]
-        public void FailWithInvalidApiKey()
+        public async Task FailWithInvalidApiKey()
         {
-            TestApi(
+            var explorerGuid = await TestApi(
                 HttpMethod.Post,
                 "/explore",
                 data: new Models.ExploreParams
@@ -179,11 +179,21 @@ namespace Explorer.Api.Tests
                     TableName = ValidData.TableName,
                     ColumnName = ValidData.ColumnName,
                 },
-                test: (response, content) =>
+                test: (_, content) =>
                 {
-                    Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-                    Assert.Contains("Unauthorized", content, StringComparison.InvariantCultureIgnoreCase);
+                    var rootEl = JsonDocument.Parse(content).RootElement;
+
+                    return rootEl.GetProperty("id").GetGuid();
                 });
+
+            // Allow some time for query to fail.
+            await Task.Delay(1000);
+
+            TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
+            {
+                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+                Assert.Contains("Unauthorized", content, StringComparison.InvariantCultureIgnoreCase);
+            });
         }
 
         private async void TestApi(
