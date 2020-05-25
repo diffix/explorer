@@ -70,7 +70,7 @@ namespace Explorer.Tests
                 Scope.GetInstance<JsonApiClient>(),
                 dataSourceName,
                 System.TimeSpan.FromSeconds(pollFrequencySecs),
-                tokenSource?.Token ?? CancellationToken.None));
+                tokenSource?.Token ?? cts.Token));
             return this;
         }
 

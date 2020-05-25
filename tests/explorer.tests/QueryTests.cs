@@ -186,13 +186,11 @@
             var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
             {
 #pragma warning disable CS4014 // Consider applying the 'await' operator to the result of the call.
-                queryScope.CancelQuery();
+                queryScope.CancelQuery(1000);
 #pragma warning restore CS4014 // Consider applying the 'await' operator to the result of the call.
 
                 await queryTask;
             });
-
-            Assert.StartsWith("Aircloak API query canceled", ex.Message, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private class RepeatingRowsQuery : DQuery<RepeatingRowsQuery.Result>
