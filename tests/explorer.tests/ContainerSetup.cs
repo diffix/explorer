@@ -45,70 +45,103 @@ namespace Explorer.Tests
 
         public TestScope PrepareTestScope() => new TestScope(Container);
 
-        public QueryScope SimpleQueryScope(string dataSourceName) =>
-            PrepareTestScope().WithConnectionParams(dataSourceName);
+        public QueryTestScope SimpleQueryTestScope(string dataSourceName) =>
+            PrepareTestScope()
+                .WithConnectionParams(dataSourceName);
+
+        public ComponentTestScope SimpleComponentTestScope(
+            string dataSourceName,
+            string tableName,
+            string columnName,
+            DValueType columnType = DValueType.Unknown) =>
+            PrepareTestScope()
+                .WithConnectionParams(dataSourceName)
+                .WithContext(tableName, columnName, columnType);
     }
 
-    public class TestScope : QueryScope
+    public class TestScope
     {
-        private readonly CancellationTokenSource cts = new CancellationTokenSource();
-        public INestedContainer Scope { get; }
+        protected readonly CancellationTokenSource cts = new CancellationTokenSource();
+        public INestedContainer Container { get; }
 
-        public TestScope(Container parentContainer)
+        public TestScope(Container rootContainer)
         {
-            Scope = parentContainer.GetNestedContainer();
-            Scope.Inject(cts);
+            Container = rootContainer.GetNestedContainer();
+            Container.Inject(cts);
         }
 
-        public TestScope WithConnectionParams(
+        public QueryTestScope WithConnectionParams(
             string dataSourceName,
             int pollFrequencySecs = 2,
             CancellationTokenSource? tokenSource = null)
         {
-            Scope.Inject<DConnection>(
+            Container.Inject<DConnection>(
                 new AircloakConnection(
-                Scope.GetInstance<JsonApiClient>(),
+                Container.GetInstance<JsonApiClient>(),
                 dataSourceName,
                 System.TimeSpan.FromSeconds(pollFrequencySecs),
                 tokenSource?.Token ?? cts.Token));
-            return this;
+            return new QueryTestScope(this);
+        }
+    }
+
+    public class QueryTestScope
+    {
+        public QueryTestScope(TestScope scope)
+        {
+            Scope = scope;
         }
 
-        public TestScope WithContext(
+        public TestScope Scope { get; }
+
+        public async Task<IEnumerable<TRow>> QueryRows<TRow>(DQuery<TRow> query)
+        {
+            var queryResult = await Scope.Container.GetInstance<DConnection>().Exec(query);
+
+            return queryResult.Rows;
+        }
+
+        public void CancelQuery() => Scope.Container.GetInstance<CancellationTokenSource>().Cancel();
+
+        public async Task CancelQuery(int millisecondDelay)
+        {
+            await Task.Delay(millisecondDelay);
+            CancelQuery();
+        }
+
+
+        public ComponentTestScope WithContext(
             string tableName,
             string columnName,
             DValueType columnType = DValueType.Unknown)
         {
-            Scope.Inject<ExplorerContext>(
+            Scope.Container.Inject<ExplorerContext>(
                 new RawExplorerContext
                 {
                     Table = tableName,
                     Column = columnName,
                     ColumnType = columnType,
                 });
-            return this;
+            return new ComponentTestScope(Scope);
         }
-
-        public async Task<IEnumerable<TRow>> QueryRows<TRow>(DQuery<TRow> query)
-        {
-            var queryResult = await Scope.GetInstance<DConnection>().Exec(query);
-
-            return queryResult.Rows;
-        }
-
-        public void CancelQuery() => Scope.GetInstance<CancellationTokenSource>().Cancel();
     }
 
-    public interface QueryScope
+    public class ComponentTestScope
     {
-        public Task<IEnumerable<TRow>> QueryRows<TRow>(DQuery<TRow> query);
-
-        public void CancelQuery();
-
-        public async Task CancelQuery(int millisecondDelay)
+        public ComponentTestScope(TestScope scope)
         {
-            await Task.Delay(millisecondDelay);
-            CancelQuery();
+            Scope = scope;
+        }
+
+        public TestScope Scope { get; }
+
+        public async Task Test<TComponent, TResult>(System.Action<TResult> test)
+        where TComponent : ExplorerComponent<TResult>
+        {
+            var c = Scope.Container.GetInstance<TComponent>();
+            var result = await c.ResultAsync;
+
+            test(result);
         }
     }
 }

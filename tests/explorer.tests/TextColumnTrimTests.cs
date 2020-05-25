@@ -10,11 +10,11 @@ namespace Explorer.Tests
     {
         private const string TestDataSource = "gda_banking";
 
-        private readonly QueryScope queryScope;
+        private readonly QueryTestScope queryScope;
 
         public TextColumnTrimTests(ContainerSetup setup)
         {
-            queryScope = setup.SimpleQueryScope(TestDataSource);
+            queryScope = setup.SimpleQueryTestScope(TestDataSource);
         }
 
         [Fact]

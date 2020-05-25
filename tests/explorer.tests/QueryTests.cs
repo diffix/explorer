@@ -23,7 +23,7 @@
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            var queryScope = testBase.SimpleQueryScope("gda_banking");
+            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
 
             var result = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -43,7 +43,7 @@
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            var queryScope = testBase.SimpleQueryScope("gda_banking");
+            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
 
             var realResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -62,7 +62,7 @@
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            var queryScope = testBase.SimpleQueryScope("gda_banking");
+            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
 
             var textResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -84,7 +84,7 @@
         [Fact]
         public async void TestDistinctDatetimes()
         {
-            var queryScope = testBase.SimpleQueryScope("cov_clear");
+            var queryScope = testBase.SimpleQueryTestScope("cov_clear");
 
             var datetimeResult = await queryScope.QueryRows(
                 new DistinctColumnValues(tableName: "survey", columnName: "first_caught"));
@@ -101,7 +101,7 @@
         [Fact]
         public async void TestHistogramLoansAmount()
         {
-            var queryScope = testBase.SimpleQueryScope("gda_banking");
+            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
 
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
             var result = await queryScope.QueryRows(
@@ -123,7 +123,7 @@
         [Fact]
         public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
         {
-            var queryScope = testBase.SimpleQueryScope("gda_taxi");
+            var queryScope = testBase.SimpleQueryTestScope("gda_taxi");
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
@@ -136,7 +136,7 @@
         [Fact]
         public async void TestCyclicalDateQueryTaxiBirthdates()
         {
-            var queryScope = testBase.SimpleQueryScope("gda_taxi");
+            var queryScope = testBase.SimpleQueryTestScope("gda_taxi");
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
@@ -150,7 +150,7 @@
         [Fact]
         public async void TestBucketedDatetimeQueryTaxiPickupTimes()
         {
-            var queryScope = testBase.SimpleQueryScope("gda_taxi");
+            var queryScope = testBase.SimpleQueryTestScope("gda_taxi");
 
             var result = await queryScope.QueryRows(
                 query: new BucketedDatetimes(
@@ -163,7 +163,7 @@
         [Fact]
         public async void TestRepeatingRows()
         {
-            var queryScope = testBase.SimpleQueryScope(RepeatingRowsQuery.DataSet);
+            var queryScope = testBase.SimpleQueryTestScope(RepeatingRowsQuery.DataSet);
 
             var queryResult = await queryScope.QueryRows(new RepeatingRowsQuery());
 
@@ -179,7 +179,7 @@
         [Fact]
         public async void TestCancelQuery()
         {
-            var queryScope = testBase.SimpleQueryScope(LongRunningQuery.DataSet);
+            var queryScope = testBase.SimpleQueryTestScope(LongRunningQuery.DataSet);
 
             var queryTask = Task.Run(() => queryScope.QueryRows(new LongRunningQuery()));
 
