@@ -44,7 +44,7 @@
 
                 var contents = serializer.Deserialize<CachedRequestResponseArray>(reader);
                 cachedEntries = new LinkedList<CachedRequestResponse>(
-                    contents.HttpInteractions ?? Array.Empty<CachedRequestResponse>());
+                    contents?.HttpInteractions ?? Array.Empty<CachedRequestResponse>());
             }
             else
             {
