@@ -14,6 +14,13 @@ namespace Explorer.Common
             CountNoise = reader.ParseCountNoise();
         }
 
+        private ValueWithCount(DValue<T> dvalue, long count, double? countNoise)
+        {
+            DValue = dvalue;
+            Count = count;
+            CountNoise = countNoise;
+        }
+
         public T Value => DValue.Value;
 
         public long Count { get; }
@@ -27,5 +34,16 @@ namespace Explorer.Common
         public bool HasValue => DValue.HasValue;
 
         protected DValue<T> DValue { get; }
+
+#pragma warning disable CA1000 // do not declare static members on generic types
+        public static ValueWithCount<T> ValueCount(T value, long count, double? countNoise = null) =>
+            new ValueWithCount<T>(DValue<T>.Create(value), count, countNoise);
+
+        public static ValueWithCount<T> NullCount(long count, double? countNoise = null) =>
+            new ValueWithCount<T>(DValue<T>.Null, count, countNoise);
+
+        public static ValueWithCount<T> SuppressedCount(long count, double? countNoise = null) =>
+            new ValueWithCount<T>(DValue<T>.Suppressed, count, countNoise);
+#pragma warning restore CA1000 // do not declare static members on generic types
     }
 }
