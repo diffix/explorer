@@ -16,7 +16,7 @@ namespace Explorer.Tests
         {
             Scope = rootContainer.GetNestedContainer();
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Object lifetime is managed by container.)
-            Scope.Inject(new CancellationTokenSource());
+            Scope.InjectDisposable(new CancellationTokenSource());
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
         }
 
@@ -25,7 +25,7 @@ namespace Explorer.Tests
         public TestScope LoadCassette([CallerMemberName] string testName = "")
         {
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Object lifetime is managed by container.)
-            Scope.Inject(new VcrSharp.Cassette($"../../../.vcr/{GetType()}.{testName}.yaml"));
+            Scope.InjectDisposable(new VcrSharp.Cassette($"../../../.vcr/{GetType()}.{testName}.yaml"));
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
             return this;
