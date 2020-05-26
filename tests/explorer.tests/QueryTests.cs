@@ -6,10 +6,9 @@
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    using Xunit;
-
     using Diffix;
     using Explorer.Queries;
+    using Xunit;
 
     public class QueryTests : IClassFixture<ExplorerTestFixture>
     {
@@ -256,7 +255,7 @@
 
             public Result ParseRow(ref Utf8JsonReader reader)
             {
-                for (var i = 0; i < 10; i += 1)
+                for (var i = 0; i < 10; i++)
                 {
                     reader.Read();
                 }

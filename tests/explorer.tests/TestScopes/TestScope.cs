@@ -1,8 +1,8 @@
 namespace Explorer.Tests
 {
     using System;
-    using System.Threading;
     using System.Runtime.CompilerServices;
+    using System.Threading;
 
     using Aircloak.JsonApi;
     using Diffix;
@@ -10,20 +10,23 @@ namespace Explorer.Tests
 
     public class TestScope : IDisposable
     {
-        protected readonly CancellationTokenSource cts = new CancellationTokenSource();
         private bool disposedValue;
-
-        public INestedContainer Scope { get; }
 
         public TestScope(Container rootContainer)
         {
             Scope = rootContainer.GetNestedContainer();
-            Scope.Inject(cts);
+#pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Object lifetime is managed by container.)
+            Scope.Inject(new CancellationTokenSource());
+#pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
         }
+
+        public INestedContainer Scope { get; }
 
         public TestScope LoadCassette([CallerMemberName] string testName = "")
         {
+#pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Object lifetime is managed by container.)
             Scope.Inject(new VcrSharp.Cassette($"../../../.vcr/{GetType()}.{testName}.yaml"));
+#pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
             return this;
         }
@@ -48,8 +51,15 @@ namespace Explorer.Tests
                 Scope.GetInstance<JsonApiClient>(),
                 dataSourceName,
                 TimeSpan.FromSeconds(pollFrequencySecs),
-                cts.Token));
+                Scope.GetInstance<CancellationTokenSource>().Token));
             return new QueryableTestScope(this);
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -58,19 +68,11 @@ namespace Explorer.Tests
             {
                 if (disposing)
                 {
-                    cts.Dispose();
                     Scope.Dispose();
                 }
 
                 disposedValue = true;
             }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }

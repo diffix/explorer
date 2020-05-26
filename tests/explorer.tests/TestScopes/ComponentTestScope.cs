@@ -6,7 +6,8 @@ namespace Explorer.Tests
 
     public class ComponentTestScope : QueryableTestScope
     {
-        public ComponentTestScope(TestScope testScope) : base(testScope)
+        public ComponentTestScope(TestScope testScope)
+        : base(testScope)
         {
         }
 

@@ -2,20 +2,18 @@ namespace Explorer.Tests
 {
     using System;
     using System.Net.Http;
-    using System.Threading;
     using System.Runtime.CompilerServices;
+    using System.Threading;
 
     using Aircloak.JsonApi;
     using Diffix;
-    using Lamar;
     using Explorer.Components;
     using Explorer.Metrics;
+    using Lamar;
 
-    public class ExplorerTestFixture : IDisposable
+    public sealed class ExplorerTestFixture : IDisposable
     {
-        const string ApiKeyEnvironmentVariable = "AIRCLOAK_API_KEY";
-
-        public Container Container { get; }
+        private const string ApiKeyEnvironmentVariable = "AIRCLOAK_API_KEY";
 
         public ExplorerTestFixture()
         {
@@ -27,8 +25,7 @@ namespace Explorer.Tests
 
                 // Configure Authentication
                 registry.For<IAircloakAuthenticationProvider>().Use(_ =>
-                    StaticApiKeyAuthProvider.FromEnvironmentVariable(ApiKeyEnvironmentVariable)
-                );
+                    StaticApiKeyAuthProvider.FromEnvironmentVariable(ApiKeyEnvironmentVariable));
 
                 // Cancellation
                 registry.Injectable<CancellationTokenSource>();
@@ -40,13 +37,18 @@ namespace Explorer.Tests
             });
         }
 
+        public Container Container { get; }
+
         public TestScope PrepareTestScope() => new TestScope(Container);
 
-        public QueryableTestScope SimpleQueryTestScope(string dataSourceName, [CallerMemberName] string vcrFilename = "") =>
+        public QueryableTestScope SimpleQueryTestScope(
+            string dataSourceName,
+            [CallerMemberName] string vcrFilename = "") =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
                 .WithConnectionParams(dataSourceName);
 
+#pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Allow calling context to dispose the scope.)
         public ComponentTestScope SimpleComponentTestScope(
             string dataSourceName,
             string tableName,
@@ -57,6 +59,7 @@ namespace Explorer.Tests
                 .LoadCassette(vcrFilename)
                 .WithConnectionParams(dataSourceName)
                 .WithContext(tableName, columnName, columnType);
+#pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
         public void Dispose()
         {

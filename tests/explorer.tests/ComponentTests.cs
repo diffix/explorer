@@ -5,11 +5,10 @@ namespace Explorer.Tests
     using System.Linq;
     using System.Text.Json;
 
-    using Xunit;
-
     using Diffix;
-    using Explorer.Components;
     using Explorer.Common;
+    using Explorer.Components;
+    using Xunit;
 
     public class ComponentTests : IClassFixture<ExplorerTestFixture>
     {
@@ -23,11 +22,12 @@ namespace Explorer.Tests
         [Fact]
         public async void TestMinMaxRefinerComponent()
         {
-            await testFixture.SimpleComponentTestScope(
+            using var scope = testFixture.SimpleComponentTestScope(
                 "gda_banking",
                 "loans",
-                "amount"
-            ).Test<MinMaxRefiner, MinMaxRefiner.Result>(result =>
+                "amount");
+
+            await scope.Test<MinMaxRefiner, MinMaxRefiner.Result>(result =>
             {
                 const decimal expectedMin = 3303;
                 const decimal expectedMax = 495_103;
@@ -39,11 +39,12 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCategoricalBool()
         {
-            await testFixture.SimpleComponentTestScope(
+            using var scope = testFixture.SimpleComponentTestScope(
                 "cov_clear",
                 "survey",
-                "fever"
-            ).Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
+                "fever");
+
+            await scope.Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
                 var expectedValues = new List<ValueWithCount<bool>>
                 {
@@ -58,11 +59,12 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCategoricalText()
         {
-            await testFixture.SimpleComponentTestScope(
+            using var scope = testFixture.SimpleComponentTestScope(
                 "gda_banking",
                 "loans",
-                "status"
-            ).Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
+                "status");
+
+            await scope.Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
                 var expectedValues = new List<ValueWithCount<string>>
                 {
@@ -79,12 +81,13 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLinearDateTimeComponentWithDateTimeColumn()
         {
-            await testFixture.SimpleComponentTestScope(
+            using var scope = testFixture.SimpleComponentTestScope(
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
-                DValueType.Datetime
-            ).Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
+                DValueType.Datetime);
+
+            await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
                 result.Rows.Single(r => r.Key == "minute");
                 result.Rows.Single(r => r.Key == "hour");
@@ -97,12 +100,13 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLinearDateTimeComponentWithDateColumn()
         {
-            await testFixture.SimpleComponentTestScope(
+            using var scope = testFixture.SimpleComponentTestScope(
                 "gda_taxi",
                 "rides",
                 "birthdate",
-                DValueType.Date
-            ).Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
+                DValueType.Date);
+
+            await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
                 result.Rows.Single(r => r.Key == "year");
                 result.Rows.Single(r => r.Key == "month");

@@ -9,12 +9,14 @@ namespace Explorer.Tests
 
     public class QueryableTestScope : IDisposable
     {
-        public TestScope Inner { get; }
+        private bool disposedValue;
 
         public QueryableTestScope(TestScope testScope)
         {
             Inner = testScope;
         }
+
+        public TestScope Inner { get; }
 
         public async Task<IEnumerable<TRow>> QueryRows<TRow>(DQuery<TRow> query)
         {
@@ -48,7 +50,22 @@ namespace Explorer.Tests
 
         public void Dispose()
         {
-            Inner.Dispose();
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Inner.Dispose();
+                }
+
+                disposedValue = true;
+            }
         }
     }
 }
