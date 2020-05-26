@@ -1,6 +1,5 @@
 namespace Explorer.Components
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json;
@@ -67,7 +66,7 @@ namespace Explorer.Components
             var distinctValueQ = await conn.Exec(
                 new DistinctColumnValues(ctx.Table, ctx.Column));
 
-            return new Result(distinctValueQ.Rows);
+            return new Result(distinctValueQ.Rows.OrderByDescending(r => r.Count));
         }
 
         public class Result
