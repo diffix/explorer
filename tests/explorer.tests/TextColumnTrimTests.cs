@@ -9,17 +9,18 @@ namespace Explorer.Tests
     public sealed class TextColumnTrimTests : IClassFixture<ExplorerTestFixture>
     {
         private const string TestDataSource = "gda_banking";
-
-        private readonly QueryableTestScope queryScope;
+        private readonly ExplorerTestFixture testFixture;
 
         public TextColumnTrimTests(ExplorerTestFixture testFixture)
         {
-            queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
+            this.testFixture = testFixture;
         }
 
         [Fact]
         public async void TestEmailPositive()
         {
+            using var queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
+
             var result = await queryScope.QueryRows(
                 new TextColumnTrim("clients", "email", TextColumnTrimType.Both, TextColumnExplorer.EmailAddressChars));
 
@@ -35,6 +36,8 @@ namespace Explorer.Tests
         [Fact]
         public async void TestEmailNegative()
         {
+            using var queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
+
             var result = await queryScope.QueryRows(
                 new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, TextColumnExplorer.EmailAddressChars));
 

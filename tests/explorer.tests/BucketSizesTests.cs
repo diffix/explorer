@@ -1,4 +1,4 @@
-namespace Explorer.Api.Tests
+namespace Explorer.Tests
 {
     using System;
     using Explorer.Common;
