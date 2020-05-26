@@ -12,7 +12,7 @@ namespace Explorer.Explorers
 
     using SubstringWithCountList = Explorer.Common.ValueWithCountList<string>;
 
-    internal class TextColumnExplorer : ExplorerBase
+    internal class TextColumnExplorer
     {
         public const string EmailAddressChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
         private const double SuppressedRatioThreshold = 0.1;
@@ -20,45 +20,45 @@ namespace Explorer.Explorers
         private const int GeneratedValuesCount = 30;
         private const int EmailDomainsCountThreshold = 5 * GeneratedValuesCount;
 
-        public override async Task Explore(DConnection conn, ExplorerContext ctx)
-        {
-            var distinctValuesQ = await conn.Exec(
-                new DistinctColumnValues(ctx.Table, ctx.Column));
+        // public override async Task Explore(DConnection conn, ExplorerContext ctx)
+        // {
+        //     var distinctValuesQ = await conn.Exec(
+        //         new DistinctColumnValues(ctx.Table, ctx.Column));
 
-            var counts = ValueCounts.Compute(distinctValuesQ.Rows);
+        //     var counts = ValueCounts.Compute(distinctValuesQ.Rows);
 
-            PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
+        //     PublishMetric(new UntypedMetric(name: "distinct.suppressed_count", metric: counts.SuppressedCount));
 
-            // This shouldn't happen, but check anyway.
-            if (counts.TotalCount == 0)
-            {
-                throw new Exception(
-                    $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
-            }
+        //     // This shouldn't happen, but check anyway.
+        //     if (counts.TotalCount == 0)
+        //     {
+        //         throw new Exception(
+        //             $"Total value count for {ctx.Table}, {ctx.Column} is zero.");
+        //     }
 
-            PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: counts.TotalCount));
+        //     PublishMetric(new UntypedMetric(name: "distinct.total_count", metric: counts.TotalCount));
 
-            var distinctValueCounts =
-                from row in distinctValuesQ.Rows
-                where row.HasValue
-                orderby row.Count descending
-                select new
-                {
-                    row.Value,
-                    row.Count,
-                };
+        //     var distinctValueCounts =
+        //         from row in distinctValuesQ.Rows
+        //         where row.HasValue
+        //         orderby row.Count descending
+        //         select new
+        //         {
+        //             row.Value,
+        //             row.Count,
+        //         };
 
-            PublishMetric(new UntypedMetric(name: "distinct.top_values", metric: distinctValueCounts.Take(10)));
+        //     PublishMetric(new UntypedMetric(name: "distinct.top_values", metric: distinctValueCounts.Take(10)));
 
-            if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
-            {
-                // we generate synthetic values if the row is not categorical
-                var isEmail = await CheckIsEmail(conn, ctx);
-                PublishMetric(new UntypedMetric(name: "is_email", metric: isEmail));
-                var values = isEmail ? await GenerateEmails(conn, ctx) : await GenerateStrings(conn, ctx);
-                PublishMetric(new UntypedMetric(name: "synthetic_values", metric: values));
-            }
-        }
+        //     if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
+        //     {
+        //         // we generate synthetic values if the row is not categorical
+        //         var isEmail = await CheckIsEmail(conn, ctx);
+        //         PublishMetric(new UntypedMetric(name: "is_email", metric: isEmail));
+        //         var values = isEmail ? await GenerateEmails(conn, ctx) : await GenerateStrings(conn, ctx);
+        //         PublishMetric(new UntypedMetric(name: "synthetic_values", metric: values));
+        //     }
+        // }
 
         private static async Task<IEnumerable<string>> GenerateStrings(DConnection conn, ExplorerContext ctx)
         {
