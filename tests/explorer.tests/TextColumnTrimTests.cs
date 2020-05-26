@@ -6,15 +6,15 @@ namespace Explorer.Tests
     using Explorer.Queries;
     using Xunit;
 
-    public sealed class TextColumnTrimTests : IClassFixture<ContainerSetup>
+    public sealed class TextColumnTrimTests : IClassFixture<ExplorerTestFixture>
     {
         private const string TestDataSource = "gda_banking";
 
-        private readonly QueryTestScope queryScope;
+        private readonly QueryableTestScope queryScope;
 
-        public TextColumnTrimTests(ContainerSetup setup)
+        public TextColumnTrimTests(ExplorerTestFixture testFixture)
         {
-            queryScope = setup.SimpleQueryTestScope(TestDataSource);
+            queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
         }
 
         [Fact]

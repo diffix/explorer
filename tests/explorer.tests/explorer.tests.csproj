@@ -18,7 +18,6 @@
   <ItemGroup>
     <PackageReference Include="Lamar" Version="4.3.0" />
     <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="4.3.0" />
-    <PackageReference Include="YamlDotNet" Version="8.1.1" />
   </ItemGroup>
 
   <ItemGroup>

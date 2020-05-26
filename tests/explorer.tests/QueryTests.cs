@@ -11,19 +11,19 @@
     using Diffix;
     using Explorer.Queries;
 
-    public class QueryTests : IClassFixture<ContainerSetup>
+    public class QueryTests : IClassFixture<ExplorerTestFixture>
     {
-        private readonly ContainerSetup testBase;
+        private readonly ExplorerTestFixture testFixture;
 
-        public QueryTests(ContainerSetup testBase)
+        public QueryTests(ExplorerTestFixture testFixture)
         {
-            this.testBase = testBase;
+            this.testFixture = testFixture;
         }
 
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
 
             var result = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -43,7 +43,7 @@
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
 
             var realResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -62,7 +62,7 @@
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
 
             var textResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -84,7 +84,7 @@
         [Fact]
         public async void TestDistinctDatetimes()
         {
-            var queryScope = testBase.SimpleQueryTestScope("cov_clear");
+            using var queryScope = testFixture.SimpleQueryTestScope("cov_clear");
 
             var datetimeResult = await queryScope.QueryRows(
                 new DistinctColumnValues(tableName: "survey", columnName: "first_caught"));
@@ -101,7 +101,7 @@
         [Fact]
         public async void TestHistogramLoansAmount()
         {
-            var queryScope = testBase.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
 
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
             var result = await queryScope.QueryRows(
@@ -123,7 +123,7 @@
         [Fact]
         public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
         {
-            var queryScope = testBase.SimpleQueryTestScope("gda_taxi");
+            using var queryScope = testFixture.SimpleQueryTestScope("gda_taxi");
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
@@ -136,7 +136,7 @@
         [Fact]
         public async void TestCyclicalDateQueryTaxiBirthdates()
         {
-            var queryScope = testBase.SimpleQueryTestScope("gda_taxi");
+            using var queryScope = testFixture.SimpleQueryTestScope("gda_taxi");
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
@@ -150,7 +150,7 @@
         [Fact]
         public async void TestBucketedDatetimeQueryTaxiPickupTimes()
         {
-            var queryScope = testBase.SimpleQueryTestScope("gda_taxi");
+            using var queryScope = testFixture.SimpleQueryTestScope("gda_taxi");
 
             var result = await queryScope.QueryRows(
                 query: new BucketedDatetimes(
@@ -163,7 +163,7 @@
         [Fact]
         public async void TestRepeatingRows()
         {
-            var queryScope = testBase.SimpleQueryTestScope(RepeatingRowsQuery.DataSet);
+            using var queryScope = testFixture.SimpleQueryTestScope(RepeatingRowsQuery.DataSet);
 
             var queryResult = await queryScope.QueryRows(new RepeatingRowsQuery());
 
@@ -179,7 +179,11 @@
         [Fact]
         public async void TestCancelQuery()
         {
-            var queryScope = testBase.SimpleQueryTestScope(LongRunningQuery.DataSet);
+            using var queryScope = testFixture
+                .PrepareTestScope()
+                .LoadCassette()
+                .OverrideVcrOptions(recordingOptions: VcrSharp.RecordingOptions.FailureOnly)
+                .WithConnectionParams(LongRunningQuery.DataSet);
 
             var queryTask = Task.Run(() => queryScope.QueryRows(new LongRunningQuery()));
 

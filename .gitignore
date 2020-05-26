@@ -1,6 +1,6 @@
 bin/
 obj/
 ~*
-tests/explorer.api.tests/.vcr/
+tests/**/.vcr/
 
 src/clients/ExplorerWebClient/client_config.js

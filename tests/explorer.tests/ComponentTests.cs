@@ -11,19 +11,19 @@ namespace Explorer.Tests
     using Explorer.Components;
     using Explorer.Common;
 
-    public class ComponentTests : IClassFixture<ContainerSetup>
+    public class ComponentTests : IClassFixture<ExplorerTestFixture>
     {
-        private readonly ContainerSetup testBase;
+        private readonly ExplorerTestFixture testFixture;
 
-        public ComponentTests(ContainerSetup testBase)
+        public ComponentTests(ExplorerTestFixture testFixture)
         {
-            this.testBase = testBase;
+            this.testFixture = testFixture;
         }
 
         [Fact]
         public async void TestMinMaxRefinerComponent()
         {
-            await testBase.SimpleComponentTestScope(
+            await testFixture.SimpleComponentTestScope(
                 "gda_banking",
                 "loans",
                 "amount"
@@ -39,7 +39,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCategoricalBool()
         {
-            await testBase.SimpleComponentTestScope(
+            await testFixture.SimpleComponentTestScope(
                 "cov_clear",
                 "survey",
                 "fever"
@@ -58,7 +58,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCategoricalText()
         {
-            await testBase.SimpleComponentTestScope(
+            await testFixture.SimpleComponentTestScope(
                 "gda_banking",
                 "loans",
                 "status"
@@ -79,7 +79,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLinearDateTimeComponentWithDateTimeColumn()
         {
-            await testBase.SimpleComponentTestScope(
+            await testFixture.SimpleComponentTestScope(
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
@@ -97,7 +97,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLinearDateTimeComponentWithDateColumn()
         {
-            await testBase.SimpleComponentTestScope(
+            await testFixture.SimpleComponentTestScope(
                 "gda_taxi",
                 "rides",
                 "birthdate",

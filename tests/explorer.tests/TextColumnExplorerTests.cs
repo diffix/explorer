@@ -10,7 +10,7 @@ namespace Explorer.Tests
     using Explorer.Explorers;
     using Xunit;
 
-    public sealed class TextColumnExplorerTests : IClassFixture<ContainerSetup>
+    public sealed class TextColumnExplorerTests : IClassFixture<ExplorerTestFixture>
     {
         public TextColumnExplorerTests()
         {
