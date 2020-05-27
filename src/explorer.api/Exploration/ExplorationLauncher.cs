@@ -50,6 +50,9 @@ namespace Explorer.Api
         private static Exploration TextExploration(INestedContainer scope) =>
             Exploration.Compose(scope, _ =>
             {
+                _.AddPublisher<DistinctValuesComponent>();
+                _.AddPublisher<EmailCheckComponent>();
+                _.AddPublisher<TextGeneratorComponent>();
                 _.AddPublisher<TextLengthComponent>();
             });
 
