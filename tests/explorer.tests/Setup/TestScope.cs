@@ -25,7 +25,7 @@ namespace Explorer.Tests
         public TestScope LoadCassette([CallerMemberName] string testName = "")
         {
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Object lifetime is managed by container.)
-            Scope.InjectDisposable(new VcrSharp.Cassette($"../../../.vcr/{GetType()}.{testName}.yaml"));
+            Scope.InjectDisposable(new VcrSharp.Cassette($"../../../.vcr/{testName}.yaml"));
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
             return this;
