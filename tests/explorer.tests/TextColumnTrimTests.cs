@@ -22,7 +22,7 @@ namespace Explorer.Tests
             using var queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
 
             var result = await queryScope.QueryRows(
-                new TextColumnTrim("clients", "email", TextColumnTrimType.Both, TextColumnExplorer.EmailAddressChars));
+                new TextColumnTrim("clients", "email", TextColumnTrimType.Both, TextUtilities.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 
@@ -39,7 +39,7 @@ namespace Explorer.Tests
             using var queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
 
             var result = await queryScope.QueryRows(
-                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, TextColumnExplorer.EmailAddressChars));
+                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, TextUtilities.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 
