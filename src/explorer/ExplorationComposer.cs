@@ -19,19 +19,15 @@ namespace Explorer
             this.scope = scope;
         }
 
-        public void AddPublisher<T>()
+        public void AddPublisher<T>(Action<T>? configure = null)
             where T : PublisherComponent
         {
-            if (scope.GetInstance<T>() is PublisherComponent publisherComponent)
-            {
-                var metricsPublisher = scope.GetInstance<MetricsPublisher>();
+            var component = scope.GetInstance<T>();
+            configure?.Invoke(component);
 
-                tasks.Add(Task.Run(async () => await publisherComponent.PublishMetrics(metricsPublisher)));
-            }
-            else
-            {
-                throw new Exception($"Unable to resolve {typeof(T)}");
-            }
+            var metricsPublisher = scope.GetInstance<MetricsPublisher>();
+
+            tasks.Add(Task.Run(async () => await component.PublishMetrics(metricsPublisher)));
         }
 
         internal Exploration Finalize() => new Exploration(Task.WhenAll(tasks));
