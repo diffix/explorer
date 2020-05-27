@@ -38,6 +38,7 @@
 	"extensions": [
 		"ms-dotnettools.csharp",
 		"k--kato.docomment",
-		"jchannon.csharpextensions"
+		"jchannon.csharpextensions",
+		"jorgeserrano.vscode-csharp-snippets"
 	]
 }
