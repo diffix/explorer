@@ -22,7 +22,9 @@
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_banking",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -42,7 +44,9 @@
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_banking",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var realResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -61,7 +65,9 @@
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_banking",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var textResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
@@ -83,7 +89,9 @@
         [Fact]
         public async void TestDistinctDatetimes()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("cov_clear");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "cov_clear",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var datetimeResult = await queryScope.QueryRows(
                 new DistinctColumnValues(tableName: "survey", columnName: "first_caught"));
@@ -100,7 +108,9 @@
         [Fact]
         public async void TestHistogramLoansAmount()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("gda_banking");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_banking",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
             var result = await queryScope.QueryRows(
@@ -122,7 +132,9 @@
         [Fact]
         public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("gda_taxi");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_taxi",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
@@ -135,7 +147,9 @@
         [Fact]
         public async void TestCyclicalDateQueryTaxiBirthdates()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("gda_taxi");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_taxi",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
@@ -149,7 +163,9 @@
         [Fact]
         public async void TestBucketedDatetimeQueryTaxiPickupTimes()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope("gda_taxi");
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_taxi",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
                 query: new BucketedDatetimes(
@@ -162,7 +178,9 @@
         [Fact]
         public async void TestRepeatingRows()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(RepeatingRowsQuery.DataSet);
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                RepeatingRowsQuery.DataSet,
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var queryResult = await queryScope.QueryRows(new RepeatingRowsQuery());
 
@@ -180,7 +198,7 @@
         {
             using var queryScope = testFixture
                 .PrepareTestScope()
-                .LoadCassette()
+                .LoadCassette(ExplorerTestFixture.GenerateVcrFilename(this))
                 .OverrideVcrOptions(recordingOptions: VcrSharp.RecordingOptions.FailureOnly)
                 .WithConnectionParams(LongRunningQuery.DataSet);
 

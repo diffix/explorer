@@ -39,11 +39,14 @@ namespace Explorer.Tests
 
         public Container Container { get; }
 
+        public static string GenerateVcrFilename(object caller, string name) =>
+            $"{caller.GetType().Name}.{name}";
+
         public TestScope PrepareTestScope() => new TestScope(Container);
 
         public QueryableTestScope SimpleQueryTestScope(
             string dataSourceName,
-            [CallerMemberName] string vcrFilename = "") =>
+            string vcrFilename) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
                 .WithConnectionParams(dataSourceName);
@@ -53,8 +56,8 @@ namespace Explorer.Tests
             string dataSourceName,
             string tableName,
             string columnName,
-            DValueType columnType = DValueType.Unknown,
-            [CallerMemberName] string vcrFilename = "") =>
+            string vcrFilename,
+            DValueType columnType = DValueType.Unknown) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
                 .WithConnectionParams(dataSourceName)

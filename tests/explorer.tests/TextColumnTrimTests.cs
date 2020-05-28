@@ -2,7 +2,6 @@ namespace Explorer.Tests
 {
     using System.Linq;
     using Explorer.Common;
-    using Explorer.Explorers;
     using Explorer.Queries;
     using Xunit;
 

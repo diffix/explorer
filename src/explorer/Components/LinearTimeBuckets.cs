@@ -27,11 +27,9 @@ namespace Explorer.Components
         {
             var result = await ResultAsync;
 
-            foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
+            await foreach (var m in TimeUtilities.YieldMetrics<Result, DateTime>(result))
             {
-                yield return new UntypedMetric(
-                    name: $"dates_linear.{row.Key}",
-                    metric: MetricBlob<DateTime>(valueCount.TotalCount, valueCount.SuppressedCount, row.Select(_ => _)));
+                yield return m;
             }
         }
 
@@ -47,13 +45,13 @@ namespace Explorer.Components
                 groupings.Select(g => g.Item2));
         }
 
-        private IEnumerable<(ValueCounts, IGrouping<string, GroupingSetsResult<DateTime>>)> ProcessLinearBuckets(
+        private static IEnumerable<(ValueCounts, IGrouping<string, GroupingSetsResult<DateTime>>)> ProcessLinearBuckets(
             IEnumerable<GroupingSetsResult<DateTime>> queryResult)
         {
-            foreach (var group in GroupByLabel(queryResult))
+            foreach (var group in TimeUtilities.GroupByLabel(queryResult))
             {
                 var counts = ValueCounts.Compute(group);
-                if (counts.SuppressedCountRatio > SuppressedRatioThreshold)
+                if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
                 {
                     break;
                 }
@@ -62,35 +60,7 @@ namespace Explorer.Components
             }
         }
 
-        private IEnumerable<IGrouping<string, GroupingSetsResult<T>>> GroupByLabel<T>(
-            IEnumerable<GroupingSetsResult<T>> queryResult)
-        {
-            return queryResult.GroupBy(row => row.GroupingLabel);
-        }
-
-        private static object MetricBlob<T>(
-            long total,
-            long suppressed,
-            IEnumerable<GroupingSetsResult<T>> valueCounts)
-        {
-            return new
-            {
-                Total = total,
-                Suppressed = suppressed,
-                Counts =
-                    from row in valueCounts
-                    where row.HasValue
-                    orderby row.Value ascending
-                    select new
-                    {
-                        row.Value,
-                        row.Count,
-                        row.CountNoise,
-                    },
-            };
-        }
-
-        public class Result : GenericResult<DateTime>
+        public class Result : TimeUtilities.GenericResult<DateTime>
         {
             public Result(
                 IEnumerable<ValueCounts> valueCounts,
@@ -98,21 +68,6 @@ namespace Explorer.Components
             : base(valueCounts, rows)
             {
             }
-        }
-
-        public class GenericResult<T>
-        {
-            public GenericResult(
-                IEnumerable<ValueCounts> valueCounts,
-                IEnumerable<IGrouping<string, GroupingSetsResult<T>>> rows)
-            {
-                ValueCounts = valueCounts;
-                Rows = rows;
-            }
-
-            public IEnumerable<ValueCounts> ValueCounts { get; }
-
-            public IEnumerable<IGrouping<string, GroupingSetsResult<T>>> Rows { get; }
         }
     }
 }

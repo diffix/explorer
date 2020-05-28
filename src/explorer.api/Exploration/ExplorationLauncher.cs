@@ -59,7 +59,9 @@ namespace Explorer.Api
         private static Exploration DatetimeExploration(INestedContainer scope) =>
             Exploration.Compose(scope, _ =>
             {
+                _.AddPublisher<DistinctValuesComponent>();
                 _.AddPublisher<LinearTimeBuckets>();
+                _.AddPublisher<CyclicalTimeBuckets>();
             });
 
         private async Task Explore(Models.ExploreParams data, CancellationToken ct)
@@ -81,10 +83,10 @@ namespace Explorer.Api
             scope.Inject(conn);
 
             // Choose components based on column type.
-            var explorationTasks = SelectComponents(scope, ctx.ColumnType);
+            var exploration = SelectComponents(scope, ctx.ColumnType);
 
             // Run and await completion of all components
-            await explorationTasks.Completion;
+            await exploration.Completion;
         }
     }
 }

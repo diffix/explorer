@@ -1,0 +1,66 @@
+namespace Explorer.Common
+{
+    using System.Collections.Generic;
+    using System.Linq;
+    using Explorer.Metrics;
+
+    public static class TimeUtilities
+    {
+        public static IEnumerable<IGrouping<string, GroupingSetsResult<T>>> GroupByLabel<T>(
+            IEnumerable<GroupingSetsResult<T>> queryResult)
+        {
+            return queryResult.GroupBy(row => row.GroupingLabel);
+        }
+
+        internal static async IAsyncEnumerable<ExploreMetric> YieldMetrics<TResult, T>(TResult result)
+        where TResult : GenericResult<T>
+        {
+            foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
+            {
+                yield return new UntypedMetric(
+                    name: $"dates_linear.{row.Key}",
+                    metric: MetricBlob(
+                        valueCount.TotalCount,
+                        valueCount.SuppressedCount,
+                        row.Select(_ => _)));
+            }
+        }
+
+        private static object MetricBlob<T>(
+            long total,
+            long suppressed,
+            IEnumerable<GroupingSetsResult<T>> valueCounts)
+        {
+            return new
+            {
+                Total = total,
+                Suppressed = suppressed,
+                Counts =
+                    from row in valueCounts
+                    where row.HasValue
+                    orderby row.GroupingIndex ascending
+                    select new
+                    {
+                        row.Value,
+                        row.Count,
+                        row.CountNoise,
+                    },
+            };
+        }
+
+        public class GenericResult<T>
+        {
+            public GenericResult(
+                IEnumerable<ValueCounts> valueCounts,
+                IEnumerable<IGrouping<string, GroupingSetsResult<T>>> rows)
+            {
+                ValueCounts = valueCounts;
+                Rows = rows;
+            }
+
+            public IEnumerable<ValueCounts> ValueCounts { get; }
+
+            public IEnumerable<IGrouping<string, GroupingSetsResult<T>>> Rows { get; }
+        }
+    }
+}

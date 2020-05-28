@@ -25,7 +25,8 @@ namespace Explorer.Tests
             using var scope = testFixture.SimpleComponentTestScope(
                 "gda_banking",
                 "loans",
-                "amount");
+                "amount",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.Test<MinMaxRefiner, MinMaxRefiner.Result>(result =>
             {
@@ -42,7 +43,8 @@ namespace Explorer.Tests
             using var scope = testFixture.SimpleComponentTestScope(
                 "cov_clear",
                 "survey",
-                "fever");
+                "fever",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
@@ -62,7 +64,8 @@ namespace Explorer.Tests
             using var scope = testFixture.SimpleComponentTestScope(
                 "gda_banking",
                 "loans",
-                "status");
+                "status",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
@@ -76,46 +79,6 @@ namespace Explorer.Tests
 
                 CheckDistinctCategories(result, expectedValues, el => el.GetString());
             });
-        }
-
-        [Fact]
-        public async void TestLinearDateTimeComponentWithDateTimeColumn()
-        {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_taxi",
-                "rides",
-                "pickup_datetime",
-                DValueType.Datetime);
-
-            await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
-            {
-                result.Rows.Single(r => r.Key == "minute");
-                result.Rows.Single(r => r.Key == "hour");
-            });
-
-            // Assert.Single(metrics, m => m.Name == "dates_cyclical.second");
-            // Assert.Single(metrics, m => m.Name == "dates_cyclical.minute");
-        }
-
-        [Fact]
-        public async void TestLinearDateTimeComponentWithDateColumn()
-        {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_taxi",
-                "rides",
-                "birthdate",
-                DValueType.Date);
-
-            await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
-            {
-                result.Rows.Single(r => r.Key == "year");
-                result.Rows.Single(r => r.Key == "month");
-            });
-
-            // Assert.Single(metrics, m => m.Name == "dates_cyclical.day");
-            // Assert.Single(metrics, m => m.Name == "dates_cyclical.weekday");
-            // Assert.Single(metrics, m => m.Name == "dates_cyclical.month");
-            // Assert.Single(metrics, m => m.Name == "dates_cyclical.quarter");
         }
 
         private void CheckDistinctCategories<T>(
