@@ -1,4 +1,4 @@
-namespace Explorer.Api.Tests
+﻿namespace Explorer.Api.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -9,7 +9,7 @@ namespace Explorer.Api.Tests
     using System.Threading.Tasks;
     using Xunit;
 
-    public sealed class ExploreTests : IClassFixture<TestWebAppFactory>
+    public sealed class ApiTests : IClassFixture<TestWebAppFactory>
     {
         private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
         {
@@ -21,7 +21,7 @@ namespace Explorer.Api.Tests
 
         private readonly TestWebAppFactory factory;
 
-        public ExploreTests(TestWebAppFactory factory)
+        public ApiTests(TestWebAppFactory factory)
         {
             this.factory = factory;
         }
@@ -186,9 +186,6 @@ namespace Explorer.Api.Tests
                     return rootEl.GetProperty("id").GetGuid();
                 });
 
-            // Allow some time for query to fail.
-            await Task.Delay(1000);
-
             TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
             {
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
@@ -203,7 +200,7 @@ namespace Explorer.Api.Tests
             ApiTestActionWithContent test,
             [CallerMemberName] string vcrSessionName = "")
         {
-            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ExploreTests), vcrSessionName);
+            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ApiTests), vcrSessionName);
             var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
         }
@@ -215,7 +212,7 @@ namespace Explorer.Api.Tests
             ApiTestActionWithContent<T> test,
             [CallerMemberName] string vcrSessionName = "")
         {
-            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ExploreTests), vcrSessionName);
+            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ApiTests), vcrSessionName);
             var responseString = await response.Content.ReadAsStringAsync();
             return test(response, responseString);
         }

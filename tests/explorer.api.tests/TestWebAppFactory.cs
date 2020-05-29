@@ -87,7 +87,7 @@
 
         protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
         {
-            var testConfig = GetTestConfig(GetType().ToString().Split(".")[^1], "WebHost.OutgoingRequests");
+            var testConfig = GetTestConfig(GetType().Name, "WebHost.OutgoingRequests");
 
             builder.ConfigureServices(services =>
             {
