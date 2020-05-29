@@ -1,8 +1,8 @@
-namespace Explorer.Tests
+#nullable enable
+namespace VcrSharp
 {
     using System;
     using System.Net.Http;
-    using VcrSharp;
 
     public class VcrApiHttpClientFactory : IHttpClientFactory
     {
@@ -65,3 +65,4 @@ namespace Explorer.Tests
         }
     }
 }
+#nullable disable

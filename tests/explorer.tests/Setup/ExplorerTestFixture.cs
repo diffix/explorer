@@ -10,6 +10,7 @@ namespace Explorer.Tests
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
+    using VcrSharp;
 
     public sealed class ExplorerTestFixture : IDisposable
     {
@@ -21,7 +22,7 @@ namespace Explorer.Tests
             {
                 // VCR setup
                 registry.For<IHttpClientFactory>().Use<VcrApiHttpClientFactory>().Scoped();
-                registry.Injectable<VcrSharp.Cassette>();
+                registry.Injectable<Cassette>();
 
                 // Configure Authentication
                 registry.For<IAircloakAuthenticationProvider>().Use(_ =>
@@ -39,8 +40,8 @@ namespace Explorer.Tests
 
         public Container Container { get; }
 
-        public static string GenerateVcrFilename(object caller, string name) =>
-            $"{caller.GetType().Name}.{name}";
+        public static string GenerateVcrFilename(object caller, [CallerMemberName] string name = "") =>
+            Cassette.GenerateVcrFilename(caller, name);
 
         public TestScope PrepareTestScope() => new TestScope(Container);
 

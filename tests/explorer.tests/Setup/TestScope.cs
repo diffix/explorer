@@ -1,12 +1,12 @@
 namespace Explorer.Tests
 {
     using System;
-    using System.Runtime.CompilerServices;
     using System.Threading;
 
     using Aircloak.JsonApi;
     using Diffix;
     using Lamar;
+    using VcrSharp;
 
     public class TestScope : IDisposable
     {
@@ -22,18 +22,18 @@ namespace Explorer.Tests
 
         public INestedContainer Scope { get; }
 
-        public TestScope LoadCassette([CallerMemberName] string testName = "")
+        public TestScope LoadCassette(string testFileName)
         {
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Object lifetime is managed by container.)
-            Scope.InjectDisposable(new VcrSharp.Cassette($"../../../.vcr/{testName}.yaml"));
+            Scope.InjectDisposable(new Cassette($"../../../.vcr/{testFileName}.yaml"));
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
             return this;
         }
 
         public TestScope OverrideVcrOptions(
-            VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Cache,
-            VcrSharp.RecordingOptions recordingOptions = VcrSharp.RecordingOptions.SuccessOnly)
+            VCRMode vcrMode = VCRMode.Cache,
+            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly)
         {
             var vcrFactory = Scope.GetInstance<VcrApiHttpClientFactory>();
             vcrFactory.VcrMode = vcrMode;

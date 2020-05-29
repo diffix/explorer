@@ -18,7 +18,9 @@ namespace Explorer.Tests
         [Fact]
         public async void TestEmailPositive()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                TestDataSource,
+                VcrSharp.Cassette.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
                 new TextColumnTrim("clients", "email", TextColumnTrimType.Both, TextUtilities.EmailAddressChars));
@@ -35,7 +37,9 @@ namespace Explorer.Tests
         [Fact]
         public async void TestEmailNegative()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(TestDataSource);
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                TestDataSource,
+                VcrSharp.Cassette.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
                 new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, TextUtilities.EmailAddressChars));

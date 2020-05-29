@@ -4,6 +4,7 @@ namespace Explorer.Tests
     using System.Collections.Generic;
     using System.Linq;
     using Explorer.Components;
+    using VcrSharp;
     using Xunit;
 
     public sealed class TextColumnExplorerTests : IClassFixture<ExplorerTestFixture>
@@ -18,7 +19,11 @@ namespace Explorer.Tests
         [Fact]
         public async void TestClientsEmail()
         {
-            using var scope = testFixture.SimpleComponentTestScope("gda_banking", "clients", "email");
+            using var scope = testFixture.SimpleComponentTestScope(
+                "gda_banking",
+                "clients",
+                "email",
+                Cassette.GenerateVcrFilename(this));
 
             await scope.Test<EmailCheckComponent, bool>(Assert.True);
 
@@ -34,7 +39,11 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCardsEmail()
         {
-            using var scope = testFixture.SimpleComponentTestScope("gda_banking", "cards", "email");
+            using var scope = testFixture.SimpleComponentTestScope(
+                "gda_banking",
+                "cards",
+                "email",
+                Cassette.GenerateVcrFilename(this));
 
             await scope.Test<EmailCheckComponent, bool>(Assert.True);
 
@@ -50,7 +59,11 @@ namespace Explorer.Tests
         [Fact]
         public async void TestFirstName()
         {
-            using var scope = testFixture.SimpleComponentTestScope("gda_banking", "cards", "firstname");
+            using var scope = testFixture.SimpleComponentTestScope(
+                "gda_banking",
+                "cards",
+                "firstname",
+                Cassette.GenerateVcrFilename(this));
 
             await scope.Test<EmailCheckComponent, bool>(Assert.False);
 
@@ -61,7 +74,11 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLastName()
         {
-            using var scope = testFixture.SimpleComponentTestScope("gda_banking", "cards", "lastname");
+            using var scope = testFixture.SimpleComponentTestScope(
+                "gda_banking",
+                "cards",
+                "lastname",
+                Cassette.GenerateVcrFilename(this));
 
             await scope.Test<EmailCheckComponent, bool>(Assert.False);
 

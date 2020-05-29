@@ -22,8 +22,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
-                DValueType.Datetime,
-                ExplorerTestFixture.GenerateVcrFilename(this));
+                ExplorerTestFixture.GenerateVcrFilename(this),
+                DValueType.Datetime);
 
             await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
@@ -39,8 +39,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "birthdate",
-                DValueType.Date,
-                ExplorerTestFixture.GenerateVcrFilename(this));
+                ExplorerTestFixture.GenerateVcrFilename(this),
+                DValueType.Date);
 
             await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
@@ -56,8 +56,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
-                DValueType.Datetime,
-                ExplorerTestFixture.GenerateVcrFilename(this));
+                ExplorerTestFixture.GenerateVcrFilename(this),
+                DValueType.Datetime);
 
             await scope.Test<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
@@ -74,8 +74,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "birthdate",
-                DValueType.Date,
-                ExplorerTestFixture.GenerateVcrFilename(this));
+                ExplorerTestFixture.GenerateVcrFilename(this),
+                DValueType.Date);
 
             await scope.Test<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
