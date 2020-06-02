@@ -21,9 +21,13 @@ namespace Explorer.Api
             this.rootContainer = rootContainer;
         }
 
-        public Task LaunchExploration(Models.ExploreParams data, CancellationToken ct) =>
-            Task.Run(async () => await Explore(data, ct));
-
+        /// <summary>
+        /// Configures and runs an Exploration.
+        /// </summary>
+        /// <param name="scope">This should be a fresh nested scope based off the main container.</param>
+        /// <param name="data">The params of the current explorer api request.</param>
+        /// <param name="ct">A cancellation token that will be passed to subtasks.</param>
+        /// <returns>A task that represents the configured Exploration.</returns>
         public static async Task Explore(INestedContainer scope, Models.ExploreParams data, CancellationToken ct)
         {
             // Register the authentication token for this scope.
@@ -32,59 +36,68 @@ namespace Explorer.Api
                 auth.RegisterApiKey(data.ApiKey);
             }
 
-            // Create the Context and Connection objects for this exploration and inject them into the scope.
+            // Create the Context and Connection objects for this exploration.
             var ctx = await scope.GetInstance<ContextBuilder>().Build(data);
             var conn = scope.GetInstance<AircloakConnectionBuilder>().Build(data.DataSourceName, ct);
 
-            scope.Inject(ctx);
-            scope.Inject(conn);
-
-            // Choose components based on column type.
-            var exploration = SelectComponents(scope, ctx.ColumnType);
+            // Configure a new Exploration
+            var exploration = Exploration.Configure(scope, _ =>
+            {
+                _.UseConnection(conn);
+                _.UseContext(ctx);
+                _.Compose(ConfigureComponents(ctx.ColumnType));
+            });
 
             // Run and await completion of all components
             await exploration.Completion;
         }
 
-        private static Exploration SelectComponents(INestedContainer scope, DValueType columnType) =>
+        /// <summary>
+        /// Runs the exploration as a background task.
+        /// </summary>
+        /// <param name="data">The params of the current explorer api request.</param>
+        /// <param name="ct">A cancellation token that will be passed to subtasks.</param>
+        /// <returns>The running Task.</returns>
+        public Task LaunchExploration(Models.ExploreParams data, CancellationToken ct) =>
+            Task.Run(async () => await Explore(data, ct));
+
+        private static Action<ExplorationConfig> ConfigureComponents(DValueType columnType) =>
             columnType switch
             {
-                DValueType.Integer => NumericExploration(scope),
-                DValueType.Real => NumericExploration(scope),
-                DValueType.Text => TextExploration(scope),
-                DValueType.Timestamp => DatetimeExploration(scope),
-                DValueType.Date => DatetimeExploration(scope),
-                DValueType.Datetime => DatetimeExploration(scope),
-                DValueType.Bool => Exploration.Compose(scope, _ => _.AddPublisher<DistinctValuesComponent>()),
-                DValueType.Unknown => throw new NotImplementedException(),
+                DValueType.Integer => NumericExploration,
+                DValueType.Real => NumericExploration,
+                DValueType.Text => TextExploration,
+                DValueType.Timestamp => DatetimeExploration,
+                DValueType.Date => DatetimeExploration,
+                DValueType.Datetime => DatetimeExploration,
+                DValueType.Bool => _ => _.AddPublisher<DistinctValuesComponent>(),
+                DValueType.Unknown => throw new ArgumentException(
+                    $"Cannot explore column type {columnType}.", nameof(columnType)),
             };
 
-        private static Exploration NumericExploration(INestedContainer scope) =>
-            Exploration.Compose(scope, _ =>
-            {
-                _.AddPublisher<NumericHistogramComponent>();
-                _.AddPublisher<QuartileEstimator>();
-                _.AddPublisher<AverageEstimator>();
-                _.AddPublisher<MinMaxRefiner>();
-                _.AddPublisher<DistinctValuesComponent>();
-            });
+        private static void NumericExploration(ExplorationConfig config)
+        {
+            config.AddPublisher<NumericHistogramComponent>();
+            config.AddPublisher<QuartileEstimator>();
+            config.AddPublisher<AverageEstimator>();
+            config.AddPublisher<MinMaxRefiner>();
+            config.AddPublisher<DistinctValuesComponent>();
+        }
 
-        private static Exploration TextExploration(INestedContainer scope) =>
-            Exploration.Compose(scope, _ =>
-            {
-                _.AddPublisher<DistinctValuesComponent>();
-                _.AddPublisher<EmailCheckComponent>();
-                _.AddPublisher<TextGeneratorComponent>();
-                _.AddPublisher<TextLengthComponent>();
-            });
+        private static void TextExploration(ExplorationConfig config)
+        {
+            config.AddPublisher<DistinctValuesComponent>();
+            config.AddPublisher<EmailCheckComponent>();
+            config.AddPublisher<TextGeneratorComponent>();
+            config.AddPublisher<TextLengthComponent>();
+        }
 
-        private static Exploration DatetimeExploration(INestedContainer scope) =>
-            Exploration.Compose(scope, _ =>
-            {
-                _.AddPublisher<DistinctValuesComponent>();
-                _.AddPublisher<LinearTimeBuckets>();
-                _.AddPublisher<CyclicalTimeBuckets>();
-            });
+        private static void DatetimeExploration(ExplorationConfig config)
+        {
+            config.AddPublisher<DistinctValuesComponent>();
+            config.AddPublisher<LinearTimeBuckets>();
+            config.AddPublisher<CyclicalTimeBuckets>();
+        }
 
         private async Task Explore(Models.ExploreParams data, CancellationToken ct)
         {

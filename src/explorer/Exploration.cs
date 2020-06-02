@@ -6,18 +6,18 @@ namespace Explorer
 
     public sealed class Exploration
     {
-        internal Exploration(Task task)
+        public Exploration(ExplorationConfig config)
         {
-            Completion = task;
+            Completion = Task.WhenAll(config.Tasks);
         }
 
         public Task Completion { get; }
 
-        public static Exploration Compose(INestedContainer scope, Action<ExplorationComposer> compose)
+        public static Exploration Configure(INestedContainer scope, Action<ExplorationConfig> configure)
         {
-            var tasks = new ExplorationComposer(scope);
-            compose(tasks);
-            return tasks.Finalize();
+            var config = new ExplorationConfig(scope);
+            configure(config);
+            return new Exploration(config);
         }
     }
 }
