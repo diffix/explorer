@@ -8,53 +8,67 @@ namespace Explorer.Api.Tests
 
     public class ExplorationTests : IClassFixture<ExplorationTestFixture>
     {
-        private readonly ExplorationTestScope testScope;
+        private readonly ExplorationTestFixture fixture;
 
         public ExplorationTests(ExplorationTestFixture fixture)
         {
-            testScope = fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this, nameof(TestIntegerColumn)));
+            this.fixture = fixture;
         }
 
         [Fact]
         public async Task TestIntegerColumn()
         {
-            await testScope.RunAndCheckMetrics(
-                "gda_banking",
-                "loans",
-                "duration",
-                metrics => Assert.True(metrics.Any()));
+            using var testScope = fixture.PrepareExplorationTestScope();
+
+            await testScope
+                .LoadCassette(Cassette.GenerateVcrFilename(this))
+                .RunAndCheckMetrics(
+                    "gda_banking",
+                    "loans",
+                    "duration",
+                    metrics => Assert.True(metrics.Any()));
         }
 
         [Fact]
         public async Task TestRealColumn()
         {
-            await testScope.RunAndCheckMetrics(
-                "gda_banking",
-                "loans",
-                "payments",
-                metrics => Assert.True(metrics.Any()));
+            using var testScope = fixture.PrepareExplorationTestScope();
+
+            await testScope
+                .LoadCassette(Cassette.GenerateVcrFilename(this))
+                .RunAndCheckMetrics(
+                    "gda_banking",
+                    "loans",
+                    "payments",
+                    metrics => Assert.True(metrics.Any()));
         }
 
         [Fact]
         public async Task TestBooleanColumn()
         {
-            await testScope.RunAndCheckMetrics(
-                "GiveMeSomeCreditOnline",
-                "loans",
-                "SeriousDlqin2yrs",
-                metrics => Assert.True(metrics.Any()));
+            using var testScope = fixture.PrepareExplorationTestScope();
+
+            await testScope
+                .LoadCassette(Cassette.GenerateVcrFilename(this))
+                .RunAndCheckMetrics(
+                    "GiveMeSomeCredit",
+                    "loans",
+                    "SeriousDlqin2yrs",
+                    metrics => Assert.True(metrics.Any()));
         }
 
         [Fact]
         public async Task TestTextColumn()
         {
-            await testScope.RunAndCheckMetrics(
-                "gda_banking",
-                "loans",
-                "firstname",
-                metrics => Assert.True(metrics.Any()));
+            using var testScope = fixture.PrepareExplorationTestScope();
+
+            await testScope
+                .LoadCassette(Cassette.GenerateVcrFilename(this))
+                .RunAndCheckMetrics(
+                    "gda_banking",
+                    "loans",
+                    "firstname",
+                    metrics => Assert.True(metrics.Any()));
         }
 
         // TODO: Find a table with a timestamp column
@@ -66,21 +80,29 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestDateColumn()
         {
-            await testScope.RunAndCheckMetrics(
-                "gda_banking",
-                "loans",
-                "birthdate",
-                metrics => Assert.True(metrics.Any()));
+            using var testScope = fixture.PrepareExplorationTestScope();
+
+            await testScope
+                .LoadCassette(Cassette.GenerateVcrFilename(this))
+                .RunAndCheckMetrics(
+                    "gda_banking",
+                    "loans",
+                    "birthdate",
+                    metrics => Assert.True(metrics.Any()));
         }
 
         [Fact]
         public async Task TestDatetimeColumn()
         {
-            await testScope.RunAndCheckMetrics(
-                "gda_taxi",
-                "rides",
-                "pickup_datetime",
-                metrics => Assert.True(metrics.Any()));
+            using var testScope = fixture.PrepareExplorationTestScope();
+
+            await testScope
+                .LoadCassette(Cassette.GenerateVcrFilename(this))
+                .RunAndCheckMetrics(
+                    "gda_taxi",
+                    "rides",
+                    "pickup_datetime",
+                    metrics => Assert.True(metrics.Any()));
         }
     }
 }

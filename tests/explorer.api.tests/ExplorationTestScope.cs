@@ -42,8 +42,7 @@ namespace Explorer.Api.Tests
                 ColumnName = column,
             };
 
-            var task = Scope.GetInstance<ExplorationLauncher>()
-                .LaunchExploration(exploreParams, CancellationToken.None);
+            var task = ExplorationLauncher.Explore(Scope, exploreParams, CancellationToken.None);
 
             await task;
             Assert.True(task.IsCompletedSuccessfully);
