@@ -27,7 +27,7 @@ namespace Explorer
 
             var metricsPublisher = scope.GetInstance<MetricsPublisher>();
 
-            tasks.Add(Task.Run(async () => await component.PublishMetrics(metricsPublisher)));
+            tasks.Add(component.PublishMetrics(metricsPublisher));
         }
 
         internal Exploration Finalize() => new Exploration(Task.WhenAll(tasks));
