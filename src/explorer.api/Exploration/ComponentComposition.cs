@@ -28,6 +28,8 @@ namespace Explorer.Api
             config.AddPublisher<AverageEstimator>();
             config.AddPublisher<MinMaxRefiner>();
             config.AddPublisher<DistinctValuesComponent>();
+            config.AddPublisher<NumericSampleGenerator>();
+            config.AddPublisher<DistributionAnalysisComponent>();
         }
 
         private static void TextExploration(ExplorationConfig config)
