@@ -1,4 +1,4 @@
-namespace Explorer.Tests
+﻿namespace Explorer.Tests
 {
     using System.Linq;
 
@@ -6,11 +6,11 @@ namespace Explorer.Tests
     using Explorer.Components;
     using Xunit;
 
-    public class NumericSampleGeneratorTest : IClassFixture<ExplorerTestFixture>
+    public class NumericDistributionTests : IClassFixture<ExplorerTestFixture>
     {
         private readonly ExplorerTestFixture testFixture;
 
-        public NumericSampleGeneratorTest(ExplorerTestFixture testFixture)
+        public NumericDistributionTests(ExplorerTestFixture testFixture)
         {
             this.testFixture = testFixture;
         }
@@ -40,6 +40,36 @@ namespace Explorer.Tests
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.Test<NumericSampleGenerator>(result =>
+            {
+                Assert.True(result.Any());
+            });
+        }
+
+        [Fact]
+        public async void TestDistributionAnalysis()
+        {
+            using var scope = testFixture.SimpleComponentTestScope(
+                "GiveMeSomeCredit",
+                "loans",
+                "age",
+                ExplorerTestFixture.GenerateVcrFilename(this));
+
+            await scope.Test<DistributionAnalysisComponent>(result =>
+            {
+                Assert.True(result.Any());
+            });
+        }
+
+        [Fact]
+        public async void TestDescriptiveStatsPublisher()
+        {
+            using var scope = testFixture.SimpleComponentTestScope(
+                "GiveMeSomeCredit",
+                "loans",
+                "age",
+                ExplorerTestFixture.GenerateVcrFilename(this));
+
+            await scope.Test<DescriptiveStatsPublisher>(result =>
             {
                 Assert.True(result.Any());
             });

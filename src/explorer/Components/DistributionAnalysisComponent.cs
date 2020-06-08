@@ -21,18 +21,51 @@ namespace Explorer.Components
         {
             var fits = await ResultAsync;
 
+            var goodFits = fits.Values
+                .Where(fit =>
+                    fit.AndersonDarlingRank == 0 ||
+                    fit.ChiSquareRank == 0 ||
+                    fit.KolmogorovSmirnovRank == 0);
+
             yield return new UntypedMetric(
                 name: "distribution_estimates",
-                metric: fits.Values
-                    .OrderBy(fit => fit.Index)
-                    .Take(3)
-                    .Select(fit =>
-                    new
+                metric: goodFits.Select(fit =>
+                {
+                    var ad = fit.Analysis.AndersonDarling[fit.Index];
+                    var cs = fit.Analysis.ChiSquare[fit.Index];
+                    var ks = fit.Analysis.KolmogorovSmirnov[fit.Index];
+
+                    return new
                     {
                         fit.Name,
                         Distribution = fit.Distribution.ToString(),
-                        Goodness = fit.KolmogorovSmirnov,
-                    }));
+                        Goodness = new object?[]
+                        {
+                            ad is null ? null : new
+                            {
+                                Method = "AndersonDarling",
+                                ad.PValue,
+                                ad.Significant,
+                                Rank = fit.AndersonDarlingRank,
+                            },
+                            cs is null ? null : new
+                            {
+                                Method = "ChiSquare",
+                                cs.PValue,
+                                cs.Significant,
+                                Rank = fit.ChiSquareRank,
+                            },
+                            ks is null ? null : new
+                            {
+                                Method = "KolmogorovSmirnov",
+                                ks.PValue,
+                                ks.Significant,
+                                Rank = fit.KolmogorovSmirnovRank,
+                            },
+                        }
+                        .Where(o => !(o is null)),
+                    };
+                }));
         }
 
         protected override async Task<GoodnessOfFitCollection> Explore()
@@ -42,7 +75,7 @@ namespace Explorer.Components
             return await Task.Run(() =>
             {
                 var analysis = new DistributionAnalysis();
-                return analysis.Learn(distribution.Generate(1_000));
+                return analysis.Learn(distribution.Generate(10_000));
             });
         }
     }
