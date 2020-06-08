@@ -28,7 +28,7 @@ namespace Explorer.Components
             var quartile = 1;
             var processed = 0L;
 
-            foreach (var (bucketSize, bucket) in histogram.Buckets)
+            foreach (var (lowerBound, bucket) in histogram.Buckets)
             {
                 if (processed + bucket.Count < quartileCount * quartile)
                 {
@@ -39,25 +39,25 @@ namespace Explorer.Components
                 {
                     // one or more quartiles in this bucket
                     var remaining = bucket.Count;
-                    var lowerBound = (double)bucket.LowerBound;
-                    var range = (double)bucketSize;
+                    var start = (double)lowerBound;
+                    var range = (double)bucket.BucketSize.SnappedSize;
 
                     do
                     {
                         var toProcess = (quartileCount * quartile) - processed;
 
-                        if (toProcess > remaining)
+                        if (toProcess >= remaining)
                         {
                             processed += remaining;
                             break;
                         }
 
                         var subRange = (double)toProcess / remaining * range;
-                        var quartileEstimate = lowerBound + subRange;
+                        var quartileEstimate = start + subRange;
 
                         quartileEstimates.Add(quartileEstimate);
 
-                        lowerBound = quartileEstimate;
+                        start = quartileEstimate;
                         range -= subRange;
                         processed += toProcess;
                         remaining -= toProcess;
