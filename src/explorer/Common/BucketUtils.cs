@@ -1,6 +1,5 @@
 namespace Explorer.Common
 {
-    using System.Diagnostics;
 
     internal static class BucketUtils
     {
@@ -8,7 +7,8 @@ namespace Explorer.Common
             long numSamples,
             double minSample,
             double maxSample,
-            long valuesPerBucketTarget)
+            long valuesPerBucketTarget,
+            bool isIntegerColumn)
         {
             if (numSamples <= 0)
             {
@@ -25,31 +25,11 @@ namespace Explorer.Common
 
             var valueDensity = numSamples / (maxSample - minSample);
 
-            return EstimateBucketResolutions(valuesPerBucketTarget, valueDensity);
-        }
+            var targetBucketSize = valuesPerBucketTarget / valueDensity;
 
-        internal static decimal[] EstimateBucketResolutions(
-            long numSamples,
-            long minSample,
-            long maxSample,
-            long valuesPerBucketTarget)
-        {
-            Debug.Assert(numSamples > 0, "Argument numSamples should always be greater than zero.");
-
-            var range = maxSample - minSample;
-
-            Debug.Assert(range > 0, "Data range must be greater than zero.");
-
-            var valueDensity = (double)numSamples / (maxSample - minSample);
-
-            return EstimateBucketResolutions(valuesPerBucketTarget, valueDensity);
-        }
-
-        private static decimal[] EstimateBucketResolutions(
-            long valuesPerBucketTarget,
-            double valueDensityEstimate)
-        {
-            var bucketSizeEstimate = new BucketSize(valuesPerBucketTarget / valueDensityEstimate);
+            var bucketSizeEstimate = new BucketSize(isIntegerColumn
+                ? System.Math.Max(targetBucketSize, 5)
+                : targetBucketSize);
 
             return new decimal[]
             {
