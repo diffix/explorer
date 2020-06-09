@@ -1,5 +1,6 @@
 namespace Explorer.Api
 {
+    using System;
     using System.Threading;
 
     using Aircloak.JsonApi;
@@ -16,9 +17,18 @@ namespace Explorer.Api
             this.apiClient = apiClient;
         }
 
-        public DConnection Build(string dataSourceName, CancellationToken token)
+        public DConnection Build(Models.ExploreParams data, CancellationToken token)
         {
-            return new AircloakConnection(apiClient, dataSourceName, explorerConfig.PollFrequencyTimeSpan, token);
+            var url = data.ApiUrl.EndsWith("/")
+                ? new Uri(data.ApiUrl)
+                : new Uri($"{data.ApiUrl}/");
+
+            return new AircloakConnection(
+                apiClient,
+                url,
+                data.DataSourceName,
+                explorerConfig.PollFrequencyTimeSpan,
+                token);
         }
     }
 }
