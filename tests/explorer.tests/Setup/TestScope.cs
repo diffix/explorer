@@ -43,12 +43,14 @@ namespace Explorer.Tests
         }
 
         public QueryableTestScope WithConnectionParams(
+            Uri apiUrl,
             string dataSourceName,
             int pollFrequencySecs = 2)
         {
             Scope.Inject<DConnection>(
                 new AircloakConnection(
                 Scope.GetInstance<JsonApiClient>(),
+                apiUrl,
                 dataSourceName,
                 TimeSpan.FromSeconds(pollFrequencySecs),
                 Scope.GetInstance<CancellationTokenSource>().Token));

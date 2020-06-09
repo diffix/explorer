@@ -92,7 +92,7 @@
             builder.ConfigureServices(services =>
             {
                 services
-                    .AddAircloakJsonApiServices<ExplorerApiAuthProvider>(Config.AircloakApiUrl())
+                    .AddAircloakJsonApiServices<ExplorerApiAuthProvider>()
                     .AddHttpMessageHandler(_ => new VcrSharp.ReplayingHandler(
                             testConfig.VcrMode,
                             LoadCassette(testConfig.VcrCassettePath),

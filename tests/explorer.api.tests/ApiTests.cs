@@ -13,6 +13,7 @@
     {
         private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
         {
+            ApiUrl = "https://attack.aircloak.com/api/",
             ApiKey = TestWebAppFactory.GetAircloakApiKeyFromEnvironment(),
             DataSourceName = "gda_banking",
             TableName = "loans",
@@ -31,16 +32,16 @@
         private delegate T ApiTestActionWithContent<T>(HttpResponseMessage response, string content);
 
         [Fact]
-        public void Success()
+        public async Task Success()
         {
-            TestApi(HttpMethod.Post, "/explore", ValidData, (response, _) =>
+            await TestApi(HttpMethod.Post, "/explore", ValidData, (response, _) =>
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}."));
         }
 
         [Fact]
-        public void SuccessWithContents()
+        public async Task SuccessWithContents()
         {
-            TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
+            await TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
             {
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
 
@@ -59,7 +60,7 @@
         }
 
         [Fact]
-        public async void SuccessWithResult()
+        public async Task SuccessWithResult()
         {
             var explorerGuid = await TestApi(HttpMethod.Post, "/explore", ValidData, (response, content) =>
             {
@@ -82,7 +83,7 @@
                 return explorerGuid;
             });
 
-            TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
+            await TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
             {
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
 
@@ -116,9 +117,9 @@
         [InlineData("")]
         [InlineData("/")]
         [InlineData("/invalid endpoint test")]
-        public void FailWithBadEndPoint(string endpoint)
+        public async Task FailWithBadEndPoint(string endpoint)
         {
-            TestApi(HttpMethod.Post, endpoint, ValidData, test: (response, content) =>
+            await TestApi(HttpMethod.Post, endpoint, ValidData, test: (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
@@ -127,14 +128,14 @@
         [InlineData("GET")]
         [InlineData("HEAD")]
         [InlineData("PUT")]
-        public void FailWithBadMethod(string method)
+        public async Task FailWithBadMethod(string method)
         {
-            TestApi(new HttpMethod(method), "/explore", ValidData, test: (response, content) =>
+            await TestApi(new HttpMethod(method), "/explore", ValidData, test: (response, content) =>
                 Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
 
         [Fact]
-        public void FailWithEmptyFields()
+        public async Task FailWithEmptyFields()
         {
             var data = new
             {
@@ -143,7 +144,8 @@
                 TableName = string.Empty,
                 ColumnName = string.Empty,
             };
-            TestApi(HttpMethod.Post, "/explore", data, test: (response, content) =>
+
+            await TestApi(HttpMethod.Post, "/explore", data, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -154,9 +156,9 @@
         }
 
         [Fact]
-        public void FailWithMissingFields()
+        public async Task FailWithMissingFields()
         {
-            TestApi(HttpMethod.Post, "/explore", new { }, test: (response, content) =>
+            await TestApi(HttpMethod.Post, "/explore", new { }, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
@@ -169,36 +171,28 @@
         [Fact]
         public async Task FailWithInvalidApiKey()
         {
-            var explorerGuid = await TestApi(
+            var invalidData = new Models.ExploreParams
+            {
+                ApiKey = "INVALID_KEY",
+                ApiUrl = ValidData.ApiUrl,
+                DataSourceName = ValidData.DataSourceName,
+                TableName = ValidData.TableName,
+                ColumnName = ValidData.ColumnName,
+            };
+
+            await TestApi(
                 HttpMethod.Post,
                 "/explore",
-                data: new Models.ExploreParams
+                data: invalidData,
+                test: (response, content) =>
                 {
-                    ApiKey = "INVALID_KEY",
-                    DataSourceName = ValidData.DataSourceName,
-                    TableName = ValidData.TableName,
-                    ColumnName = ValidData.ColumnName,
-                },
-                test: (_, content) =>
-                {
-                    var rootEl = JsonDocument.Parse(content).RootElement;
 
-                    return rootEl.GetProperty("id").GetGuid();
+                    Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+                    Assert.Contains("Unauthorized", content, StringComparison.InvariantCultureIgnoreCase);
                 });
-
-            // wait a couple of seconds to be sure we get a response from the aircloak api
-            await Task.Delay(2000);
-            TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
-            {
-                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-                Assert.Contains(
-                    "Unauthorized -- Your API token is wrong.",
-                    content,
-                    StringComparison.InvariantCultureIgnoreCase);
-            });
         }
 
-        private async void TestApi(
+        private async Task TestApi(
             HttpMethod method,
             string endpoint,
             object? data,
