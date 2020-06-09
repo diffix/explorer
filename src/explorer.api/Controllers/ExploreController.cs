@@ -51,7 +51,11 @@ namespace Explorer.Api.Controllers
             var ctx = await contextBuilder.Build(data);
             var conn = connectionBuilder.Build(data, cts.Token);
 
-            var exploreTask = Task.Run(async () => await launcher.LaunchExploration(ctx, conn));
+            // Get the configuration based on column type.
+            var config = ComponentComposition.ColumnConfiguration(ctx.ColumnType);
+            var exploreTask = Task.Run(async () => await launcher.LaunchExploration(ctx, conn, config));
+
+            // Register the exploration for future reference.
             var id = explorationRegistry.Register(exploreTask, cts);
 
             return Ok(new ExploreResult(id, ExplorationStatus.New));
