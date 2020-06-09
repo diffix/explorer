@@ -12,19 +12,16 @@ namespace Aircloak.JsonApi
         /// that can be resolved through DI.
         /// </summary>
         /// <param name="services">The IServiceCollection.</param>
-        /// <param name="apiBaseAddress">The base Url for the aircloak api.</param>
         /// <typeparam name="TAuthHandler">
         /// A type that implements <see cref="IAircloakAuthenticationProvider"/>.
         /// </typeparam>
         /// <returns>The <see cref="IHttpClientBuilder"/> with the attached services.</returns>
         public static IHttpClientBuilder AddAircloakJsonApiServices<TAuthHandler>(
-            this IServiceCollection services,
-            System.Uri apiBaseAddress)
+            this IServiceCollection services)
         where TAuthHandler : class, IAircloakAuthenticationProvider
         {
             var builder = services
-                .AddHttpClient(JsonApiClient.HttpClientName)
-                .ConfigureHttpClient(client => client.BaseAddress = apiBaseAddress);
+                .AddHttpClient(JsonApiClient.HttpClientName);
 
             services
                 .AddScoped<IAircloakAuthenticationProvider, TAuthHandler>()
@@ -38,17 +35,14 @@ namespace Aircloak.JsonApi
         /// provider instance.
         /// </summary>
         /// <param name="services">The IServiceCollection.</param>
-        /// <param name="apiBaseAddress">The base Url for the aircloak api.</param>
         /// <param name="authProvider">The authentication provider instance.</param>
         /// <returns>The <see cref="IHttpClientBuilder"/> with the attached services.</returns>
         public static IHttpClientBuilder AddAircloakJsonApiServices(
             this IServiceCollection services,
-            System.Uri apiBaseAddress,
             IAircloakAuthenticationProvider authProvider)
         {
             var builder = services
-                .AddHttpClient(JsonApiClient.HttpClientName)
-                .ConfigureHttpClient(client => client.BaseAddress = apiBaseAddress);
+                .AddHttpClient(JsonApiClient.HttpClientName);
 
             services
                 .AddScoped(_ => authProvider)
