@@ -148,6 +148,7 @@
             await TestApi(HttpMethod.Post, "/explore", data, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
+                Assert.Contains("The ApiUrl field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The DataSourceName field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The TableName field is required.", content, StringComparison.InvariantCulture);
@@ -161,6 +162,7 @@
             await TestApi(HttpMethod.Post, "/explore", new { }, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
+                Assert.Contains("The ApiUrl field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The DataSourceName field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The TableName field is required.", content, StringComparison.InvariantCulture);

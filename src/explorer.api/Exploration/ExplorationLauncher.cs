@@ -42,12 +42,16 @@ namespace Explorer.Api
         /// <summary>
         /// Runs the exploration as a background task.
         /// </summary>
-        /// <param name="data">The params of the current explorer api request.</param>
-        /// <param name="ct">A cancellation token that will be passed to subtasks.</param>
+        /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
+        /// <param name="conn">A DConnection configured for the Api backend.</param>
         /// <returns>The running Task.</returns>
-        public Task LaunchExploration(ExplorerContext ctx, DConnection conn) =>
-            RunScoped(async scope => await Explore(scope, ctx, conn));
-        // Task.Run(async () => await Explore(data, ct));
+        public async Task LaunchExploration(ExplorerContext ctx, DConnection conn)
+        {
+            // This scope (and all the components resolved within) should live until the end of the Task.
+            using var scope = rootContainer.GetNestedContainer();
+
+            await Explore(scope, ctx, conn);
+        }
 
         private static Action<ExplorationConfig> ConfigureComponents(DValueType columnType) =>
             columnType switch
@@ -85,14 +89,6 @@ namespace Explorer.Api
             config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<LinearTimeBuckets>();
             config.AddPublisher<CyclicalTimeBuckets>();
-        }
-
-        private async Task RunScoped(Func<INestedContainer, Task> run)
-        {
-            // This scope (and all the components resolved within) should live until the end of the Task.
-            using var scope = rootContainer.GetNestedContainer();
-
-            await run(scope);
         }
     }
 }
