@@ -56,18 +56,23 @@ namespace Aircloak.JsonApi
         /// <summary>
         /// Sends a Http GET request to the Aircloak server's /api/data_sources endpoint.
         /// </summary>
+        /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <returns>A <c>List&lt;DataSource&gt;</c> containing the data sources provided by this
         /// Aircloak instance.</returns>
-        public async Task<DataSourceCollection> GetDataSources(CancellationToken cancellationToken)
+        public async Task<DataSourceCollection> GetDataSources(
+            Uri apiUrl,
+            CancellationToken cancellationToken)
         {
-            using var httpResponse = await ApiGetRequest("data_sources", cancellationToken);
+            var endPoint = new Uri(apiUrl, "data_sources");
+            using var httpResponse = await ApiGetRequest(endPoint, cancellationToken);
             return await ParseJson<DataSourceCollection>(httpResponse, DefaultJsonOptions, cancellationToken);
         }
 
         /// <summary>
         /// Posts a query to the Aircloak server, retrieves the query ID, and then polls for the result.
         /// </summary>
+        /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
@@ -75,23 +80,26 @@ namespace Aircloak.JsonApi
         /// <returns>A <see cref="QueryResult{TRow}"/> instance containing the success status and query Id.</returns>
         /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
         public async Task<QueryResult<TRow>> Query<TRow>(
+            Uri apiUrl,
             string dataSource,
             DQuery<TRow> query,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
-            var queryResponse = await SubmitQuery(dataSource, query.QueryStatement, cancellationToken);
-            return await PollQueryUntilComplete(queryResponse.QueryId, query, pollFrequency, cancellationToken);
+            var queryResponse = await SubmitQuery(apiUrl, dataSource, query.QueryStatement, cancellationToken);
+            return await PollQueryUntilComplete(apiUrl, queryResponse.QueryId, query, pollFrequency, cancellationToken);
         }
 
         /// <summary>
         /// Sends a Http POST request to the Aircloak server's /api/queries endpoint.
         /// </summary>
+        /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="queryStatement">The query statement as a string.</param>
         /// <param name="cancellationToken">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <returns>A QueryResonse instance containing the success status and query Id.</returns>
         public async Task<QueryResponse> SubmitQuery(
+            Uri apiUrl,
             string dataSource,
             string queryStatement,
             CancellationToken cancellationToken)
@@ -104,8 +112,10 @@ namespace Aircloak.JsonApi
                     data_source_name = dataSource,
                 },
             };
+
+            var endPoint = new Uri(apiUrl, "queries");
             var requestContent = JsonSerializer.Serialize(queryBody);
-            using var httpResponse = await ApiPostRequest("queries", requestContent, cancellationToken);
+            using var httpResponse = await ApiPostRequest(endPoint, requestContent, cancellationToken);
             var queryResponse = await ParseJson<QueryResponse>(httpResponse, DefaultJsonOptions, cancellationToken);
 
             if (!queryResponse.Success)
@@ -123,6 +133,7 @@ namespace Aircloak.JsonApi
         /// Canceling via the <c>CancellationToken</c> cancels the returned <c>Task</c> and
         /// automatically cancels the query execution by calling <c>/api/queries/{query_id}/cancel</c>.
         /// </remarks>
+        /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
@@ -131,6 +142,7 @@ namespace Aircloak.JsonApi
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each
         /// row seralised to type <c>TRow</c>.</returns>
         public async Task<QueryResult<TRow>> PollQueryUntilComplete<TRow>(
+            Uri apiUrl,
             string queryId,
             DQuery<TRow> query,
             TimeSpan pollFrequency,
@@ -156,7 +168,8 @@ namespace Aircloak.JsonApi
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    using var httpResponse = await ApiGetRequest($"queries/{queryId}", cancellationToken);
+                    var endPoint = new Uri(apiUrl, $"queries/{queryId}");
+                    using var httpResponse = await ApiGetRequest(endPoint, cancellationToken);
                     var queryResult = await ParseJson<QueryResult<TRow>>(httpResponse, jsonDeserializeOptions, cancellationToken);
 
                     if (queryResult.Query.Completed)
@@ -183,7 +196,7 @@ namespace Aircloak.JsonApi
             {
                 if (!queryCompleted)
                 {
-                    await CancelQuery(queryId);
+                    await CancelQuery(apiUrl, queryId);
                 }
                 throw;
             }
@@ -225,12 +238,16 @@ namespace Aircloak.JsonApi
         /// Sends a Http GET request to the /api/queries/{query_id}/cancel. Cancels a running query on the Aircloak
         /// server.
         /// </summary>
+        /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="queryId">The id of the query to cancel.</param>
         /// <returns>A <c>CancelResponse</c> instance indicating whether or not the query was indeed canceled.
         /// </returns>
-        private async Task<CancelResponse> CancelQuery(string queryId)
+        public async Task<CancelResponse> CancelQuery(
+            Uri apiUrl,
+            string queryId)
         {
-            using var httpResponse = await ApiPostRequest($"queries/{queryId}/cancel", null, CancellationToken.None);
+            var endPoint = new Uri(apiUrl, $"queries/{queryId}/cancel");
+            using var httpResponse = await ApiPostRequest(endPoint, null, CancellationToken.None);
             return await ParseJson<CancelResponse>(httpResponse, DefaultJsonOptions, CancellationToken.None);
         }
 
@@ -244,7 +261,7 @@ namespace Aircloak.JsonApi
         /// such as network connectivity, DNS failure, server certificate validation or timeout.
         /// </exception>
         private async Task<HttpResponseMessage> ApiGetRequest(
-            string apiEndpoint,
+            Uri apiEndpoint,
             CancellationToken cancellationToken)
         {
             return await ApiRequest(HttpMethod.Get, apiEndpoint, null, cancellationToken);
@@ -261,7 +278,7 @@ namespace Aircloak.JsonApi
         /// such as network connectivity, DNS failure, server certificate validation or timeout.
         /// </exception>
         private async Task<HttpResponseMessage> ApiPostRequest(
-            string apiEndpoint,
+            Uri apiEndpoint,
             string? requestContent,
             CancellationToken cancellationToken)
         {
@@ -281,7 +298,7 @@ namespace Aircloak.JsonApi
         /// </exception>
         private async Task<HttpResponseMessage> ApiRequest(
             HttpMethod requestMethod,
-            string apiEndpoint,
+            Uri apiEndpoint,
             string? requestContent,
             CancellationToken cancellationToken)
         {
