@@ -56,7 +56,11 @@ namespace Explorer.Api.Tests
             var ctx = await Scope.GetInstance<ContextBuilder>().Build(data);
             var conn = Scope.GetInstance<AircloakConnectionBuilder>().Build(data, CancellationToken.None);
 
-            var task = ExplorationLauncher.Explore(Scope, ctx, conn);
+            var task = ExplorationLauncher.Explore(
+                Scope,
+                ctx,
+                conn,
+                ComponentComposition.ColumnConfiguration(ctx.ColumnType));
 
             await task;
             Assert.True(task.IsCompletedSuccessfully);

@@ -1,10 +1,9 @@
-namespace Explorer.Api
+namespace Explorer
 {
     using System;
     using System.Threading.Tasks;
 
     using Diffix;
-    using Explorer;
     using Explorer.Common;
     using Lamar;
 
@@ -18,7 +17,35 @@ namespace Explorer.Api
         }
 
         /// <summary>
-        /// Runs the exploration as a background task.
+        /// Configure and run the exploration within a given scope.
+        /// </summary>
+        /// <param name="scope">The scoped container to use for object resolution.</param>
+        /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
+        /// <param name="conn">A DConnection configured for the Api backend.</param>
+        /// <param name="componentConfiguration">
+        /// An action to add and configure the components to use in this exploration.
+        /// </param>
+        /// <returns>The running Task.</returns>
+        public static async Task Explore(
+            INestedContainer scope,
+            ExplorerContext ctx,
+            DConnection conn,
+            Action<ExplorationConfig> componentConfiguration)
+        {
+            // Configure a new Exploration
+            var exploration = Exploration.Configure(scope, _ =>
+            {
+                _.UseConnection(conn);
+                _.UseContext(ctx);
+                _.Compose(componentConfiguration);
+            });
+
+            // Run and await completion of all components
+            await exploration.Completion;
+        }
+
+        /// <summary>
+        /// Configure and run the exploration.
         /// </summary>
         /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
         /// <param name="conn">A DConnection configured for the Api backend.</param>
@@ -33,17 +60,7 @@ namespace Explorer.Api
         {
             // This scope (and all the components resolved within) should live until the end of the Task.
             using var scope = rootContainer.GetNestedContainer();
-
-            // Configure a new Exploration
-            var exploration = Exploration.Configure(scope, _ =>
-            {
-                _.UseConnection(conn);
-                _.UseContext(ctx);
-                _.Compose(componentConfiguration);
-            });
-
-            // Run and await completion of all components
-            await exploration.Completion;
+            await Explore(scope, ctx, conn, componentConfiguration);
         }
     }
 }
