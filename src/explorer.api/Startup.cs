@@ -34,7 +34,7 @@ namespace Explorer.Api
             var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
             services.AddSingleton(config);
 
-            services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>(config.AircloakApiUrl());
+            services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>();
 
             // Singleton services
             services
