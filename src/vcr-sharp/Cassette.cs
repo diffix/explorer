@@ -70,6 +70,14 @@
             {
                 return false;
             }
+
+            cached.Headers.TryGetValue("auth-token", out var cachedToken);
+            fresh.Headers.TryGetValue("auth-token", out var freshToken);
+            if (cachedToken != freshToken)
+            {
+                return false;
+            }
+
             return true;
         }
 

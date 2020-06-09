@@ -5,6 +5,8 @@ namespace Explorer.Api.Tests
     using System.Threading;
     using System.Threading.Tasks;
 
+    using Aircloak.JsonApi;
+    using Explorer.Api.Authentication;
     using Explorer.Metrics;
     using Lamar;
     using VcrSharp;
@@ -12,6 +14,7 @@ namespace Explorer.Api.Tests
 
     public class ExplorationTestScope : IDisposable
     {
+        private const string TestApiUrl = "https://attack.aircloak.com/api/";
         private bool disposedValue;
 
         public ExplorationTestScope(Container rootContainer)
@@ -35,14 +38,25 @@ namespace Explorer.Api.Tests
             string table,
             string column)
         {
-            var exploreParams = new Models.ExploreParams
+            var data = new Models.ExploreParams
             {
+                ApiUrl = TestApiUrl,
                 DataSourceName = dataSourceName,
                 TableName = table,
                 ColumnName = column,
             };
 
-            var task = ExplorationLauncher.Explore(Scope, exploreParams, CancellationToken.None);
+            // Register the authentication token for this scope.
+            if (Scope.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
+            {
+                auth.RegisterApiKey(data.ApiKey);
+            }
+
+            // Create the Context and Connection objects for this exploration.
+            var ctx = await Scope.GetInstance<ContextBuilder>().Build(data);
+            var conn = Scope.GetInstance<AircloakConnectionBuilder>().Build(data, CancellationToken.None);
+
+            var task = ExplorationLauncher.Explore(Scope, ctx, conn);
 
             await task;
             Assert.True(task.IsCompletedSuccessfully);

@@ -200,7 +200,7 @@
                 .PrepareTestScope()
                 .LoadCassette(ExplorerTestFixture.GenerateVcrFilename(this))
                 .OverrideVcrOptions(recordingOptions: VcrSharp.RecordingOptions.FailureOnly)
-                .WithConnectionParams(LongRunningQuery.DataSet);
+                .WithConnectionParams(ExplorerTestFixture.ApiUrl, LongRunningQuery.DataSet);
 
             var queryTask = Task.Run(() => queryScope.QueryRows(new LongRunningQuery()));
 
