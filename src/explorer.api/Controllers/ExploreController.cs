@@ -33,12 +33,25 @@ namespace Explorer.Api.Controllers
         [Route("explore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Explore(
+        public async Task<IActionResult> Explore(
             ExploreParams data,
-            [FromServices] ExplorationLauncher launcher)
+            [FromServices] ExplorationLauncher launcher,
+            [FromServices] IAircloakAuthenticationProvider authProvider,
+            [FromServices] ContextBuilder contextBuilder,
+            [FromServices] AircloakConnectionBuilder connectionBuilder)
         {
+            // Register the authentication token for this scope.
+            if (authProvider is ExplorerApiAuthProvider auth)
+            {
+                auth.RegisterApiKey(data.ApiKey);
+            }
+
+            // Create the Context and Connection objects for this exploration.
             var cts = new CancellationTokenSource();
-            var exploreTask = launcher.LaunchExploration(data, cts.Token);
+            var ctx = await contextBuilder.Build(data);
+            var conn = connectionBuilder.Build(data, cts.Token);
+
+            var exploreTask = Task.Run(async () => await launcher.LaunchExploration(ctx, conn));
             var id = explorationRegistry.Register(exploreTask, cts);
 
             return Ok(new ExploreResult(id, ExplorationStatus.New));
