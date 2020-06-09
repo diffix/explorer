@@ -4,6 +4,18 @@ namespace Explorer.Api.Models
 
     public class ExploreParams
     {
+        private string apiUrl = string.Empty;
+
+        [Required]
+        public string ApiUrl
+        {
+            get => apiUrl;
+            set
+            {
+                apiUrl = value.EndsWith("/") ? value : $"{value}/";
+            }
+        }
+
         [Required]
         public string ApiKey { get; set; } = string.Empty;
 
