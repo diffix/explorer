@@ -1,14 +1,11 @@
 namespace Explorer.Api
 {
     using System;
-    using System.Collections.Generic;
-    using System.Threading;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
     using Diffix;
     using Explorer;
-    using Explorer.Api.Authentication;
+    using Explorer.Common;
     using Explorer.Components;
     using Lamar;
 
@@ -25,21 +22,11 @@ namespace Explorer.Api
         /// Configures and runs an Exploration.
         /// </summary>
         /// <param name="scope">This should be a fresh nested scope based off the main container.</param>
-        /// <param name="data">The params of the current explorer api request.</param>
-        /// <param name="ct">A cancellation token that will be passed to subtasks.</param>
+        /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
+        /// <param name="conn">A DConnection configured for the Api backend.</param>
         /// <returns>A task that represents the configured Exploration.</returns>
-        public static async Task Explore(INestedContainer scope, Models.ExploreParams data, CancellationToken ct)
+        public static async Task Explore(INestedContainer scope, ExplorerContext ctx, DConnection conn)
         {
-            // Register the authentication token for this scope.
-            if (scope.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
-            {
-                auth.RegisterApiKey(data.ApiKey);
-            }
-
-            // Create the Context and Connection objects for this exploration.
-            var ctx = await scope.GetInstance<ContextBuilder>().Build(data);
-            var conn = scope.GetInstance<AircloakConnectionBuilder>().Build(data.DataSourceName, ct);
-
             // Configure a new Exploration
             var exploration = Exploration.Configure(scope, _ =>
             {
@@ -58,8 +45,9 @@ namespace Explorer.Api
         /// <param name="data">The params of the current explorer api request.</param>
         /// <param name="ct">A cancellation token that will be passed to subtasks.</param>
         /// <returns>The running Task.</returns>
-        public Task LaunchExploration(Models.ExploreParams data, CancellationToken ct) =>
-            Task.Run(async () => await Explore(data, ct));
+        public Task LaunchExploration(ExplorerContext ctx, DConnection conn) =>
+            RunScoped(async scope => await Explore(scope, ctx, conn));
+        // Task.Run(async () => await Explore(data, ct));
 
         private static Action<ExplorationConfig> ConfigureComponents(DValueType columnType) =>
             columnType switch
@@ -99,12 +87,12 @@ namespace Explorer.Api
             config.AddPublisher<CyclicalTimeBuckets>();
         }
 
-        private async Task Explore(Models.ExploreParams data, CancellationToken ct)
+        private async Task RunScoped(Func<INestedContainer, Task> run)
         {
             // This scope (and all the components resolved within) should live until the end of the Task.
             using var scope = rootContainer.GetNestedContainer();
 
-            await Explore(scope, data, ct);
+            await run(scope);
         }
     }
 }

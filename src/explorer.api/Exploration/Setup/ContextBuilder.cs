@@ -7,7 +7,7 @@
     using Diffix;
     using Explorer.Common;
 
-    internal class ContextBuilder
+    public class ContextBuilder
     {
         private readonly JsonApiClient apiClient;
 
@@ -18,7 +18,7 @@
 
         public async Task<ExplorerContext> Build(Models.ExploreParams data)
         {
-            var dataSources = await apiClient.GetDataSources(CancellationToken.None);
+            var dataSources = await apiClient.GetDataSources(new System.Uri(data.ApiUrl), CancellationToken.None);
 
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
