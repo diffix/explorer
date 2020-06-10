@@ -38,7 +38,11 @@
             return new CheckedContext(data, exploreColumnMeta.Type);
         }
 
-        internal class CheckedContext : ExplorerContext
+        /// <summary>
+        /// An <see cref="ExplorerContext" /> that has been checked to make sure the datasource,
+        /// table and column exist on the database. 
+        /// </summary>
+        private class CheckedContext : ExplorerContext
         {
             internal CheckedContext(Models.ExploreParams data, DValueType columnType)
             {
