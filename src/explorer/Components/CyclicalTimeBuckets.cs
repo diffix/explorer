@@ -27,7 +27,7 @@ namespace Explorer.Components
         {
             var result = await ResultAsync;
 
-            await foreach (var m in TimeUtilities.YieldMetrics<Result, int>(result))
+            foreach (var m in TimeUtilities.YieldMetrics<Result, int>(result))
             {
                 yield return m;
             }

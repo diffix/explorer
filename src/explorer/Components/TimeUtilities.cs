@@ -1,7 +1,9 @@
-namespace Explorer.Common
+namespace Explorer.Components
 {
     using System.Collections.Generic;
     using System.Linq;
+
+    using Explorer.Common;
     using Explorer.Metrics;
 
     public static class TimeUtilities
@@ -12,7 +14,7 @@ namespace Explorer.Common
             return queryResult.GroupBy(row => row.GroupingLabel);
         }
 
-        internal static async IAsyncEnumerable<ExploreMetric> YieldMetrics<TResult, T>(TResult result)
+        internal static IEnumerable<ExploreMetric> YieldMetrics<TResult, T>(TResult result)
         where TResult : GenericResult<T>
         {
             foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
