@@ -39,7 +39,7 @@ namespace Explorer.Tests
             DValueType columnType = DValueType.Unknown)
         {
             Inner.Scope.Inject<ExplorerContext>(
-                new RawExplorerContext
+                new ExplorerTestContext
                 {
                     Table = tableName,
                     Column = columnName,
