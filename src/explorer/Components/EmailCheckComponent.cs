@@ -30,7 +30,7 @@ namespace Explorer.Components
         private static async Task<bool> CheckIsEmail(DConnection conn, ExplorerContext ctx)
         {
             var emailCheck = await conn.Exec(
-                new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, TextUtilities.EmailAddressChars));
+                new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, Constants.EmailAddressChars));
 
             return emailCheck.Rows.All(r => r.IsNull || (!r.IsSuppressed && r.Value == "@"));
         }

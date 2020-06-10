@@ -23,7 +23,7 @@ namespace Explorer.Tests
                 VcrSharp.Cassette.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
-                new TextColumnTrim("clients", "email", TextColumnTrimType.Both, TextUtilities.EmailAddressChars));
+                new TextColumnTrim("clients", "email", TextColumnTrimType.Both, Constants.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 
@@ -42,7 +42,7 @@ namespace Explorer.Tests
                 VcrSharp.Cassette.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
-                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, TextUtilities.EmailAddressChars));
+                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, Constants.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 
