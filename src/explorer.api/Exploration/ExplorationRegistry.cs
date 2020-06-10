@@ -1,6 +1,7 @@
 namespace Explorer.Api
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
@@ -8,7 +9,8 @@ namespace Explorer.Api
 
     public class ExplorationRegistry
     {
-        private readonly Dictionary<Guid, Registration> registrations = new Dictionary<Guid, Registration>();
+        private readonly ConcurrentDictionary<Guid, Registration> registrations =
+            new ConcurrentDictionary<Guid, Registration>();
 
         public Guid Register(Task task, CancellationTokenSource tokenSource)
         {
