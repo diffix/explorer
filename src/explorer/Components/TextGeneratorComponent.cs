@@ -80,23 +80,23 @@ namespace Explorer.Components
         private async Task<IEnumerable<string>> GenerateEmails()
         {
             var (substrings, domains, tlds) = await Utilities.WhenAll(
-                TextUtilities.ExploreSubstrings(
+                ExploreSubstrings(
                     conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
                 ExploreEmailDomains(conn, ctx),
                 ExploreEmailTopLevelDomains(conn, ctx));
 
-            return await Task.Run(() => TextUtilities.GenerateEmails(
+            return await Task.Run(() => GenerateEmails(
                     substrings, domains, tlds, GeneratedValuesCount, EmailDomainsCountThreshold));
         }
 
         private async Task<IEnumerable<string>> GenerateStrings()
         {
             // the substring lengths 3 and 4 were determined empirically to work for column containing names
-            var substrings = await TextUtilities.ExploreSubstrings(
+            var substrings = await ExploreSubstrings(
                 conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
             var rand = new Random(Environment.TickCount);
             return Enumerable.Range(0, GeneratedValuesCount).Select(_
-                => TextUtilities.GenerateString(substrings, minLength: 3, rand));
+                => GenerateString(substrings, minLength: 3, rand));
         }
 
         private static string GenerateString(SubstringsData substrings, int minLength, Random rand)
