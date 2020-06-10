@@ -6,6 +6,7 @@
     <Rule Id="CA1062" Action="None" /> <!-- Validate that parameter is not null in public methods (disabled since nullable reference types are enabled) -->
     <Rule Id="CA1303" Action="None" /> <!-- Use a resource string for exception message instead of literal  -->
     <Rule Id="CA1715" Action="None" /> <!-- Prefix interface name with 'I' -->
+    <Rule Id="CA1034" Action="None" /> <!-- Don't nest types -->
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA0001" Action="None" /> <!-- XML comment analysis is disabled due to project configuration -->
