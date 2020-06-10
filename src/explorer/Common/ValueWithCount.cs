@@ -38,12 +38,6 @@ namespace Explorer.Common
 #pragma warning disable CA1000 // do not declare static members on generic types
         public static ValueWithCount<T> ValueCount(T value, long count, double? countNoise = null) =>
             new ValueWithCount<T>(DValue<T>.Create(value), count, countNoise);
-
-        public static ValueWithCount<T> NullCount(long count, double? countNoise = null) =>
-            new ValueWithCount<T>(DValue<T>.Null, count, countNoise);
-
-        public static ValueWithCount<T> SuppressedCount(long count, double? countNoise = null) =>
-            new ValueWithCount<T>(DValue<T>.Suppressed, count, countNoise);
 #pragma warning restore CA1000 // do not declare static members on generic types
     }
 }
