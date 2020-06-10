@@ -4,6 +4,8 @@ namespace Explorer.Common
 
     public interface ExplorerContext
     {
+        public string DataSource { get; }
+
         public string Table { get; }
 
         public string Column { get; }

@@ -11,14 +11,11 @@ namespace Explorer.Tests
 
         public ExplorerTestContext(ExplorerContext ctx)
         {
-            ApiUrl = ctx.ApiUrl;
             DataSource = ctx.DataSource;
             Table = ctx.Table;
             Column = ctx.Column;
             ColumnType = ctx.ColumnType;
         }
-
-        public System.Uri ApiUrl { get; set; } = new System.Uri(string.Empty);
 
         public string DataSource { get; set; } = string.Empty;
 
