@@ -14,8 +14,8 @@ namespace Explorer.Tests
 
     public sealed class ExplorerTestFixture : IDisposable
     {
-        private const string ApiKeyEnvironmentVariable = "AIRCLOAK_API_KEY";
         public static readonly Uri ApiUrl = new Uri("https://attack.aircloak.com/api/");
+        private const string ApiKeyEnvironmentVariable = "AIRCLOAK_API_KEY";
 
         public ExplorerTestFixture()
         {
@@ -47,23 +47,23 @@ namespace Explorer.Tests
         public TestScope PrepareTestScope() => new TestScope(Container);
 
         public QueryableTestScope SimpleQueryTestScope(
-            string dataSourceName,
+            string dataSource,
             string vcrFilename) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
-                .WithConnectionParams(ApiUrl, dataSourceName);
+                .WithConnectionParams(ApiUrl, dataSource);
 
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Allow calling context to dispose the scope.)
         public ComponentTestScope SimpleComponentTestScope(
-            string dataSourceName,
-            string tableName,
-            string columnName,
+            string dataSource,
+            string table,
+            string column,
             string vcrFilename,
             DValueType columnType = DValueType.Unknown) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
-                .WithConnectionParams(ApiUrl, dataSourceName)
-                .WithContext(tableName, columnName, columnType);
+                .WithConnectionParams(ApiUrl, dataSource)
+                .WithContext(dataSource, table, column, columnType);
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
         public void Dispose()
