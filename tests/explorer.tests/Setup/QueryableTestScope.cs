@@ -34,6 +34,7 @@ namespace Explorer.Tests
         }
 
         public ComponentTestScope WithContext(
+            string dataSource,
             string tableName,
             string columnName,
             DValueType columnType = DValueType.Unknown)
@@ -41,6 +42,7 @@ namespace Explorer.Tests
             Inner.Scope.Inject<ExplorerContext>(
                 new ExplorerTestContext
                 {
+                    DataSource = dataSource,
                     Table = tableName,
                     Column = columnName,
                     ColumnType = columnType,

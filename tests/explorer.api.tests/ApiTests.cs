@@ -188,7 +188,6 @@
                 data: invalidData,
                 test: (response, content) =>
                 {
-
                     Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
                     Assert.Contains("Unauthorized", content, StringComparison.InvariantCultureIgnoreCase);
                 });
