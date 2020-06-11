@@ -10,6 +10,11 @@
     <ProjectReference Include="../aircloak/aircloak.csproj"/>
     <ProjectReference Include="../explorer/explorer.csproj"/>
   </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Lamar" Version="4.3.0" />
+    <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="4.3.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.0.0">

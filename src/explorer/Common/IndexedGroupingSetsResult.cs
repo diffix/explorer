@@ -1,11 +1,11 @@
-﻿namespace Explorer.Common
+namespace Explorer.Common
 {
     using System.Text.Json;
 
     using Diffix;
     using Explorer.JsonExtensions;
 
-    internal class IndexedGroupingSetsResult<TIndex, TGroupedValue> : CountableRow
+    public class IndexedGroupingSetsResult<TIndex, TGroupedValue> : CountableRow
     {
         internal IndexedGroupingSetsResult(ref Utf8JsonReader reader, TIndex[] groupingLabels)
         {

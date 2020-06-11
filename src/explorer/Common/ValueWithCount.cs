@@ -5,13 +5,20 @@ namespace Explorer.Common
     using Diffix;
     using Explorer.JsonExtensions;
 
-    internal class ValueWithCount<T> : CountableRow
+    public class ValueWithCount<T> : CountableRow
     {
-        public ValueWithCount(ref Utf8JsonReader reader)
+        internal ValueWithCount(ref Utf8JsonReader reader)
         {
             DValue = reader.ParseDValue<T>();
             Count = reader.ParseCount();
             CountNoise = reader.ParseCountNoise();
+        }
+
+        private ValueWithCount(DValue<T> dvalue, long count, double? countNoise)
+        {
+            DValue = dvalue;
+            Count = count;
+            CountNoise = countNoise;
         }
 
         public T Value => DValue.Value;
@@ -27,5 +34,10 @@ namespace Explorer.Common
         public bool HasValue => DValue.HasValue;
 
         protected DValue<T> DValue { get; }
+
+#pragma warning disable CA1000 // do not declare static members on generic types
+        public static ValueWithCount<T> ValueCount(T value, long count, double? countNoise = null) =>
+            new ValueWithCount<T>(DValue<T>.Create(value), count, countNoise);
+#pragma warning restore CA1000 // do not declare static members on generic types
     }
 }

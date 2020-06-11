@@ -2,14 +2,9 @@ namespace Explorer.Common
 {
     using Diffix;
 
-    internal class ExplorerContext
+    public interface ExplorerContext
     {
-        public ExplorerContext(string tableName, string columnName, DValueType columnType)
-        {
-            Table = tableName;
-            Column = columnName;
-            ColumnType = columnType;
-        }
+        public string DataSource { get; }
 
         public string Table { get; }
 

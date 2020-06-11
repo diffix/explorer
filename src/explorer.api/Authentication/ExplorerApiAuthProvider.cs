@@ -6,16 +6,12 @@
 
     public class ExplorerApiAuthProvider : IAircloakAuthenticationProvider
     {
-        private string apiKey;
-
-        public ExplorerApiAuthProvider()
-        {
-            apiKey = "NO_API_KEY_REGISTERED";
-        }
+        private string? apiKey;
 
         public Task<string> GetAuthToken()
         {
-            return Task.FromResult(apiKey);
+            return Task.FromResult(apiKey ??
+                throw new System.Exception($"No auth token registered in {nameof(ExplorerApiAuthProvider)}"));
         }
 
         public void RegisterApiKey(string apiKey)

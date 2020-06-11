@@ -3,7 +3,7 @@ namespace Explorer.Common
     using System.Collections.Generic;
     using System.Linq;
 
-    internal sealed class ValueCounts
+    public sealed class ValueCounts
     {
         private ValueCounts()
         {

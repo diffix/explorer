@@ -6,6 +6,7 @@
     using System.Collections.Concurrent;
     using System.IO;
     using System.Net.Http;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using YamlDotNet.Serialization;
@@ -44,13 +45,16 @@
 
                 var contents = serializer.Deserialize<CachedRequestResponseArray>(reader);
                 cachedEntries = new LinkedList<CachedRequestResponse>(
-                    contents.HttpInteractions ?? Array.Empty<CachedRequestResponse>());
+                    contents?.HttpInteractions ?? Array.Empty<CachedRequestResponse>());
             }
             else
             {
                 cachedEntries = new LinkedList<CachedRequestResponse>();
             }
         }
+
+        public static string GenerateVcrFilename(object caller, [CallerMemberName] string name = "") =>
+            $"{caller.GetType().Name}.{name}";
 
         static bool MatchesRequest(CachedRequest cached, CachedRequest fresh)
         {

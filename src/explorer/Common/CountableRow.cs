@@ -1,6 +1,6 @@
 namespace Explorer.Common
 {
-    internal interface CountableRow
+    public interface CountableRow
     {
         long Count { get; }
 

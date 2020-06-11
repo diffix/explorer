@@ -29,6 +29,8 @@ namespace Aircloak.JsonApi
     /// </summary>
     public class JsonApiClient
     {
+        public const string HttpClientName = "aircloak-api";
+
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
@@ -42,11 +44,12 @@ namespace Aircloak.JsonApi
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonApiClient" /> class.
         /// </summary>
-        /// <param name="httpClient">A HttpClient object injected into this instance.</param>
+        /// <param name="httpClientFactory">A HttpClient factory providing a named client <see ref="HttpClientName" />.
+        /// </param>
         /// <param name="authProvider">An authentication token source.</param>
-        public JsonApiClient(HttpClient httpClient, IAircloakAuthenticationProvider authProvider)
+        public JsonApiClient(IHttpClientFactory httpClientFactory, IAircloakAuthenticationProvider authProvider)
         {
-            this.httpClient = httpClient;
+            httpClient = httpClientFactory.CreateClient(HttpClientName);
             this.authProvider = authProvider;
         }
 
