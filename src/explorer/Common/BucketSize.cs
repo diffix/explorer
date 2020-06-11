@@ -1,7 +1,11 @@
 namespace Explorer.Common
 {
     using System.Linq;
+    using System.Text.Json.Serialization;
 
+    using Explorer.Common.JsonConversion;
+
+    [JsonConverter(typeof(BucketSizeConverter))]
     public class BucketSize
     {
 #pragma warning disable SA1137 // Elements should have the same indentation
