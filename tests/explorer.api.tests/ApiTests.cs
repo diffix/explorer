@@ -186,10 +186,15 @@
                     return rootEl.GetProperty("id").GetGuid();
                 });
 
+            // wait a couple of seconds to be sure we get a response from the aircloak api
+            await Task.Delay(2000);
             TestApi(HttpMethod.Get, $"/result/{explorerGuid}", null, (response, content) =>
             {
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-                Assert.Contains("Unauthorized", content, StringComparison.InvariantCultureIgnoreCase);
+                Assert.Contains(
+                    "Unauthorized -- Your API token is wrong.",
+                    content,
+                    StringComparison.InvariantCultureIgnoreCase);
             });
         }
 
