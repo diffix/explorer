@@ -1,4 +1,4 @@
-# Explorer
+# Diffix Explorer
 
 - [What it does](#what-it-does)
 - [Getting started](#getting-started)
@@ -28,7 +28,7 @@ variable in your environment.
 
 ### Docker Image from github registry
 
-The most up-to-date version of the api is published as a docker image in the github registry, tagged `latest`. 
+The most up-to-date version of the API is published as a docker image in the github registry, tagged `latest`. 
 
 In order to pull from the github registry you need to authenticate with a github access token:
 1. Go [here](https://github.com/settings/tokens) and create a new token with the `read:packages` permission.
@@ -42,7 +42,7 @@ See [here](https://help.github.com/en/packages/using-github-packages-with-your-p
 
 With the above out of the way, you can download and run the latest image with a single docker command. 
 
-For example, the following exposes the explorer api on port `5000`:
+For example, the following exposes the Explorer API on port `5000`:
 
 ```
 docker run -it --rm \
@@ -69,12 +69,12 @@ docker run -it --rm -p 5000:80 explorer
 
 ## Usage
 
-> You will need an access token for the Aircloak Api. If you don't have one, ask your local Aircloak admin. 
+> You will need an access token for the Aircloak API. If you don't have one, ask your local Aircloak admin. 
 
 ### Launching an exploration
 
-The explorer exposes an `/explore` endpoint that expects a `POST` request containing the url of the Aircloak Api, 
-and authentication token, and the dataset, table and column to analyse. Assuming you are running the explorer on `localhost:5000` and you are targeting `https://attack.aircloak.com/api/`: 
+Diffix Explorer exposes an `/explore` endpoint that expects a `POST` request containing the url of the Aircloak API, 
+and authentication token, and the dataset, table and column to analyse. Assuming you are running the Explorer on `localhost:5000` and you are targeting `https://attack.aircloak.com/api/`: 
 
 ```bash
 curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/explore \
