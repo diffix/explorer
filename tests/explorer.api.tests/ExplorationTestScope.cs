@@ -56,14 +56,14 @@ namespace Explorer.Api.Tests
             var ctx = await Scope.GetInstance<ContextBuilder>().Build(data);
             var conn = Scope.GetInstance<AircloakConnectionBuilder>().Build(data, CancellationToken.None);
 
-            var task = ExplorationLauncher.Explore(
+            var exploration = ExplorationLauncher.Explore(
                 Scope,
                 ctx,
                 conn,
                 ComponentComposition.ColumnConfiguration(ctx.ColumnType));
 
-            await task;
-            Assert.True(task.IsCompletedSuccessfully);
+            await exploration.Completion;
+            Assert.True(exploration.Completion.IsCompletedSuccessfully);
         }
 
         public void CheckMetrics(Action<IEnumerable<ExploreMetric>> testMetrics)

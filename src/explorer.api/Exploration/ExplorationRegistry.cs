@@ -12,10 +12,10 @@ namespace Explorer.Api
         private readonly ConcurrentDictionary<Guid, Registration> registrations =
             new ConcurrentDictionary<Guid, Registration>();
 
-        public Guid Register(Task task, CancellationTokenSource tokenSource)
+        public Guid Register(Exploration exploration, CancellationTokenSource tokenSource)
         {
             var id = Guid.NewGuid();
-            registrations[id] = new Registration(task, tokenSource);
+            registrations[id] = new Registration(exploration, tokenSource);
 
             return id;
         }
@@ -34,7 +34,7 @@ namespace Explorer.Api
 
                 // Wait for the task to finish before disposing the registration.
                 // This will also allow any Exceptions to surface.
-                await registration.Exploration;
+                await registration.Exploration.Completion;
             }
             finally
             {
@@ -44,7 +44,7 @@ namespace Explorer.Api
 
         public ExplorationStatus GetStatus(Guid id) => registrations[id].Status;
 
-        public Task GetExplorationTask(Guid id) => registrations[id].Exploration;
+        public Exploration GetExploration(Guid id) => registrations[id].Exploration;
 
         public void CancelExploration(Guid id)
         {
@@ -57,13 +57,13 @@ namespace Explorer.Api
 
             private bool disposedValue;
 
-            public Registration(Task exploration, CancellationTokenSource tokenSource)
+            public Registration(Exploration exploration, CancellationTokenSource tokenSource)
             {
                 Exploration = exploration;
                 this.tokenSource = tokenSource;
             }
 
-            public Task Exploration { get; }
+            public Exploration Exploration { get; }
 
             public ExplorationStatus Status
             {
@@ -73,7 +73,7 @@ namespace Explorer.Api
                     {
                         return ExplorationStatus.Canceled;
                     }
-                    return ConvertToExplorationStatus(Exploration.Status);
+                    return Exploration.Status;
                 }
             }
 
@@ -96,22 +96,6 @@ namespace Explorer.Api
                     }
                     disposedValue = true;
                 }
-            }
-
-            private static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
-            {
-                return status switch
-                {
-                    TaskStatus.Canceled => ExplorationStatus.Canceled,
-                    TaskStatus.Created => ExplorationStatus.New,
-                    TaskStatus.Faulted => ExplorationStatus.Error,
-                    TaskStatus.RanToCompletion => ExplorationStatus.Complete,
-                    TaskStatus.Running => ExplorationStatus.Processing,
-                    TaskStatus.WaitingForActivation => ExplorationStatus.Processing,
-                    TaskStatus.WaitingToRun => ExplorationStatus.Processing,
-                    TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
-                    _ => throw new Exception("Unexpected TaskStatus: '{exploration.Status}'."),
-                };
             }
         }
     }

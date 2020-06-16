@@ -17,7 +17,7 @@ namespace Explorer
         }
 
         /// <summary>
-        /// Configure and run the exploration within a given scope.
+        /// Configure an exploration within a given scope.
         /// </summary>
         /// <param name="scope">The scoped container to use for object resolution.</param>
         /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
@@ -26,26 +26,23 @@ namespace Explorer
         /// An action to add and configure the components to use in this exploration.
         /// </param>
         /// <returns>The running Task.</returns>
-        public static async Task Explore(
+        public static Exploration Explore(
             INestedContainer scope,
             ExplorerContext ctx,
             DConnection conn,
             Action<ExplorationConfig> componentConfiguration)
         {
             // Configure a new Exploration
-            var exploration = Exploration.Configure(scope, _ =>
+            return Exploration.Configure(scope, _ =>
             {
                 _.UseConnection(conn);
                 _.UseContext(ctx);
                 _.Compose(componentConfiguration);
             });
-
-            // Run and await completion of all components
-            await exploration.Completion;
         }
 
         /// <summary>
-        /// Configure and run the exploration.
+        /// Configure an exploration.
         /// </summary>
         /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
         /// <param name="conn">A DConnection configured for the Api backend.</param>
@@ -53,14 +50,14 @@ namespace Explorer
         /// An action to add and configure the components to use in this exploration.
         /// </param>
         /// <returns>The running Task.</returns>
-        public async Task LaunchExploration(
+        public Exploration LaunchExploration(
             ExplorerContext ctx,
             DConnection conn,
             Action<ExplorationConfig> componentConfiguration)
         {
             // This scope (and all the components resolved within) should live until the end of the Task.
             using var scope = rootContainer.GetNestedContainer();
-            await Explore(scope, ctx, conn, componentConfiguration);
+            return Explore(scope, ctx, conn, componentConfiguration);
         }
     }
 }
