@@ -28,7 +28,7 @@
 
                 // Singleton services
                 registry.AddLogging();
-                registry.For<MetricsPublisher>().Use<SimpleMetricsPublisher>().Singleton();
+                registry.For<MetricsPublisher>().Use<SimpleMetricsPublisher>().Scoped();
 
                 // Scoped services
                 registry

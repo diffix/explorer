@@ -38,12 +38,12 @@ namespace Explorer.Api
 
             // Singleton services
             services
-                .AddSingleton<MetricsPublisher, SimpleMetricsPublisher>()
                 .AddSingleton<ExplorationRegistry>()
                 .AddSingleton<ExplorationLauncher>();
 
             // Scoped services
             services
+                .AddScoped<MetricsPublisher, SimpleMetricsPublisher>()
                 .AddScoped<ContextBuilder>()
                 .AddScoped<AircloakConnectionBuilder>();
 

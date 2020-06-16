@@ -53,10 +53,10 @@ namespace Explorer.Api.Controllers
 
             // Get the configuration based on column type.
             var config = ComponentComposition.ColumnConfiguration(ctx.ColumnType);
-            var exploreTask = Task.Run(async () => await launcher.LaunchExploration(ctx, conn, config));
+            var exploration = launcher.LaunchExploration(ctx, conn, config);
 
             // Register the exploration for future reference.
-            var id = explorationRegistry.Register(exploreTask, cts);
+            var id = explorationRegistry.Register(exploration, cts);
 
             return Ok(new ExploreResult(id, ExplorationStatus.New));
         }
@@ -66,13 +66,14 @@ namespace Explorer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Result(
-            System.Guid explorationId,
-            [FromServices] MetricsPublisher metricsPublisher)
+            System.Guid explorationId)
         {
-            var explorationStatus = ExplorationStatus.Error;
+            Exploration exploration;
+            ExplorationStatus explorationStatus;
 
             try
             {
+                exploration = explorationRegistry.GetExploration(explorationId);
                 explorationStatus = explorationRegistry.GetStatus(explorationId);
             }
             catch (System.Collections.Generic.KeyNotFoundException)
@@ -80,7 +81,7 @@ namespace Explorer.Api.Controllers
                 return NotFound($"Couldn't find exploration with id {explorationId}.");
             }
 
-            var metrics = metricsPublisher.PublishedMetrics
+            var metrics = exploration.PublishedMetrics
                     .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
 
             var result = new ExploreResult(

@@ -32,8 +32,8 @@ namespace Explorer.Tests
                 // Cancellation
                 registry.Injectable<CancellationTokenSource>();
 
-                // Singleton services
-                registry.For<MetricsPublisher>().Use<SimpleMetricsPublisher>().Singleton();
+                // Publisher
+                registry.For<MetricsPublisher>().Use<SimpleMetricsPublisher>().Scoped();
 
                 registry.IncludeRegistry<ComponentRegistry>();
             });
