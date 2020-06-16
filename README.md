@@ -154,7 +154,7 @@ The short version:
 1. Install [Docker](https://www.docker.com/get-started)
 2. Install [Visual Studio Code](https://code.visualstudio.com/)
 3. Add the [remote development pack](https://aka.ms/vscode-remote/download/extension) in VS Code
-4. Start VS Code and from the command palette (`F1`) selt _Remote-Containers: Open Repository in Container_.
+4. Start VS Code and from the command palette (`F1`) select _Remote-Containers: Open Repository in Container_.
 5. Enter the url for this project: `https://github.com/diffix/explorer.git`
 6. Let VS Code do its magic.
 
