@@ -1,18 +1,14 @@
 ﻿namespace Explorer.Api
 {
-    using System.Collections.Concurrent;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
-    using Aircloak.JsonApi.ResponseTypes;
     using Diffix;
     using Explorer.Common;
 
     public class ContextBuilder
     {
-        private static readonly ConcurrentDictionary<string, DataSourceCollection> DataSourcesCache
-            = new ConcurrentDictionary<string, DataSourceCollection>();
-
         private readonly JsonApiClient apiClient;
 
         public ContextBuilder(JsonApiClient apiClient)
@@ -22,25 +18,8 @@
 
         public async Task<ExplorerContext> Build(Models.ExploreParams data)
         {
-            if (DataSourcesCache.TryGetValue(data.ApiUrl, out var dataSources))
-            {
-                try
-                {
-                    return CheckAndBuild(data, dataSources);
-                }
-                catch (MetaDataCheckException)
-                {
-                    // Validation failed with cached data sources, swallow this exception and try with fresh data.
-                }
-            }
+            var dataSources = await apiClient.GetDataSources(new System.Uri(data.ApiUrl), CancellationToken.None);
 
-            DataSourcesCache[data.ApiUrl] = await apiClient.GetDataSources(new System.Uri(data.ApiUrl), default);
-
-            return CheckAndBuild(data, DataSourcesCache[data.ApiUrl]);
-        }
-
-        private static ExplorerContext CheckAndBuild(Models.ExploreParams data, DataSourceCollection dataSources)
-        {
             if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
             {
                 throw new MetaDataCheckException($"Could not find datasource '{data.DataSourceName}'.");
