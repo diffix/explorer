@@ -36,11 +36,17 @@ namespace Explorer.Api.Tests
         public async Task RunExploration(
             string dataSourceName,
             string table,
-            string column)
+            string column,
+            string apiUrl = TestApiUrl,
+            string? apiKey = null)
         {
+            // Mock the request data
+            // Note that in most test cases the api key will not be needed as it will be provided from 
+            // the environment (via a `StaticApiKeyAuthProvider`)
             var data = new Models.ExploreParams
             {
-                ApiUrl = TestApiUrl,
+                ApiKey = apiKey ?? string.Empty,
+                ApiUrl = apiUrl,
                 DataSourceName = dataSourceName,
                 TableName = table,
                 ColumnName = column,
