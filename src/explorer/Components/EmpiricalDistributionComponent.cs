@@ -1,6 +1,6 @@
 ﻿namespace Explorer.Components
 {
-    using System.Collections.Generic;
+    using System;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -18,31 +18,28 @@
 
         public static EmpiricalDistribution GenerateDistribution(Histogram histogram)
         {
-            var interpolatedHistogramSamples = histogram.Buckets.Values.SelectMany(bucket =>
+            var samples = histogram.Buckets.Values.Select(bucket =>
             {
-                var bucketSize = (double)bucket.BucketSize.SnappedSize;
-                var sampleSpacing = bucketSize / bucket.Count;
-                var sample = (double)bucket.LowerBound + (0.5 * sampleSpacing);
-                var upperBound = (double)bucket.LowerBound + bucketSize;
-                var samples = new List<double>((int)bucket.Count);
+                var sampleValue = bucket.LowerBound + (bucket.BucketSize.SnappedSize / 2);
+                var sampleWeight = Convert.ToInt32(bucket.Count);
 
-                while (sample < upperBound)
+                return new
                 {
-                    samples.Add(sample);
-                    sample += sampleSpacing;
-                }
-
-                return samples;
+                    SampleValue = sampleValue,
+                    SampleWeight = sampleWeight,
+                };
             });
 
-            return new EmpiricalDistribution(interpolatedHistogramSamples.ToArray());
+            return new EmpiricalDistribution(
+                samples.Select(_ => Convert.ToDouble(_.SampleValue)).ToArray(),
+                samples.Select(_ => _.SampleWeight).ToArray());
         }
 
         protected override async Task<EmpiricalDistribution> Explore()
         {
             var histogramResult = await histogramResultProvider.ResultAsync;
 
-            return await Task.Run(() => GenerateDistribution(histogramResult.Histogram));
+            return GenerateDistribution(histogramResult.Histogram);
         }
     }
 }
