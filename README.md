@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/diffix/explorer.svg?branch=master)](https://travis-ci.com/diffix/explorer)
+
 # Diffix Explorer
 
 - [What it does](#what-it-does)
