@@ -6,6 +6,7 @@ namespace Explorer.Components
 
     using Accord.Statistics.Analysis;
     using Accord.Statistics.Distributions.Univariate;
+    using Accord.Statistics.Testing;
     using Explorer.Metrics;
 
     public class DistributionAnalysisComponent : ExplorerComponent<GoodnessOfFitCollection>, PublisherComponent
@@ -39,31 +40,19 @@ namespace Explorer.Components
                     {
                         fit.Name,
                         Distribution = fit.Distribution.ToString(),
-                        Goodness = new object?[]
+                        Goodness = new GoodnessMetric?[]
                         {
-                            ad is null ? null : new
-                            {
-                                Method = "AndersonDarling",
-                                ad.PValue,
-                                ad.Significant,
-                                Rank = fit.AndersonDarlingRank,
-                            },
-                            cs is null ? null : new
-                            {
-                                Method = "ChiSquare",
-                                cs.PValue,
-                                cs.Significant,
-                                Rank = fit.ChiSquareRank,
-                            },
-                            ks is null ? null : new
-                            {
-                                Method = "KolmogorovSmirnov",
-                                ks.PValue,
-                                ks.Significant,
-                                Rank = fit.KolmogorovSmirnovRank,
-                            },
+                            ad is null
+                                ? null
+                                : GoodnessMetric.AndersonDarling(ad, fit.AndersonDarlingRank),
+                            cs is null
+                                ? null
+                                : GoodnessMetric.ChiSquare(cs, fit.ChiSquareRank),
+                            ks is null
+                                ? null
+                                : GoodnessMetric.KolmogorovSmirnov(ks, fit.KolmogorovSmirnovRank)
                         }
-                        .Where(o => !(o is null)),
+                        .Where(gm => !(gm is null) && double.IsFinite(gm.PValue)),
                     };
                 }));
         }
@@ -77,6 +66,35 @@ namespace Explorer.Components
                 var analysis = new DistributionAnalysis();
                 return analysis.Learn(distribution.Generate(10_000));
             });
+        }
+
+        private class GoodnessMetric
+        {
+            public static GoodnessMetric AndersonDarling(AndersonDarlingTest ad, int rank) =>
+                new GoodnessMetric("AndersonDarling", ad.PValue, ad.Significant, rank);
+
+            public static GoodnessMetric ChiSquare(ChiSquareTest cs, int rank) =>
+                new GoodnessMetric("ChiSquare", cs.PValue, cs.Significant, rank);
+
+            public static GoodnessMetric KolmogorovSmirnov(KolmogorovSmirnovTest ks, int rank) =>
+                new GoodnessMetric("KolmogorovSmirnov", ks.PValue, ks.Significant, rank);
+
+            private GoodnessMetric(string method, double pValue, bool significant, int rank)
+            {
+                Method = method;
+                PValue = pValue;
+                Significant = significant;
+                Rank = rank;
+
+            }
+
+            public string Method { get; }
+
+            public double PValue { get; }
+
+            public bool Significant { get; }
+
+            public int Rank { get; }
         }
     }
 }
