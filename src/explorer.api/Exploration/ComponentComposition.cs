@@ -30,6 +30,7 @@ namespace Explorer.Api
             config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<NumericSampleGenerator>();
             config.AddPublisher<DistributionAnalysisComponent>();
+            config.AddPublisher<DescriptiveStatsPublisher>();
         }
 
         private static void TextExploration(ExplorationConfig config)
