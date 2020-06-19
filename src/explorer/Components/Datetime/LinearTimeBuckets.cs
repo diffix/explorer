@@ -27,7 +27,7 @@ namespace Explorer.Components
         {
             var result = await ResultAsync;
 
-            foreach (var m in TimeUtilities.YieldMetrics<Result, DateTime>(result))
+            foreach (var m in TimeUtilities.YieldMetrics<Result, DateTime>("dates_linear", result))
             {
                 yield return m;
             }
