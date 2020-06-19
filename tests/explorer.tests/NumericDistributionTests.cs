@@ -2,7 +2,6 @@
 {
     using System.Linq;
 
-    using Accord.Statistics.Distributions.Univariate;
     using Explorer.Components;
     using Xunit;
 
@@ -16,21 +15,6 @@
         }
 
         [Fact]
-        public async void TestEmpiricalDistributionGenerator()
-        {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "loans",
-                "duration",
-                ExplorerTestFixture.GenerateVcrFilename(this));
-
-            await scope.Test<EmpiricalDistributionComponent, EmpiricalDistribution>(result =>
-            {
-                Assert.True(result.Length > 0);
-            });
-        }
-
-        [Fact]
         public async void TestNumericSampleGenerator()
         {
             using var scope = testFixture.SimpleComponentTestScope(
@@ -41,6 +25,7 @@
 
             await scope.Test<NumericSampleGenerator>(result =>
             {
+                // TODO: Check metrics against schema definition
                 Assert.True(result.Any());
             });
         }

@@ -14,13 +14,13 @@ namespace Explorer.Components
             return queryResult.GroupBy(row => row.GroupingLabel);
         }
 
-        internal static IEnumerable<ExploreMetric> YieldMetrics<TResult, T>(TResult result)
+        internal static IEnumerable<ExploreMetric> YieldMetrics<TResult, T>(string metricName, TResult result)
         where TResult : GenericResult<T>
         {
             foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
             {
                 yield return new UntypedMetric(
-                    name: $"dates_linear.{row.Key}",
+                    name: $"{metricName}.{row.Key}",
                     metric: MetricBlob(
                         valueCount.TotalCount,
                         valueCount.SuppressedCount,

@@ -1,6 +1,5 @@
 namespace Explorer.Components
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -27,7 +26,7 @@ namespace Explorer.Components
         {
             var result = await ResultAsync;
 
-            foreach (var m in TimeUtilities.YieldMetrics<Result, int>(result))
+            foreach (var m in TimeUtilities.YieldMetrics<Result, int>("dates_cyclical", result))
             {
                 yield return m;
             }

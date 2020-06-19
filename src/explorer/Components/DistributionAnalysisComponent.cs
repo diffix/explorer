@@ -5,15 +5,14 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Accord.Statistics.Analysis;
-    using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics.Testing;
     using Explorer.Metrics;
 
     public class DistributionAnalysisComponent : ExplorerComponent<GoodnessOfFitCollection>, PublisherComponent
     {
-        private readonly ResultProvider<EmpiricalDistribution> distributionProvider;
+        private readonly ResultProvider<NumericDistribution> distributionProvider;
 
-        public DistributionAnalysisComponent(ResultProvider<EmpiricalDistribution> distributionProvider)
+        public DistributionAnalysisComponent(ResultProvider<NumericDistribution> distributionProvider)
         {
             this.distributionProvider = distributionProvider;
         }
@@ -50,7 +49,7 @@ namespace Explorer.Components
                                 : GoodnessMetric.ChiSquare(cs, fit.ChiSquareRank),
                             ks is null
                                 ? null
-                                : GoodnessMetric.KolmogorovSmirnov(ks, fit.KolmogorovSmirnovRank)
+                                : GoodnessMetric.KolmogorovSmirnov(ks, fit.KolmogorovSmirnovRank),
                         }
                         .Where(gm => !(gm is null) && double.IsFinite(gm.PValue)),
                     };
@@ -61,15 +60,20 @@ namespace Explorer.Components
         {
             var distribution = await distributionProvider.ResultAsync;
 
-            return await Task.Run(() =>
-            {
-                var analysis = new DistributionAnalysis();
-                return analysis.Learn(distribution.Generate(10_000));
-            });
+            var analysis = new DistributionAnalysis();
+            return analysis.Learn(distribution.Generate(10_000).ToArray());
         }
 
         private class GoodnessMetric
         {
+            private GoodnessMetric(string method, double pValue, bool significant, int rank)
+            {
+                Method = method;
+                PValue = pValue;
+                Significant = significant;
+                Rank = rank;
+            }
+
             public static GoodnessMetric AndersonDarling(AndersonDarlingTest ad, int rank) =>
                 new GoodnessMetric("AndersonDarling", ad.PValue, ad.Significant, rank);
 
@@ -78,15 +82,6 @@ namespace Explorer.Components
 
             public static GoodnessMetric KolmogorovSmirnov(KolmogorovSmirnovTest ks, int rank) =>
                 new GoodnessMetric("KolmogorovSmirnov", ks.PValue, ks.Significant, rank);
-
-            private GoodnessMetric(string method, double pValue, bool significant, int rank)
-            {
-                Method = method;
-                PValue = pValue;
-                Significant = significant;
-                Rank = rank;
-
-            }
 
             public string Method { get; }
 

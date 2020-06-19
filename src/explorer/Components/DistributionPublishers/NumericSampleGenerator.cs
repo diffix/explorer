@@ -4,27 +4,29 @@ namespace Explorer.Components
     using System.Collections.Generic;
     using System.Linq;
 
-    using Accord.Statistics.Distributions.Univariate;
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class NumericSampleGenerator : EmpiricalDistributionPublisher
+    public class NumericSampleGenerator : PublisherComponent
     {
         public const int DefaultSamplesToPublish = 20;
         private readonly ExplorerContext ctx;
+        private readonly ResultProvider<NumericDistribution> distributionProvider;
 
         public NumericSampleGenerator(
             ExplorerContext ctx,
-            ResultProvider<EmpiricalDistribution> distributionProvider)
-        : base(distributionProvider)
+            ResultProvider<NumericDistribution> distributionProvider)
         {
+            this.distributionProvider = distributionProvider;
             this.ctx = ctx;
         }
 
         public int SamplesToPublish { get; set; } = DefaultSamplesToPublish;
 
-        protected override IEnumerable<ExploreMetric> EnumerateMetrics(EmpiricalDistribution distribution)
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
+            var distribution = await distributionProvider.ResultAsync;
+
             yield return new UntypedMetric(
                 name: "sample_values",
                 metric: distribution
