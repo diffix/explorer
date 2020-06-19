@@ -55,6 +55,8 @@ namespace Explorer.Api
             config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<LinearTimeBuckets>();
             config.AddPublisher<CyclicalTimeBuckets>();
+            config.AddPublisher<DatetimeDistributionComponent>();
+            config.AddPublisher<DatetimeGeneratorComponent>();
         }
     }
 }
