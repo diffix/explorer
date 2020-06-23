@@ -5,31 +5,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="w3.css">
-    <link rel="stylesheet" type="text/css" href="client.css">
     <script type="text/javascript" src="client_config.js"></script>
     <script type="text/javascript" src="client.js"></script>
     <title>Explorer Test</title>
+    <style>
+        label {
+            font-weight: bold;
+        }
+    </style>
 </head>
 
-<body class="w3-theme-d5">
+<body>
     <div class="w3-container">
         <div class="w3-third w3-padding">
             <label class="w3-text-blue-grey">Data Source</label>
             <input type="text" id="txt_data_source" name="data_source" value="gda_banking"
-                class="w3-input w3-darken w3-round w3-border-0" />
+                class="w3-input w3-sand w3-round w3-border-1" />
         </div>
 
         <div class="w3-third w3-padding">
             <label class="w3-text-blue-grey">Table</label>
             <input type="text" id="txt_table" name="table_name" value="loans"
-                class="w3-input w3-darken w3-round w3-border-0" />
+                class="w3-input w3-sand w3-round w3-border-0" />
         </div>
 
 
         <div class="w3-third w3-padding">
-            <label class="w3-text-blue-grey">Column</label>
-            <input type="text" id="txt_column" name="column_name" value="amount"
-                class="w3-input w3-darken w3-round w3-border-0" />
+            <label class="w3-text-blue-grey">Columns</label>
+            <input type="text" id="txt_column" name="column_name" value="amount, duration"
+                class="w3-input w3-sand w3-round w3-border-0" />
         </div>
     </div>
 
@@ -42,7 +46,7 @@
         </div>
     </div>
 
-    <pre id="result" class="w3-code w3-darken w3-border-0 w3-margin">
+    <pre id="result" class="w3-code w3-sand w3-border-0 w3-margin">
     </pre>
 </body>
 

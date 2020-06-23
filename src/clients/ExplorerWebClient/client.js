@@ -65,10 +65,11 @@ async function explore_impl() {
     let column_name = document.getElementById("txt_column").value;
 
     let data = {
-        "DataSourceName": data_source,
-        "TableName": table_name,
-        "ColumnName": column_name,
-        "ApiKey": AIRCLOAK_API_KEY
+        "DataSource": data_source,
+        "Table": table_name,
+        "Columns": column_name.split(",").map(s => s.trim()),
+        "ApiKey": AIRCLOAK_API_KEY,
+        "ApiUrl": AIRCLOAK_API_URL
     };
 
     let response = await fetch_post('explore', data, show_error);
