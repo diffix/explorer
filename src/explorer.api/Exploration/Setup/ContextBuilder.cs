@@ -1,5 +1,8 @@
 ﻿namespace Explorer.Api
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -16,39 +19,41 @@
             this.apiClient = apiClient;
         }
 
-        public async Task<ExplorerContext> Build(Models.ExploreParams data)
+        public async Task<IEnumerable<ExplorerContext>> Build(Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
         {
-            var dataSources = await apiClient.GetDataSources(new System.Uri(data.ApiUrl), CancellationToken.None);
+            var dataSources = await apiClient.GetDataSources(apiUrl, CancellationToken.None);
 
-            if (!dataSources.AsDict.TryGetValue(data.DataSourceName, out var exploreDataSource))
+            if (!dataSources.AsDict.TryGetValue(dataSource, out var dataSourceInfo))
             {
-                throw new MetaDataCheckException($"Could not find datasource '{data.DataSourceName}'.");
+                throw new MetaDataCheckException($"Could not find datasource '{dataSource}'.");
             }
 
-            if (!exploreDataSource.TableDict.TryGetValue(data.TableName, out var exploreTableMeta))
+            if (!dataSourceInfo.TableDict.TryGetValue(table, out var tableInfo))
             {
-                throw new MetaDataCheckException($"Could not find table '{data.TableName}'.");
+                throw new MetaDataCheckException($"Could not find table '{dataSource}.{table}'.");
             }
 
-            if (!exploreTableMeta.ColumnDict.TryGetValue(data.ColumnName, out var exploreColumnMeta))
+            return columns.Select(column =>
             {
-                throw new MetaDataCheckException($"Could not find column '{data.ColumnName}'.");
-            }
-
-            return new CheckedContext(data, exploreColumnMeta.Type);
+                if (!tableInfo.ColumnDict.TryGetValue(column, out var columnInfo))
+                {
+                    throw new MetaDataCheckException($"Could not find column '{dataSource}.{table}.{column}'.");
+                }
+                return new CheckedContext(dataSource, table, column, columnInfo.Type);
+            });
         }
 
         /// <summary>
         /// An <see cref="ExplorerContext" /> that has been checked to make sure the datasource,
-        /// table and column exist on the database. 
+        /// table and column exist on the database.
         /// </summary>
         private class CheckedContext : ExplorerContext
         {
-            internal CheckedContext(Models.ExploreParams data, DValueType columnType)
+            internal CheckedContext(string dataSource, string table, string column, DValueType columnType)
             {
-                DataSource = data.DataSourceName;
-                Table = data.TableName;
-                Column = data.ColumnName;
+                DataSource = dataSource;
+                Table = table;
+                Column = column;
                 ColumnType = columnType;
             }
 

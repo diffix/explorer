@@ -1,10 +1,13 @@
+using System.Linq;
 namespace Explorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
 
     using Diffix;
     using Explorer.Common;
+    using Explorer.Metrics;
     using Lamar;
 
     public class ExplorationLauncher
@@ -17,47 +20,73 @@ namespace Explorer
         }
 
         /// <summary>
-        /// Configure an exploration within a given scope.
+        /// Configure a column exploration within a given scope.
         /// </summary>
         /// <param name="scope">The scoped container to use for object resolution.</param>
-        /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
         /// <param name="conn">A DConnection configured for the Api backend.</param>
+        /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
         /// <param name="componentConfiguration">
         /// An action to add and configure the components to use in this exploration.
         /// </param>
-        /// <returns>The running Task.</returns>
-        public static Exploration Explore(
+        /// <returns>A new ColumnExploration object.</returns>
+        public static ColumnExploration ExploreColumn(
             INestedContainer scope,
-            ExplorerContext ctx,
             DConnection conn,
+            ExplorerContext ctx,
             Action<ExplorationConfig> componentConfiguration)
         {
             // Configure a new Exploration
-            return Exploration.Configure(scope, _ =>
-            {
-                _.UseConnection(conn);
-                _.UseContext(ctx);
-                _.Compose(componentConfiguration);
-            });
+            var config = new ExplorationConfig(scope);
+            config.UseConnection(conn);
+            config.UseContext(ctx);
+            config.Compose(componentConfiguration);
+            return new ColumnExploration(config, scope.GetInstance<MetricsPublisher>(), ctx.Column);
+        }
+
+        /// <summary>
+        /// Configure a column exploration.
+        /// </summary>
+        /// <param name="conn">A DConnection configured for the Api backend.</param>
+        /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
+        /// <param name="componentConfiguration">
+        /// An action to add and configure the components to use in this exploration.
+        /// </param>
+        /// <returns>A new ColumnExploration object.</returns>
+        public ColumnExploration LaunchColumnExploration(
+            DConnection conn,
+            ExplorerContext ctx,
+            Action<ExplorationConfig> componentConfiguration)
+        {
+            // This scope (and all the components resolved within) should live until the end of the Task.
+            using var scope = rootContainer.GetNestedContainer();
+            return ExploreColumn(scope, conn, ctx, componentConfiguration);
         }
 
         /// <summary>
         /// Configure an exploration.
         /// </summary>
-        /// <param name="ctx">An <see cref="ExplorerContext" /> defining the exploration parameters.</param>
+        /// <param name="dataSource">The data source name on which to execute the exploration.</param>
+        /// <param name="table">The table name on which to execute the exploration.</param>
         /// <param name="conn">A DConnection configured for the Api backend.</param>
-        /// <param name="componentConfiguration">
-        /// An action to add and configure the components to use in this exploration.
+        /// <param name="explorationSettings">
+        /// A list of tuples containing the exploration parameters and
+        /// the action to add and configure the components to use in this exploration.
         /// </param>
-        /// <returns>The running Task.</returns>
+        /// <returns>A new Exploration object.</returns>
         public Exploration LaunchExploration(
-            ExplorerContext ctx,
+            string dataSource,
+            string table,
             DConnection conn,
-            Action<ExplorationConfig> componentConfiguration)
+            IEnumerable<(Action<ExplorationConfig> ComponentConfig, ExplorerContext Context)> explorationSettings)
         {
             // This scope (and all the components resolved within) should live until the end of the Task.
-            using var scope = rootContainer.GetNestedContainer();
-            return Explore(scope, ctx, conn, componentConfiguration);
+            var columnExplorations = explorationSettings.Select(item =>
+                    ExploreColumn(
+                        rootContainer.GetNestedContainer(),
+                        conn,
+                        item.Context,
+                        item.ComponentConfig));
+            return new Exploration(dataSource, table, columnExplorations.ToList());
         }
     }
 }

@@ -8,25 +8,46 @@ namespace Explorer.Api.Models
 
     internal class ExploreResult
     {
-        public ExploreResult(Guid explorationId, ExplorationStatus status)
+        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table)
         {
             Id = explorationId;
             Status = status;
-            Metrics = Array.Empty<Metric>();
+            DataSource = dataSource;
+            Table = table;
+            Columns = Array.Empty<ColumnMetricsCollection>();
         }
 
-        public ExploreResult(Guid explorationId, ExplorationStatus status, IEnumerable<Metric> metrics)
+        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table, IEnumerable<ColumnMetricsCollection> columnMetrics)
         {
             Id = explorationId;
             Status = status;
-            Metrics = metrics;
+            DataSource = dataSource;
+            Table = table;
+            Columns = columnMetrics;
         }
+
+        public Guid Id { get; }
 
         public ExplorationStatus Status { get; }
 
-        public IEnumerable<Metric> Metrics { get; }
+        public string DataSource { get; }
 
-        public Guid Id { get; }
+        public string Table { get; }
+
+        public IEnumerable<ColumnMetricsCollection> Columns { get; }
+
+        public class ColumnMetricsCollection
+        {
+            public ColumnMetricsCollection(string column, IEnumerable<Metric> metrics)
+            {
+                Column = column;
+                Metrics = metrics;
+            }
+
+            public string Column { get; }
+
+            public IEnumerable<Metric> Metrics { get; }
+        }
 
         public class Metric
         {

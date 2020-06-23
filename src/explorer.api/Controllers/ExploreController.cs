@@ -1,5 +1,6 @@
 namespace Explorer.Api.Controllers
 {
+    using System;
     using System.Linq;
     using System.Net.Mime;
     using System.Threading;
@@ -46,19 +47,17 @@ namespace Explorer.Api.Controllers
                 auth.RegisterApiKey(data.ApiKey);
             }
 
-            // Create the Context and Connection objects for this exploration.
+            var apiUri = new Uri(data.ApiUrl);
             var cts = new CancellationTokenSource();
-            var ctx = await contextBuilder.Build(data);
-            var conn = connectionBuilder.Build(data, cts.Token);
-
-            // Get the configuration based on column type.
-            var config = ComponentComposition.ColumnConfiguration(ctx.ColumnType);
-            var exploration = launcher.LaunchExploration(ctx, conn, config);
+            var conn = connectionBuilder.Build(apiUri, data.DataSource, cts.Token);
+            var ctxList = await contextBuilder.Build(apiUri, data.DataSource, data.Table, data.Columns);
+            var explorationSettings = ctxList.Select(ctx => (ComponentComposition.ColumnConfiguration(ctx.ColumnType), ctx));
+            var exploration = launcher.LaunchExploration(data.DataSource, data.Table, conn, explorationSettings);
 
             // Register the exploration for future reference.
             var id = explorationRegistry.Register(exploration, cts);
 
-            return Ok(new ExploreResult(id, ExplorationStatus.New));
+            return Ok(new ExploreResult(id, ExplorationStatus.New, data.DataSource, data.Table));
         }
 
         [HttpGet]
@@ -66,7 +65,7 @@ namespace Explorer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Result(
-            System.Guid explorationId)
+            Guid explorationId)
         {
             Exploration exploration;
             ExplorationStatus explorationStatus;
@@ -80,14 +79,6 @@ namespace Explorer.Api.Controllers
             {
                 return NotFound($"Couldn't find exploration with id {explorationId}.");
             }
-
-            var metrics = exploration.PublishedMetrics
-                    .Select(m => new ExploreResult.Metric(m.Name, m.Metric));
-
-            var result = new ExploreResult(
-                        explorationId,
-                        explorationStatus,
-                        metrics);
 
             if (explorationStatus != ExplorationStatus.New && explorationStatus != ExplorationStatus.Processing)
             {
@@ -103,6 +94,19 @@ namespace Explorer.Api.Controllers
                 }
             }
 
+            var columnMetricsList = exploration.ColumnExplorations.Select(ce =>
+                new ExploreResult.ColumnMetricsCollection(
+                    ce.Column,
+                    ce.PublishedMetrics.Select(m =>
+                        new ExploreResult.Metric(m.Name, m.Metric))));
+
+            var result = new ExploreResult(
+                            explorationId,
+                            exploration.Status,
+                            exploration.DataSource,
+                            exploration.Table,
+                            columnMetricsList);
+
             return Ok(result);
         }
 
@@ -110,7 +114,7 @@ namespace Explorer.Api.Controllers
         [Route("cancel/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Cancel(System.Guid explorationId)
+        public IActionResult Cancel(Guid explorationId)
         {
             try
             {
