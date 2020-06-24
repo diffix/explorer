@@ -10,7 +10,6 @@ namespace Explorer.Api.Controllers
     using Explorer;
     using Explorer.Api.Authentication;
     using Explorer.Api.Models;
-    using Explorer.Metrics;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -105,7 +104,8 @@ namespace Explorer.Api.Controllers
                             exploration.Status,
                             exploration.DataSource,
                             exploration.Table,
-                            columnMetricsList);
+                            columnMetricsList,
+                            exploration.SampleData);
 
             return Ok(result);
         }

@@ -15,15 +15,23 @@ namespace Explorer.Api.Models
             DataSource = dataSource;
             Table = table;
             Columns = Array.Empty<ColumnMetricsCollection>();
+            SampleData = Array.Empty<IEnumerable<object?>>();
         }
 
-        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table, IEnumerable<ColumnMetricsCollection> columnMetrics)
+        public ExploreResult(
+            Guid explorationId,
+            ExplorationStatus status,
+            string dataSource,
+            string table,
+            IEnumerable<ColumnMetricsCollection> columnMetrics,
+            IEnumerable<IEnumerable<object?>> sampleData)
         {
             Id = explorationId;
             Status = status;
             DataSource = dataSource;
             Table = table;
             Columns = columnMetrics;
+            SampleData = sampleData;
         }
 
         public Guid Id { get; }
@@ -35,6 +43,8 @@ namespace Explorer.Api.Models
         public string Table { get; }
 
         public IEnumerable<ColumnMetricsCollection> Columns { get; }
+
+        public IEnumerable<IEnumerable<object?>> SampleData { get; }
 
         public class ColumnMetricsCollection
         {

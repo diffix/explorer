@@ -12,7 +12,11 @@ namespace Explorer
             DataSource = dataSource;
             Table = table;
             ColumnExplorations = columnExplorations;
-            Completion = Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+            Completion = Task.Run(async () =>
+            {
+                await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+                SampleData = GenerateSampleData();
+            });
         }
 
         public string DataSource { get; }
@@ -24,6 +28,8 @@ namespace Explorer
         public Task Completion { get; }
 
         public ExplorationStatus Status => ConvertToExplorationStatus(Completion.Status);
+
+        public IEnumerable<IEnumerable<object?>> SampleData { get; private set; } = Array.Empty<IEnumerable<object>>();
 
         private static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
         {
@@ -39,6 +45,47 @@ namespace Explorer
                 TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
                 _ => throw new Exception("Unexpected TaskStatus: '{exploration.Status}'."),
             };
+        }
+
+        private IEnumerable<IEnumerable<object?>> GenerateSampleData()
+        {
+            var valuesList = ColumnExplorations.Select(ce =>
+                ce.PublishedMetrics
+                    .Where(m => m.Name == "sample_values")
+                    .Select(m => m.Metric as IEnumerable<object?>)
+                    .FirstOrDefault());
+            var enumerators = valuesList.Select(e => e?.GetEnumerator()).ToArray();
+            var sampleData = new List<List<object?>>();
+            try
+            {
+                while (true)
+                {
+                    var hasData = false;
+                    var row = new List<object?>();
+                    foreach (var e in enumerators)
+                    {
+                        if (e?.MoveNext() == true)
+                        {
+                            hasData = true;
+                            row.Add(e.Current);
+                        }
+                        else
+                        {
+                            row.Add(null);
+                        }
+                    }
+                    if (!hasData)
+                    {
+                        break;
+                    }
+                    sampleData.Add(row);
+                }
+            }
+            finally
+            {
+                Array.ForEach(enumerators, e => e?.Dispose());
+            }
+            return sampleData;
         }
     }
 }
