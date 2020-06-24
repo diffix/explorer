@@ -23,7 +23,8 @@
         public void AddPublisher<T>(Action<T>? configure = null)
             where T : PublisherComponent
         {
-            var component = scope.GetInstance<T>();
+            var component = scope.ResolvePublisherComponent<T>();
+
             configure?.Invoke(component);
 
             var metricsPublisher = scope.GetInstance<MetricsPublisher>();
