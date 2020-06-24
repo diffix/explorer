@@ -45,7 +45,7 @@ namespace Explorer.Components
 
             if (result.Any())
             {
-                yield return new UntypedMetric(name: "synthetic_values", metric: result);
+                yield return new UntypedMetric(name: "sample_values", metric: result);
             }
         }
 
