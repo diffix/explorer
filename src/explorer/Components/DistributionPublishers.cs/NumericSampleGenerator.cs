@@ -29,7 +29,6 @@ namespace Explorer.Components
                 name: "sample_values",
                 metric: new
                 {
-                    Count = SamplesToPublish,
                     Samples = distribution
                         .Generate(SamplesToPublish)
                         .Select(s => ctx.ColumnType == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
