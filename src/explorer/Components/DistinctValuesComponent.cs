@@ -14,6 +14,7 @@ namespace Explorer.Components
         : ExplorerComponent<DistinctValuesComponent.Result>, PublisherComponent
     {
         private const double SuppressedRatioThreshold = 0.1;
+        private const int DefaultNumValuesToPublish = 10;
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
 
@@ -23,7 +24,9 @@ namespace Explorer.Components
             this.conn = conn;
         }
 
-        public static IEnumerable<ExploreMetric> YieldMetrics(Result result)
+        public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
+
+        public IEnumerable<ExploreMetric> YieldMetrics(Result result)
         {
             var valueCounts = result.ValueCounts;
 
@@ -41,8 +44,20 @@ namespace Explorer.Components
                         row.Count,
                     };
 
+                var toPublish = distinctValues.Take(NumValuesToPublish);
+                var remaining = distinctValues.Skip(NumValuesToPublish);
+
+                if (remaining.Any())
+                {
+                    toPublish = toPublish.Append(new
+                    {
+                        Value = JsonDocument.Parse("\"--OTHER--\"").RootElement,
+                        Count = remaining.Sum(distinct => distinct.Count),
+                    });
+                }
+
                 yield return new UntypedMetric(name: "distinct.is_categorical", metric: true);
-                yield return new UntypedMetric(name: "distinct.values", metric: distinctValues);
+                yield return new UntypedMetric(name: "distinct.values", metric: toPublish.ToList());
                 yield return new UntypedMetric(name: "distinct.null_count", metric: valueCounts.NullCount);
                 yield return new UntypedMetric(name: "distinct.suppressed_count", metric: valueCounts.SuppressedCount);
                 yield return new UntypedMetric(name: "distinct.value_count", metric: valueCounts.TotalCount);
