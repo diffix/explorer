@@ -25,9 +25,9 @@ namespace Explorer.Tests
                 "email",
                 Cassette.GenerateVcrFilename(this));
 
-            await scope.Test<EmailCheckComponent, bool>(Assert.True);
+            await scope.ResultTest<EmailCheckComponent, bool>(Assert.True);
 
-            await scope.Test<TextGeneratorComponent, IEnumerable<string>>(result =>
+            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
             {
                 Assert.True(result.All(v => v.Length >= 3));
                 Assert.True(result.All(v => v.Count(c => c == '@') == 1));
@@ -45,9 +45,9 @@ namespace Explorer.Tests
                 "email",
                 Cassette.GenerateVcrFilename(this));
 
-            await scope.Test<EmailCheckComponent, bool>(Assert.True);
+            await scope.ResultTest<EmailCheckComponent, bool>(Assert.True);
 
-            await scope.Test<TextGeneratorComponent, IEnumerable<string>>(result =>
+            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
             {
                 Assert.True(result.All(v => v.Length >= 3));
                 Assert.True(result.All(v => v.Count(c => c == '@') == 1));
@@ -65,9 +65,9 @@ namespace Explorer.Tests
                 "firstname",
                 Cassette.GenerateVcrFilename(this));
 
-            await scope.Test<EmailCheckComponent, bool>(Assert.False);
+            await scope.ResultTest<EmailCheckComponent, bool>(Assert.False);
 
-            await scope.Test<TextGeneratorComponent, IEnumerable<string>>(result =>
+            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
                 Assert.True(result.All(v => v.Length >= 3)));
         }
 
@@ -80,9 +80,9 @@ namespace Explorer.Tests
                 "lastname",
                 Cassette.GenerateVcrFilename(this));
 
-            await scope.Test<EmailCheckComponent, bool>(Assert.False);
+            await scope.ResultTest<EmailCheckComponent, bool>(Assert.False);
 
-            await scope.Test<TextGeneratorComponent, IEnumerable<string>>(result =>
+            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
                 Assert.True(result.All(v => v.Length >= 3)));
         }
     }

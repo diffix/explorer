@@ -25,7 +25,7 @@ namespace Explorer.Tests
                 ExplorerTestFixture.GenerateVcrFilename(this),
                 DValueType.Datetime);
 
-            await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
+            await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
                 Assert.Single(result.Rows, r => r.Key == "minute");
                 Assert.Single(result.Rows, r => r.Key == "hour");
@@ -42,7 +42,7 @@ namespace Explorer.Tests
                 ExplorerTestFixture.GenerateVcrFilename(this),
                 DValueType.Date);
 
-            await scope.Test<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
+            await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
                 Assert.Single(result.Rows, r => r.Key == "year");
                 Assert.Single(result.Rows, r => r.Key == "quarter");
@@ -59,7 +59,7 @@ namespace Explorer.Tests
                 ExplorerTestFixture.GenerateVcrFilename(this),
                 DValueType.Datetime);
 
-            await scope.Test<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
+            await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
                 Assert.True(result.Rows.Count() == 2);
                 Assert.Single(result.Rows, r => r.Key == "second");
@@ -77,7 +77,7 @@ namespace Explorer.Tests
                 ExplorerTestFixture.GenerateVcrFilename(this),
                 DValueType.Date);
 
-            await scope.Test<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
+            await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
                 Assert.True(result.Rows.Count() == 4);
                 Assert.Single(result.Rows, r => r.Key == "day");
