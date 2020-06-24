@@ -1,7 +1,10 @@
 ﻿namespace Explorer.Components
 {
     using System.Collections.Generic;
+    using System.Text.Json.Serialization;
+
     using Accord.Statistics.Distributions.Univariate;
+    using Explorer.Common.JsonConversion;
 
     public class NumericDistribution : SampleDistribution<double>
     {
@@ -18,6 +21,7 @@
 
         public double Mode => distribution.Mode;
 
+        [JsonConverter(typeof(ThreeDoublesTupleConverter))]
         public (double, double, double) Quartiles => (
             distribution.Quartiles.Min,
             distribution.Median,
