@@ -4,8 +4,8 @@ namespace Explorer.Tests
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json;
+    using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
     using Explorer.Components;
     using Xunit;
@@ -20,7 +20,7 @@ namespace Explorer.Tests
         }
 
         [Fact]
-        public async void TestMinMaxRefinerComponent()
+        public async Task TestMinMaxRefinerComponent()
         {
             using var scope = testFixture.SimpleComponentTestScope(
                 "gda_banking",
@@ -28,7 +28,7 @@ namespace Explorer.Tests
                 "amount",
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.Test<MinMaxRefiner, MinMaxRefiner.Result>(result =>
+            await scope.ResultTest<MinMaxRefiner, MinMaxRefiner.Result>(result =>
             {
                 const decimal expectedMin = 3303;
                 const decimal expectedMax = 495_103;
@@ -38,7 +38,26 @@ namespace Explorer.Tests
         }
 
         [Fact]
-        public async void TestCategoricalBool()
+        public async Task TestDistinctValuesMetricContainsRemainder()
+        {
+            using var scope = testFixture.SimpleComponentTestScope(
+                "gda_banking",
+                "loans",
+                "duration",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+
+            scope.ConfigurePublisher<DistinctValuesComponent>(c => c.NumValuesToPublish = 1);
+
+            await scope.MetricsTest<DistinctValuesComponent>(metrics =>
+            {
+                Assert.Single(metrics, m => m.Name == "distinct.values");
+                dynamic valuesMetric = metrics.Single(m => m.Name == "distinct.values").Metric;
+                Assert.True(valuesMetric.Count == 2);
+            });
+        }
+
+        [Fact]
+        public async Task TestCategoricalBool()
         {
             using var scope = testFixture.SimpleComponentTestScope(
                 "cov_clear",
@@ -46,7 +65,7 @@ namespace Explorer.Tests
                 "fever",
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
+            await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
                 var expectedValues = new List<ValueWithCount<bool>>
                 {
@@ -59,7 +78,7 @@ namespace Explorer.Tests
         }
 
         [Fact]
-        public async void TestCategoricalText()
+        public async Task TestCategoricalText()
         {
             using var scope = testFixture.SimpleComponentTestScope(
                 "gda_banking",
@@ -67,7 +86,7 @@ namespace Explorer.Tests
                 "status",
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.Test<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
+            await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
                 var expectedValues = new List<ValueWithCount<string>>
                 {

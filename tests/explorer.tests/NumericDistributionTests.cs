@@ -23,7 +23,7 @@
                 "duration",
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.Test<NumericSampleGenerator>(result =>
+            await scope.MetricsTest<NumericSampleGenerator>(result =>
             {
                 // TODO: Check metrics against schema definition
                 Assert.True(result.Any());
@@ -39,7 +39,7 @@
                 "age",
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.Test<DistributionAnalysisComponent>(result =>
+            await scope.MetricsTest<DistributionAnalysisComponent>(result =>
             {
                 Assert.True(result.Any());
             });
@@ -54,7 +54,7 @@
                 "age",
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.Test<DescriptiveStatsPublisher>(result =>
+            await scope.MetricsTest<DescriptiveStatsPublisher>(result =>
             {
                 Assert.True(result.Any());
             });
