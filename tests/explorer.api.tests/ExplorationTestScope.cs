@@ -1,3 +1,4 @@
+using System.Linq;
 namespace Explorer.Api.Tests
 {
     using System;
@@ -34,42 +35,36 @@ namespace Explorer.Api.Tests
         }
 
         public async Task RunExploration(
-            string dataSourceName,
+            string dataSource,
             string table,
             string column,
             string apiUrl = TestApiUrl,
             string? apiKey = null)
         {
-            // Mock the request data
+            // Register the authentication token for this scope.
             // Note that in most test cases the api key will not be needed as it will be provided from 
             // the environment (via a `StaticApiKeyAuthProvider`)
-            var data = new Models.ExploreParams
-            {
-                ApiKey = apiKey ?? string.Empty,
-                ApiUrl = apiUrl,
-                DataSourceName = dataSourceName,
-                TableName = table,
-                ColumnName = column,
-            };
-
-            // Register the authentication token for this scope.
             if (Scope.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
             {
-                auth.RegisterApiKey(data.ApiKey);
+                auth.RegisterApiKey(apiKey ?? string.Empty);
             }
 
             // Create the Context and Connection objects for this exploration.
-            var ctx = await Scope.GetInstance<ContextBuilder>().Build(data);
-            var conn = Scope.GetInstance<AircloakConnectionBuilder>().Build(data, CancellationToken.None);
+            var apiUri = new Uri(apiUrl);
+            var ctxList = await Scope.GetInstance<ContextBuilder>().Build(apiUri, dataSource, table, new string[] { column });
+            var conn = Scope.GetInstance<AircloakConnectionBuilder>().Build(apiUri, dataSource, CancellationToken.None);
 
-            var exploration = ExplorationLauncher.Explore(
-                Scope,
-                ctx,
-                conn,
-                ComponentComposition.ColumnConfiguration(ctx.ColumnType));
+            var explorations = ctxList.Select(ctx =>
+            {
+                return ExplorationLauncher.ExploreColumn(
+                    Scope,
+                    conn,
+                    ctx,
+                    ComponentComposition.ColumnConfiguration(ctx.ColumnType));
+            }).ToList();
 
-            await exploration.Completion;
-            Assert.True(exploration.Completion.IsCompletedSuccessfully);
+            await Task.WhenAll(explorations.Select(ce => ce.Completion));
+            Assert.True(explorations.All(ce => ce.Completion.IsCompletedSuccessfully));
         }
 
         public void CheckMetrics(Action<IEnumerable<ExploreMetric>> testMetrics)
