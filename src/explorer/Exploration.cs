@@ -49,43 +49,15 @@ namespace Explorer
 
         private IEnumerable<IEnumerable<object?>> GenerateSampleData()
         {
-            var valuesList = ColumnExplorations.Select(ce =>
-                ce.PublishedMetrics
-                    .Where(m => m.Name == "sample_values")
-                    .Select(m => m.Metric as IEnumerable<object?>)
-                    .FirstOrDefault());
-            var enumerators = valuesList.Select(e => e?.GetEnumerator()).ToArray();
-            var sampleData = new List<List<object?>>();
-            try
+            var valuesList = ColumnExplorations
+                .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric)
+                .Cast<IEnumerable<object?>?>();
+
+            var numSamples = valuesList.Max(col => col?.Count() ?? 0);
+            for (var i = 0; i < numSamples; i++)
             {
-                while (true)
-                {
-                    var hasData = false;
-                    var row = new List<object?>();
-                    foreach (var e in enumerators)
-                    {
-                        if (e?.MoveNext() == true)
-                        {
-                            hasData = true;
-                            row.Add(e.Current);
-                        }
-                        else
-                        {
-                            row.Add(null);
-                        }
-                    }
-                    if (!hasData)
-                    {
-                        break;
-                    }
-                    sampleData.Add(row);
-                }
+                yield return valuesList.Select(sampleColumn => sampleColumn?.ElementAtOrDefault(i));
             }
-            finally
-            {
-                Array.ForEach(enumerators, e => e?.Dispose());
-            }
-            return sampleData;
         }
     }
 }
