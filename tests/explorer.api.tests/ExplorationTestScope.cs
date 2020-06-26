@@ -15,9 +15,10 @@ namespace Explorer.Api.Tests
 
     public class ExplorationTestScope : IDisposable
     {
-        private const string TestApiUrl = "https://attack.aircloak.com/api/";
-        private bool disposedValue;
+        private static readonly Uri TestApiUri = new Uri("https://attack.aircloak.com/api/");
         private readonly Container rootContainer;
+        private readonly List<INestedContainer> columnScopes = new List<INestedContainer>();
+        private bool disposedValue;
 
         public ExplorationTestScope(Container rootContainer)
         {
@@ -25,9 +26,6 @@ namespace Explorer.Api.Tests
         }
 
         public (string, Cassette)? LoadedCassette { get; private set; }
-
-        public Dictionary<string, INestedContainer> ColumnScopes { get; }
-            = new Dictionary<string, INestedContainer>();
 
         public ExplorationTestScope LoadCassette(string testFileName)
         {
@@ -37,7 +35,7 @@ namespace Explorer.Api.Tests
             var cassette = new Cassette($"../../../.vcr/{testFileName}.yaml");
             LoadedCassette = (testFileName, cassette);
 
-            foreach (var scope in ColumnScopes.Values)
+            foreach (var scope in columnScopes)
             {
                 scope.Inject(cassette);
             }
@@ -45,24 +43,25 @@ namespace Explorer.Api.Tests
             return this;
         }
 
-        public async Task RunExploration(
+        public async Task<Exploration> RunExploration(
             string dataSource,
             string table,
             IEnumerable<string> columns,
-            string apiUrl = TestApiUrl,
+            Uri? apiUri = null,
             string? apiKey = null)
         {
+            apiUri ??= TestApiUri;
+            apiKey ??= string.Empty;
 
             // Register the authentication token for this scope.
             // Note that in most test cases the api key will not be needed as it will be provided from 
             // the environment (via a `StaticApiKeyAuthProvider`)
             if (rootContainer.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
             {
-                auth.RegisterApiKey(apiKey ?? string.Empty);
+                auth.RegisterApiKey(apiKey);
             }
 
             // Create the Context and Connection objects for this exploration.
-            var apiUri = new Uri(apiUrl);
             var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(apiUri, dataSource, table, columns);
             var conn = rootContainer.GetInstance<AircloakConnectionBuilder>().Build(apiUri, dataSource, CancellationToken.None);
 
@@ -74,70 +73,39 @@ namespace Explorer.Api.Tests
                     scope.Inject(LoadedCassette.Value.Item2);
                 }
 
-                ColumnScopes.Add(ctx.Column, scope);
+                columnScopes.Add(scope);
 
                 return ExplorationLauncher.ExploreColumn(
                     scope, conn, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnType));
             });
 
-            var exploration = new Exploration(dataSource, table, columnExplorations.ToList());
-
-            await exploration.Completion;
-            Assert.True(exploration.Completion.IsCompletedSuccessfully);
-            Assert.True(exploration.ColumnExplorations.All(ce => ce.Completion.IsCompletedSuccessfully));
-        }
-
-        public void CheckMetrics(Action<IEnumerable<ExploreMetric>> testMetrics)
-        {
-            INestedContainer scope;
-
-            try
-            {
-                scope = ColumnScopes.Values.Single();
-            }
-            catch (InvalidOperationException)
-            {
-                throw new InvalidOperationException(
-                    "`Expected a single-column test context");
-            }
-
-            var publisher = scope.GetInstance<MetricsPublisher>();
-
-            testMetrics(publisher.PublishedMetrics);
-        }
-
-        public void CheckMetrics(Action<Dictionary<string, IEnumerable<ExploreMetric>>> testMetrics)
-        {
-            var metrics = new Dictionary<string, IEnumerable<ExploreMetric>>();
-            foreach (var (column, scope) in ColumnScopes)
-            {
-                var publisher = scope.GetInstance<MetricsPublisher>();
-
-                metrics.Add(column, publisher.PublishedMetrics);
-            }
-
-            testMetrics(metrics);
+            return new Exploration(dataSource, table, columnExplorations.ToList());
         }
 
         public async Task RunAndCheckMetrics(
             string dataSource,
             string table,
             string column,
-            Action<IEnumerable<ExploreMetric>> testMetrics)
+            Action<IEnumerable<ExploreMetric>> check)
             => await RunAndCheckMetrics(
                 dataSource,
                 table,
                 new[] { column },
-                metricsDict => testMetrics(metricsDict[column]));
+                metricsDict => check(metricsDict[column]));
 
         public async Task RunAndCheckMetrics(
             string dataSourceName,
             string table,
             IEnumerable<string> columns,
-            Action<Dictionary<string, IEnumerable<ExploreMetric>>> testMetrics)
+            Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
-            await RunExploration(dataSourceName, table, columns);
-            CheckMetrics(testMetrics);
+            var exploration = await RunExploration(dataSourceName, table, columns);
+
+            await exploration.Completion;
+            Assert.True(exploration.Completion.IsCompletedSuccessfully);
+            Assert.True(exploration.ColumnExplorations.All(ce => ce.Completion.IsCompletedSuccessfully));
+
+            CheckMetrics(exploration, check);
         }
 
         public void Dispose()
@@ -153,7 +121,12 @@ namespace Explorer.Api.Tests
             {
                 if (disposing)
                 {
-                    DisposeDict(ColumnScopes);
+                    foreach (var scope in columnScopes)
+                    {
+                        scope.Dispose();
+                    }
+                    columnScopes.Clear();
+
                     LoadedCassette?.Item2.Dispose();
                     LoadedCassette = null;
                 }
@@ -162,14 +135,15 @@ namespace Explorer.Api.Tests
             }
         }
 
-        private static void DisposeDict<T>(Dictionary<string, T> dict)
-        where T : IDisposable
+        private void CheckMetrics(
+            Exploration exploration,
+            Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
-            foreach (var scope in dict.Values)
-            {
-                scope.Dispose();
-            }
-            dict.Clear();
+            var metrics = exploration.ColumnExplorations.ToDictionary(
+                ce => ce.Column,
+                ce => ce.PublishedMetrics);
+
+            check(metrics);
         }
     }
 }
