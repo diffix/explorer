@@ -93,21 +93,7 @@ namespace Explorer.Api.Controllers
                 }
             }
 
-            var columnMetricsList = exploration.ColumnExplorations.Select(ce =>
-                new ExploreResult.ColumnMetricsCollection(
-                    ce.Column,
-                    ce.PublishedMetrics.Select(m =>
-                        new ExploreResult.Metric(m.Name, m.Metric))));
-
-            var result = new ExploreResult(
-                            explorationId,
-                            exploration.Status,
-                            exploration.DataSource,
-                            exploration.Table,
-                            columnMetricsList,
-                            exploration.SampleData);
-
-            return Ok(result);
+            return Ok(new ExploreResult(explorationId, exploration));
         }
 
         [HttpGet]

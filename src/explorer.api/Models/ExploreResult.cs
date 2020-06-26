@@ -2,6 +2,7 @@ namespace Explorer.Api.Models
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text.Json.Serialization;
 
     using Explorer;
@@ -18,20 +19,17 @@ namespace Explorer.Api.Models
             SampleData = Array.Empty<IEnumerable<object?>>();
         }
 
-        public ExploreResult(
-            Guid explorationId,
-            ExplorationStatus status,
-            string dataSource,
-            string table,
-            IEnumerable<ColumnMetricsCollection> columnMetrics,
-            IEnumerable<IEnumerable<object?>> sampleData)
+        public ExploreResult(Guid explorationId, Exploration exploration)
         {
             Id = explorationId;
-            Status = status;
-            DataSource = dataSource;
-            Table = table;
-            Columns = columnMetrics;
-            SampleData = sampleData;
+            Status = exploration.Status;
+            DataSource = exploration.DataSource;
+            Table = exploration.Table;
+            SampleData = exploration.SampleData;
+            Columns = exploration.ColumnExplorations.Select(ce =>
+                new ColumnMetricsCollection(
+                    ce.Column,
+                    ce.PublishedMetrics.Select(m => new Metric(m.Name, m.Metric))));
         }
 
         public Guid Id { get; }
