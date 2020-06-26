@@ -12,11 +12,7 @@ namespace Explorer
             DataSource = dataSource;
             Table = table;
             ColumnExplorations = columnExplorations;
-            Completion = Task.Run(async () =>
-            {
-                await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
-                SampleData = GenerateSampleData();
-            });
+            Completion = Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
         }
 
         public string DataSource { get; }
@@ -29,7 +25,24 @@ namespace Explorer
 
         public ExplorationStatus Status => ConvertToExplorationStatus(Completion.Status);
 
-        public IEnumerable<IEnumerable<object?>> SampleData { get; private set; } = Array.Empty<IEnumerable<object>>();
+        public IEnumerable<IEnumerable<object?>> SampleData
+        {
+            get
+            {
+                if (!Completion.IsCompletedSuccessfully)
+                {
+                    yield break;
+                }
+                var valuesList = ColumnExplorations
+                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric)
+                    .Cast<IEnumerable<object?>?>();
+                var numSamples = valuesList.Max(col => col?.Count() ?? 0);
+                for (var i = 0; i < numSamples; i++)
+                {
+                    yield return valuesList.Select(sampleColumn => sampleColumn?.ElementAtOrDefault(i));
+                }
+            }
+        }
 
         private static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
         {
@@ -45,19 +58,6 @@ namespace Explorer
                 TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
                 _ => throw new Exception("Unexpected TaskStatus: '{exploration.Status}'."),
             };
-        }
-
-        private IEnumerable<IEnumerable<object?>> GenerateSampleData()
-        {
-            var valuesList = ColumnExplorations
-                .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric)
-                .Cast<IEnumerable<object?>?>();
-
-            var numSamples = valuesList.Max(col => col?.Count() ?? 0);
-            for (var i = 0; i < numSamples; i++)
-            {
-                yield return valuesList.Select(sampleColumn => sampleColumn?.ElementAtOrDefault(i));
-            }
         }
     }
 }
