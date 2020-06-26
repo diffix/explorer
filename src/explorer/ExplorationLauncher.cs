@@ -80,11 +80,7 @@ namespace Explorer
         {
             // This scope (and all the components resolved within) should live until the end of the Task.
             var columnExplorations = explorationSettings.Select(item =>
-                    ExploreColumn(
-                        rootContainer.GetNestedContainer(),
-                        conn,
-                        item.Context,
-                        item.ComponentConfig));
+                LaunchColumnExploration(conn, item.Context, item.ComponentConfig));
             return new Exploration(dataSource, table, columnExplorations.ToList());
         }
     }
