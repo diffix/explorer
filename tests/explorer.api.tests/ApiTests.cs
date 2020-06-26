@@ -265,7 +265,7 @@
                 {
                     break;
                 }
-                System.Threading.Thread.Sleep(pollFrequency);
+                await Task.Delay(pollFrequency);
             }
         }
 
