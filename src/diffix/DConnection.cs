@@ -1,7 +1,5 @@
 namespace Diffix
 {
-    using System;
-    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -9,11 +7,6 @@ namespace Diffix
     /// </summary>
     public interface DConnection
     {
-        /// <summary>
-        /// Gets a <see ref="CancellationToken"/> that can be used to cancel a running query.
-        /// </summary>
-        CancellationToken CancellationToken { get; }
-
         /// <summary>
         /// Executes the query.
         /// </summary>

@@ -17,16 +17,12 @@ namespace Explorer.Api
             this.apiClient = apiClient;
         }
 
-        public DConnection Build(Models.ExploreParams data, CancellationToken token)
+        public DConnection Build(Uri apiUri, string dataSource, CancellationToken token)
         {
-            var url = data.ApiUrl.EndsWith("/")
-                ? new Uri(data.ApiUrl)
-                : new Uri($"{data.ApiUrl}/");
-
             return new AircloakConnection(
                 apiClient,
-                url,
-                data.DataSourceName,
+                apiUri,
+                dataSource,
                 explorerConfig.PollFrequencyTimeSpan,
                 token);
         }

@@ -74,7 +74,7 @@ namespace Explorer.Api.Tests
         // TODO: Find a table with a timestamp column
         // [Fact]
         // public async Task TestTimestampColumn()
-        // {   
+        // {
         // }
 
         [Fact]
@@ -103,6 +103,25 @@ namespace Explorer.Api.Tests
                     "rides",
                     "pickup_datetime",
                     metrics => Assert.True(metrics.Any()));
+        }
+
+        [Fact]
+        public async Task TestMultiColumn()
+        {
+            using var testScope = fixture.PrepareExplorationTestScope();
+
+            await testScope
+                .LoadCassette(Cassette.GenerateVcrFilename(this))
+                .RunAndCheckMetrics(
+                    "gda_banking",
+                    "loans",
+                    new[] { "firstname", "duration" },
+                    metrics =>
+                    {
+                        Assert.True(metrics["firstname"].Any());
+                        Assert.True(metrics["duration"].Any());
+                        Assert.True(metrics.Count == 2);
+                    });
         }
     }
 }

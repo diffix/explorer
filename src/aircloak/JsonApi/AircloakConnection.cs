@@ -15,6 +15,7 @@ namespace Aircloak.JsonApi
         private readonly Uri apiUrl;
         private readonly JsonApiClient apiClient;
         private readonly TimeSpan pollFrequency;
+        private readonly CancellationToken cancellationToken;
 
         /// <summary>
         /// Initializes a new  instance of the <see cref="AircloakConnection" /> class.
@@ -35,11 +36,8 @@ namespace Aircloak.JsonApi
             this.apiClient = apiClient;
             this.dataSourceName = dataSourceName;
             this.pollFrequency = pollFrequency;
-            CancellationToken = cancellationToken;
+            this.cancellationToken = cancellationToken;
         }
-
-        /// <inheritdoc />
-        public CancellationToken CancellationToken { get; }
 
         /// <inheritdoc />
         public async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
@@ -49,7 +47,7 @@ namespace Aircloak.JsonApi
                 dataSourceName,
                 query,
                 pollFrequency,
-                CancellationToken);
+                cancellationToken);
         }
     }
 }

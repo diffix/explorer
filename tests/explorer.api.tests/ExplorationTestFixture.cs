@@ -28,10 +28,10 @@
 
                 // Singleton services
                 registry.AddLogging();
-                registry.For<MetricsPublisher>().Use<SimpleMetricsPublisher>().Scoped();
 
                 // Scoped services
                 registry
+                    .AddScoped<MetricsPublisher, SimpleMetricsPublisher>()
                     .AddScoped<ContextBuilder>()
                     .AddScoped<AircloakConnectionBuilder>();
 
