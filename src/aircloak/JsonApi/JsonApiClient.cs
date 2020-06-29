@@ -310,7 +310,7 @@ namespace Aircloak.JsonApi
                 requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(System.Net.Mime.MediaTypeNames.Application.Json);
             }
 
-            var authToken = await Task.Run(authProvider.GetAuthToken, cancellationToken);
+            var authToken = await authProvider.GetAuthToken();
             if (!requestMessage.Headers.TryAddWithoutValidation("auth-token", authToken))
             {
                 throw new Exception("Failed to add auth-token header!");
@@ -323,7 +323,7 @@ namespace Aircloak.JsonApi
 
             if (!response.IsSuccessStatusCode)
             {
-                var responseContent = await Task.Run(response.Content.ReadAsStringAsync, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Request Error: {ServiceError(response)}.\n{requestMessage}\n{requestContent}\n{responseContent}");
             }
 
@@ -343,9 +343,9 @@ namespace Aircloak.JsonApi
         /// -or- <c>T</c> is not compatible with the JSON.
         /// -or- There is remaining data in the stream.
         /// </exception>
-        private async Task<T> ParseJson<T>(HttpResponseMessage httpResponse, JsonSerializerOptions options, CancellationToken cancellationToken)
+        private static async Task<T> ParseJson<T>(HttpResponseMessage httpResponse, JsonSerializerOptions options, CancellationToken cancellationToken)
         {
-            var stream = await Task.Run(httpResponse.Content.ReadAsStreamAsync, cancellationToken);
+            var stream = await httpResponse.Content.ReadAsStreamAsync();
             return await JsonSerializer.DeserializeAsync<T>(stream, options, cancellationToken);
         }
     }

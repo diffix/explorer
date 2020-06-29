@@ -31,7 +31,13 @@ namespace Explorer.Components
         {
             var result = await ResultAsync;
 
-            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values);
+            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values.Select(b => new
+            {
+                BucketSize = b.BucketSize.SnappedSize,
+                b.LowerBound,
+                b.Count,
+                b.CountNoise,
+            }));
             yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
             yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
             yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
@@ -42,7 +48,11 @@ namespace Explorer.Components
             var stats = await statsResultProvider.ResultAsync;
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
-                stats.Count, stats.Min, stats.Max, ValuesPerBucketTarget);
+                stats.Count,
+                stats.Min,
+                stats.Max,
+                ValuesPerBucketTarget,
+                isIntegerColumn: ctx.ColumnType == DValueType.Integer);
 
             var histogramQ = await conn.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 
