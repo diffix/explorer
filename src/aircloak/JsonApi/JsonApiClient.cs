@@ -29,7 +29,7 @@ namespace Aircloak.JsonApi
     /// </summary>
     public class JsonApiClient
     {
-        public const string HttpClientName = "aircloak-api";
+        internal const string HttpClientName = "aircloak-api";
 
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {

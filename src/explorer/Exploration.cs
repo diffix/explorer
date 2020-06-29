@@ -1,33 +1,48 @@
 namespace Explorer
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
-
-    using Explorer.Metrics;
-    using Lamar;
 
     public sealed class Exploration
     {
-        private readonly MetricsPublisher publisher;
-
-        public Exploration(ExplorationConfig config, MetricsPublisher publisher)
+        public Exploration(string dataSource, string table, IList<ColumnExploration> columnExplorations)
         {
-            this.publisher = publisher;
-            Completion = Task.WhenAll(config.Tasks);
+            DataSource = dataSource;
+            Table = table;
+            ColumnExplorations = columnExplorations;
+            Completion = Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
         }
 
-        public IEnumerable<ExploreMetric> PublishedMetrics => publisher.PublishedMetrics;
+        public string DataSource { get; }
+
+        public string Table { get; }
+
+        public IList<ColumnExploration> ColumnExplorations { get; }
 
         public Task Completion { get; }
 
         public ExplorationStatus Status => ConvertToExplorationStatus(Completion.Status);
 
-        public static Exploration Configure(INestedContainer scope, Action<ExplorationConfig> configure)
+        public IEnumerable<IEnumerable<object?>> SampleData
         {
-            var config = new ExplorationConfig(scope);
-            configure(config);
-            return new Exploration(config, scope.GetInstance<MetricsPublisher>());
+            get
+            {
+                if (!Completion.IsCompletedSuccessfully)
+                {
+                    yield break;
+                }
+                var valuesList = ColumnExplorations
+                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
+                    .Select(metric => metric?.Cast<object?>());
+                var numSamples = valuesList.Max(col => col?.Count() ?? 0);
+                for (var i = 0; i < numSamples; i++)
+                {
+                    yield return valuesList.Select(sampleColumn => sampleColumn?.ElementAtOrDefault(i));
+                }
+            }
         }
 
         private static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
