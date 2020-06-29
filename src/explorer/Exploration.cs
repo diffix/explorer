@@ -1,6 +1,7 @@
 namespace Explorer
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -34,8 +35,8 @@ namespace Explorer
                     yield break;
                 }
                 var valuesList = ColumnExplorations
-                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric)
-                    .Cast<IEnumerable<object?>?>();
+                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
+                    .Select(metric => metric?.Cast<object?>());
                 var numSamples = valuesList.Max(col => col?.Count() ?? 0);
                 for (var i = 0; i < numSamples; i++)
                 {
