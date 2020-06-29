@@ -25,15 +25,15 @@ namespace Explorer.Api.Tests
             this.rootContainer = rootContainer;
         }
 
-        public (string, Cassette)? LoadedCassette { get; private set; }
+        public Cassette? LoadedCassette { get; private set; }
 
         public ExplorationTestScope LoadCassette(string testFileName)
         {
-            LoadedCassette?.Item2.Dispose();
+            LoadedCassette?.Dispose();
             LoadedCassette = null;
 
             var cassette = new Cassette($"../../../.vcr/{testFileName}.yaml");
-            LoadedCassette = (testFileName, cassette);
+            LoadedCassette = cassette;
 
             foreach (var scope in columnScopes)
             {
@@ -68,9 +68,9 @@ namespace Explorer.Api.Tests
             var columnExplorations = ctxList.Select(ctx =>
             {
                 var scope = rootContainer.GetNestedContainer();
-                if (LoadedCassette.HasValue)
+                if (LoadedCassette != null)
                 {
-                    scope.Inject(LoadedCassette.Value.Item2);
+                    scope.Inject(LoadedCassette);
                 }
 
                 columnScopes.Add(scope);
@@ -127,7 +127,7 @@ namespace Explorer.Api.Tests
                     }
                     columnScopes.Clear();
 
-                    LoadedCassette?.Item2.Dispose();
+                    LoadedCassette?.Dispose();
                     LoadedCassette = null;
                 }
 
