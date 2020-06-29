@@ -1,9 +1,7 @@
 namespace Explorer.Api
 {
     using Aircloak.JsonApi;
-    using Diffix;
     using Explorer.Api.Authentication;
-    using Explorer.Common;
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
