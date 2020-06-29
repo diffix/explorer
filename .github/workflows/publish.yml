@@ -20,4 +20,5 @@ jobs:
           registry: docker.pkg.github.com
           repository: diffix/explorer/explorer-api
           tag_with_ref: true
+          build_args: COMMIT_HASH={{ github.sha }},COMMIT_REF={{ github.ref }}
   
