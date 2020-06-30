@@ -17,7 +17,7 @@ namespace Explorer.Api
                 DValueType.Date => DatetimeExploration,
                 DValueType.Datetime => DatetimeExploration,
                 DValueType.Bool => BoolExploration,
-                DValueType.Unknown => throw new ArgumentException(
+                _ => throw new ArgumentException(
                     $"Cannot explore column type {columnType}.", nameof(columnType)),
             };
 
