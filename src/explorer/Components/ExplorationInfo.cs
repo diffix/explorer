@@ -7,7 +7,7 @@ namespace Explorer.Components
     using Explorer.Metrics;
 
     public class ExplorationInfo
-        : ExplorerComponent<bool>, PublisherComponent
+        : ExplorerComponent<ExplorationInfo.Result>, PublisherComponent
     {
         private readonly ExplorerContext ctx;
 
@@ -18,18 +18,34 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            await ResultAsync;
+            var r = await ResultAsync;
             yield return new UntypedMetric("exploration_info", new
             {
-                ctx.DataSource,
-                ctx.Table,
-                ctx.Column,
+                r.DataSource,
+                r.Table,
+                r.Column,
             });
         }
 
-        protected override Task<bool> Explore()
+        protected override Task<Result> Explore()
         {
-            return Task.FromResult(true);
+            return Task.FromResult(new Result(ctx.DataSource, ctx.Table, ctx.Column));
+        }
+
+        public class Result
+        {
+            public Result(string dataSource, string table, string column)
+            {
+                DataSource = dataSource;
+                Table = table;
+                Column = column;
+            }
+
+            public string DataSource { get; }
+
+            public string Table { get; }
+
+            public string Column { get; }
         }
     }
 }
