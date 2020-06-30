@@ -16,9 +16,10 @@ namespace Explorer.Tests
     public sealed class ExplorerTestFixture : IDisposable
     {
         private static readonly TestConfig Config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json")
+            .AddJsonFile($"{Environment.CurrentDirectory}/../../../../appsettings.Test.json")
             .AddEnvironmentVariables()
             .Build()
+            .GetSection("Explorer")
             .Get<TestConfig>();
 
         public ExplorerTestFixture()
