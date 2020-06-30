@@ -19,6 +19,7 @@
     {
         public static readonly ExplorerConfig Config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Development.json")
+            .AddEnvironmentVariables()
             .Build()
             .GetSection("Explorer")
             .Get<ExplorerConfig>();
@@ -32,8 +33,12 @@
 
         public static string GetAircloakApiKeyFromEnvironment()
         {
-            return Environment.GetEnvironmentVariable(ExplorerConfig.ApiKeyEnvironmentVariable) ??
-                throw new Exception($"Environment variable {ExplorerConfig.ApiKeyEnvironmentVariable} not set.");
+            if (string.IsNullOrEmpty(Config.AircloakApiKey))
+            {
+                throw new Exception("ApiKey needs to be set in environment or in config.");
+            }
+
+            return Config.AircloakApiKey;
         }
 
         public async Task<HttpResponseMessage> SendExplorerApiRequest(HttpMethod method, string endpoint, object? data, string testClassName, string vcrSessionName)
