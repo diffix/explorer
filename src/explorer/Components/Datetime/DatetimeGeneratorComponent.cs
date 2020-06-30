@@ -25,13 +25,10 @@ namespace Explorer.Components
 
             yield return new UntypedMetric(
                 name: "sample_values",
-                metric: new
-                {
-                    Count = SamplesToPublish,
-                    Samples = distribution
+                metric: distribution
                         .Generate(SamplesToPublish)
-                        .OrderBy(_ => _),
-                });
+                        .OrderBy(_ => _)
+                        .ToArray());
         }
     }
 }
