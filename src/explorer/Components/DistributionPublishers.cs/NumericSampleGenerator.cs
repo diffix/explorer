@@ -27,13 +27,11 @@ namespace Explorer.Components
         {
             yield return new UntypedMetric(
                 name: "sample_values",
-                metric: new
-                {
-                    Samples = distribution
+                metric: distribution
                         .Generate(SamplesToPublish)
                         .Select(s => ctx.ColumnType == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
-                        .OrderBy(_ => _),
-                });
+                        .OrderBy(_ => _)
+                        .ToArray());
         }
     }
 }
