@@ -7,8 +7,9 @@ namespace Explorer.Api
 
     public static class ComponentComposition
     {
-        public static Action<ExplorationConfig> ColumnConfiguration(DValueType columnType) =>
-            columnType switch
+        public static Action<ExplorationConfig> ColumnConfiguration(DValueType columnType)
+        {
+            Action<ExplorationConfig> typeBasedConfiguration = columnType switch
             {
                 DValueType.Integer => NumericExploration,
                 DValueType.Real => NumericExploration,
@@ -21,15 +22,26 @@ namespace Explorer.Api
                     $"Cannot explore column type {columnType}.", nameof(columnType)),
             };
 
-        private static void BoolExploration(ExplorationConfig config)
+            return config =>
+            {
+                CommonConfiguration(config);
+                typeBasedConfiguration(config);
+            };
+        }
+
+        private static void CommonConfiguration(ExplorationConfig config)
         {
             config.AddPublisher<ExplorationInfo>();
+            config.AddPublisher<ExplorerConfig>();
+        }
+
+        private static void BoolExploration(ExplorationConfig config)
+        {
             config.AddPublisher<DistinctValuesComponent>();
         }
 
         private static void NumericExploration(ExplorationConfig config)
         {
-            config.AddPublisher<ExplorationInfo>();
             config.AddPublisher<NumericHistogramComponent>();
             config.AddPublisher<QuartileEstimator>();
             config.AddPublisher<AverageEstimator>();
@@ -42,7 +54,6 @@ namespace Explorer.Api
 
         private static void TextExploration(ExplorationConfig config)
         {
-            config.AddPublisher<ExplorationInfo>();
             config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<EmailCheckComponent>();
             config.AddPublisher<TextGeneratorComponent>();
@@ -51,7 +62,6 @@ namespace Explorer.Api
 
         private static void DatetimeExploration(ExplorationConfig config)
         {
-            config.AddPublisher<ExplorationInfo>();
             config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<LinearTimeBuckets>();
             config.AddPublisher<CyclicalTimeBuckets>();
