@@ -13,7 +13,7 @@
 
     public sealed class ExplorationTestFixture : IDisposable
     {
-        private static readonly ExplorerConfig Config = new ConfigurationBuilder()
+        public static ExplorerConfig Config { get; } = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Development.json")
             .AddEnvironmentVariables()
             .Build()
