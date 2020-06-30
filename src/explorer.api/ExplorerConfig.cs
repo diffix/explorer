@@ -1,10 +1,14 @@
 namespace Explorer.Api
 {
-    using Aircloak.JsonApi;
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
 
-    public class ExplorerConfig : IAircloakAuthenticationProvider
+    using Aircloak.JsonApi;
+    using Explorer.Components;
+    using Explorer.Metrics;
+
+    public class ExplorerConfig : IAircloakAuthenticationProvider, PublisherComponent
     {
         public string AircloakApiKey { get; set; } = string.Empty;
 
@@ -17,5 +21,16 @@ namespace Explorer.Api
         public string CommitRef { get; set; } = string.Empty;
 
         public Task<string> GetAuthToken() => Task.FromResult(AircloakApiKey);
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            yield return new UntypedMetric(
+                name: "version_info",
+                metric: new
+                {
+                    CommitHash,
+                    CommitRef,
+                });
+        }
     }
 }
