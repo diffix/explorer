@@ -31,8 +31,8 @@
 	"remoteEnv": {
 		// [Optional] Override the default HTTP endpoints - need to listen to '*' for appPort to work
 		"ASPNETCORE_Kestrel__Endpoints__Http__Url": "http://*:5000",
-		// The api key should be defined in the local environment
-		"AIRCLOAK_API_KEY": "${localEnv:AIRCLOAK_API_KEY}"
+		// A development api key can be imported from the local environment
+		"Explorer__AircloakApiKey": "${localEnv:AIRCLOAK_API_KEY}"
 	},
 	// Add the IDs of extensions you want installed when the container is created in the array below.
 	"extensions": [

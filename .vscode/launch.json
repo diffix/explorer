@@ -16,21 +16,6 @@
             }
         },
         {
-            "name": "explorer.api nightly",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/explorer.api/bin/Debug/netcoreapp3.1/explorer.api.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/src/explorer.api",
-            "stopAtEntry": false,
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_URLS": "http://[::]:5000",
-                "AIRCLOAK_API_URL": "https://nightly-air.aircloak.com/api/"
-            }
-        },
-        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",
