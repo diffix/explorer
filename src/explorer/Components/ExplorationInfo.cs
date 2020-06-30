@@ -21,6 +21,7 @@ namespace Explorer.Components
                 ctx.DataSource,
                 ctx.Table,
                 ctx.Column,
+                ctx.ColumnType,
             });
         }
     }
