@@ -7,6 +7,13 @@ namespace Explorer.Components
     {
         public static T ResolvePublisherComponent<T>(this INestedContainer scope)
             where T : PublisherComponent
-        => (T)scope.GetInstance<PublisherComponent>(typeof(T).NameInCode());
+        {
+            // Try to resolve using the PublisherComponent interface. If this doesn't work, auto-resolve
+            // the concrete instance instead.
+            var fromCollection = (T)scope.TryGetInstance<PublisherComponent>(typeof(T).NameInCode());
+            return fromCollection is null
+                ? scope.GetInstance<T>()
+                : fromCollection;
+        }
     }
 }
