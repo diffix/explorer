@@ -16,13 +16,20 @@ namespace Explorer.Api
                 DValueType.Timestamp => DatetimeExploration,
                 DValueType.Date => DatetimeExploration,
                 DValueType.Datetime => DatetimeExploration,
-                DValueType.Bool => _ => _.AddPublisher<DistinctValuesComponent>(),
+                DValueType.Bool => BoolExploration,
                 DValueType.Unknown => throw new ArgumentException(
                     $"Cannot explore column type {columnType}.", nameof(columnType)),
             };
 
+        private static void BoolExploration(ExplorationConfig config)
+        {
+            config.AddPublisher<ExplorationInfo>();
+            config.AddPublisher<DistinctValuesComponent>();
+        }
+
         private static void NumericExploration(ExplorationConfig config)
         {
+            config.AddPublisher<ExplorationInfo>();
             config.AddPublisher<NumericHistogramComponent>();
             config.AddPublisher<QuartileEstimator>();
             config.AddPublisher<AverageEstimator>();
@@ -35,6 +42,7 @@ namespace Explorer.Api
 
         private static void TextExploration(ExplorationConfig config)
         {
+            config.AddPublisher<ExplorationInfo>();
             config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<EmailCheckComponent>();
             config.AddPublisher<TextGeneratorComponent>();
@@ -43,6 +51,7 @@ namespace Explorer.Api
 
         private static void DatetimeExploration(ExplorationConfig config)
         {
+            config.AddPublisher<ExplorationInfo>();
             config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<LinearTimeBuckets>();
             config.AddPublisher<CyclicalTimeBuckets>();
