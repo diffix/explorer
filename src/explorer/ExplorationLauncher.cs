@@ -57,8 +57,7 @@ namespace Explorer
             Action<ExplorationConfig> componentConfiguration)
         {
             // This scope (and all the components resolved within) should live until the end of the Task.
-            using var scope = rootContainer.GetNestedContainer();
-            return ExploreColumn(scope, conn, ctx, componentConfiguration);
+            return ExploreColumn(rootContainer.GetNestedContainer(), conn, ctx, componentConfiguration);
         }
 
         /// <summary>
