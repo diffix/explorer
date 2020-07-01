@@ -18,7 +18,7 @@
     public class TestWebAppFactory : WebApplicationFactory<Startup>
     {
         public static readonly ExplorerConfig Config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json")
+            .AddJsonFile("appsettings.Test.json")
             .AddEnvironmentVariables()
             .Build()
             .GetSection("Explorer")
