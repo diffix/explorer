@@ -93,6 +93,7 @@ namespace Explorer.Api
                     if (disposing)
                     {
                         tokenSource.Dispose();
+                        Exploration.Dispose();
                     }
                     disposedValue = true;
                 }

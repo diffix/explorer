@@ -1,13 +1,14 @@
 namespace Explorer
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
-    public sealed class Exploration
+    public sealed class Exploration : IDisposable
     {
+        private bool disposedValue;
+
         public Exploration(string dataSource, string table, IList<ColumnExploration> columnExplorations)
         {
             DataSource = dataSource;
@@ -45,6 +46,12 @@ namespace Explorer
             }
         }
 
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
         private static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
         {
             return status switch
@@ -59,6 +66,21 @@ namespace Explorer
                 TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
                 _ => throw new Exception("Unexpected TaskStatus: '{exploration.Status}'."),
             };
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    foreach (var item in ColumnExplorations)
+                    {
+                        item.Dispose();
+                    }
+                }
+                disposedValue = true;
+            }
         }
     }
 }
