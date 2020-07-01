@@ -11,6 +11,7 @@ namespace Aircloak.JsonApi
     using Aircloak.JsonApi.JsonConversion;
     using Aircloak.JsonApi.ResponseTypes;
     using Diffix;
+    using Diffix.JsonConversion;
 
     /// <summary>
     /// Convenience class providing GET and POST methods adapted to the
