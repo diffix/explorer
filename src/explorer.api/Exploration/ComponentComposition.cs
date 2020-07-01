@@ -32,7 +32,6 @@ namespace Explorer.Api
         private static void CommonConfiguration(ExplorationConfig config)
         {
             config.AddPublisher<ExplorationInfo>();
-            config.AddPublisher<ExplorerConfig>();
         }
 
         private static void BoolExploration(ExplorationConfig config)
