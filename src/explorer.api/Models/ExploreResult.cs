@@ -9,7 +9,7 @@ namespace Explorer.Api.Models
 
     internal class ExploreResult
     {
-        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table)
+        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table, VersionInfo versionInfo)
         {
             Id = explorationId;
             Status = status;
@@ -17,9 +17,10 @@ namespace Explorer.Api.Models
             Table = table;
             Columns = Array.Empty<ColumnMetricsCollection>();
             SampleData = Array.Empty<IEnumerable<object?>>();
+            VersionInfo = versionInfo;
         }
 
-        public ExploreResult(Guid explorationId, Exploration exploration)
+        public ExploreResult(Guid explorationId, Exploration exploration, VersionInfo versionInfo)
         {
             Id = explorationId;
             Status = exploration.Status;
@@ -30,11 +31,14 @@ namespace Explorer.Api.Models
                 new ColumnMetricsCollection(
                     ce.Column,
                     ce.PublishedMetrics.Select(m => new Metric(m.Name, m.Metric))));
+            VersionInfo = versionInfo;
         }
 
         public Guid Id { get; }
 
         public ExplorationStatus Status { get; }
+
+        public VersionInfo VersionInfo { get; }
 
         public string DataSource { get; }
 
