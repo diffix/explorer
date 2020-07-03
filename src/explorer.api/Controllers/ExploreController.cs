@@ -82,6 +82,8 @@ namespace Explorer.Api.Controllers
                 return NotFound($"Couldn't find exploration with id {explorationId}.");
             }
 
+            var exploreResult = new ExploreResult(explorationId, exploration);
+
             if (explorationStatus != ExplorationStatus.New && explorationStatus != ExplorationStatus.Processing)
             {
                 try
@@ -93,6 +95,21 @@ namespace Explorer.Api.Controllers
                     // Do nothing, just log the occurrence.
                     // A TaskCanceledException is expected when the client cancels an exploration.
                     logger.LogInformation($"Exploration {explorationId} was canceled.", null);
+                }
+                catch (AggregateException aex)
+                {
+                    // Log any other exceptions and add them to the response object.
+                    logger.LogWarning(aex, "Exceptions occurred in the exploration tasks.");
+                    foreach (var ex in aex.Flatten().InnerExceptions)
+                    {
+                        exploreResult.AddErrorMessage(ex.Message);
+                    }
+                }
+                catch (Exception ex)
+                    when (ex is Aircloak.JsonApi.Exceptions.ApiException)
+                {
+                    logger.LogWarning(ex, "Aircloak Api Error.");
+                    exploreResult.AddErrorMessage(ex.Message);
                 }
             }
 

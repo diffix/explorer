@@ -6,6 +6,7 @@
     using System.Text.Json;
     using System.Threading.Tasks;
 
+    using Aircloak.JsonApi.Exceptions;
     using Diffix;
     using Explorer.Queries;
     using Xunit;
@@ -214,6 +215,16 @@
             });
         }
 
+        [Fact]
+        public async void TestBadQueryThrowsException()
+        {
+            using var queryScope = testFixture.SimpleQueryTestScope(
+                "gda_banking",
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+
+            await Assert.ThrowsAnyAsync<ApiException>(async () => await queryScope.QueryRows(new BadQuery()));
+        }
+
         private class RepeatingRowsQuery : DQuery<RepeatingRowsQuery.Result>
         {
             public const string DataSet = "gda_banking";
@@ -278,6 +289,20 @@
                     reader.Read();
                 }
 
+                return default;
+            }
+
+            public struct Result
+            {
+            }
+        }
+
+        private class BadQuery : DQuery<BadQuery.Result>
+        {
+            public string QueryStatement => "this is not a query";
+
+            public Result ParseRow(ref Utf8JsonReader reader)
+            {
                 return default;
             }
 
