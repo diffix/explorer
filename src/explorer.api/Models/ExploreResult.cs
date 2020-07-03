@@ -48,6 +48,13 @@ namespace Explorer.Api.Models
 
         public IEnumerable<IEnumerable<object?>> SampleData { get; }
 
+        public List<string> Errors { get; } = new List<string>();
+
+        public void AddErrorMessage(string message)
+        {
+            Errors.Add(message);
+        }
+
         public class ColumnMetricsCollection
         {
             public ColumnMetricsCollection(string column, IEnumerable<Metric> metrics)
