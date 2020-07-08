@@ -22,7 +22,7 @@ Anonymized data from the Diffix-protected datasets is inherently restricted. The
 - Aircloak API Key
 
   You will need an authorization token for the Aircloak API. This should be assigned to the `AIRCLOAK_API_KEY`
-variable in your environment. 
+variable in your environment.
 
 - Docker
 
@@ -30,21 +30,21 @@ variable in your environment.
 
 ### Docker Image from github registry
 
-The most up-to-date version of the API is published as a docker image in the github registry, tagged `latest`. 
+The most up-to-date version of the API is published as a docker image in the github registry, tagged `latest`.
 
 In order to pull from the github registry you need to authenticate with a github access token:
 1. Go [here](https://github.com/settings/tokens) and create a new token with the `read:packages` permission.
 2. Save it in a file, for example `github_registry_token.txt`
-3. Authenticate with docker login using the generated token for your github username: 
+3. Authenticate with docker login using the generated token for your github username:
     ```
     cat github_registry_token.txt | docker login docker.pkg.github.com -u $GITHUB_USERNAME --password-stdin
     ```
-See [here](https://help.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages) for further information. 
+See [here](https://help.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages) for further information.
 
 
-With the above out of the way, you can download and run the latest image with a single docker command. 
+With the above out of the way, you can download and run the latest image with a single docker command.
 
-For example, the following exposes the Explorer API on port `5000`:
+For example, the following starts the Explorer in the foreground and exposes the API on port `5000`:
 
 ```
 docker run -it --rm \
@@ -52,6 +52,17 @@ docker run -it --rm \
     docker.pkg.github.com/diffix/explorer/explorer-api:latest
 ```
 
+The following command is better suited for running the Explorer long term. It will give the container a name
+and restart the service should it crash or the host be restarted.
+
+```
+docker run \
+    -d \
+    --name explorer \
+    --restart unless-stopped \
+    -p 5000:80 \
+    docker.pkg.github.com/diffix/explorer/explorer-api:latest
+```
 
 ### Docker build
 
@@ -59,7 +70,7 @@ You can also build and run the docker image locally.
 
 ```
 # 1. Clone this repo
-git clone https://github.com/diffix/explorer.git 
+git clone https://github.com/diffix/explorer.git
 
 # 2. Build the docker image
 docker build -t explorer explorer
@@ -71,25 +82,25 @@ docker run -it --rm -p 5000:80 explorer
 
 ## Usage
 
-> You will need an access token for the Aircloak API. If you don't have one, ask your local Aircloak admin. 
+> You will need an access token for the Aircloak API. If you don't have one, ask your local Aircloak admin.
 
 ### Launching an exploration
 
-Diffix Explorer exposes an `/explore` endpoint that expects a `POST` request containing the url of the Aircloak API, 
-and authentication token, and the dataset, table and column to analyse. Assuming you are running the Explorer on `localhost:5000` and you are targeting `https://attack.aircloak.com/api/`: 
+Diffix Explorer exposes an `/explore` endpoint that expects a `POST` request containing the url of the Aircloak API,
+and authentication token, and the dataset, table and column to analyse. Assuming you are running the Explorer on `localhost:5000` and you are targeting `https://attack.aircloak.com/api/`:
 
 ```bash
 curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/explore \
   -d "{
    \"ApiUrl\":\"https://attack.aircloak.com/api/\"
-   \"ApiKey\":\"my_secret_key\", 
-   \"DataSource\": \"gda_banking\", 
+   \"ApiKey\":\"my_secret_key\",
+   \"DataSource\": \"gda_banking\",
    \"Table\":\"loans\",
    \"Columns\":[\"amount\", \"firstname\"]
    }"
 ```
 
-This launches the column exploration and, if all goes well, returns a http 200 reponse with a json payload containing a unique `id`: 
+This launches the column exploration and, if all goes well, returns a http 200 reponse with a json payload containing a unique `id`:
 ```json
 {
   "versionInfo": {
@@ -98,7 +109,7 @@ This launches the column exploration and, if all goes well, returns a http 200 r
   },
   "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf",
   "status":"New",
-  "dataSource": "gda_banking", 
+  "dataSource": "gda_banking",
   "table":"loans",
   "columns":[],
   "sampleData":[]
@@ -113,7 +124,7 @@ You can use the exploration `id` to poll for results on the `/result` endpoint:
 curl -k http://localhost:5000/result/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
 
-The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics, e.g. for integer and text columns: 
+The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics, e.g. for integer and text columns:
 
 ```json
 {
@@ -123,11 +134,11 @@ The body of the response should again contain a json payload with an indication 
   },
   "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf",
   "status":"Processing",
-  "dataSource": "gda_banking", 
+  "dataSource": "gda_banking",
   "table":"loans",
   "columns":[
     {
-      "column":"amount", 
+      "column":"amount",
       "metrics":[
         {
           "name": "exploration_info",
@@ -227,9 +238,9 @@ For further examples, check out the basic [client implementations](src/clients).
 
 ## Development
 
-The simplest way to get a development environment up and running is with VS Code's remote containers feature. 
+The simplest way to get a development environment up and running is with VS Code's remote containers feature.
 
-> Detailed information on setting up remote containers for VS Code can be found 
+> Detailed information on setting up remote containers for VS Code can be found
 [here](https://code.visualstudio.com/docs/remote/containers#_getting-started).
 
 The short version:
@@ -243,7 +254,7 @@ The short version:
 
 If you want to use an editor other than VS Code, you will need [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1) to compile the source files on your local machine.
 
-> **Note**: Many of the tests run against data sources hosted at `https://attack.aircloak.com/api/`. To run the tests you will need to set the `AIRCLOAK_API_KEY` environment variable to a token that is valid for accessing this Aircloak instance. If you are using vs code remote containers, this environment variable will be propagated from your local environment to the development container. 
+> **Note**: Many of the tests run against data sources hosted at `https://attack.aircloak.com/api/`. To run the tests you will need to set the `AIRCLOAK_API_KEY` environment variable to a token that is valid for accessing this Aircloak instance. If you are using vs code remote containers, this environment variable will be propagated from your local environment to the development container.
 
 ## Additional reading
 
