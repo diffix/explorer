@@ -15,6 +15,7 @@ namespace Explorer.Tests
 
         public async Task Test<TComponent, TResult>(Action<TResult> test)
         where TComponent : ExplorerComponent<TResult>
+        where TResult : class
         {
             var c = Inner.Scope.GetInstance<TComponent>();
             var result = await c.ResultAsync;
