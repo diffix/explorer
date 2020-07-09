@@ -60,6 +60,8 @@ namespace Explorer.Components
 
                 reader.Read(); // ignore key type
 
+                reader.Read(); // ignore comment
+
                 return (name, isolator);
             }
         }
