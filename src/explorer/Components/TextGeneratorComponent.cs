@@ -51,9 +51,9 @@ namespace Explorer.Components
 
         protected override async Task<IEnumerable<string>> Explore()
         {
-            var isEmail = await emailChecker.ResultAsync;
+            var result = await emailChecker.ResultAsync;
 
-            return isEmail
+            return result.Value
                 ? await GenerateEmails()
                 : await GenerateStrings();
         }
