@@ -83,18 +83,25 @@ curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/explor
   -d "{
    \"ApiUrl\":\"https://attack.aircloak.com/api/\"
    \"ApiKey\":\"my_secret_key\", 
-   \"DataSourceName\": \"gda_banking\", 
-   \"TableName\":\"loans\",
-   \"ColumnName\":\"amount\"
+   \"DataSource\": \"gda_banking\", 
+   \"Table\":\"loans\",
+   \"Columns\":[\"amount\", \"firstname\"]
    }"
 ```
 
 This launches the column exploration and, if all goes well, returns a http 200 reponse with a json payload containing a unique `id`: 
 ```json
 {
+  "versionInfo": {
+    "commitHash": "7a35d2c8cd661947a6916179b49e6381f4878268",
+    "commitRef": "master"
+  },
+  "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf",
   "status":"New",
-  "metrics":[],
-  "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf"
+  "dataSource": "gda_banking", 
+  "table":"loans",
+  "columns":[],
+  "sampleData":[]
 }
 ```
 
@@ -106,25 +113,99 @@ You can use the exploration `id` to poll for results on the `/result` endpoint:
 curl -k http://localhost:5000/result/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
 
-The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics. For example for a text column: 
+The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics, e.g. for integer and text columns: 
 
 ```json
 {
-  "status":"Processing",
+  "versionInfo": {
+    "commitHash": "7a35d2c8cd661947a6916179b49e6381f4878268",
+    "commitRef": "master"
+  },
   "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf",
-  "metrics":[
-    {"name": "text.length.distinct.suppressed_count", "value": 16},
-    {"name": "text.length.distinct.values",
-      "value": [
-        {"value": 24, "count": 256},
-        {"value": 25, "count": 254},
-        {"value": 27, "count": 242},
-        {"..."},
-        {"value": 51, "count": 6},
-        {"value": 9, "count": 4},
-        {"value": 8, "count": 2}]},
-    {"name": "text.length.naive_max", "value": 49},
-    {"name": "text.length.naive_min", "value": 15}
+  "status":"Processing",
+  "dataSource": "gda_banking", 
+  "table":"loans",
+  "columns":[
+    {
+      "column":"amount", 
+      "metrics":[
+        {
+          "name": "exploration_info",
+          "value": {
+            "dataSource": "gda_banking",
+            "table": "loans",
+            "column": "amount",
+            "columnType": "integer"
+          }
+        },
+        {
+          "name": "distinct.is_categorical",
+          "value": false
+        },
+        {
+          "name": "refined_min",
+          "value": 3303
+        },
+        {
+          "name": "refined_max",
+          "value": 495103
+        },
+        {
+          "name": "average_estimate",
+          "value": 113750.413223
+        },
+        {
+          "name": "quartile_estimates",
+          "value": [ 58000, 90181.81818181818, 161000 ]
+        },
+        {
+          "name": "sample_values",
+          "value": [ 11000, 37000, 47000, 57000, 61000, 95000, 95000, 101000, 117000, 137000, 141000, 159000, 171000, 185000, 203000, 271000, 285000, 309000, 309000, 369000 ]
+        }
+      ]
+    },
+    {
+      "column": "firstname",
+      "metrics": [
+        {
+          "name": "exploration_info",
+          "value": {
+            "dataSource": "gda_banking",
+            "table": "loans",
+            "column": "firstname"
+          }
+        },
+        {
+          "name": "is_email",
+          "value": false
+        },
+        {
+          "name": "distinct.is_categorical",
+          "value": false
+        },
+        {
+          "name": "sample_values",
+          "value": [ "Stenor", "Brad", "Ele", "Abrley", "Chritia", "Brieine", "Wynley", "Cam", "Jusson", "Sam" ]
+        }
+      ]
+    }
+  ],
+  "sampleData": [
+    [ 17000, "Clatau" ],
+    [ 39000, "Bryina" ],
+    [ 45000, "Ale" ],
+    [ 67000, "Zen" ],
+    [ 73000, "Jorlle" ],
+    [ 91000, "Cole" ],
+    [ 103000, "Jessti" ],
+    [ 117000, "Abra" ],
+    [ 123000, "Pric" ],
+    [ 137000, "Karlie" ],
+    [ 149000, "Just" ],
+    [ 259000, "Quison" ],
+    [ 309000, "Madlle" ],
+    [ null, "Abra" ],
+    [ null, "Darson" ],
   ]
 }
 ```

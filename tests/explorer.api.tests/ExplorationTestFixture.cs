@@ -7,12 +7,18 @@
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using VcrSharp;
 
     public sealed class ExplorationTestFixture : IDisposable
     {
-        private const string ApiKeyEnvironmentVariable = "AIRCLOAK_API_KEY";
+        public static ExplorerConfig Config { get; } = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.Development.json")
+            .AddEnvironmentVariables()
+            .Build()
+            .GetSection("Explorer")
+            .Get<ExplorerConfig>();
 
         public ExplorationTestFixture()
         {
@@ -23,8 +29,7 @@
                 registry.Injectable<Cassette>();
 
                 // Configure Authentication
-                registry.For<IAircloakAuthenticationProvider>().Use(_ =>
-                    StaticApiKeyAuthProvider.FromEnvironmentVariable(ApiKeyEnvironmentVariable));
+                registry.For<IAircloakAuthenticationProvider>().Use(Config);
 
                 // Singleton services
                 registry.AddLogging();

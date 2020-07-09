@@ -11,6 +11,7 @@
     using Aircloak.JsonApi;
     using Explorer.Api;
     using Explorer.Api.Authentication;
+    using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,8 @@
     public class TestWebAppFactory : WebApplicationFactory<Startup>
     {
         public static readonly ExplorerConfig Config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json")
+            .AddJsonFile($"{Environment.CurrentDirectory}/../../../../appsettings.Test.json")
+            .AddEnvironmentVariables()
             .Build()
             .GetSection("Explorer")
             .Get<ExplorerConfig>();
@@ -32,8 +34,12 @@
 
         public static string GetAircloakApiKeyFromEnvironment()
         {
-            return Environment.GetEnvironmentVariable(ExplorerConfig.ApiKeyEnvironmentVariable) ??
-                throw new Exception($"Environment variable {ExplorerConfig.ApiKeyEnvironmentVariable} not set.");
+            if (string.IsNullOrEmpty(Config.AircloakApiKey))
+            {
+                throw new Exception("ApiKey needs to be set in environment or in config.");
+            }
+
+            return Config.AircloakApiKey;
         }
 
         public async Task<HttpResponseMessage> SendExplorerApiRequest(HttpMethod method, string endpoint, object? data, string testClassName, string vcrSessionName)
@@ -85,7 +91,7 @@
         }
 #pragma warning restore CA1822 // method should be made static
 
-        protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             var testConfig = GetTestConfig(GetType().Name, "WebHost.OutgoingRequests");
 

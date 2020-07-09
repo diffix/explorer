@@ -1,6 +1,6 @@
 #pragma warning disable CA1812 // DValueTypeEnumConverter is an internal class that is apparently never instantiated.
 
-namespace Aircloak.JsonApi.JsonConversion
+namespace Diffix.JsonConversion
 {
     using System;
     using System.Text.Json;
@@ -11,7 +11,7 @@ namespace Aircloak.JsonApi.JsonConversion
     /// <summary>
     /// <c>JsonConverter</c> for (de)serializing the <see cref="ValueType" /> enum as a string.
     /// </summary>
-    internal class DValueTypeEnumConverter : JsonConverter<DValueType>
+    public class DValueTypeEnumConverter : JsonConverter<DValueType>
     {
         private const string Integer = "integer";
         private const string Real = "real";

@@ -20,13 +20,16 @@ namespace Explorer.Api.Controllers
     {
         private readonly ILogger<ExploreController> logger;
         private readonly ExplorationRegistry explorationRegistry;
+        private readonly VersionInfo versionInfo;
 
         public ExploreController(
             ILogger<ExploreController> logger,
-            ExplorationRegistry explorationRegistry)
+            ExplorationRegistry explorationRegistry,
+            VersionInfo versionInfo)
         {
             this.logger = logger;
             this.explorationRegistry = explorationRegistry;
+            this.versionInfo = versionInfo;
         }
 
         [HttpPost]
@@ -56,7 +59,7 @@ namespace Explorer.Api.Controllers
             // Register the exploration for future reference.
             var id = explorationRegistry.Register(exploration, cts);
 
-            return Ok(new ExploreResult(id, ExplorationStatus.New, data.DataSource, data.Table));
+            return Ok(new ExploreResult(id, ExplorationStatus.New, data.DataSource, data.Table, versionInfo));
         }
 
         [HttpGet]
@@ -93,7 +96,7 @@ namespace Explorer.Api.Controllers
                 }
             }
 
-            return Ok(new ExploreResult(explorationId, exploration));
+            return Ok(new ExploreResult(explorationId, exploration, versionInfo));
         }
 
         [HttpGet]

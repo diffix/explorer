@@ -4,18 +4,23 @@ namespace Explorer.Tests
     using System.Net.Http;
     using System.Runtime.CompilerServices;
     using System.Threading;
-
+    using System.Threading.Tasks;
     using Aircloak.JsonApi;
     using Diffix;
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
+    using Microsoft.Extensions.Configuration;
     using VcrSharp;
 
     public sealed class ExplorerTestFixture : IDisposable
     {
-        public static readonly Uri ApiUrl = new Uri("https://attack.aircloak.com/api/");
-        private const string ApiKeyEnvironmentVariable = "AIRCLOAK_API_KEY";
+        private static readonly TestConfig Config = new ConfigurationBuilder()
+            .AddJsonFile($"{Environment.CurrentDirectory}/../../../../appsettings.Test.json")
+            .AddEnvironmentVariables()
+            .Build()
+            .GetSection("Explorer")
+            .Get<TestConfig>();
 
         public ExplorerTestFixture()
         {
@@ -26,8 +31,7 @@ namespace Explorer.Tests
                 registry.Injectable<Cassette>();
 
                 // Configure Authentication
-                registry.For<IAircloakAuthenticationProvider>().Use(_ =>
-                    StaticApiKeyAuthProvider.FromEnvironmentVariable(ApiKeyEnvironmentVariable));
+                registry.For<IAircloakAuthenticationProvider>().Use(Config).Singleton();
 
                 // Cancellation
                 registry.Injectable<CancellationTokenSource>();
@@ -37,7 +41,11 @@ namespace Explorer.Tests
 
                 registry.IncludeRegistry<ComponentRegistry>();
             });
+
+            ApiUri = new Uri(Config.DefaultApiUrl);
         }
+
+        public Uri ApiUri { get; }
 
         public Container Container { get; }
 
@@ -51,7 +59,7 @@ namespace Explorer.Tests
             string vcrFilename) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
-                .WithConnectionParams(ApiUrl, dataSource);
+                .WithConnectionParams(ApiUri, dataSource);
 
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Allow calling context to dispose the scope.)
         public ComponentTestScope SimpleComponentTestScope(
@@ -62,13 +70,22 @@ namespace Explorer.Tests
             DValueType columnType = DValueType.Unknown) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
-                .WithConnectionParams(ApiUrl, dataSource)
+                .WithConnectionParams(ApiUri, dataSource)
                 .WithContext(dataSource, table, column, columnType);
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
         public void Dispose()
         {
             Container.Dispose();
+        }
+
+        private class TestConfig : IAircloakAuthenticationProvider
+        {
+            public string AircloakApiKey { get; set; } = string.Empty;
+
+            public string DefaultApiUrl { get; set; } = string.Empty;
+
+            public Task<string> GetAuthToken() => Task.FromResult(AircloakApiKey);
         }
     }
 }

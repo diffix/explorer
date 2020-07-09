@@ -1,13 +1,14 @@
 namespace Explorer.Components
 {
     using System.Collections.Generic;
-    using System.Threading.Tasks;
+    using System.Text.Json.Serialization;
 
+    using Diffix;
+    using Diffix.JsonConversion;
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class ExplorationInfo
-        : ExplorerComponent<ExplorationInfo.Result>, PublisherComponent
+    public class ExplorationInfo : PublisherComponent
     {
         private readonly ExplorerContext ctx;
 
@@ -16,36 +17,18 @@ namespace Explorer.Components
             this.ctx = ctx;
         }
 
+        public string DataSource { get => ctx.DataSource; }
+
+        public string Table { get => ctx.Table; }
+
+        public string Column { get => ctx.Column; }
+
+        [JsonConverter(typeof(DValueTypeEnumConverter))]
+        public DValueType ColumnType { get => ctx.ColumnType; }
+
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var r = await ResultAsync;
-            yield return new UntypedMetric("exploration_info", new
-            {
-                r.DataSource,
-                r.Table,
-                r.Column,
-            });
-        }
-
-        protected override Task<Result> Explore()
-        {
-            return Task.FromResult(new Result(ctx.DataSource, ctx.Table, ctx.Column));
-        }
-
-        public class Result
-        {
-            public Result(string dataSource, string table, string column)
-            {
-                DataSource = dataSource;
-                Table = table;
-                Column = column;
-            }
-
-            public string DataSource { get; }
-
-            public string Table { get; }
-
-            public string Column { get; }
+            yield return new UntypedMetric("exploration_info", this);
         }
     }
 }
