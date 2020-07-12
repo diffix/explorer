@@ -3,6 +3,7 @@
     "configurations": [
         {
             "name": "explorer.api",
+            "console": "integratedTerminal",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
