@@ -17,6 +17,7 @@ namespace Explorer.Tests
 
         public async Task ResultTest<TComponent, TResult>(Action<TResult> test)
         where TComponent : ResultProvider<TResult>
+        where TResult : class
         {
             // Resolve the component using the interface to ensure correct scope
             var c = Inner.Scope.GetInstance<ResultProvider<TResult>>();

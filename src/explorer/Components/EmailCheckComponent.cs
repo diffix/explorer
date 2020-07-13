@@ -9,7 +9,7 @@ namespace Explorer.Components
     using Explorer.Metrics;
     using Explorer.Queries;
 
-    public class EmailCheckComponent : ExplorerComponent<bool>, PublisherComponent
+    public class EmailCheckComponent : ExplorerComponent<EmailCheckComponent.Result>, PublisherComponent
     {
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
@@ -25,14 +25,24 @@ namespace Explorer.Components
             yield return new UntypedMetric(name: "is_email", metric: await ResultAsync);
         }
 
-        protected override Task<bool> Explore() => CheckIsEmail(conn, ctx);
+        protected override Task<Result> Explore() => CheckIsEmail(conn, ctx);
 
-        private static async Task<bool> CheckIsEmail(DConnection conn, ExplorerContext ctx)
+        private static async Task<Result> CheckIsEmail(DConnection conn, ExplorerContext ctx)
         {
             var emailCheck = await conn.Exec(
                 new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, Constants.EmailAddressChars));
+            var isEmail = emailCheck.Rows.All(r => r.IsNull || (!r.IsSuppressed && r.Value == "@"));
+            return new Result(isEmail);
+        }
 
-            return emailCheck.Rows.All(r => r.IsNull || (!r.IsSuppressed && r.Value == "@"));
+        public class Result
+        {
+            public Result(bool value)
+            {
+                IsEmail = value;
+            }
+
+            public bool IsEmail { get; }
         }
     }
 }
