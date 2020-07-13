@@ -40,10 +40,10 @@ namespace Explorer.Components
         {
             public Result(bool value)
             {
-                Value = value;
+                IsEmail = value;
             }
 
-            public bool Value { get; }
+            public bool IsEmail { get; }
         }
     }
 }

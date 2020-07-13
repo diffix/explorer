@@ -53,7 +53,7 @@ namespace Explorer.Components
         {
             var result = await emailChecker.ResultAsync;
 
-            return result.Value
+            return result.IsEmail
                 ? await GenerateEmails()
                 : await GenerateStrings();
         }
