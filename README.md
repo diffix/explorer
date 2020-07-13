@@ -19,16 +19,14 @@ Anonymized data from the Diffix-protected datasets is inherently restricted. The
 
 ### Prerequisites
 
-- Aircloak API Key
+#### Aircloak API Key
 
-  You will need an authorization token for the Aircloak API. This should be assigned to the `AIRCLOAK_API_KEY`
+You will need an authorization token for the Aircloak API. This should be assigned to the `AIRCLOAK_API_KEY`
 variable in your environment.
 
-- Docker
+#### Docker
 
-  Not a strict requirement, but the easiest way to get started is with [Docker](https://www.docker.com/get-started).
-
-### Docker Image from github registry
+Not a strict requirement, but the easiest way to get started is with [Docker](https://www.docker.com/get-started).
 
 The most up-to-date version of the API is published as a docker image in the github registry, tagged `latest`.
 
@@ -41,6 +39,9 @@ In order to pull from the github registry you need to authenticate with a github
     ```
 See [here](https://help.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages) for further information.
 
+## Running
+
+### Pre-built Docker Image
 
 With the above out of the way, you can download and run the latest image with a single docker command.
 
@@ -256,7 +257,9 @@ The short version:
 
 If you want to use an editor other than VS Code, you will need [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1) to compile the source files on your local machine.
 
-> **Note**: Many of the tests run against data sources hosted at `https://attack.aircloak.com/api/`. To run the tests you will need to set the `AIRCLOAK_API_KEY` environment variable to a token that is valid for accessing this Aircloak instance. If you are using vs code remote containers, this environment variable will be propagated from your local environment to the development container.
+### Testing
+
+Many of the tests run against data sources hosted at `https://attack.aircloak.com/api/`. To run the tests you will need to set the `AIRCLOAK_API_KEY` environment variable to a token that is valid for accessing this Aircloak instance. If you are using vs code remote containers, this environment variable will be propagated from your local environment to the development container.
 
 ## Additional reading
 
