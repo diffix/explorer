@@ -3,13 +3,14 @@ namespace Explorer.Api.Models
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.Json;
     using System.Text.Json.Serialization;
 
     using Explorer;
 
     internal class ExploreResult
     {
-        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table, VersionInfo versionInfo)
+        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table)
         {
             Id = explorationId;
             Status = status;
@@ -17,10 +18,9 @@ namespace Explorer.Api.Models
             Table = table;
             Columns = Array.Empty<ColumnMetricsCollection>();
             SampleData = Array.Empty<IEnumerable<object?>>();
-            VersionInfo = versionInfo;
         }
 
-        public ExploreResult(Guid explorationId, Exploration exploration, VersionInfo versionInfo)
+        public ExploreResult(Guid explorationId, Exploration exploration)
         {
             Id = explorationId;
             Status = exploration.Status;
@@ -32,14 +32,19 @@ namespace Explorer.Api.Models
                     ce.Column,
                     Exploration.ConvertToExplorationStatus(ce.Completion.Status),
                     ce.PublishedMetrics.Select(m => new Metric(m.Name, m.Metric))));
-            VersionInfo = versionInfo;
         }
 
         public Guid Id { get; }
 
         public ExplorationStatus Status { get; }
 
-        public VersionInfo VersionInfo { get; }
+#pragma warning disable CA1822 // member can be marked as static
+        // Note:
+        // It would be simpler to define the property as static instead of implementing this through a separate static
+        // member variable, however the default json serializer ignores static fields. This is a way to make sure the
+        // VersionInfo is included in the serialized output.
+        public VersionInfo VersionInfo { get => VersionInfo.ForThisAssembly(); }
+#pragma warning restore CA1822 // member can be marked as static
 
         public string DataSource { get; }
 

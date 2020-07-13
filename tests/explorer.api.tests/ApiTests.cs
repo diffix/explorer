@@ -56,6 +56,9 @@
                 Assert.True(
                     rootEl.TryGetProperty("status", out var status),
                     $"Expected a 'status' property in:\n{content}");
+                Assert.True(
+                    rootEl.TryGetProperty("versionInfo", out var versionInfo),
+                    $"Expected a 'versionInfo' property in:\n{content}");
             });
         }
 
