@@ -8,7 +8,7 @@ namespace Explorer.Api
     using Explorer.Components;
     using Explorer.Metrics;
 
-    public class ExplorerConfig : IAircloakAuthenticationProvider, PublisherComponent
+    public class ExplorerConfig : IAircloakAuthenticationProvider
     {
         public string AircloakApiKey { get; set; } = string.Empty;
 
@@ -16,21 +16,10 @@ namespace Explorer.Api
 
         public TimeSpan PollFrequencyTimeSpan => TimeSpan.FromMilliseconds(PollFrequency);
 
-        public string CommitHash { get; set; } = string.Empty;
+        public string? CommitHash { get; set; }
 
         public string CommitRef { get; set; } = string.Empty;
 
         public Task<string> GetAuthToken() => Task.FromResult(AircloakApiKey);
-
-        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
-        {
-            yield return new UntypedMetric(
-                name: "version_info",
-                metric: new
-                {
-                    CommitHash,
-                    CommitRef,
-                });
-        }
     }
 }
