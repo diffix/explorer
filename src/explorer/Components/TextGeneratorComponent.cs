@@ -51,9 +51,9 @@ namespace Explorer.Components
 
         protected override async Task<IEnumerable<string>> Explore()
         {
-            var isEmail = await emailChecker.ResultAsync;
+            var result = await emailChecker.ResultAsync;
 
-            return isEmail
+            return result.IsEmail
                 ? await GenerateEmails()
                 : await GenerateStrings();
         }
@@ -75,28 +75,6 @@ namespace Explorer.Components
             return SubstringWithCountList.FromValueWithCountEnum(
                 suffixes.Rows
                     .Where(r => r.HasValue && r.Value.StartsWith(".", StringComparison.InvariantCulture)));
-        }
-
-        private async Task<IEnumerable<string>> GenerateEmails()
-        {
-            var (substrings, domains, tlds) = await Utilities.WhenAll(
-                ExploreSubstrings(
-                    conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
-                ExploreEmailDomains(conn, ctx),
-                ExploreEmailTopLevelDomains(conn, ctx));
-
-            return await Task.Run(() => GenerateEmails(
-                    substrings, domains, tlds, GeneratedValuesCount, EmailDomainsCountThreshold));
-        }
-
-        private async Task<IEnumerable<string>> GenerateStrings()
-        {
-            // the substring lengths 3 and 4 were determined empirically to work for column containing names
-            var substrings = await ExploreSubstrings(
-                conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
-            var rand = new Random(Environment.TickCount);
-            return Enumerable.Range(0, GeneratedValuesCount).Select(_
-                => GenerateString(substrings, minLength: 3, rand));
         }
 
         private static string GenerateString(SubstringsData substrings, int minLength, Random rand)
@@ -217,6 +195,28 @@ namespace Explorer.Components
                 }
             }
             return substrings;
+        }
+
+        private async Task<IEnumerable<string>> GenerateEmails()
+        {
+            var (substrings, domains, tlds) = await Utilities.WhenAll(
+                ExploreSubstrings(
+                    conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
+                ExploreEmailDomains(conn, ctx),
+                ExploreEmailTopLevelDomains(conn, ctx));
+
+            return await Task.Run(() => GenerateEmails(
+                    substrings, domains, tlds, GeneratedValuesCount, EmailDomainsCountThreshold));
+        }
+
+        private async Task<IEnumerable<string>> GenerateStrings()
+        {
+            // the substring lengths 3 and 4 were determined empirically to work for column containing names
+            var substrings = await ExploreSubstrings(
+                conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
+            var rand = new Random(Environment.TickCount);
+            return Enumerable.Range(0, GeneratedValuesCount).Select(_
+                => GenerateString(substrings, minLength: 3, rand));
         }
     }
 }
