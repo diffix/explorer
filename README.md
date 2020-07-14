@@ -104,16 +104,17 @@ curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/explor
 This launches the column exploration and, if all goes well, returns a http 200 reponse with a json payload containing a unique `id`:
 ```json
 {
-  "versionInfo": {
-    "commitHash": "7a35d2c8cd661947a6916179b49e6381f4878268",
-    "commitRef": "master"
-  },
-  "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf",
-  "status":"New",
-  "dataSource": "gda_banking",
-  "table":"loans",
-  "columns":[],
-  "sampleData":[]
+    "id": "e55a1a4a-a0e4-4673-9ecf-fae66a704d7d",
+    "status": "New",
+    "versionInfo": {
+        "commitRef": "master",
+        "commitHash": "7a35d2c8cd661947a6916179b49e6381f4878268"
+    },
+    "dataSource": "gda_banking",
+    "table": "loans",
+    "columns": [],
+    "sampleData": [],
+    "errors": []
 }
 ```
 
@@ -218,7 +219,8 @@ The body of the response should again contain a json payload with an indication 
     [ 309000, "Madlle" ],
     [ null, "Abra" ],
     [ null, "Darson" ],
-  ]
+  ],
+  "errors": []
 }
 ```
 
