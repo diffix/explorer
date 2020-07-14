@@ -1,6 +1,7 @@
 namespace Aircloak.JsonApi
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -11,11 +12,17 @@ namespace Aircloak.JsonApi
     /// </summary>
     public class AircloakConnection : DConnection
     {
+        private const int MaxConcurrentRequests = 10;
+
+        private static readonly ConcurrentDictionary<Uri, SemaphoreSlim> Semaphores =
+            new ConcurrentDictionary<Uri, SemaphoreSlim>();
+
         private readonly string dataSourceName;
         private readonly Uri apiUrl;
         private readonly JsonApiClient apiClient;
         private readonly TimeSpan pollFrequency;
         private readonly CancellationToken cancellationToken;
+        private readonly SemaphoreSlim semaphore;
 
         /// <summary>
         /// Initializes a new  instance of the <see cref="AircloakConnection" /> class.
@@ -37,17 +44,27 @@ namespace Aircloak.JsonApi
             this.dataSourceName = dataSourceName;
             this.pollFrequency = pollFrequency;
             this.cancellationToken = cancellationToken;
+            semaphore = Semaphores.GetOrAdd(apiUrl, _ => new SemaphoreSlim(MaxConcurrentRequests));
         }
 
         /// <inheritdoc />
         public async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
         {
-            return await apiClient.Query(
-                apiUrl,
-                dataSourceName,
-                query,
-                pollFrequency,
-                cancellationToken);
+            await semaphore.WaitAsync(cancellationToken);
+
+            try
+            {
+                return await apiClient.Query(
+                    apiUrl,
+                    dataSourceName,
+                    query,
+                    pollFrequency,
+                    cancellationToken);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
     }
 }
