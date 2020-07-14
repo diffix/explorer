@@ -2,15 +2,22 @@ namespace Explorer.Api
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using Explorer;
+    using Microsoft.Extensions.Logging;
 
     public class ExplorationRegistry
     {
         private readonly ConcurrentDictionary<Guid, Registration> registrations =
             new ConcurrentDictionary<Guid, Registration>();
+
+        public ILogger<ExplorationRegistry> Logger { get; }
+
+        public ExplorationRegistry(ILogger<ExplorationRegistry> logger)
+        {
+            Logger = logger;
+        }
 
         public Guid Register(Exploration exploration, CancellationTokenSource tokenSource)
         {
@@ -20,26 +27,19 @@ namespace Explorer.Api
             return id;
         }
 
-        public async Task Remove(Guid id)
+        public void Remove(Guid id)
         {
-            registrations.Remove(id, out var registration);
-
-            try
+            if (!registrations.TryGetValue(id, out var registration))
             {
-                if (registration is null)
-                {
-                    return;
-                }
+                return;
+            }
+
+            if (registration.Status == ExplorationStatus.Processing)
+            {
                 registration.CancelExploration();
+            }
 
-                // Wait for the task to finish before disposing the registration.
-                // This will also allow any Exceptions to surface.
-                await registration.Exploration.Completion;
-            }
-            finally
-            {
-                registration?.Dispose();
-            }
+            registration.Dispose();
         }
 
         public ExplorationStatus GetStatus(Guid id) => registrations[id].Status;
