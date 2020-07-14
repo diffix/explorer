@@ -85,7 +85,8 @@ namespace Explorer.Api.Controllers
             {
                 try
                 {
-                    await explorationRegistry.Remove(explorationId);
+                    // Await the completion task to force exceptions to the surface.
+                    await exploration.Completion;
                 }
                 catch (TaskCanceledException)
                 {
@@ -93,20 +94,20 @@ namespace Explorer.Api.Controllers
                     // A TaskCanceledException is expected when the client cancels an exploration.
                     logger.LogInformation($"Exploration {explorationId} was canceled.", null);
                 }
-                catch (AggregateException aex)
+                catch (Exception)
+                    when (!(exploration.Completion.Exception is null))
                 {
-                    // Log any other exceptions and add them to the response object.
-                    logger.LogWarning(aex, "Exceptions occurred in the exploration tasks.");
-                    foreach (var ex in aex.Flatten().InnerExceptions)
+                    // Log any other exceptions from the explorer and add them to the response object.
+                    logger.LogWarning($"Exceptions occurred in the exploration tasks for exploration {explorationId}.");
+
+                    foreach (var innerEx in exploration.Completion.Exception!.Flatten().InnerExceptions)
                     {
-                        exploreResult.AddErrorMessage(ex.Message);
+                        exploreResult.AddErrorMessage(innerEx.Message);
                     }
                 }
-                catch (Exception ex)
-                    when (ex is Aircloak.JsonApi.Exceptions.ApiException)
+                finally
                 {
-                    logger.LogWarning(ex, "Aircloak Api Error.");
-                    exploreResult.AddErrorMessage(ex.Message);
+                    explorationRegistry.Remove(explorationId);
                 }
             }
 
