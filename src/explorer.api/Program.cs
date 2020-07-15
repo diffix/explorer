@@ -27,6 +27,7 @@ namespace Explorer.Api
                 {
                     builder.UseStartup<Startup>();
                     builder.UseConfiguration(config);
+                    builder.UseSentry();
 
                     builder.ConfigureServices((_, services) => services.AddControllers());
                 });
