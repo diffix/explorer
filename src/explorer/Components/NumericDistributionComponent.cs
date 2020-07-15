@@ -6,12 +6,13 @@
 
     using Accord.Statistics.Distributions.Univariate;
     using Explorer.Common;
+    using Explorer.Components.ResultTypes;
 
     public class NumericDistributionComponent : ExplorerComponent<NumericDistribution>
     {
-        private readonly ResultProvider<NumericHistogramComponent.Result> histogramResultProvider;
+        private readonly ResultProvider<HistogramWithCounts> histogramResultProvider;
 
-        public NumericDistributionComponent(ResultProvider<NumericHistogramComponent.Result> histogramResultProvider)
+        public NumericDistributionComponent(ResultProvider<HistogramWithCounts> histogramResultProvider)
         {
             this.histogramResultProvider = histogramResultProvider;
         }
