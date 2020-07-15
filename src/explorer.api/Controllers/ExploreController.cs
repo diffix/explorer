@@ -102,6 +102,7 @@ namespace Explorer.Api.Controllers
 
                     foreach (var innerEx in exploration.Completion.Exception!.Flatten().InnerExceptions)
                     {
+                        logger.LogWarning(innerEx, "Exception occurred in exploration task.");
                         exploreResult.AddErrorMessage(innerEx.Message);
                     }
                 }
