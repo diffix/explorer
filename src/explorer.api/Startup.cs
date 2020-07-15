@@ -11,6 +11,7 @@ namespace Explorer.Api
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Logging;
 
     public class Startup
     {
@@ -83,8 +84,10 @@ namespace Explorer.Api
         {
             var container = (IContainer)app.ApplicationServices;
 
-            System.Console.WriteLine(container.WhatDoIHave());
-            System.Console.WriteLine(container.WhatDidIScan());
+            var logger = container.GetInstance<ILogger<Startup>>();
+
+            logger.LogInformation(container.WhatDoIHave());
+            logger.LogInformation(container.WhatDidIScan());
 
             container.AssertConfigurationIsValid();
         }
