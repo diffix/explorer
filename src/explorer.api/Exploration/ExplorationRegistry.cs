@@ -3,7 +3,6 @@ namespace Explorer.Api
     using System;
     using System.Collections.Concurrent;
     using System.Threading;
-    using System.Threading.Tasks;
     using Explorer;
     using Microsoft.Extensions.Logging;
 
@@ -12,12 +11,12 @@ namespace Explorer.Api
         private readonly ConcurrentDictionary<Guid, Registration> registrations =
             new ConcurrentDictionary<Guid, Registration>();
 
-        public ILogger<ExplorationRegistry> Logger { get; }
-
         public ExplorationRegistry(ILogger<ExplorationRegistry> logger)
         {
             Logger = logger;
         }
+
+        public ILogger<ExplorationRegistry> Logger { get; }
 
         public Guid Register(Exploration exploration, CancellationTokenSource tokenSource)
         {
@@ -34,9 +33,9 @@ namespace Explorer.Api
                 return;
             }
 
-            if (registration.Status == ExplorationStatus.Processing)
+            if (registration.Status == ExplorationStatus.Processing || registration.Status == ExplorationStatus.New)
             {
-                registration.CancelExploration();
+                throw new InvalidOperationException("Exploration should not be removed before completion.");
             }
 
             registration.Dispose();
