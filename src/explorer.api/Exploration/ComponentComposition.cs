@@ -42,7 +42,8 @@ namespace Explorer.Api
 
         private static void NumericExploration(ExplorationConfig config)
         {
-            config.AddPublisher<NumericHistogramComponent>();
+            config.AddPublisher<HistogramSelectorComponent>();
+            config.AddPublisher<MinMaxFromHistogramComponent>();
             config.AddPublisher<QuartileEstimator>();
             config.AddPublisher<AverageEstimator>();
             config.AddPublisher<MinMaxRefiner>();
