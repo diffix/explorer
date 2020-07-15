@@ -7,6 +7,7 @@ namespace Explorer.Components
 
     using Diffix;
     using Explorer.Common;
+    using Explorer.Components.ResultTypes;
     using Explorer.Metrics;
     using Explorer.Queries;
 
@@ -15,16 +16,38 @@ namespace Explorer.Components
         private const int MaxIterations = 10;
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
+        private readonly ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider;
 
-        public MinMaxRefiner(DConnection conn, ExplorerContext ctx)
+        public MinMaxRefiner(
+            DConnection conn,
+            ExplorerContext ctx,
+            ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
         {
             this.ctx = ctx;
+            this.histogramMinMaxProvider = histogramMinMaxProvider;
             this.conn = conn;
+        }
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            var bounds = await ResultAsync;
+
+            if (!(bounds is null))
+            {
+                yield return new UntypedMetric("min", bounds.Min, priority: 10);
+                yield return new UntypedMetric("max", bounds.Max, priority: 10);
+            }
         }
 
         protected override async Task<Result> Explore()
         {
-            return new Result(await RefinedMinEstimate(), await RefinedMaxEstimate());
+            var histogramBounds = await histogramMinMaxProvider.ResultAsync;
+
+#pragma warning disable CS8603 // Possible null reference return
+            return histogramBounds is null
+                ? new Result(await RefinedMinEstimate(), await RefinedMaxEstimate())
+                : null;
+#pragma warning restore CS8603 // Possible null reference return
         }
 
         private async Task<decimal> RefinedMinEstimate()
@@ -99,25 +122,12 @@ namespace Explorer.Components
             return maxQ.Rows.Single().Max;
         }
 
-        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        public class Result : NumericColumnBounds
         {
-            var result = await ResultAsync;
-
-            yield return new UntypedMetric("refined_max", result.Max);
-            yield return new UntypedMetric("refined_min", result.Min);
-        }
-
-        public class Result
-        {
-            public Result(decimal min, decimal max)
+            internal Result(decimal min, decimal max)
+            : base(min, max)
             {
-                Max = max;
-                Min = min;
             }
-
-            public decimal Min { get; }
-
-            public decimal Max { get; }
         }
     }
 }
