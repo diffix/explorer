@@ -5,5 +5,7 @@ namespace Explorer.Metrics
         public string Name { get; }
 
         public object Metric { get; }
+
+        public int Priority { get; }
     }
 }
