@@ -6,6 +6,7 @@
 - [Getting started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Running](#running)
+  - [Usage](#usage)
   - [Development](#development)
 - [Additional reading](#additional-reading)
 
