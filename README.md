@@ -173,7 +173,8 @@ The body of the response should again contain a json payload with an indication 
           "name": "sample_values",
           "value": [ 11000, 37000, 47000, 57000, 61000, 95000, 95000, 101000, 117000, 137000, 141000, 159000, 171000, 185000, 203000, 271000, 285000, 309000, 309000, 369000 ]
         }
-      ]
+      ],
+      "status":"Processing"
     },
     {
       "column": "firstname",
@@ -198,7 +199,8 @@ The body of the response should again contain a json payload with an indication 
           "name": "sample_values",
           "value": [ "Stenor", "Brad", "Ele", "Abrley", "Chritia", "Brieine", "Wynley", "Cam", "Jusson", "Sam" ]
         }
-      ]
+      ],
+      "status":"Processing"
     }
   ],
   "sampleData": [
