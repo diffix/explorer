@@ -30,6 +30,7 @@ namespace Explorer.Api.Models
             Columns = exploration.ColumnExplorations.Select(ce =>
                 new ColumnMetricsCollection(
                     ce.Column,
+                    Exploration.ConvertToExplorationStatus(ce.Completion.Status),
                     ce.PublishedMetrics.Select(m => new Metric(m.Name, m.Metric))));
         }
 
@@ -62,11 +63,14 @@ namespace Explorer.Api.Models
 
         public class ColumnMetricsCollection
         {
-            public ColumnMetricsCollection(string column, IEnumerable<Metric> metrics)
+            public ColumnMetricsCollection(string column, ExplorationStatus status, IEnumerable<Metric> metrics)
             {
                 Column = column;
+                Status = status;
                 Metrics = metrics;
             }
+
+            public ExplorationStatus Status { get; }
 
             public string Column { get; }
 

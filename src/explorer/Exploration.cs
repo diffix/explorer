@@ -47,13 +47,7 @@ namespace Explorer
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        private static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
+        public static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
         {
             return status switch
             {
@@ -67,6 +61,12 @@ namespace Explorer
                 TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
                 _ => throw new Exception("Unexpected TaskStatus: '{exploration.Status}'."),
             };
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
