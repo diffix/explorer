@@ -3,10 +3,10 @@ namespace Explorer.Api.Models
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text.Json;
     using System.Text.Json.Serialization;
 
     using Explorer;
+    using Explorer.Metrics;
 
     internal class ExploreResult
     {
@@ -31,7 +31,7 @@ namespace Explorer.Api.Models
                 new ColumnMetricsCollection(
                     ce.Column,
                     Exploration.ConvertToExplorationStatus(ce.Completion.Status),
-                    ce.PublishedMetrics.Select(m => new Metric(m.Name, m.Metric))));
+                    ce.PublishedMetrics));
         }
 
         public Guid Id { get; }
@@ -63,33 +63,18 @@ namespace Explorer.Api.Models
 
         public class ColumnMetricsCollection
         {
-            public ColumnMetricsCollection(string column, ExplorationStatus status, IEnumerable<Metric> metrics)
+            public ColumnMetricsCollection(string column, ExplorationStatus status, IEnumerable<ExploreMetric> metrics)
             {
                 Column = column;
                 Status = status;
-                Metrics = metrics;
+                Metrics = metrics.ToDictionary(m => m.Name, m => m.Metric);
             }
 
             public ExplorationStatus Status { get; }
 
             public string Column { get; }
 
-            public IEnumerable<Metric> Metrics { get; }
-        }
-
-        public class Metric
-        {
-            public Metric(string name, object value)
-            {
-                MetricName = name;
-                MetricValue = value;
-            }
-
-            [JsonPropertyName("name")]
-            public string MetricName { get; set; }
-
-            [JsonPropertyName("value")]
-            public object MetricValue { get; set; }
+            public Dictionary<string, object> Metrics { get; }
         }
     }
 }
