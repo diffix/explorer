@@ -20,10 +20,11 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
+            var column = ctx.Column[1..^1];
             var isolators = await conn.Exec(new IsolatorQuery(ctx.Table));
-            var isIsolatorColumn = isolators.Rows.First(r => r.Item1 == ctx.Column).Item2;
+            var isIsolatorColumn = isolators.Rows.First(r => r.Item1 == column).Item2;
 
-            return new Result(ctx.Column, isIsolatorColumn);
+            return new Result(column, isIsolatorColumn);
         }
 
         public class Result
