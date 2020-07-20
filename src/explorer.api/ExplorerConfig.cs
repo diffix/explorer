@@ -16,10 +16,6 @@ namespace Explorer.Api
 
         public TimeSpan PollFrequencyTimeSpan => TimeSpan.FromMilliseconds(PollFrequency);
 
-        public string? CommitHash { get; set; }
-
-        public string CommitRef { get; set; } = string.Empty;
-
         public Task<string> GetAuthToken() => Task.FromResult(AircloakApiKey);
     }
 }
