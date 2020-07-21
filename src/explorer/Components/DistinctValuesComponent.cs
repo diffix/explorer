@@ -78,9 +78,11 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            var distinctValueQ = await conn.Exec(
-                new DistinctColumnValues(ctx.Table, ctx.Column));
-
+            if (ctx.ColumnInfo.UserId)
+            {
+                return new Result(Enumerable.Empty<ValueWithCount<JsonElement>>());
+            }
+            var distinctValueQ = await conn.Exec(new DistinctColumnValues(ctx.Table, ctx.Column));
             return new Result(distinctValueQ.Rows.OrderByDescending(r => r.Count));
         }
 
