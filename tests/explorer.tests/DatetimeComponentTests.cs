@@ -3,6 +3,7 @@ namespace Explorer.Tests
     using System.Linq;
 
     using Diffix;
+    using Explorer.Common;
     using Explorer.Components;
     using Xunit;
 
@@ -22,8 +23,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
-                ExplorerTestFixture.GenerateVcrFilename(this),
-                DValueType.Datetime);
+                new ColumnInfo(DValueType.Datetime, ColumnInfo.ColumnType.Regular),
+                ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
@@ -39,8 +40,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "birthdate",
-                ExplorerTestFixture.GenerateVcrFilename(this),
-                DValueType.Date);
+                new ColumnInfo(DValueType.Date, ColumnInfo.ColumnType.Isolating),
+                ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
@@ -56,8 +57,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
-                ExplorerTestFixture.GenerateVcrFilename(this),
-                DValueType.Datetime);
+                new ColumnInfo(DValueType.Datetime, ColumnInfo.ColumnType.Regular),
+                ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
@@ -74,8 +75,8 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "birthdate",
-                ExplorerTestFixture.GenerateVcrFilename(this),
-                DValueType.Date);
+                new ColumnInfo(DValueType.Date, ColumnInfo.ColumnType.Isolating),
+                ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {

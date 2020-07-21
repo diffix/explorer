@@ -3,6 +3,9 @@ namespace Explorer.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
+
+    using Diffix;
+    using Explorer.Common;
     using Explorer.Components;
     using VcrSharp;
     using Xunit;
@@ -23,6 +26,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "clients",
                 "email",
+                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Isolating),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
@@ -43,6 +47,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "cards",
                 "email",
+                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Isolating),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
@@ -63,6 +68,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "cards",
                 "firstname",
+                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Regular),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
@@ -78,6 +84,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "cards",
                 "lastname",
+                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Isolating),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));

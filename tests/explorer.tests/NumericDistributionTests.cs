@@ -2,6 +2,8 @@
 {
     using System.Linq;
 
+    using Diffix;
+    using Explorer.Common;
     using Explorer.Components;
     using Xunit;
 
@@ -21,11 +23,12 @@
                 "gda_banking",
                 "loans",
                 "duration",
+                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.MetricsTest<NumericSampleGenerator>(result =>
             {
-                // TODO: Check metrics against schema definition
+                // TODO: Check metrics aga
                 Assert.True(result.Any());
             });
         }
@@ -37,12 +40,11 @@
                 "GiveMeSomeCredit",
                 "loans",
                 "age",
+                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.MetricsTest<DistributionAnalysisComponent>(result =>
-            {
-                Assert.True(result.Any());
-            });
+                Assert.True(result.Any()));
         }
 
         [Fact]
@@ -52,12 +54,11 @@
                 "GiveMeSomeCredit",
                 "loans",
                 "age",
+                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.MetricsTest<DescriptiveStatsPublisher>(result =>
-            {
-                Assert.True(result.Any());
-            });
+                Assert.True(result.Any()));
         }
     }
 }
