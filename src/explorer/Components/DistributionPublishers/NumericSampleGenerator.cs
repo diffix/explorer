@@ -31,7 +31,7 @@ namespace Explorer.Components
                 name: "sample_values",
                 metric: distribution
                         .Generate(SamplesToPublish)
-                        .Select(s => ctx.ColumnType == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
+                        .Select(s => ctx.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
                         .OrderBy(_ => _)
                         .ToArray());
         }

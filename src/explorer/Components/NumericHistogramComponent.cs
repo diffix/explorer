@@ -52,7 +52,7 @@ namespace Explorer.Components
                 stats.Min,
                 stats.Max,
                 ValuesPerBucketTarget,
-                isIntegerColumn: ctx.ColumnType == DValueType.Integer);
+                isIntegerColumn: ctx.ColumnInfo.Type == DValueType.Integer);
 
             var histogramQ = await conn.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 

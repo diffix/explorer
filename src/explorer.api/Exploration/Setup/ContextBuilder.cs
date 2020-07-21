@@ -39,7 +39,8 @@
                 {
                     throw new MetaDataCheckException($"Could not find column '{dataSource}.{table}.{column}'.");
                 }
-                return new CheckedContext(dataSource, table, column, columnInfo.Type);
+                var ci = new ColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating ?? true);
+                return new CheckedContext(dataSource, table, column, ci);
             });
         }
 
@@ -49,12 +50,12 @@
         /// </summary>
         private class CheckedContext : ExplorerContext
         {
-            internal CheckedContext(string dataSource, string table, string column, DValueType columnType)
+            internal CheckedContext(string dataSource, string table, string column, ColumnInfo columnInfo)
             {
                 DataSource = dataSource;
                 Table = table;
                 Column = column;
-                ColumnType = columnType;
+                ColumnInfo = columnInfo;
             }
 
             public string DataSource { get; }
@@ -63,7 +64,7 @@
 
             public string Column { get; }
 
-            public DValueType ColumnType { get; }
+            public ColumnInfo ColumnInfo { get; }
         }
     }
 }
