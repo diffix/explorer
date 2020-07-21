@@ -105,24 +105,6 @@ namespace Explorer.Tests
             });
         }
 
-        // [Theory]
-        // [InlineData("birth_number", new ColumnInfo(DValueType.Text, ))]
-        // [InlineData("district_id", false)]
-        // public async void TestIsolatorComponent(string column, bool isIsolator)
-        // {
-        //     using var scope = testFixture.SimpleComponentTestScope(
-        //         "gda_banking",
-        //         "clients",
-        //         column,
-        //         vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
-
-        //     await scope.ResultTest<IsolatorCheckComponent, IsolatorCheckComponent.Result>(result =>
-        //     {
-        //         Assert.Equal(result.ColumnName, column);
-        //         Assert.Equal(result.IsIsolatorColumn, isIsolator);
-        //     });
-        // }
-
         private void CheckDistinctCategories<T>(
             DistinctValuesComponent.Result distinctValuesResult,
             IEnumerable<ValueWithCount<T>> expectedValues,

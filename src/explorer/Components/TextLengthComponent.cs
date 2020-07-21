@@ -14,16 +14,11 @@ namespace Explorer.Components
     {
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
-        private readonly ResultProvider<IsolatorCheckComponent.Result> isolatorCheck;
 
-        public TextLengthComponent(
-            DConnection conn,
-            ExplorerContext ctx,
-            ResultProvider<IsolatorCheckComponent.Result> isolatorCheck)
+        public TextLengthComponent(DConnection conn, ExplorerContext ctx)
         {
             this.ctx = ctx;
             this.conn = conn;
-            this.isolatorCheck = isolatorCheck;
         }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
@@ -50,9 +45,7 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            var isolator = await isolatorCheck.ResultAsync;
-
-            if (isolator.IsIsolatorColumn)
+            if (ctx.ColumnInfo.Isolating)
             {
                 return Result.Failed();
             }
@@ -63,7 +56,7 @@ namespace Explorer.Components
             return Result.Ok(new DistinctValuesComponent.Result(distinctResult.Rows));
         }
 
-        public class Result
+        public sealed class Result
         {
             private Result(bool success)
             {
