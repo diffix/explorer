@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lamar" Version="4.3.0" />
+    <PackageReference Include="Lamar" Version="4.3.1" />
     <PackageReference Include="Accord.Statistics" Version="3.8.0" />
   </ItemGroup>
 
