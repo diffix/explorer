@@ -28,7 +28,7 @@
 
             await scope.MetricsTest<NumericSampleGenerator>(result =>
             {
-                // TODO: Check metrics aga
+                // TODO: Check metrics against schema definition
                 Assert.True(result.Any());
             });
         }
