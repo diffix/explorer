@@ -7,15 +7,20 @@ namespace Explorer.Queries
 
     internal class DistinctColumnValues : DQuery<ValueWithCount<JsonElement>>
     {
-        public DistinctColumnValues(string tableName, string columnName)
+        public DistinctColumnValues(DSqlObjectName tableName, string expression)
         {
             QueryStatement = $@"
                 select
-                    {columnName},
+                    {expression},
                     count(*),
                     count_noise(*)
                 from {tableName}
-                group by {columnName}";
+                group by {expression}";
+        }
+
+        public DistinctColumnValues(DSqlObjectName tableName, DSqlObjectName columnName)
+        : this(tableName, columnName.ToString())
+        {
         }
 
         public string QueryStatement { get; }

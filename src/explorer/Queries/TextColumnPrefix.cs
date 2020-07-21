@@ -8,11 +8,11 @@ namespace Explorer.Queries
     internal class TextColumnPrefix :
         DQuery<ValueWithCount<string>>
     {
-        public TextColumnPrefix(string tableName, string columnName, int length)
+        public TextColumnPrefix(DSqlObjectName tableName, DSqlObjectName columnName, int length)
         {
             // TODO: determine prefix length dynamically
             QueryStatement = $@"
-                select 
+                select
                     left({columnName}, {length}),
                     count(*),
                     count_noise(*)

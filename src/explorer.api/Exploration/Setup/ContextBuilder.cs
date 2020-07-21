@@ -52,16 +52,16 @@
             internal CheckedContext(string dataSource, string table, string column, DValueType columnType)
             {
                 DataSource = dataSource;
-                Table = table;
-                Column = column;
+                Table = new DSqlObjectName(table);
+                Column = new DSqlObjectName(column);
                 ColumnType = columnType;
             }
 
             public string DataSource { get; }
 
-            public string Table { get; }
+            public DSqlObjectName Table { get; }
 
-            public string Column { get; }
+            public DSqlObjectName Column { get; }
 
             public DValueType ColumnType { get; }
         }

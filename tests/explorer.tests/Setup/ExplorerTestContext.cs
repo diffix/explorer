@@ -19,9 +19,9 @@ namespace Explorer.Tests
 
         public string DataSource { get; set; } = string.Empty;
 
-        public string Table { get; set; } = string.Empty;
+        public DSqlObjectName Table { get; set; } = new DSqlObjectName(string.Empty);
 
-        public string Column { get; set; } = string.Empty;
+        public DSqlObjectName Column { get; set; } = new DSqlObjectName(string.Empty);
 
         public DValueType ColumnType { get; set; } = DValueType.Unknown;
     }

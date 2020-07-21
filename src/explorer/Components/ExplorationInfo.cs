@@ -19,9 +19,9 @@ namespace Explorer.Components
 
         public string DataSource { get => ctx.DataSource; }
 
-        public string Table { get => ctx.Table; }
+        public string Table { get => ctx.Table.Name; }
 
-        public string Column { get => ctx.Column; }
+        public string Column { get => ctx.Column.Name; }
 
         [JsonConverter(typeof(DValueTypeEnumConverter))]
         public DValueType ColumnType { get => ctx.ColumnType; }

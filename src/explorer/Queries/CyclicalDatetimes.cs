@@ -25,7 +25,7 @@ namespace Explorer.Queries
             "second",
         };
 
-        public CyclicalDatetimes(string tableName, string columnName, DValueType columnType = DValueType.Datetime)
+        public CyclicalDatetimes(DSqlObjectName tableName, DSqlObjectName columnName, DValueType columnType = DValueType.Datetime)
         {
             QueryComponents = columnType switch
             {

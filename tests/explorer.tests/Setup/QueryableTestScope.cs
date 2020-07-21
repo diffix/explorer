@@ -43,8 +43,8 @@ namespace Explorer.Tests
                 new ExplorerTestContext
                 {
                     DataSource = dataSource,
-                    Table = tableName,
-                    Column = columnName,
+                    Table = new DSqlObjectName(tableName),
+                    Column = new DSqlObjectName(columnName),
                     ColumnType = columnType,
                 });
             return new ComponentTestScope(Inner);

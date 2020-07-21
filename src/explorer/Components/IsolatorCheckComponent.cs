@@ -21,9 +21,9 @@ namespace Explorer.Components
         protected override async Task<Result> Explore()
         {
             var isolators = await conn.Exec(new IsolatorQuery(ctx.Table));
-            var isIsolatorColumn = isolators.Rows.First(r => r.Item1 == ctx.Column).Item2;
+            var isIsolatorColumn = isolators.Rows.First(r => r.Item1 == ctx.Column.Name).Item2;
 
-            return new Result(ctx.Column, isIsolatorColumn);
+            return new Result(ctx.Column.Name, isIsolatorColumn);
         }
 
         public class Result
@@ -41,7 +41,7 @@ namespace Explorer.Components
 
         private class IsolatorQuery : DQuery<(string, bool)>
         {
-            public IsolatorQuery(string table)
+            public IsolatorQuery(DSqlObjectName table)
             {
                 QueryStatement = $"show columns from {table}";
             }

@@ -29,8 +29,8 @@
 
             var result = await queryScope.QueryRows(
                 new DistinctColumnValues(
-                    tableName: "loans",
-                    columnName: "duration"));
+                    tableName: new DSqlObjectName("loans"),
+                    columnName: new DSqlObjectName("duration")));
 
             Assert.All(result, row =>
             {
@@ -51,8 +51,8 @@
 
             var realResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
-                    tableName: "loans",
-                    columnName: "payments"));
+                    tableName: new DSqlObjectName("loans"),
+                    columnName: new DSqlObjectName("payments")));
 
             Assert.All(realResult, row =>
             {
@@ -72,8 +72,8 @@
 
             var textResult = await queryScope.QueryRows(
                 new DistinctColumnValues(
-                    tableName: "loans",
-                    columnName: "gender"));
+                    tableName: new DSqlObjectName("loans"),
+                    columnName: new DSqlObjectName("gender")));
 
             Assert.All(textResult, row =>
             {
@@ -95,7 +95,9 @@
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             var datetimeResult = await queryScope.QueryRows(
-                new DistinctColumnValues(tableName: "survey", columnName: "first_caught"));
+                new DistinctColumnValues(
+                    tableName: new DSqlObjectName("survey"),
+                    columnName: new DSqlObjectName("first_caught")));
 
             Assert.True(datetimeResult.Any());
             Assert.All(datetimeResult, row =>
@@ -116,8 +118,8 @@
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
             var result = await queryScope.QueryRows(
                 new SingleColumnHistogram(
-                    "loans",
-                    "amount",
+                    new DSqlObjectName("loans"),
+                    new DSqlObjectName("amount"),
                     bucketSizes));
 
             Assert.All(result, row =>
@@ -139,8 +141,8 @@
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
-                    "rides",
-                    "pickup_datetime"));
+                    new DSqlObjectName("rides"),
+                    new DSqlObjectName("pickup_datetime")));
 
             Assert.All(result, row => Assert.True(row.Count > 0));
         }
@@ -154,8 +156,8 @@
 
             var result = await queryScope.QueryRows(
                 query: new CyclicalDatetimes(
-                    "rides",
-                    "birthdate",
+                    new DSqlObjectName("rides"),
+                    new DSqlObjectName("birthdate"),
                     DValueType.Date));
 
             Assert.All(result, row => Assert.True(row.Count > 0));
@@ -170,8 +172,8 @@
 
             var result = await queryScope.QueryRows(
                 query: new BucketedDatetimes(
-                    "rides",
-                    "pickup_datetime"));
+                    new DSqlObjectName("rides"),
+                    new DSqlObjectName("pickup_datetime")));
 
             Assert.All(result, row => Assert.True(row.Count > 0));
         }
