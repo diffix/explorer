@@ -5,24 +5,30 @@ namespace Explorer.Tests
 
     public class ExplorerTestContext : ExplorerContext
     {
-        public ExplorerTestContext()
+        public ExplorerTestContext(string dataSource, string table, string column, DValueType columnType)
         {
+            DataSource = dataSource;
+            Table = Quote(table);
+            Column = Quote(column);
+            ColumnType = columnType;
         }
 
         public ExplorerTestContext(ExplorerContext ctx)
         {
             DataSource = ctx.DataSource;
-            Table = ctx.Table;
-            Column = ctx.Column;
+            Table = Quote(ctx.Table);
+            Column = Quote(ctx.Column);
             ColumnType = ctx.ColumnType;
         }
 
-        public string DataSource { get; set; } = string.Empty;
+        public string DataSource { get; }
 
-        public string Table { get; set; } = string.Empty;
+        public string Table { get; }
 
-        public string Column { get; set; } = string.Empty;
+        public string Column { get; }
 
-        public DValueType ColumnType { get; set; } = DValueType.Unknown;
+        public DValueType ColumnType { get; }
+
+        private static string Quote(string name) => "\"" + name + "\"";
     }
 }

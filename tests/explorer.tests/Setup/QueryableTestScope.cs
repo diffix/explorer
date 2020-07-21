@@ -40,13 +40,7 @@ namespace Explorer.Tests
             DValueType columnType = DValueType.Unknown)
         {
             Inner.Scope.Inject<ExplorerContext>(
-                new ExplorerTestContext
-                {
-                    DataSource = dataSource,
-                    Table = tableName,
-                    Column = columnName,
-                    ColumnType = columnType,
-                });
+                new ExplorerTestContext(dataSource, tableName, columnName, columnType));
             return new ComponentTestScope(Inner);
         }
 

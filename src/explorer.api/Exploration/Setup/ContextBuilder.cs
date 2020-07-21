@@ -39,11 +39,10 @@
                 {
                     throw new MetaDataCheckException($"Could not find column '{dataSource}.{table}.{column}'.");
                 }
-                return new CheckedContext(dataSource, Quote(table), Quote(column), columnInfo.Type);
+                return new CheckedContext(dataSource, table, column, columnInfo.Type);
             });
         }
 
-        private static string Quote(string name) => "\"" + name + "\"";
 
         /// <summary>
         /// An <see cref="ExplorerContext" /> that has been checked to make sure the datasource,
@@ -54,8 +53,8 @@
             internal CheckedContext(string dataSource, string table, string column, DValueType columnType)
             {
                 DataSource = dataSource;
-                Table = table;
-                Column = column;
+                Table = Quote(table);
+                Column = Quote(column);
                 ColumnType = columnType;
             }
 
@@ -66,6 +65,9 @@
             public string Column { get; }
 
             public DValueType ColumnType { get; }
+
+            private static string Quote(string name) => "\"" + name + "\"";
         }
+
     }
 }
