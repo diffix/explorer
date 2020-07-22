@@ -27,7 +27,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "loans",
                 "amount",
-                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<MinMaxRefiner, MinMaxRefiner.Result>(result =>
@@ -46,7 +46,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "loans",
                 "duration",
-                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             scope.ConfigurePublisher<DistinctValuesComponent>(c => c.NumValuesToPublish = 1);
@@ -66,7 +66,7 @@ namespace Explorer.Tests
                 "cov_clear",
                 "survey",
                 "fever",
-                new ColumnInfo(DValueType.Bool, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Bool, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
@@ -88,7 +88,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "loans",
                 "status",
-                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>

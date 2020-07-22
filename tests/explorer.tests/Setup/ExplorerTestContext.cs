@@ -10,7 +10,7 @@ namespace Explorer.Tests
             DataSource = string.Empty;
             Table = string.Empty;
             Column = string.Empty;
-            ColumnInfo = new ColumnInfo(DValueType.Unknown, false, true);
+            ColumnInfo = new DColumnInfo(DValueType.Unknown, false, true);
         }
 
         public ExplorerTestContext(ExplorerContext ctx)
@@ -27,6 +27,6 @@ namespace Explorer.Tests
 
         public string Column { get; set; }
 
-        public ColumnInfo ColumnInfo { get; set; }
+        public DColumnInfo ColumnInfo { get; set; }
     }
 }

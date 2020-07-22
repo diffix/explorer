@@ -23,7 +23,7 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
-                new ColumnInfo(DValueType.Datetime, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Datetime, DColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
@@ -40,7 +40,7 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "birthdate",
-                new ColumnInfo(DValueType.Date, ColumnInfo.ColumnType.Isolating),
+                new DColumnInfo(DValueType.Date, DColumnInfo.ColumnType.Isolating),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
@@ -57,7 +57,7 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "pickup_datetime",
-                new ColumnInfo(DValueType.Datetime, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Datetime, DColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
@@ -75,7 +75,7 @@ namespace Explorer.Tests
                 "gda_taxi",
                 "rides",
                 "birthdate",
-                new ColumnInfo(DValueType.Date, ColumnInfo.ColumnType.Isolating),
+                new DColumnInfo(DValueType.Date, DColumnInfo.ColumnType.Isolating),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>

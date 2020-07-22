@@ -67,7 +67,7 @@ namespace Explorer.Tests
             string dataSource,
             string table,
             string column,
-            ColumnInfo columnInfo,
+            DColumnInfo columnInfo,
             string vcrFilename) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)

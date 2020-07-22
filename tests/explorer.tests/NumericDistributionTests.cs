@@ -23,7 +23,7 @@
                 "gda_banking",
                 "loans",
                 "duration",
-                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.MetricsTest<NumericSampleGenerator>(result =>
@@ -40,7 +40,7 @@
                 "GiveMeSomeCredit",
                 "loans",
                 "age",
-                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.MetricsTest<DistributionAnalysisComponent>(result =>
@@ -54,7 +54,7 @@
                 "GiveMeSomeCredit",
                 "loans",
                 "age",
-                new ColumnInfo(DValueType.Integer, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.MetricsTest<DescriptiveStatsPublisher>(result =>

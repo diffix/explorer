@@ -10,6 +10,6 @@ namespace Explorer.Common
 
         public string Column { get; }
 
-        public ColumnInfo ColumnInfo { get; }
+        public DColumnInfo ColumnInfo { get; }
     }
 }

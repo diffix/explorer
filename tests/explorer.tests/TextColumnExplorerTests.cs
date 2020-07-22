@@ -26,7 +26,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "clients",
                 "email",
-                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Isolating),
+                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Isolating),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
@@ -47,7 +47,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "cards",
                 "email",
-                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Isolating),
+                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Isolating),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
@@ -68,7 +68,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "cards",
                 "firstname",
-                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Regular),
+                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Regular),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
@@ -84,7 +84,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "cards",
                 "lastname",
-                new ColumnInfo(DValueType.Text, ColumnInfo.ColumnType.Isolating),
+                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Isolating),
                 Cassette.GenerateVcrFilename(this));
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));

@@ -38,7 +38,7 @@ namespace Explorer.Tests
             string dataSource,
             string tableName,
             string columnName,
-            ColumnInfo columnInfo)
+            DColumnInfo columnInfo)
         {
             Inner.Scope.Inject<ExplorerContext>(
                 new ExplorerTestContext
