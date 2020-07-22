@@ -113,6 +113,25 @@ namespace Explorer.Tests
             });
         }
 
+        [Fact]
+        public async Task TestHistogramMinMaxComponent()
+        {
+            using var scope = testFixture.SimpleComponentTestScope(
+                "gda_banking",
+                "loans",
+                "duration",
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+
+            await scope.ResultTest<MinMaxFromHistogramComponent, MinMaxFromHistogramComponent.Result>(result =>
+            {
+                const decimal expectedMin = 12.0M;
+                const decimal expectedMax = 61.0M;
+                Assert.True(result.Min == expectedMin, $"Expected {expectedMin}, got {result.Min}");
+                Assert.True(result.Max == expectedMax, $"Expected {expectedMax}, got {result.Max}");
+            });
+        }
+
         private void CheckDistinctCategories<T>(
             DistinctValuesComponent.Result distinctValuesResult,
             IEnumerable<ValueWithCount<T>> expectedValues,
