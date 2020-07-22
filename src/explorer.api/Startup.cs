@@ -28,6 +28,7 @@ namespace Explorer.Api
         public void ConfigureContainer(ServiceRegistry services)
         {
             services.AddControllers();
+            services.AddApiVersioning();
 
             var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
             services.AddSingleton(config);
