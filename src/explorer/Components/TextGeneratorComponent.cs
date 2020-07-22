@@ -22,12 +22,18 @@ namespace Explorer.Components
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
         private readonly EmailCheckComponent emailChecker;
+        private readonly DistinctValuesComponent distinctValues;
 
-        public TextGeneratorComponent(DConnection conn, ExplorerContext ctx, EmailCheckComponent emailChecker)
+        public TextGeneratorComponent(
+            DConnection conn,
+            ExplorerContext ctx,
+            EmailCheckComponent emailChecker,
+            DistinctValuesComponent distinctValues)
         {
             this.conn = conn;
             this.ctx = ctx;
             this.emailChecker = emailChecker;
+            this.distinctValues = distinctValues;
             SamplesToPublish = DefaultSamplesToPublish;
             EmailDomainsCountThreshold = DefaultEmailDomainsCountThreshold;
             SubstringQueryColumnCount = DefaultSubstringQueryColumnCount;
@@ -51,12 +57,15 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            var result = await emailChecker.ResultAsync;
-
-            var sampleValues = result.IsEmail
-                ? await GenerateEmails()
-                : await GenerateStrings();
-
+            var sampleValues = Enumerable.Empty<string>();
+            var distinctValuesResult = await distinctValues.ResultAsync;
+            if (!distinctValuesResult.IsCategorical)
+            {
+                var emailCheckerResult = await emailChecker.ResultAsync;
+                sampleValues = emailCheckerResult.IsEmail
+                    ? await GenerateEmails()
+                    : await GenerateStrings();
+            }
             return new Result(sampleValues.ToList());
         }
 
