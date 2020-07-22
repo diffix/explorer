@@ -30,13 +30,21 @@ namespace Explorer.Tests
                 new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.ResultTest<MinMaxRefiner, MinMaxRefiner.Result>(result =>
+            // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
+            var refiner = new MinMaxRefiner(
+                scope.Conn,
+                scope.Ctx,
+                new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null));
+
+            TestResult(await refiner.ResultAsync);
+
+            static void TestResult(MinMaxRefiner.Result result)
             {
                 const decimal expectedMin = 3303;
                 const decimal expectedMax = 495_103;
                 Assert.True(result.Min == expectedMin, $"Expected {expectedMin}, got {result.Min}");
                 Assert.True(result.Max == expectedMax, $"Expected {expectedMax}, got {result.Max}");
-            });
+            }
         }
 
         [Fact]
@@ -132,6 +140,16 @@ namespace Explorer.Tests
             Assert.True(
                 actualSuppressed == expectedSuppressed,
                 $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
+        }
+
+        public class StaticResultProvider<T> : ResultProvider<T>
+        {
+            public StaticResultProvider(T result)
+            {
+                ResultAsync = Task.FromResult(result);
+            }
+
+            public Task<T> ResultAsync { get; }
         }
     }
 }
