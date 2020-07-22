@@ -13,7 +13,7 @@ namespace Explorer.Components
 
     using SubstringWithCountList = Explorer.Common.ValueWithCountList<string>;
 
-    public class TextGeneratorComponent : ExplorerComponent<IEnumerable<string>>, PublisherComponent
+    public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
     {
         private const int DefaultGeneratedValuesCount = 30;
         private const int DefaultEmailDomainsCountThreshold = 5 * DefaultGeneratedValuesCount;
@@ -43,19 +43,21 @@ namespace Explorer.Components
         {
             var result = await ResultAsync;
 
-            if (result.Any())
+            if (result.SampleValues.Count > 0)
             {
-                yield return new UntypedMetric(name: "sample_values", metric: result.ToArray());
+                yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
             }
         }
 
-        protected override async Task<IEnumerable<string>> Explore()
+        protected override async Task<Result> Explore()
         {
             var result = await emailChecker.ResultAsync;
 
-            return result.IsEmail
+            var sampleValues = result.IsEmail
                 ? await GenerateEmails()
                 : await GenerateStrings();
+
+            return new Result(sampleValues.ToList());
         }
 
         private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
@@ -217,6 +219,16 @@ namespace Explorer.Components
             var rand = new Random(Environment.TickCount);
             return Enumerable.Range(0, GeneratedValuesCount).Select(_
                 => GenerateString(substrings, minLength: 3, rand));
+        }
+
+        public class Result
+        {
+            public Result(IList<string> sampleValues)
+            {
+                SampleValues = sampleValues;
+            }
+
+            public IList<string> SampleValues { get; }
         }
     }
 }
