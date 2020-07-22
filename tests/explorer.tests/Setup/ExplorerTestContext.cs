@@ -7,6 +7,10 @@ namespace Explorer.Tests
     {
         public ExplorerTestContext()
         {
+            DataSource = string.Empty;
+            Table = string.Empty;
+            Column = string.Empty;
+            ColumnInfo = new DColumnInfo(DValueType.Unknown, false, true);
         }
 
         public ExplorerTestContext(ExplorerContext ctx)
@@ -14,15 +18,15 @@ namespace Explorer.Tests
             DataSource = ctx.DataSource;
             Table = ctx.Table;
             Column = ctx.Column;
-            ColumnType = ctx.ColumnType;
+            ColumnInfo = ctx.ColumnInfo;
         }
 
-        public string DataSource { get; set; } = string.Empty;
+        public string DataSource { get; set; }
 
-        public string Table { get; set; } = string.Empty;
+        public string Table { get; set; }
 
-        public string Column { get; set; } = string.Empty;
+        public string Column { get; set; }
 
-        public DValueType ColumnType { get; set; } = DValueType.Unknown;
+        public DColumnInfo ColumnInfo { get; set; }
     }
 }

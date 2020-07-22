@@ -4,6 +4,7 @@ namespace Explorer.Tests
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+
     using Diffix;
     using Explorer.Common;
 
@@ -37,7 +38,7 @@ namespace Explorer.Tests
             string dataSource,
             string tableName,
             string columnName,
-            DValueType columnType = DValueType.Unknown)
+            DColumnInfo columnInfo)
         {
             Inner.Scope.Inject<ExplorerContext>(
                 new ExplorerTestContext
@@ -45,7 +46,7 @@ namespace Explorer.Tests
                     DataSource = dataSource,
                     Table = tableName,
                     Column = columnName,
-                    ColumnType = columnType,
+                    ColumnInfo = columnInfo,
                 });
             return new ComponentTestScope(Inner);
         }

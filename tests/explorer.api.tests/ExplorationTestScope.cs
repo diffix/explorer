@@ -54,7 +54,7 @@ namespace Explorer.Api.Tests
             apiKey ??= string.Empty;
 
             // Register the authentication token for this scope.
-            // Note that in most test cases the api key will not be needed as it will be provided from 
+            // Note that in most test cases the api key will not be needed as it will be provided from
             // the environment (via a `StaticApiKeyAuthProvider`)
             if (rootContainer.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
             {
@@ -76,7 +76,7 @@ namespace Explorer.Api.Tests
                 columnScopes.Add(scope);
 
                 return ExplorationLauncher.ExploreColumn(
-                    scope, conn, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnType));
+                    scope, conn, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type));
             });
 
             return new Exploration(dataSource, table, columnExplorations.ToList());

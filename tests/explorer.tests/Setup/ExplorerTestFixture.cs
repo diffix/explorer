@@ -5,8 +5,9 @@ namespace Explorer.Tests
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
+
     using Aircloak.JsonApi;
-    using Diffix;
+    using Explorer.Common;
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
@@ -66,12 +67,12 @@ namespace Explorer.Tests
             string dataSource,
             string table,
             string column,
-            string vcrFilename,
-            DValueType columnType = DValueType.Unknown) =>
+            DColumnInfo columnInfo,
+            string vcrFilename) =>
             PrepareTestScope()
                 .LoadCassette(vcrFilename)
                 .WithConnectionParams(ApiUri, dataSource)
-                .WithContext(dataSource, table, column, columnType);
+                .WithContext(dataSource, table, column, columnInfo);
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
 
         public void Dispose()
