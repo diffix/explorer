@@ -31,12 +31,12 @@ namespace Explorer.Tests
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
 
-            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
+            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
             {
-                Assert.True(result.All(v => v.Length >= 3));
-                Assert.True(result.All(v => v.Count(c => c == '@') == 1));
-                Assert.True(result.All(v => v.Contains('.', StringComparison.InvariantCulture)));
-                Assert.True(result.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
+                Assert.True(result.SampleValues.All(v => v.Length >= 3));
+                Assert.True(result.SampleValues.All(v => v.Count(c => c == '@') == 1));
+                Assert.True(result.SampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+                Assert.True(result.SampleValues.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
             });
         }
 
@@ -52,12 +52,12 @@ namespace Explorer.Tests
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
 
-            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
+            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
             {
-                Assert.True(result.All(v => v.Length >= 3));
-                Assert.True(result.All(v => v.Count(c => c == '@') == 1));
-                Assert.True(result.All(v => v.Contains('.', StringComparison.InvariantCulture)));
-                Assert.True(result.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
+                Assert.True(result.SampleValues.All(v => v.Length >= 3));
+                Assert.True(result.SampleValues.All(v => v.Count(c => c == '@') == 1));
+                Assert.True(result.SampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+                Assert.True(result.SampleValues.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
             });
         }
 
@@ -73,8 +73,8 @@ namespace Explorer.Tests
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
 
-            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
-                Assert.True(result.All(v => v.Length >= 3)));
+            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
+                Assert.True(result.SampleValues.All(v => v.Length >= 3)));
         }
 
         [Fact]
@@ -89,8 +89,8 @@ namespace Explorer.Tests
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
 
-            await scope.ResultTest<TextGeneratorComponent, IEnumerable<string>>(result =>
-                Assert.True(result.All(v => v.Length >= 3)));
+            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
+                Assert.True(result.SampleValues.All(v => v.Length >= 3)));
         }
     }
 }
