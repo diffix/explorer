@@ -3,8 +3,6 @@ namespace Explorer.Api.Models
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text.Json;
-    using System.Text.Json.Serialization;
 
     using Explorer;
 
@@ -16,8 +14,8 @@ namespace Explorer.Api.Models
             Status = status;
             DataSource = dataSource;
             Table = table;
-            Columns = Array.Empty<ColumnMetricsCollection>();
-            SampleData = Array.Empty<IEnumerable<object?>>();
+            Columns = new List<object>();
+            SampleData = new List<List<object?>>();
         }
 
         public ExploreResult(Guid explorationId, Exploration exploration)
@@ -26,12 +24,8 @@ namespace Explorer.Api.Models
             Status = exploration.Status;
             DataSource = exploration.DataSource;
             Table = exploration.Table;
-            SampleData = exploration.SampleData;
-            Columns = exploration.ColumnExplorations.Select(ce =>
-                new ColumnMetricsCollection(
-                    ce.Column,
-                    Exploration.ConvertToExplorationStatus(ce.Completion.Status),
-                    ce.PublishedMetrics.Select(m => new Metric(m.Name, m.Metric))));
+            SampleData = exploration.SampleData.Select(col => col.ToList()).ToList();
+            Columns = exploration.PublishedMetrics.Select(m => m.Metric).ToList();
         }
 
         public Guid Id { get; }
@@ -49,46 +43,15 @@ namespace Explorer.Api.Models
 
         public string Table { get; }
 
-        public IEnumerable<ColumnMetricsCollection> Columns { get; }
+        public List<object> Columns { get; }
 
-        public IEnumerable<IEnumerable<object?>> SampleData { get; }
+        public List<List<object?>> SampleData { get; }
 
         public List<string> Errors { get; } = new List<string>();
 
         public void AddErrorMessage(string message)
         {
             Errors.Add(message);
-        }
-
-        public class ColumnMetricsCollection
-        {
-            public ColumnMetricsCollection(string column, ExplorationStatus status, IEnumerable<Metric> metrics)
-            {
-                Column = column;
-                Status = status;
-                Metrics = metrics;
-            }
-
-            public ExplorationStatus Status { get; }
-
-            public string Column { get; }
-
-            public IEnumerable<Metric> Metrics { get; }
-        }
-
-        public class Metric
-        {
-            public Metric(string name, object value)
-            {
-                MetricName = name;
-                MetricValue = value;
-            }
-
-            [JsonPropertyName("name")]
-            public string MetricName { get; set; }
-
-            [JsonPropertyName("value")]
-            public object MetricValue { get; set; }
         }
     }
 }

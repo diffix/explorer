@@ -5,66 +5,75 @@ namespace Explorer.Api
     using Diffix;
     using Explorer.Components;
 
-    public static class ComponentComposition
+    public class ComponentComposition : ExplorationConfigurator
     {
-        public static Action<ExplorationConfig> ColumnConfiguration(DValueType columnType)
+        private readonly ExplorerContext ctx;
+
+        public ComponentComposition(ExplorerContext ctx)
         {
-            return config =>
+            this.ctx = ctx;
+        }
+
+        public void Configure(ExplorationScope scope)
+        {
+            scope.UseContext(ctx);
+            CommonConfiguration(scope);
+            ColumnConfiguration(scope);
+        }
+
+        public void ColumnConfiguration(ExplorationScope scope)
+        {
+            Action<ExplorationScope> configure = ctx.ColumnInfo.Type switch
             {
-                CommonConfiguration(config);
-                switch (columnType)
-                {
-                    case DValueType.Integer:
-                    case DValueType.Real: NumericExploration(config); break;
-                    case DValueType.Timestamp:
-                    case DValueType.Date:
-                    case DValueType.Datetime: DatetimeExploration(config); break;
-                    case DValueType.Bool: BoolExploration(config); break;
-                    case DValueType.Text: TextExploration(config); break;
-                    default:
-                        throw new ArgumentException(
-                            $"Cannot explore column type {columnType}.", nameof(columnType));
-                }
+                DValueType.Integer => NumericExploration,
+                DValueType.Real => NumericExploration,
+                DValueType.Text => TextExploration,
+                DValueType.Timestamp => DatetimeExploration,
+                DValueType.Date => DatetimeExploration,
+                DValueType.Datetime => DatetimeExploration,
+                DValueType.Bool => BoolExploration,
+                _ => throw new InvalidOperationException($"Cannot explore column type {ctx.ColumnInfo.Type}."),
             };
+
+            configure(scope);
         }
 
-        private static void CommonConfiguration(ExplorationConfig config)
+        private static void CommonConfiguration(ExplorationScope scope)
         {
-            config.AddPublisher<ExplorationInfo>();
-            config.AddPublisher<DistinctValuesComponent>();
-            config.AddPublisher<CategoricalSampleGenerator>();
+            scope.AddPublisher<ExplorationInfo>();
+            scope.AddPublisher<DistinctValuesComponent>();
+            scope.AddPublisher<CategoricalSampleGenerator>();
         }
 
-        private static void BoolExploration(ExplorationConfig config)
+        private static void BoolExploration(ExplorationScope scope)
         {
-            _ = config;
         }
 
-        private static void NumericExploration(ExplorationConfig config)
+        private static void NumericExploration(ExplorationScope scope)
         {
-            config.AddPublisher<HistogramSelectorComponent>();
-            config.AddPublisher<MinMaxFromHistogramComponent>();
-            config.AddPublisher<QuartileEstimator>();
-            config.AddPublisher<AverageEstimator>();
-            config.AddPublisher<MinMaxRefiner>();
-            config.AddPublisher<NumericSampleGenerator>();
-            config.AddPublisher<DistributionAnalysisComponent>();
-            config.AddPublisher<DescriptiveStatsPublisher>();
+            scope.AddPublisher<HistogramSelectorComponent>();
+            scope.AddPublisher<MinMaxFromHistogramComponent>();
+            scope.AddPublisher<QuartileEstimator>();
+            scope.AddPublisher<AverageEstimator>();
+            scope.AddPublisher<MinMaxRefiner>();
+            scope.AddPublisher<NumericSampleGenerator>();
+            scope.AddPublisher<DistributionAnalysisComponent>();
+            scope.AddPublisher<DescriptiveStatsPublisher>();
         }
 
-        private static void TextExploration(ExplorationConfig config)
+        private static void TextExploration(ExplorationScope scope)
         {
-            config.AddPublisher<EmailCheckComponent>();
-            config.AddPublisher<TextGeneratorComponent>();
-            config.AddPublisher<TextLengthComponent>();
+            scope.AddPublisher<EmailCheckComponent>();
+            scope.AddPublisher<TextGeneratorComponent>();
+            scope.AddPublisher<TextLengthComponent>();
         }
 
-        private static void DatetimeExploration(ExplorationConfig config)
+        private static void DatetimeExploration(ExplorationScope scope)
         {
-            config.AddPublisher<LinearTimeBuckets>();
-            config.AddPublisher<CyclicalTimeBuckets>();
-            config.AddPublisher<DatetimeDistributionComponent>();
-            config.AddPublisher<DatetimeGeneratorComponent>();
+            scope.AddPublisher<LinearTimeBuckets>();
+            scope.AddPublisher<CyclicalTimeBuckets>();
+            scope.AddPublisher<DatetimeDistributionComponent>();
+            scope.AddPublisher<DatetimeGeneratorComponent>();
         }
     }
 }

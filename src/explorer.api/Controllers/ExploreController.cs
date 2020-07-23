@@ -51,8 +51,8 @@ namespace Explorer.Api.Controllers
             var cts = new CancellationTokenSource();
             var conn = connectionBuilder.Build(apiUri, data.DataSource, cts.Token);
             var ctxList = await contextBuilder.Build(conn, apiUri, data.DataSource, data.Table, data.Columns);
-            var explorationSettings = ctxList.Select(ctx => (ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type), ctx));
-            var exploration = launcher.LaunchExploration(data.DataSource, data.Table, explorationSettings);
+            var configurations = ctxList.Select(ctx => new ComponentComposition(ctx));
+            var exploration = launcher.LaunchExploration(data.DataSource, data.Table, configurations);
 
             // Register the exploration for future reference.
             var id = explorationRegistry.Register(exploration, cts);
@@ -105,7 +105,7 @@ namespace Explorer.Api.Controllers
 
                     foreach (var innerEx in exploration.Completion.Exception!.Flatten().InnerExceptions)
                     {
-                        logger.LogWarning(innerEx, "Exception occurred in exploration task.");
+                        logger.LogError(innerEx, "Exception occurred in exploration task.");
                         exploreResult.AddErrorMessage(innerEx.Message);
                     }
                 }

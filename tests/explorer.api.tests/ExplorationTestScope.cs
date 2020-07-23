@@ -13,12 +13,10 @@ namespace Explorer.Api.Tests
     using VcrSharp;
     using Xunit;
 
-    public class ExplorationTestScope : IDisposable
+    public class ExplorationTestScope
     {
         private static readonly Uri TestApiUri = new Uri("https://attack.aircloak.com/api/");
         private readonly Container rootContainer;
-        private readonly List<INestedContainer> columnScopes = new List<INestedContainer>();
-        private bool disposedValue;
 
         public ExplorationTestScope(Container rootContainer)
         {
@@ -32,18 +30,12 @@ namespace Explorer.Api.Tests
             LoadedCassette?.Dispose();
             LoadedCassette = null;
 
-            var cassette = new Cassette($"../../../.vcr/{testFileName}.yaml");
-            LoadedCassette = cassette;
-
-            foreach (var scope in columnScopes)
-            {
-                scope.Inject(cassette);
-            }
+            LoadedCassette = new Cassette($"../../../.vcr/{testFileName}.yaml");
 
             return this;
         }
 
-        public async Task<Exploration> RunExploration(
+        public async Task<Exploration> PrepareExploration(
             string dataSource,
             string table,
             IEnumerable<string> columns,
@@ -65,21 +57,23 @@ namespace Explorer.Api.Tests
             var conn = rootContainer.GetInstance<AircloakConnectionBuilder>().Build(apiUri, dataSource, CancellationToken.None);
             var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(conn, apiUri, dataSource, table, columns);
 
-            var columnExplorations = ctxList.Select(ctx =>
+            var columnScopes = ctxList.Select(ctx =>
             {
                 var scope = rootContainer.GetNestedContainer();
                 if (LoadedCassette != null)
                 {
-                    scope.Inject(LoadedCassette);
+                    scope.InjectDisposable(LoadedCassette);
                 }
 
-                columnScopes.Add(scope);
+                var configurator = new ComponentComposition(ctx);
 
-                return ExplorationLauncher.ExploreColumn(
-                    scope, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type));
+                var explorationScope = new ExplorationScope(scope);
+                explorationScope.Configure(configurator);
+
+                return explorationScope;
             });
 
-            return new Exploration(dataSource, table, columnExplorations.ToList());
+            return new Exploration(dataSource, table, columnScopes);
         }
 
         public async Task RunAndCheckMetrics(
@@ -99,7 +93,7 @@ namespace Explorer.Api.Tests
             IEnumerable<string> columns,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
-            using var exploration = await RunExploration(dataSourceName, table, columns);
+            using var exploration = await PrepareExploration(dataSourceName, table, columns);
 
             await exploration.Completion;
             Assert.True(exploration.Completion.IsCompletedSuccessfully);
@@ -108,34 +102,7 @@ namespace Explorer.Api.Tests
             CheckMetrics(exploration, check);
         }
 
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    foreach (var scope in columnScopes)
-                    {
-                        scope.Dispose();
-                    }
-                    columnScopes.Clear();
-
-                    LoadedCassette?.Dispose();
-                    LoadedCassette = null;
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        private static void CheckMetrics(
+        private void CheckMetrics(
             Exploration exploration,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {

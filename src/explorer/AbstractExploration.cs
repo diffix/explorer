@@ -1,0 +1,45 @@
+﻿namespace Explorer
+{
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    using Explorer.Metrics;
+
+    public abstract class AbstractExploration
+    {
+        private Task? completionTask;
+
+        public ExplorationStatus Status
+        {
+            // If completionTask is null, that means it has not yet been launched, so status is `New`.
+            // Otherwise, derive the ExplorationStatus from the TaskStatus.
+            get => completionTask is null
+                ? ExplorationStatus.New
+                : ExplorationStatusConverter.FromTaskStatus(completionTask.Status);
+        }
+
+        public abstract IEnumerable<ExploreMetric> PublishedMetrics { get; }
+
+        public Task Completion
+        {
+            get
+            {
+                Run();
+                return completionTask!;
+            }
+        }
+
+        public void Run()
+        {
+            completionTask ??= RunTask();
+        }
+
+        public async Task RunAsync()
+        {
+            Run();
+            await completionTask!;
+        }
+
+        protected abstract Task RunTask();
+    }
+}
