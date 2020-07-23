@@ -47,6 +47,9 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
+            var distinctValuesResult = await distinctValues.ResultAsync;
+            if (!distinctValuesResult.IsCategorical)
+            {
             var result = await ResultAsync;
 
             if (result.SampleValues.Count > 0)
@@ -54,18 +57,12 @@ namespace Explorer.Components
                 yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
             }
         }
+        }
 
         protected override async Task<Result> Explore()
         {
-            var sampleValues = Enumerable.Empty<string>();
-            var distinctValuesResult = await distinctValues.ResultAsync;
-            if (!distinctValuesResult.IsCategorical)
-            {
                 var emailCheckerResult = await emailChecker.ResultAsync;
-                sampleValues = emailCheckerResult.IsEmail
-                    ? await GenerateEmails()
-                    : await GenerateStrings();
-            }
+            var sampleValues = emailCheckerResult.IsEmail ? await GenerateEmails() : await GenerateStrings();
             return new Result(sampleValues.ToList());
         }
 
