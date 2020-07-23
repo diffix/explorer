@@ -2,36 +2,56 @@ namespace Explorer
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
 
+    using Diffix;
     using Explorer.Metrics;
-    using Lamar;
+    using Microsoft.Extensions.Logging;
 
-    public sealed class ColumnExploration : IDisposable
+    public sealed class ColumnExploration : AbstractExploration, IDisposable
     {
-        private readonly MetricsPublisher publisher;
-        private readonly INestedContainer scope;
+        private readonly ExplorationScope scope;
         private bool disposedValue;
 
-        public ColumnExploration(ExplorationConfig config, INestedContainer scope, string column)
+        public ColumnExploration(ExplorationScope scope)
         {
+            if (scope.Ctx is null)
+            {
+                throw new InvalidOperationException(
+                    $"Can't build {GetType().Name} without a context object in scope!");
+            }
+
             this.scope = scope;
-            publisher = scope.GetInstance<MetricsPublisher>();
-            Column = column;
-            Completion = Task.WhenAll(config.Tasks);
         }
 
-        public string Column { get; }
+        public string Column { get => scope.Ctx?.Column ?? string.Empty; }
 
-        public Task Completion { get; }
+        public DColumnInfo? ColumnInfo { get => scope.Ctx?.ColumnInfo; }
 
-        public IEnumerable<ExploreMetric> PublishedMetrics => publisher.PublishedMetrics;
+        public override IEnumerable<ExploreMetric> PublishedMetrics =>
+            scope.MetricsPublisher.PublishedMetrics;
 
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+        protected override Task RunTask() => Task.WhenAll(scope.Tasks.Select(async t =>
+        {
+            try
+            {
+                await t;
+            }
+            catch (Exception ex)
+            {
+                scope.Logger.LogError(
+                    ex,
+                    $"Error in column exploration for {scope.Ctx!.DataSource} / {scope.Ctx!.Table} / {Column}.");
+                throw;
+            }
+        }));
 
         private void Dispose(bool disposing)
         {
