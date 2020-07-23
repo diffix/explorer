@@ -13,6 +13,8 @@ namespace Explorer.Api
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
 
+    using Sentry.Extensibility;
+
     public class Startup
     {
         public Startup(IConfiguration configuration, IWebHostEnvironment environment)
@@ -35,6 +37,9 @@ namespace Explorer.Api
             services.AddSingleton(config);
 
             services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>();
+
+            // Enriched event logger for sentry
+            services.AddTransient<ISentryEventProcessor, ExplorerEventProcessor>();
 
             // Singleton services
             services
