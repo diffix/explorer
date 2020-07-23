@@ -9,7 +9,10 @@ namespace Explorer.Metrics
 
         public void PublishMetric(ExploreMetric metric);
 
-        public Task PublishMetricAsync(ExploreMetric metric) =>
-            Task.Run(() => PublishMetric(metric));
+        public async Task PublishMetricAsync(ExploreMetric metric)
+        {
+            await Task.CompletedTask;
+            PublishMetric(metric);
+        }
     }
 }
