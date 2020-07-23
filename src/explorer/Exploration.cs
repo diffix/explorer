@@ -5,28 +5,25 @@ namespace Explorer
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using Diffix;
+    using Explorer.Metrics;
 
-    public sealed class Exploration : IDisposable
+    public sealed class Exploration : AbstractExploration, IDisposable
     {
         private bool disposedValue;
 
-        public Exploration(string dataSource, string table, IList<ColumnExploration> columnExplorations)
+        public Exploration(string dataSource, string table, IEnumerable<ExplorationScope> scopes)
         {
             DataSource = dataSource;
             Table = table;
-            ColumnExplorations = columnExplorations;
-            Completion = Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+            ColumnExplorations = scopes.Select(scope => new ColumnExploration(scope)).ToList();
         }
 
         public string DataSource { get; }
 
         public string Table { get; }
 
-        public IList<ColumnExploration> ColumnExplorations { get; }
-
-        public Task Completion { get; }
-
-        public ExplorationStatus Status => ConvertToExplorationStatus(Completion.Status);
+        public List<ColumnExploration> ColumnExplorations { get; }
 
         public IEnumerable<IEnumerable<object?>> SampleData
         {
@@ -47,20 +44,20 @@ namespace Explorer
             }
         }
 
-        public static ExplorationStatus ConvertToExplorationStatus(TaskStatus status)
+        public override IEnumerable<ExploreMetric> PublishedMetrics
         {
-            return status switch
+            get
             {
-                TaskStatus.Canceled => ExplorationStatus.Canceled,
-                TaskStatus.Created => ExplorationStatus.New,
-                TaskStatus.Faulted => ExplorationStatus.Error,
-                TaskStatus.RanToCompletion => ExplorationStatus.Complete,
-                TaskStatus.Running => ExplorationStatus.Processing,
-                TaskStatus.WaitingForActivation => ExplorationStatus.Processing,
-                TaskStatus.WaitingToRun => ExplorationStatus.Processing,
-                TaskStatus.WaitingForChildrenToComplete => ExplorationStatus.Processing,
-                _ => throw new Exception("Unexpected TaskStatus: '{exploration.Status}'."),
-            };
+                return ColumnExplorations.Select(ce => new UntypedMetric(
+                    name: "column_metrics",
+                    metric: new
+                    {
+                        ce.Column,
+                        ColumnType = ce.ColumnInfo?.Type ?? DValueType.Unknown,
+                        ce.Status,
+                        Metrics = ce.PublishedMetrics.ToList(),
+                    }) as ExploreMetric);
+            }
         }
 
         public void Dispose()
@@ -68,6 +65,8 @@ namespace Explorer
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+        protected override Task RunTask() => Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
 
         private void Dispose(bool disposing)
         {
