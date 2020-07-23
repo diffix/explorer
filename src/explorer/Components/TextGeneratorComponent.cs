@@ -80,7 +80,7 @@ namespace Explorer.Components
         private static string GenerateString(SubstringsData substrings, int minLength, Random rand)
         {
             var sb = new StringBuilder();
-            var len = rand.Next(minLength, substrings.Count);
+            var len = rand.Next(minLength, minLength + substrings.Count);
             for (var pos = 0; pos < substrings.Count && sb.Length < len; pos++)
             {
                 var str = substrings.GetRandomSubstring(pos, rand);
