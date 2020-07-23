@@ -15,32 +15,42 @@ namespace Explorer.Components
         private const long ValuesPerBucketTarget = 20;
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
+        private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<SimpleStats<double>.Result> statsResultProvider;
 
         public NumericHistogramComponent(
             DConnection conn,
             ExplorerContext ctx,
+            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
             ResultProvider<SimpleStats<double>.Result> statsResultProvider)
         {
             this.conn = conn;
             this.ctx = ctx;
+            this.distinctValuesProvider = distinctValuesProvider;
             this.statsResultProvider = statsResultProvider;
         }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var result = await ResultAsync;
-
-            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values.Select(b => new
+            var distinctValues = await distinctValuesProvider.ResultAsync;
+            if (!distinctValues.IsCategorical)
             {
-                BucketSize = b.BucketSize.SnappedSize,
-                b.LowerBound,
-                b.Count,
-                b.CountNoise,
-            }));
-            yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
-            yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
-            yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
+                var result = await ResultAsync;
+
+                if (result.Histogram.Buckets.Count > 0)
+                {
+                    yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values.Select(b => new
+                    {
+                        BucketSize = b.BucketSize.SnappedSize,
+                        b.LowerBound,
+                        b.Count,
+                        b.CountNoise,
+                    }));
+                    yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
+                    yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
+                    yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
+                }
+            }
         }
 
         protected async override Task<Result> Explore()
