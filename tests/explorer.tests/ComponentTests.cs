@@ -6,6 +6,7 @@ namespace Explorer.Tests
     using System.Text.Json;
     using System.Threading.Tasks;
 
+    using Diffix;
     using Explorer.Common;
     using Explorer.Components;
     using Xunit;
@@ -26,6 +27,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "loans",
                 "amount",
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<MinMaxRefiner, MinMaxRefiner.Result>(result =>
@@ -44,6 +46,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "loans",
                 "duration",
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             scope.ConfigurePublisher<DistinctValuesComponent>(c => c.NumValuesToPublish = 1);
@@ -63,6 +66,7 @@ namespace Explorer.Tests
                 "cov_clear",
                 "survey",
                 "fever",
+                new DColumnInfo(DValueType.Bool, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
@@ -84,6 +88,7 @@ namespace Explorer.Tests
                 "gda_banking",
                 "loans",
                 "status",
+                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
@@ -97,24 +102,6 @@ namespace Explorer.Tests
                 };
 
                 CheckDistinctCategories(result, expectedValues, el => el.GetString());
-            });
-        }
-
-        [Theory]
-        [InlineData("birth_number", true)]
-        [InlineData("district_id", false)]
-        public async void TestIsolatorComponent(string column, bool isIsolator)
-        {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "clients",
-                column,
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
-
-            await scope.ResultTest<IsolatorCheckComponent, IsolatorCheckComponent.Result>(result =>
-            {
-                Assert.Equal(result.ColumnName, column);
-                Assert.Equal(result.IsIsolatorColumn, isIsolator);
             });
         }
 

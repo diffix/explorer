@@ -10,6 +10,6 @@ namespace Explorer.Common
 
         public DSqlObjectName Column { get; }
 
-        public DValueType ColumnType { get; }
+        public DColumnInfo ColumnInfo { get; }
     }
 }

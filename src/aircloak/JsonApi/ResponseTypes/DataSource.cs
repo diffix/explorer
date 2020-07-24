@@ -56,6 +56,12 @@ namespace Aircloak.JsonApi.ResponseTypes
                 public string Name { get; set; }
 
                 public DValueType Type { get; set; }
+
+                [JsonPropertyName("user_id")]
+                public bool UserId { get; set; }
+
+                [JsonPropertyName("isolated")]
+                public bool? Isolating { get; set; }
             }
         }
     }

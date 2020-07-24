@@ -24,7 +24,7 @@ namespace Explorer.Components
         public string Column { get => ctx.Column.Name; }
 
         [JsonConverter(typeof(DValueTypeEnumConverter))]
-        public DValueType ColumnType { get => ctx.ColumnType; }
+        public DValueType ColumnType { get => ctx.ColumnInfo.Type; }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {

@@ -50,7 +50,7 @@ namespace Explorer.Api.Controllers
             var cts = new CancellationTokenSource();
             var conn = connectionBuilder.Build(apiUri, data.DataSource, cts.Token);
             var ctxList = await contextBuilder.Build(apiUri, data.DataSource, data.Table, data.Columns);
-            var explorationSettings = ctxList.Select(ctx => (ComponentComposition.ColumnConfiguration(ctx.ColumnType), ctx));
+            var explorationSettings = ctxList.Select(ctx => (ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type), ctx));
             var exploration = launcher.LaunchExploration(data.DataSource, data.Table, conn, explorationSettings);
 
             // Register the exploration for future reference.
