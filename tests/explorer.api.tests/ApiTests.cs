@@ -170,8 +170,14 @@
         [InlineData("/invalid endpoint test")]
         public async Task FailWithBadEndPoint(string endpoint)
         {
-            await TestApi(HttpMethod.Post, endpoint, ValidData, test: (response, content) =>
-                Assert.False(response.IsSuccessStatusCode, content));
+            var apiEndpoint = ApiRoot + endpoint;
+
+            await TestApi(HttpMethod.Post, apiEndpoint, ValidData, test: (response, content) =>
+            {
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                var jsonContent = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
+                Assert.True(jsonContent.ContainsKey("error"), $"Expected an 'error' object in payload: {content}");
+            });
         }
 
         [Theory]
@@ -182,7 +188,11 @@
         public async Task FailWithBadMethod(string method)
         {
             await TestApi(new HttpMethod(method), exploreEndpoint, ValidData, test: (response, content) =>
-                Assert.False(response.IsSuccessStatusCode, content));
+            {
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                var jsonContent = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
+                Assert.True(jsonContent.ContainsKey("error"), $"Expected an 'error' object in payload: {content}");
+            });
         }
 
         [Fact]
