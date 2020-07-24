@@ -6,9 +6,9 @@ namespace Explorer.Common
     {
         public string DataSource { get; }
 
-        public string Table { get; }
+        public DSqlObjectName Table { get; }
 
-        public string Column { get; }
+        public DSqlObjectName Column { get; }
 
         public DColumnInfo ColumnInfo { get; }
     }

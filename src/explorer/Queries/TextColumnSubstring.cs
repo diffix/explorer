@@ -9,7 +9,7 @@ namespace Explorer.Queries
 
     internal class TextColumnSubstring : DQuery<TextColumnSubstring.Result>
     {
-        public TextColumnSubstring(string tableName, string columnName, int pos, int length, int count)
+        public TextColumnSubstring(DSqlObjectName tableName, DSqlObjectName columnName, int pos, int length, int count)
         {
             var indexes = Enumerable.Range(0, count);
             var columnNames = string.Join(", ", indexes.Select(i => $"s{i}"));
@@ -19,21 +19,21 @@ namespace Explorer.Queries
                 $"when s{i} is not null then {i}"));
 
             QueryStatement = $@"
-                select 
-                    concat({columnNames}) as sstr, 
-                    sum(count), 
+                select
+                    concat({columnNames}) as sstr,
+                    sum(count),
                     sum(count_noise),
                     case
                         {whenExpressions}
                     end as i
                 from (
-                    select 
+                    select
                         {substringExpressions},
                         count(*),
                         count_noise(*)
                     from {tableName}
                     group by grouping sets ({columnNames})
-                    ) as substring_counts 
+                    ) as substring_counts
                 group by {columnNames}
                 having length(sstr) = {length}";
         }

@@ -11,8 +11,8 @@ namespace Explorer.Queries
         DQuery<SingleColumnHistogram.Result>
     {
         public SingleColumnHistogram(
-            string tableName,
-            string columnName,
+            DSqlObjectName tableName,
+            DSqlObjectName columnName,
             IList<decimal> buckets)
         {
             var bucketsFragment = string.Join(

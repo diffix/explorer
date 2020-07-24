@@ -26,8 +26,8 @@ namespace Explorer.Queries
         };
 
         public BucketedDatetimes(
-            string tableName,
-            string columnName,
+            DSqlObjectName tableName,
+            DSqlObjectName columnName,
             DValueType columnType = DValueType.Datetime)
         {
             QueryComponents = columnType switch

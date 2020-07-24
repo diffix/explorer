@@ -5,12 +5,12 @@ namespace Explorer.Tests
 
     public class ExplorerTestContext : ExplorerContext
     {
-        public ExplorerTestContext()
+        public ExplorerTestContext(string dataSource, string table, string column, DColumnInfo columnInfo)
         {
-            DataSource = string.Empty;
-            Table = string.Empty;
-            Column = string.Empty;
-            ColumnInfo = new DColumnInfo(DValueType.Unknown, false, true);
+            DataSource = dataSource;
+            Table = new DSqlObjectName(table);
+            Column = new DSqlObjectName(column);
+            ColumnInfo = columnInfo;
         }
 
         public ExplorerTestContext(ExplorerContext ctx)
@@ -23,9 +23,9 @@ namespace Explorer.Tests
 
         public string DataSource { get; set; }
 
-        public string Table { get; set; }
+        public DSqlObjectName Table { get; set; }
 
-        public string Column { get; set; }
+        public DSqlObjectName Column { get; set; }
 
         public DColumnInfo ColumnInfo { get; set; }
     }

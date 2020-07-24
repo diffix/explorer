@@ -1,6 +1,8 @@
 namespace Explorer.Tests
 {
     using System.Linq;
+
+    using Diffix;
     using Explorer.Common;
     using Explorer.Queries;
     using Xunit;
@@ -23,7 +25,11 @@ namespace Explorer.Tests
                 VcrSharp.Cassette.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
-                new TextColumnTrim("clients", "email", TextColumnTrimType.Both, Constants.EmailAddressChars));
+                new TextColumnTrim(
+                    new DSqlObjectName("clients"),
+                    new DSqlObjectName("email"),
+                    TextColumnTrimType.Both,
+                    Constants.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 
@@ -42,7 +48,11 @@ namespace Explorer.Tests
                 VcrSharp.Cassette.GenerateVcrFilename(this));
 
             var result = await queryScope.QueryRows(
-                new TextColumnTrim("cards", "lastname", TextColumnTrimType.Both, Constants.EmailAddressChars));
+                new TextColumnTrim(
+                    new DSqlObjectName("cards"),
+                    new DSqlObjectName("lastname"),
+                    TextColumnTrimType.Both,
+                    Constants.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 

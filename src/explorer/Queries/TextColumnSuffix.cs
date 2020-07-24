@@ -9,7 +9,7 @@ namespace Explorer.Queries
     internal class TextColumnSuffix :
         DQuery<ValueWithCount<string>>
     {
-        public TextColumnSuffix(string tableName, string columnName, int minLength, int maxLength)
+        public TextColumnSuffix(DSqlObjectName tableName, DSqlObjectName columnName, int minLength, int maxLength)
         {
             // TODO: determine suffix length dynamically
             var indexes = Enumerable.Range(minLength, maxLength - minLength + 1);
@@ -17,12 +17,12 @@ namespace Explorer.Queries
             var suffixExpressions = string.Join(",\n", indexes.Select(i => $"    right({columnName}, {i}) as s{i}"));
 
             QueryStatement = $@"
-                select 
-                    concat({columnNames}) as suffix, 
-                    sum(count), 
+                select
+                    concat({columnNames}) as suffix,
+                    sum(count),
                     sum(count_noise)
                 from (
-                    select 
+                    select
                         {suffixExpressions},
                         count(*),
                         count_noise(*)

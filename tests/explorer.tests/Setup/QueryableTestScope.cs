@@ -41,13 +41,7 @@ namespace Explorer.Tests
             DColumnInfo columnInfo)
         {
             Inner.Scope.Inject<ExplorerContext>(
-                new ExplorerTestContext
-                {
-                    DataSource = dataSource,
-                    Table = tableName,
-                    Column = columnName,
-                    ColumnInfo = columnInfo,
-                });
+                new ExplorerTestContext(dataSource, tableName, columnName, columnInfo));
             return new ComponentTestScope(Inner);
         }
 
