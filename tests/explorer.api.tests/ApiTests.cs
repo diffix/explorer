@@ -252,6 +252,16 @@
                 });
         }
 
+        [Fact]
+        public async Task FailWithInvalidExplorationId()
+        {
+            await TestApi(
+                HttpMethod.Get,
+                $"{resultEndpoint}/c29191e7-408e-4395-bb81-660c47181661",
+                null,
+                test: (response, content) => Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
         private async Task TestExploreResult(
             HttpMethod method,
             Guid explorerGuid,
