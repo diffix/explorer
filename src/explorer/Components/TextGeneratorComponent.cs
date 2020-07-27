@@ -121,7 +121,7 @@ namespace Explorer.Components
             if (domains.Count >= domainsCountThreshold)
             {
                 // if the number of distinct domains is big enough we select one from the extracted list
-                return localPart + domains.GetRandomValue(rand, @default: string.Empty);
+                return localPart + domains.GetRandomValue(rand);
             }
 
             // create domain section
@@ -141,7 +141,7 @@ namespace Explorer.Components
             {
                 return string.Empty;
             }
-            return localPart + "@" + domain + tlds.GetRandomValue(rand, @default: string.Empty);
+            return localPart + "@" + domain + tlds.GetRandomValue(rand);
         }
 
         private static IEnumerable<string> GenerateEmails(
