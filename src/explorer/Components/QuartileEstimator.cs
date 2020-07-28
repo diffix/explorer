@@ -10,11 +10,14 @@ namespace Explorer.Components
     public class QuartileEstimator :
         ExplorerComponent<QuartileEstimator.Result>, PublisherComponent
     {
+        private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<NumericHistogramComponent.Result> histogramResult;
 
         public QuartileEstimator(
+            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
             ResultProvider<NumericHistogramComponent.Result> histogramResult)
         {
+            this.distinctValuesProvider = distinctValuesProvider;
             this.histogramResult = histogramResult;
         }
 
@@ -77,9 +80,13 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var result = await ResultAsync;
+            var distinctValues = await distinctValuesProvider.ResultAsync;
+            if (!distinctValues.IsCategorical)
+            {
+                var result = await ResultAsync;
 
-            yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
+                yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
+            }
         }
 
         protected override async Task<Result> Explore() =>

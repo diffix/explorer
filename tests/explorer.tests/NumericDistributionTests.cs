@@ -22,7 +22,7 @@
             using var scope = testFixture.SimpleComponentTestScope(
                 "gda_banking",
                 "loans",
-                "duration",
+                "amount",
                 new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 ExplorerTestFixture.GenerateVcrFilename(this));
 
