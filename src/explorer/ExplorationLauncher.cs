@@ -39,7 +39,7 @@ namespace Explorer
             config.UseConnection(conn);
             config.UseContext(ctx);
             config.Compose(componentConfiguration);
-            return new ColumnExploration(config, scope, ctx.Column);
+            return new ColumnExploration(config, scope, ctx.Column.Name);
         }
 
         /// <summary>

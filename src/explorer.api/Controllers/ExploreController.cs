@@ -29,8 +29,9 @@ namespace Explorer.Api.Controllers
             this.explorationRegistry = explorationRegistry;
         }
 
+        [ApiVersion("1.0")]
         [HttpPost]
-        [Route("explore")]
+        [Route("api/v{version:apiVersion}/explore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Explore(
@@ -59,8 +60,9 @@ namespace Explorer.Api.Controllers
             return Ok(new ExploreResult(id, ExplorationStatus.New, data.DataSource, data.Table));
         }
 
+        [ApiVersion("1.0")]
         [HttpGet]
-        [Route("result/{explorationId}")]
+        [Route("api/v{version:apiVersion}/result/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Result(
@@ -115,8 +117,9 @@ namespace Explorer.Api.Controllers
             return Ok(exploreResult);
         }
 
+        [ApiVersion("1.0")]
         [HttpGet]
-        [Route("cancel/{explorationId}")]
+        [Route("api/v{version:apiVersion}/cancel/{explorationId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Cancel(Guid explorationId)

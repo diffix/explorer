@@ -10,7 +10,7 @@ namespace Explorer.Queries
         DQuery<Max.Result<double>>,
         DQuery<Max.Result<decimal>>
     {
-        public Max(string tableName, string columnName, decimal? lowerBound = null)
+        public Max(DSqlObjectName tableName, DSqlObjectName columnName, decimal? lowerBound = null)
         {
             var whereFragment = string.Empty;
             if (lowerBound.HasValue)

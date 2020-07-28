@@ -10,7 +10,7 @@ namespace Explorer.Queries
         DQuery<NumericColumnStats.Result<double>>,
         DQuery<NumericColumnStats.Result<System.DateTime>>
     {
-        public NumericColumnStats(string tableName, string columnName)
+        public NumericColumnStats(DSqlObjectName tableName, DSqlObjectName columnName)
         {
             QueryStatement = $@"
                 select
