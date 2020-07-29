@@ -25,9 +25,11 @@ namespace Explorer
             this.scope = scope;
         }
 
-        public string Column { get => scope.Ctx?.Column ?? string.Empty; }
+        public string Column { get => Ctx.Column; }
 
-        public DColumnInfo? ColumnInfo { get => scope.Ctx?.ColumnInfo; }
+        public DColumnInfo ColumnInfo { get => Ctx.ColumnInfo; }
+
+        public ExplorerContext Ctx { get => scope.Ctx!; }
 
         public override IEnumerable<ExploreMetric> PublishedMetrics =>
             scope.MetricsPublisher.PublishedMetrics;
@@ -46,10 +48,16 @@ namespace Explorer
             }
             catch (Exception ex)
             {
+                var wrappedEx =
+                    new ExplorerException("Exception occurred in column exploration", ex)
+                        .WithExtraContext(Ctx);
+
                 scope.Logger.LogError(
                     ex,
-                    $"Error in column exploration for {scope.Ctx!.DataSource} / {scope.Ctx!.Table} / {Column}.");
-                throw;
+                    $"Error in column exploration for `{Ctx.DataSource}` / `{Ctx.Table}` / `{Column}`.",
+                    wrappedEx.ExtraContext);
+
+                throw wrappedEx;
             }
         }));
 
