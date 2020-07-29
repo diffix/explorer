@@ -50,25 +50,25 @@ namespace Explorer.Components
             var distinctValuesResult = await distinctValues.ResultAsync;
             if (!distinctValuesResult.IsCategorical)
             {
-            var result = await ResultAsync;
+                var result = await ResultAsync;
 
-            if (result.SampleValues.Count > 0)
-            {
-                yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
+                if (result.SampleValues.Count > 0)
+                {
+                    yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
+                }
             }
-        }
         }
 
         protected override async Task<Result> Explore()
         {
-                var emailCheckerResult = await emailChecker.ResultAsync;
+            var emailCheckerResult = await emailChecker.ResultAsync;
             var sampleValues = emailCheckerResult.IsEmail ? await GenerateEmails() : await GenerateStrings();
             return new Result(sampleValues.ToList());
         }
 
         private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
         {
-            var domains = await conn.Exec(new TextColumnTrim(
+            var domains = await ctx.Exec(new TextColumnTrim(
                 ctx.Table, ctx.Column, TextColumnTrimType.Leading, Constants.EmailAddressChars));
 
             return SubstringWithCountList.FromValueWithCountEnum(
@@ -78,7 +78,7 @@ namespace Explorer.Components
 
         private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(DConnection conn, ExplorerContext ctx)
         {
-            var suffixes = await conn.Exec(new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
+            var suffixes = await ctx.Exec(new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
 
             return SubstringWithCountList.FromValueWithCountEnum(
                 suffixes.Rows
@@ -190,7 +190,7 @@ namespace Explorer.Components
                 for (var pos = 0; hasRows; pos += substringQueryColumnCount)
                 {
                     var query = new TextColumnSubstring(ctx.Table, ctx.Column, pos, length, substringQueryColumnCount);
-                    var sstrResult = await conn.Exec(query);
+                    var sstrResult = await ctx.Exec(query);
                     hasRows = false;
                     foreach (var row in sstrResult.Rows)
                     {

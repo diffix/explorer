@@ -38,7 +38,7 @@ namespace Explorer.Components
                 ValuesPerBucketTarget,
                 isIntegerColumn: ctx.ColumnInfo.Type == DValueType.Integer);
 
-            var histogramQ = await conn.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
+            var histogramQ = await ctx.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
 
             var histograms = Histogram.FromQueryRows(histogramQ.Rows);
 

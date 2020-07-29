@@ -50,7 +50,7 @@ namespace Explorer.Components
                 return Result.Failed();
             }
 
-            var distinctResult = await conn.Exec(
+            var distinctResult = await ctx.Exec(
                 new DistinctColumnValues(ctx.Table, $"length({ctx.Column})"));
 
             return Result.Ok(new DistinctValuesComponent.Result(distinctResult.Rows));

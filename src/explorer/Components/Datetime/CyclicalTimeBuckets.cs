@@ -34,7 +34,7 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            var queryResult = await conn.Exec(
+            var queryResult = await ctx.Exec(
                 new CyclicalDatetimes(ctx.Table, ctx.Column, ctx.ColumnInfo.Type));
 
             var groupings = await Task.Run(() => ProcessCyclicalBuckets(queryResult.Rows));

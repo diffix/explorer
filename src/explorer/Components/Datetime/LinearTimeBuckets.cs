@@ -35,7 +35,7 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            var queryResult = await conn.Exec(
+            var queryResult = await ctx.Exec(
                 new BucketedDatetimes(ctx.Table, ctx.Column, ctx.ColumnInfo.Type));
 
             var groupings = await Task.Run(() => ProcessLinearBuckets(queryResult.Rows));

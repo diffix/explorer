@@ -29,7 +29,7 @@ namespace Explorer.Components
 
         private static async Task<Result> CheckIsEmail(DConnection conn, ExplorerContext ctx)
         {
-            var emailCheck = await conn.Exec(
+            var emailCheck = await ctx.Exec(
                 new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, Constants.EmailAddressChars));
             var isEmail = emailCheck.Rows.All(r => r.IsNull || (!r.IsSuppressed && r.Value == "@"));
             return new Result(isEmail);
