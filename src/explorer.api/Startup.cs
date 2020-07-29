@@ -39,7 +39,7 @@ namespace Explorer.Api
             services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>();
 
             // Enriched event logger for sentry
-            services.AddTransient<ISentryEventProcessor, ExplorerEventProcessor>();
+            services.AddScoped<ISentryEventProcessor, ExplorerEventProcessor>();
 
             // Singleton services
             services
