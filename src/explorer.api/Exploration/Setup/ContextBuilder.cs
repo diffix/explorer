@@ -39,7 +39,7 @@
                 {
                     throw new MetaDataCheckException($"Could not find column '{dataSource}.{table}.{column}'.");
                 }
-                var ci = new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating ?? true);
+                var ci = new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
                 return new CheckedContext(dataSource, table, column, ci);
             });
         }
