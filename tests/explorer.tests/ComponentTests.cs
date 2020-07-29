@@ -32,8 +32,8 @@ namespace Explorer.Tests
 
             // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
             var refiner = new MinMaxRefiner(
-                scope.Conn,
-                scope.Ctx,
+                scope.Connection,
+                scope.Context,
                 new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null));
 
             TestResult(await refiner.ResultAsync);

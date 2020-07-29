@@ -4,6 +4,8 @@ namespace Explorer.Common
 
     public interface ExplorerContext
     {
+        public DConnection Connection { get; }
+
         public string DataSource { get; }
 
         public DSqlObjectName Table { get; }

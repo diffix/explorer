@@ -19,7 +19,7 @@
             this.apiClient = apiClient;
         }
 
-        public async Task<IEnumerable<ExplorerContext>> Build(Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
+        public async Task<IEnumerable<ExplorerContext>> Build(DConnection connection, Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
         {
             var dataSources = await apiClient.GetDataSources(apiUrl, CancellationToken.None);
 
@@ -40,7 +40,7 @@
                     throw new MetaDataCheckException($"Could not find column '{dataSource}.{table}.{column}'.");
                 }
                 var ci = new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
-                return new CheckedContext(dataSource, table, column, ci);
+                return new CheckedContext(connection, dataSource, table, column, ci);
             });
         }
 
@@ -50,13 +50,16 @@
         /// </summary>
         private class CheckedContext : ExplorerContext
         {
-            internal CheckedContext(string dataSource, string table, string column, DColumnInfo columnInfo)
+            internal CheckedContext(DConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
             {
+                Connection = connection;
                 DataSource = dataSource;
                 Table = new DSqlObjectName(table);
                 Column = new DSqlObjectName(column);
                 ColumnInfo = columnInfo;
             }
+
+            public DConnection Connection { get; }
 
             public string DataSource { get; }
 

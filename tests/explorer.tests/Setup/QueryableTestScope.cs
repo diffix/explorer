@@ -19,12 +19,12 @@ namespace Explorer.Tests
 
         public TestScope Inner { get; }
 
-        public DConnection Conn
+        public DConnection Connection
         {
             get => Inner.Scope.GetInstance<DConnection>();
         }
 
-        public ExplorerContext Ctx
+        public ExplorerContext Context
         {
             get => Inner.Scope.GetInstance<ExplorerContext>();
         }
@@ -51,7 +51,7 @@ namespace Explorer.Tests
             DColumnInfo columnInfo)
         {
             Inner.Scope.Inject<ExplorerContext>(
-                new ExplorerTestContext(dataSource, tableName, columnName, columnInfo));
+                new ExplorerTestContext(Connection, dataSource, tableName, columnName, columnInfo));
             return new ComponentTestScope(Inner);
         }
 
