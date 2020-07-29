@@ -1,5 +1,7 @@
 namespace Explorer.Common
 {
+    using System.Threading.Tasks;
+
     using Diffix;
 
     public interface ExplorerContext
@@ -13,5 +15,7 @@ namespace Explorer.Common
         public DSqlObjectName Column { get; }
 
         public DColumnInfo ColumnInfo { get; }
+
+        public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) => Connection.Exec(query);
     }
 }
