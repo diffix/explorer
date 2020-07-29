@@ -13,12 +13,10 @@ namespace Explorer.Components
     {
         private const double SuppressedRatioThreshold = 0.1;
 
-        private readonly DConnection conn;
         private readonly ExplorerContext ctx;
 
-        public CyclicalTimeBuckets(DConnection conn, ExplorerContext ctx)
+        public CyclicalTimeBuckets(ExplorerContext ctx)
         {
-            this.conn = conn;
             this.ctx = ctx;
         }
 

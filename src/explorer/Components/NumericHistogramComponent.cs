@@ -13,16 +13,14 @@ namespace Explorer.Components
         ExplorerComponent<List<HistogramWithCounts>>
     {
         private const long ValuesPerBucketTarget = 20;
-        private readonly DConnection conn;
+
         private readonly ExplorerContext ctx;
         private readonly ResultProvider<SimpleStats<double>.Result> statsResultProvider;
 
         public NumericHistogramComponent(
-            DConnection conn,
             ExplorerContext ctx,
             ResultProvider<SimpleStats<double>.Result> statsResultProvider)
         {
-            this.conn = conn;
             this.ctx = ctx;
             this.statsResultProvider = statsResultProvider;
         }

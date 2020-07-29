@@ -14,18 +14,15 @@ namespace Explorer.Components
     public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>, PublisherComponent
     {
         private const int MaxIterations = 10;
-        private readonly DConnection conn;
         private readonly ExplorerContext ctx;
         private readonly ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider;
 
         public MinMaxRefiner(
-            DConnection conn,
             ExplorerContext ctx,
             ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
         {
             this.ctx = ctx;
             this.histogramMinMaxProvider = histogramMinMaxProvider;
-            this.conn = conn;
         }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()

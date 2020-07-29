@@ -15,13 +15,11 @@ namespace Explorer.Components
     {
         private const double SuppressedRatioThreshold = 0.1;
         private const int DefaultNumValuesToPublish = 10;
-        private readonly DConnection conn;
         private readonly ExplorerContext ctx;
 
-        public DistinctValuesComponent(DConnection conn, ExplorerContext ctx)
+        public DistinctValuesComponent(ExplorerContext ctx)
         {
             this.ctx = ctx;
-            this.conn = conn;
         }
 
         public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;

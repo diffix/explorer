@@ -12,13 +12,11 @@ namespace Explorer.Components
     public class TextLengthComponent
         : ExplorerComponent<TextLengthComponent.Result>, PublisherComponent
     {
-        private readonly DConnection conn;
         private readonly ExplorerContext ctx;
 
-        public TextLengthComponent(DConnection conn, ExplorerContext ctx)
+        public TextLengthComponent(ExplorerContext ctx)
         {
             this.ctx = ctx;
-            this.conn = conn;
         }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()

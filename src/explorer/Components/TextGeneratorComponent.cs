@@ -19,18 +19,15 @@ namespace Explorer.Components
         public const int DefaultEmailDomainsCountThreshold = 5 * DefaultSamplesToPublish;
         public const int DefaultSubstringQueryColumnCount = 5;
 
-        private readonly DConnection conn;
         private readonly ExplorerContext ctx;
         private readonly EmailCheckComponent emailChecker;
         private readonly DistinctValuesComponent distinctValues;
 
         public TextGeneratorComponent(
-            DConnection conn,
             ExplorerContext ctx,
             EmailCheckComponent emailChecker,
             DistinctValuesComponent distinctValues)
         {
-            this.conn = conn;
             this.ctx = ctx;
             this.emailChecker = emailChecker;
             this.distinctValues = distinctValues;
@@ -66,7 +63,7 @@ namespace Explorer.Components
             return new Result(sampleValues.ToList());
         }
 
-        private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
+        private static async Task<SubstringWithCountList> ExploreEmailDomains(ExplorerContext ctx)
         {
             var domains = await ctx.Exec(new TextColumnTrim(
                 ctx.Table, ctx.Column, TextColumnTrimType.Leading, Constants.EmailAddressChars));
@@ -76,7 +73,7 @@ namespace Explorer.Components
                     .Where(r => r.HasValue && r.Value.StartsWith("@", StringComparison.InvariantCulture)));
         }
 
-        private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(DConnection conn, ExplorerContext ctx)
+        private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(ExplorerContext ctx)
         {
             var suffixes = await ctx.Exec(new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
 
@@ -178,7 +175,6 @@ namespace Explorer.Components
         /// using a single query.
         /// </summary>
         private static async Task<SubstringsData> ExploreSubstrings(
-            DConnection conn,
             ExplorerContext ctx,
             int substringQueryColumnCount,
             params int[] substringLengths)
@@ -208,9 +204,9 @@ namespace Explorer.Components
         private async Task<IEnumerable<string>> GenerateEmails()
         {
             var (substrings, domains, tlds) = await Utilities.WhenAll(
-                ExploreSubstrings(conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
-                ExploreEmailDomains(conn, ctx),
-                ExploreEmailTopLevelDomains(conn, ctx));
+                ExploreSubstrings(ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
+                ExploreEmailDomains(ctx),
+                ExploreEmailTopLevelDomains(ctx));
             if (substrings.Count == 0 || tlds.Count == 0)
             {
                 return Enumerable.Empty<string>();
@@ -222,7 +218,7 @@ namespace Explorer.Components
         {
             // the substring lengths 3 and 4 were determined empirically to work for column containing names
             var substrings = await ExploreSubstrings(
-                conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
+                ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
             if (substrings.Count == 0)
             {
                 return Enumerable.Empty<string>();

@@ -14,12 +14,10 @@ namespace Explorer.Components
     {
         private const double SuppressedRatioThreshold = 0.1;
 
-        private readonly DConnection conn;
         private readonly ExplorerContext ctx;
 
-        public LinearTimeBuckets(DConnection conn, ExplorerContext ctx)
+        public LinearTimeBuckets(ExplorerContext ctx)
         {
-            this.conn = conn;
             this.ctx = ctx;
         }
 

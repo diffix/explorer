@@ -11,13 +11,10 @@ namespace Explorer.Components
 
     public class SimpleStats<T> : ExplorerComponent<SimpleStats<T>.Result>, PublisherComponent
     {
-        private readonly DConnection conn;
-
         private readonly ExplorerContext ctx;
 
-        public SimpleStats(DConnection conn, ExplorerContext ctx)
+        public SimpleStats(ExplorerContext ctx)
         {
-            this.conn = conn;
             this.ctx = ctx;
         }
 
