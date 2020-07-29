@@ -7,7 +7,6 @@ namespace Aircloak.JsonApi.ResponseTypes
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json.Serialization;
-
     using Diffix;
 
     /// <summary>
@@ -61,7 +60,7 @@ namespace Aircloak.JsonApi.ResponseTypes
                 public bool UserId { get; set; }
 
                 [JsonPropertyName("isolated")]
-                public bool? Isolating { get; set; }
+                public IsolatorStatus Isolating { get; set; }
             }
         }
     }
