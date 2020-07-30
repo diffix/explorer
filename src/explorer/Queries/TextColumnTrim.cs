@@ -26,12 +26,12 @@ namespace Explorer.Queries
     internal class TextColumnTrim :
         DQuery<ValueWithCount<string>>
     {
-        public TextColumnTrim(string tableName, string columnName, TextColumnTrimType trimType, string trimChars)
+        public TextColumnTrim(DSqlObjectName tableName, DSqlObjectName columnName, TextColumnTrimType trimType, string trimChars)
         {
             var trimPosition = trimType.ToString().ToUpperInvariant();
 
             QueryStatement = $@"
-                select 
+                select
                     trim({trimPosition} '{trimChars}' FROM {columnName}),
                     count(*),
                     count_noise(*)

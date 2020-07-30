@@ -12,7 +12,7 @@ namespace Explorer.Common
         {
             Debug.Assert(
                 buckets.All(b => b.BucketSize.SnappedSize == bucketSize.SnappedSize),
-                $"Histogram buckets don't match given bucketsize");
+                "Histogram buckets don't match given bucketsize");
 
             BucketSize = bucketSize;
             Buckets = new SortedList<decimal, HistogramBucket>(buckets.ToDictionary(b => b.LowerBound));
@@ -21,6 +21,10 @@ namespace Explorer.Common
         public BucketSize BucketSize { get; }
 
         public SortedList<decimal, HistogramBucket> Buckets { get; }
+
+        public (decimal, decimal) Bounds => (
+                    Buckets.First().Value.LowerBound,
+                    Buckets.Last().Value.LowerBound + BucketSize.SnappedSize);
 
         public static IEnumerable<Histogram> FromQueryRows(IEnumerable<SingleColumnHistogram.Result> queryResults) =>
             from row in queryResults

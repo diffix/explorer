@@ -10,7 +10,7 @@ namespace Explorer.Queries
         DQuery<Min.Result<double>>,
         DQuery<Min.Result<decimal>>
     {
-        public Min(string tableName, string columnName, decimal? upperBound = null)
+        public Min(DSqlObjectName tableName, DSqlObjectName columnName, decimal? upperBound = null)
         {
             var whereFragment = string.Empty;
             if (upperBound.HasValue)

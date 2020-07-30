@@ -13,27 +13,33 @@ namespace Explorer.Components
 
     using SubstringWithCountList = Explorer.Common.ValueWithCountList<string>;
 
-    public class TextGeneratorComponent : ExplorerComponent<IEnumerable<string>>, PublisherComponent
+    public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
     {
-        private const int DefaultGeneratedValuesCount = 30;
-        private const int DefaultEmailDomainsCountThreshold = 5 * DefaultGeneratedValuesCount;
-        private const int DefaultSubstringQueryColumnCount = 5;
+        public const int DefaultSamplesToPublish = 20;
+        public const int DefaultEmailDomainsCountThreshold = 5 * DefaultSamplesToPublish;
+        public const int DefaultSubstringQueryColumnCount = 5;
 
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
         private readonly EmailCheckComponent emailChecker;
+        private readonly DistinctValuesComponent distinctValues;
 
-        public TextGeneratorComponent(DConnection conn, ExplorerContext ctx, EmailCheckComponent emailChecker)
+        public TextGeneratorComponent(
+            DConnection conn,
+            ExplorerContext ctx,
+            EmailCheckComponent emailChecker,
+            DistinctValuesComponent distinctValues)
         {
             this.conn = conn;
             this.ctx = ctx;
             this.emailChecker = emailChecker;
-            GeneratedValuesCount = DefaultGeneratedValuesCount;
+            this.distinctValues = distinctValues;
+            SamplesToPublish = DefaultSamplesToPublish;
             EmailDomainsCountThreshold = DefaultEmailDomainsCountThreshold;
             SubstringQueryColumnCount = DefaultSubstringQueryColumnCount;
         }
 
-        public int GeneratedValuesCount { get; set; }
+        public int SamplesToPublish { get; set; }
 
         public int EmailDomainsCountThreshold { get; set; }
 
@@ -41,21 +47,23 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
+            var distinctValuesResult = await distinctValues.ResultAsync;
+            if (!distinctValuesResult.IsCategorical)
+            {
             var result = await ResultAsync;
 
-            if (result.Any())
+            if (result.SampleValues.Count > 0)
             {
-                yield return new UntypedMetric(name: "sample_values", metric: result.ToArray());
+                yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
             }
         }
+        }
 
-        protected override async Task<IEnumerable<string>> Explore()
+        protected override async Task<Result> Explore()
         {
-            var result = await emailChecker.ResultAsync;
-
-            return result.IsEmail
-                ? await GenerateEmails()
-                : await GenerateStrings();
+                var emailCheckerResult = await emailChecker.ResultAsync;
+            var sampleValues = emailCheckerResult.IsEmail ? await GenerateEmails() : await GenerateStrings();
+            return new Result(sampleValues.ToList());
         }
 
         private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
@@ -207,7 +215,7 @@ namespace Explorer.Components
             {
                 return Enumerable.Empty<string>();
             }
-            return GenerateEmails(substrings, domains, tlds, GeneratedValuesCount, EmailDomainsCountThreshold);
+            return GenerateEmails(substrings, domains, tlds, SamplesToPublish, EmailDomainsCountThreshold);
         }
 
         private async Task<IEnumerable<string>> GenerateStrings()
@@ -220,8 +228,18 @@ namespace Explorer.Components
                 return Enumerable.Empty<string>();
             }
             var rand = new Random(Environment.TickCount);
-            return Enumerable.Range(0, GeneratedValuesCount).Select(_
+            return Enumerable.Range(0, SamplesToPublish).Select(_
                 => GenerateString(substrings, minLength: 3, rand));
+        }
+
+        public class Result
+        {
+            public Result(IList<string> sampleValues)
+            {
+                SampleValues = sampleValues;
+            }
+
+            public IList<string> SampleValues { get; }
         }
     }
 }

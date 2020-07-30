@@ -5,21 +5,25 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
+    using Explorer.Components.ResultTypes;
     using Explorer.Metrics;
 
     public class QuartileEstimator :
         ExplorerComponent<QuartileEstimator.Result>, PublisherComponent
     {
-        private readonly ResultProvider<NumericHistogramComponent.Result> histogramResult;
+        private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
+        private readonly ResultProvider<HistogramWithCounts> histogramResult;
 
         public QuartileEstimator(
-            ResultProvider<NumericHistogramComponent.Result> histogramResult)
+            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
+            ResultProvider<HistogramWithCounts> histogramResult)
         {
+            this.distinctValuesProvider = distinctValuesProvider;
             this.histogramResult = histogramResult;
         }
 
-        public static Task<List<double>> EstimateQuartiles(NumericHistogramComponent.Result result) =>
-            EstimateQuartiles(result.Histogram);
+        public static Task<List<double>> EstimateQuartiles(HistogramWithCounts hwc) =>
+            EstimateQuartiles(hwc.Histogram);
 
         public static Task<List<double>> EstimateQuartiles(Histogram histogram) => Task.Run(() =>
         {
@@ -77,9 +81,13 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var result = await ResultAsync;
+            var distinctValues = await distinctValuesProvider.ResultAsync;
+            if (!distinctValues.IsCategorical)
+            {
+                var result = await ResultAsync;
 
-            yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
+                yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
+            }
         }
 
         protected override async Task<Result> Explore() =>

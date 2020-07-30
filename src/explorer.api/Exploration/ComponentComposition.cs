@@ -32,20 +32,21 @@ namespace Explorer.Api
         private static void CommonConfiguration(ExplorationConfig config)
         {
             config.AddPublisher<ExplorationInfo>();
+            config.AddPublisher<DistinctValuesComponent>();
+            config.AddPublisher<CategoricalSampleGenerator>();
         }
 
         private static void BoolExploration(ExplorationConfig config)
         {
-            config.AddPublisher<DistinctValuesComponent>();
         }
 
         private static void NumericExploration(ExplorationConfig config)
         {
-            config.AddPublisher<NumericHistogramComponent>();
+            config.AddPublisher<HistogramSelectorComponent>();
+            config.AddPublisher<MinMaxFromHistogramComponent>();
             config.AddPublisher<QuartileEstimator>();
             config.AddPublisher<AverageEstimator>();
             config.AddPublisher<MinMaxRefiner>();
-            config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<NumericSampleGenerator>();
             config.AddPublisher<DistributionAnalysisComponent>();
             config.AddPublisher<DescriptiveStatsPublisher>();
@@ -53,7 +54,6 @@ namespace Explorer.Api
 
         private static void TextExploration(ExplorationConfig config)
         {
-            config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<EmailCheckComponent>();
             config.AddPublisher<TextGeneratorComponent>();
             config.AddPublisher<TextLengthComponent>();
@@ -61,7 +61,6 @@ namespace Explorer.Api
 
         private static void DatetimeExploration(ExplorationConfig config)
         {
-            config.AddPublisher<DistinctValuesComponent>();
             config.AddPublisher<LinearTimeBuckets>();
             config.AddPublisher<CyclicalTimeBuckets>();
             config.AddPublisher<DatetimeDistributionComponent>();

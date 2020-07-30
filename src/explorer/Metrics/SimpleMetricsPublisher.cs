@@ -21,7 +21,10 @@ namespace Explorer.Metrics
         public void PublishMetric(ExploreMetric metric)
         {
             logger.LogDebug($"{nameof(SimpleMetricsPublisher)}: Publishing metric {metric.Name}.");
-            store[metric.Name] = metric;
+            store.AddOrUpdate(
+                metric.Name,
+                _ => metric,
+                (_, old) => metric.Priority >= old.Priority ? metric : old);
         }
     }
 }

@@ -86,13 +86,18 @@ docker run -it --rm -p 5000:80 explorer
 
 > You will need an access token for the Aircloak API. If you don't have one, ask your local Aircloak admin.
 
+### Api Versions
+
+All endpoints are versioned under an api schema root. The api root is `/api/vN`, where N is the
+version number. At present, the api is at version 1 so the url root is `/api/v1`.
+
 ### Launching an exploration
 
 Diffix Explorer exposes an `/explore` endpoint that expects a `POST` request containing the url of the Aircloak API,
-and authentication token, and the dataset, table and column to analyse. Assuming you are running the Explorer on `localhost:5000` and you are targeting `https://attack.aircloak.com/api/`:
+and authentication token, and the dataset, table and column to analyse. Assuming you are running the Explorer on `localhost:5000` and you are targeting an Aircloak backend api at `https://attack.aircloak.com/api/`:
 
 ```bash
-curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/explore \
+curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/api/v1/explore \
   -d "{
    \"ApiUrl\":\"https://attack.aircloak.com/api/\"
    \"ApiKey\":\"my_secret_key\",
@@ -124,7 +129,7 @@ This launches the column exploration and, if all goes well, returns a http 200 r
 
 You can use the exploration `id` to poll for results on the `/result` endpoint:
 ```bash
-curl -k http://localhost:5000/result/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
+curl -k http://localhost:5000/api/v1/result/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
 
 The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics, e.g. for integer and text columns:
@@ -234,7 +239,7 @@ When exploration is complete, this is indicated with `"status": "Complete"`.
 You can cancel an ongoing exploration using the (you guessed it) `/cancel` endpoint:
 
 ```bash
-curl -k http://localhost:5000/cancel/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
+curl -k http://localhost:5000/api/v1/cancel/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
 
 ### More examples

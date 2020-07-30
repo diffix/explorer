@@ -19,6 +19,16 @@ namespace Explorer.Tests
 
         public TestScope Inner { get; }
 
+        public DConnection Conn
+        {
+            get => Inner.Scope.GetInstance<DConnection>();
+        }
+
+        public ExplorerContext Ctx
+        {
+            get => Inner.Scope.GetInstance<ExplorerContext>();
+        }
+
         public async Task<IEnumerable<TRow>> QueryRows<TRow>(DQuery<TRow> query)
         {
             var queryResult = await Inner.Scope.GetInstance<DConnection>().Exec(query);
@@ -41,13 +51,7 @@ namespace Explorer.Tests
             DColumnInfo columnInfo)
         {
             Inner.Scope.Inject<ExplorerContext>(
-                new ExplorerTestContext
-                {
-                    DataSource = dataSource,
-                    Table = tableName,
-                    Column = columnName,
-                    ColumnInfo = columnInfo,
-                });
+                new ExplorerTestContext(dataSource, tableName, columnName, columnInfo));
             return new ComponentTestScope(Inner);
         }
 
