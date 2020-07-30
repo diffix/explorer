@@ -5,13 +5,13 @@ namespace Explorer.Queries
     using Diffix;
     using Explorer.Common;
 
-    internal class DistinctColumnValues : DQuery<ValueWithCount<JsonElement>>
+    internal class DistinctLengths : DQuery<ValueWithCount<JsonElement>>
     {
         public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
         {
             return $@"
                 select
-                    {column},
+                    length({column}),
                     count(*),
                     count_noise(*)
                 from {table}

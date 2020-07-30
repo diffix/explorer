@@ -48,8 +48,7 @@ namespace Explorer.Components
                 return Result.Failed();
             }
 
-            var distinctResult = await ctx.Exec(
-                new DistinctColumnValues(ctx.Table, $"length({ctx.Column})"));
+            var distinctResult = await ctx.Exec(new DistinctLengths());
 
             return Result.Ok(new DistinctValuesComponent.Result(distinctResult.Rows));
         }

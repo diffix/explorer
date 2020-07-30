@@ -79,7 +79,7 @@ namespace Explorer.Components
             {
                 return new Result(Enumerable.Empty<ValueWithCount<JsonElement>>());
             }
-            var distinctValueResult = await ctx.Exec(new DistinctColumnValues(ctx.Table, ctx.Column));
+            var distinctValueResult = await ctx.Exec(new DistinctColumnValues());
             return new Result(distinctValueResult.Rows.OrderByDescending(r => r.Count));
         }
 

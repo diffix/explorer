@@ -10,22 +10,25 @@ namespace Explorer.Queries
         DQuery<Max.Result<double>>,
         DQuery<Max.Result<decimal>>
     {
-        public Max(DSqlObjectName tableName, DSqlObjectName columnName, decimal? lowerBound = null)
-        {
-            var whereFragment = string.Empty;
-            if (lowerBound.HasValue)
-            {
-                whereFragment = $"where {columnName} between {lowerBound.Value} and {lowerBound.Value * 2}";
-            }
+        private readonly decimal? lowerBound;
 
-            QueryStatement = $@"
-                select
-                    max({columnName})
-                from {tableName}
-                {whereFragment}";
+        public Max(decimal? lowerBound = null)
+        {
+            this.lowerBound = lowerBound;
         }
 
-        public string QueryStatement { get; }
+        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        {
+            var whereFragment = lowerBound.HasValue ?
+                $"where {column} between {lowerBound.Value} and {lowerBound.Value * 2}" :
+                string.Empty;
+
+            return $@"
+                select
+                    max({column})
+                from {table}
+                {whereFragment}";
+        }
 
         Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<long>

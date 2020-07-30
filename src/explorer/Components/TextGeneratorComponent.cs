@@ -65,8 +65,7 @@ namespace Explorer.Components
 
         private static async Task<SubstringWithCountList> ExploreEmailDomains(ExplorerContext ctx)
         {
-            var domains = await ctx.Exec(new TextColumnTrim(
-                ctx.Table, ctx.Column, TextColumnTrimType.Leading, Constants.EmailAddressChars));
+            var domains = await ctx.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
 
             return SubstringWithCountList.FromValueWithCountEnum(
                 domains.Rows
@@ -75,7 +74,7 @@ namespace Explorer.Components
 
         private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(ExplorerContext ctx)
         {
-            var suffixes = await ctx.Exec(new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
+            var suffixes = await ctx.Exec(new TextColumnSuffix(3, 7));
 
             return SubstringWithCountList.FromValueWithCountEnum(
                 suffixes.Rows
@@ -185,7 +184,7 @@ namespace Explorer.Components
                 var hasRows = true;
                 for (var pos = 0; hasRows; pos += substringQueryColumnCount)
                 {
-                    var query = new TextColumnSubstring(ctx.Table, ctx.Column, pos, length, substringQueryColumnCount);
+                    var query = new TextColumnSubstring(pos, length, substringQueryColumnCount);
                     var sstrResult = await ctx.Exec(query);
                     hasRows = false;
                     foreach (var row in sstrResult.Rows)

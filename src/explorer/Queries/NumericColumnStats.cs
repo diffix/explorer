@@ -10,18 +10,16 @@ namespace Explorer.Queries
         DQuery<NumericColumnStats.Result<double>>,
         DQuery<NumericColumnStats.Result<System.DateTime>>
     {
-        public NumericColumnStats(DSqlObjectName tableName, DSqlObjectName columnName)
+        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
         {
-            QueryStatement = $@"
+            return $@"
                 select
-                    min({columnName}),
-                    max({columnName}),
+                    min({column}),
+                    max({column}),
                     count(*),
                     count_noise(*)
-                from {tableName}";
+                from {table}";
         }
-
-        public string QueryStatement { get; }
 
         Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader)
         {

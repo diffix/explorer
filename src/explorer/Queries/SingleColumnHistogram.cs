@@ -10,16 +10,20 @@ namespace Explorer.Queries
     public class SingleColumnHistogram :
         DQuery<SingleColumnHistogram.Result>
     {
-        public SingleColumnHistogram(
-            DSqlObjectName tableName,
-            DSqlObjectName columnName,
-            IList<decimal> buckets)
+        private readonly decimal[] buckets;
+
+        public SingleColumnHistogram(IList<decimal> buckets)
+        {
+            this.buckets = buckets.ToArray();
+        }
+
+        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
         {
             var bucketsFragment = string.Join(
                 ",",
-                from bucket in buckets select $"bucket({columnName} by {bucket})");
+                from bucket in buckets select $"bucket({column} by {bucket})");
 
-            QueryStatement = $@"
+            return $@"
                 select
                     grouping_id(
                         {bucketsFragment}
@@ -27,18 +31,12 @@ namespace Explorer.Queries
                     {bucketsFragment},
                     count(*),
                     count_noise(*)
-                from {tableName}
-                group by grouping sets ({string.Join(",", Enumerable.Range(2, buckets.Count))})";
-
-            Buckets = buckets.ToArray();
+                from {table}
+                group by grouping sets ({string.Join(",", Enumerable.Range(2, buckets.Length))})";
         }
 
-        public string QueryStatement { get; }
-
-        public decimal[] Buckets { get; }
-
         public Result ParseRow(ref Utf8JsonReader reader) =>
-            new Result(ref reader, Buckets);
+            new Result(ref reader, buckets);
 
         public class Result : IndexedGroupingSetsResult<decimal, double>
         {

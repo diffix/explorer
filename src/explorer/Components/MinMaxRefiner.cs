@@ -107,15 +107,13 @@ namespace Explorer.Components
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound)
         {
-            var minQ = await ctx.Exec<Min.Result<decimal>>(
-                new Min(ctx.Table, ctx.Column, upperBound));
+            var minQ = await ctx.Exec<Min.Result<decimal>>(new Min(upperBound));
             return minQ.Rows.Single().Min;
         }
 
         private async Task<decimal?> GetMaxEstimate(decimal? lowerBound)
         {
-            var maxQ = await ctx.Exec<Max.Result<decimal>>(
-                new Max(ctx.Table, ctx.Column, lowerBound));
+            var maxQ = await ctx.Exec<Max.Result<decimal>>(new Max(lowerBound));
             return maxQ.Rows.Single().Max;
         }
 

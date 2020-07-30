@@ -10,22 +10,25 @@ namespace Explorer.Queries
         DQuery<Min.Result<double>>,
         DQuery<Min.Result<decimal>>
     {
-        public Min(DSqlObjectName tableName, DSqlObjectName columnName, decimal? upperBound = null)
-        {
-            var whereFragment = string.Empty;
-            if (upperBound.HasValue)
-            {
-                whereFragment = $"where {columnName} between 0 and {upperBound.Value}";
-            }
+        private readonly decimal? upperBound;
 
-            QueryStatement = $@"
-                select
-                    min({columnName})
-                from {tableName}
-                {whereFragment}";
+        public Min(decimal? upperBound = null)
+        {
+            this.upperBound = upperBound;
         }
 
-        public string QueryStatement { get; }
+        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        {
+            var whereFragment = upperBound.HasValue ?
+                $"where {column} between 0 and {upperBound.Value}" :
+                string.Empty;
+
+            return $@"
+                select
+                    min({column})
+                from {table}
+                {whereFragment}";
+        }
 
         Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<long>

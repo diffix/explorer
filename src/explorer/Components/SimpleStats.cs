@@ -29,7 +29,7 @@ namespace Explorer.Components
 
         protected override async Task<SimpleStats<T>.Result> Explore()
         {
-            var statsQ = await ctx.Exec(new BasicColumnStats<T>(ctx.Table, ctx.Column));
+            var statsQ = await ctx.Exec(new BasicColumnStats<T>());
 
             return new Result(statsQ.Rows.Single());
         }

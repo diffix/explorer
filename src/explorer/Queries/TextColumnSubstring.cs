@@ -9,16 +9,27 @@ namespace Explorer.Queries
 
     internal class TextColumnSubstring : DQuery<TextColumnSubstring.Result>
     {
-        public TextColumnSubstring(DSqlObjectName tableName, DSqlObjectName columnName, int pos, int length, int count)
+        private readonly int pos;
+        private readonly int length;
+        private readonly int count;
+
+        public TextColumnSubstring(int pos, int length, int count)
+        {
+            this.pos = pos;
+            this.length = length;
+            this.count = count;
+        }
+
+        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
         {
             var indexes = Enumerable.Range(0, count);
             var columnNames = string.Join(", ", indexes.Select(i => $"s{i}"));
             var substringExpressions = string.Join(",\n                        ", indexes.Select(i =>
-                $"substring({columnName}, {pos + i + 1}, {length}) as s{i}"));
+                $"substring({column}, {pos + i + 1}, {length}) as s{i}"));
             var whenExpressions = string.Join("\n                        ", indexes.Select(i =>
                 $"when s{i} is not null then {i}"));
 
-            QueryStatement = $@"
+            return $@"
                 select
                     concat({columnNames}) as sstr,
                     sum(count),
@@ -31,14 +42,12 @@ namespace Explorer.Queries
                         {substringExpressions},
                         count(*),
                         count_noise(*)
-                    from {tableName}
+                    from {table}
                     group by grouping sets ({columnNames})
                     ) as substring_counts
                 group by {columnNames}
                 having length(sstr) = {length}";
         }
-
-        public string QueryStatement { get; }
 
         public Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 

@@ -231,11 +231,13 @@
         {
             public const string DataSet = "gda_banking";
 
-            public string QueryStatement =>
-                @"select 1, 2, 3
+            public string BuildQueryStatement()
+            {
+                return @"select 1, 2, 3
                     from loans
                     GROUP BY duration
                     having count_noise(*) > 0";
+            }
 
             public Result ParseRow(ref Utf8JsonReader reader)
             {
@@ -261,8 +263,9 @@
         {
             public const string DataSet = "gda_taxi";
 
-            public string QueryStatement =>
-                @"select
+            public string BuildQueryStatement()
+            {
+                return @"select
                     date_trunc('year', pickup_datetime),
                     date_trunc('quarter', pickup_datetime),
                     date_trunc('month', pickup_datetime),
@@ -283,6 +286,7 @@
                     count_noise(*)
                     from rides
                     group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
+            }
 
             public Result ParseRow(ref Utf8JsonReader reader)
             {
@@ -301,7 +305,10 @@
 
         private class BadQuery : DQuery<BadQuery.Result>
         {
-            public string QueryStatement => "this is not a query";
+            public string BuildQueryStatement()
+            {
+                return "this is not a query";
+            }
 
             public Result ParseRow(ref Utf8JsonReader reader)
             {
