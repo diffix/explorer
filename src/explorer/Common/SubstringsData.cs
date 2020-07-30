@@ -31,7 +31,7 @@ namespace Explorer.Common
 
         public string GetRandomSubstring(int pos, Random rand)
         {
-            return Substrings[pos].GetRandomValue(rand, string.Empty);
+            return Substrings[pos].GetRandomValue(rand);
         }
     }
 }

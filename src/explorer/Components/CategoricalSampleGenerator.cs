@@ -44,7 +44,7 @@ namespace Explorer.Components
                 var allValues = ValueWithCountList<JsonElement>.FromValueWithCountEnum(distinctValuesResult.DistinctRows);
                 sampleValues = Enumerable
                     .Range(0, NumValuesToPublish)
-                    .Select(_ => allValues.GetRandomValue(rand, JsonNullElement));
+                    .Select(_ => allValues.GetRandomValue(rand));
             }
             return new Result(sampleValues.ToList());
         }
