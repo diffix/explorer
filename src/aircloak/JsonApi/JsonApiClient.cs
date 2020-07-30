@@ -87,12 +87,13 @@ namespace Aircloak.JsonApi
         public async Task<QueryResult<TRow>> Query<TRow>(
             Uri apiUrl,
             string dataSource,
-            DQuery<TRow> query,
+            string query,
+            DRowParser<TRow> rowParser,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
-            var queryResponse = await SubmitQuery(apiUrl, dataSource, query.QueryStatement, cancellationToken);
-            return await PollQueryUntilComplete(apiUrl, queryResponse.QueryId, query, pollFrequency, cancellationToken);
+            var queryResponse = await SubmitQuery(apiUrl, dataSource, query, cancellationToken);
+            return await PollQueryUntilComplete(apiUrl, queryResponse.QueryId, query, rowParser, pollFrequency, cancellationToken);
         }
 
         /// <summary>
@@ -154,7 +155,8 @@ namespace Aircloak.JsonApi
         public async Task<QueryResult<TRow>> PollQueryUntilComplete<TRow>(
             Uri apiUrl,
             string queryId,
-            DQuery<TRow> query,
+            string query,
+            DRowParser<TRow> rowParser,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
@@ -164,7 +166,7 @@ namespace Aircloak.JsonApi
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
                 Converters =
                 {
-                    new JsonArrayConverter<DQuery<TRow>, TRow>(query),
+                    new JsonArrayConverter<TRow>(rowParser),
                     new DValueTypeEnumConverter(),
                 },
             };
@@ -211,12 +213,12 @@ namespace Aircloak.JsonApi
                 throw;
             }
 
-            static string GetQueryResultDetails(DQuery<TRow> query, QueryResult<TRow> queryResult)
+            static string GetQueryResultDetails(string query, QueryResult<TRow> queryResult)
             {
                 return $"DataSource: {queryResult.Query.DataSource.Name}.\n" +
                     $"Error: {queryResult.Query.Error}\n" +
                     $"Query Id: {queryResult.Query.Id}\n" +
-                    $"Query Statement: {query.QueryStatement}";
+                    $"Query Statement: {query}";
             }
         }
 

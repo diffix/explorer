@@ -9,18 +9,16 @@ namespace Aircloak.JsonApi.JsonConversion
     /// <summary>
     /// Implements a <see cref="JsonConverter"/> for deserializing Aircloak rows from json array contents.
     /// </summary>
-    /// <typeparam name="TQuery">A type that implements <see cref="DQuery{T}"/> for T.</typeparam>
     /// <typeparam name="TRow">The type that the json array will be converted to.</typeparam>
     /// <remarks>Note that this is meant for reading JSON only: the Write method is intentionally
     /// left unimplemented.</remarks>
-    internal class JsonArrayConverter<TQuery, TRow> : JsonConverter<TRow>
-        where TQuery : DQuery<TRow>
+    internal class JsonArrayConverter<TRow> : JsonConverter<TRow>
     {
-        private readonly DQuery<TRow> query;
+        private readonly DRowParser<TRow> rowParser;
 
-        public JsonArrayConverter(DQuery<TRow> query)
+        public JsonArrayConverter(DRowParser<TRow> rowParser)
         {
-            this.query = query;
+            this.rowParser = rowParser;
         }
 
         public override TRow Read(
@@ -33,7 +31,7 @@ namespace Aircloak.JsonApi.JsonConversion
                 throw new JsonException("Expected an array.");
             }
 
-            var value = query.ParseRow(ref reader);
+            var value = rowParser(ref reader);
 
             // Read ']' Token
             reader.Read();

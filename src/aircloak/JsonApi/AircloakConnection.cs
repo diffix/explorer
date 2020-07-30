@@ -48,7 +48,7 @@ namespace Aircloak.JsonApi
         }
 
         /// <inheritdoc />
-        public async Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
+        public async Task<DResult<TRow>> Exec<TRow>(string query, DRowParser<TRow> rowParser)
         {
             await semaphore.WaitAsync(cancellationToken);
 
@@ -58,6 +58,7 @@ namespace Aircloak.JsonApi
                     apiUrl,
                     dataSourceName,
                     query,
+                    rowParser,
                     pollFrequency,
                     cancellationToken);
             }

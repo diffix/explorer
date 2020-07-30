@@ -19,7 +19,7 @@
             this.apiClient = apiClient;
         }
 
-        public async Task<IEnumerable<ExplorerContext>> Build(DConnection connection, Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
+        public async Task<IEnumerable<ExplorerContext>> Build(AircloakConnection connection, Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
         {
             var dataSources = await apiClient.GetDataSources(apiUrl, CancellationToken.None);
 
@@ -50,7 +50,7 @@
         /// </summary>
         private class CheckedContext : ExplorerContext
         {
-            internal CheckedContext(DConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
+            internal CheckedContext(AircloakConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
             {
                 Connection = connection;
                 DataSource = dataSource;
@@ -59,7 +59,7 @@
                 ColumnInfo = columnInfo;
             }
 
-            public DConnection Connection { get; }
+            public AircloakConnection Connection { get; }
 
             public string DataSource { get; }
 
@@ -68,6 +68,9 @@
             public DSqlObjectName Column { get; }
 
             public DColumnInfo ColumnInfo { get; }
+
+            public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) =>
+                Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
         }
     }
 }

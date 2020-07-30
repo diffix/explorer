@@ -6,8 +6,6 @@ namespace Explorer.Common
 
     public interface ExplorerContext
     {
-        public DConnection Connection { get; }
-
         public string DataSource { get; }
 
         public DSqlObjectName Table { get; }
@@ -16,6 +14,6 @@ namespace Explorer.Common
 
         public DColumnInfo ColumnInfo { get; }
 
-        public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) => Connection.Exec(query);
+        public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query);
     }
 }
