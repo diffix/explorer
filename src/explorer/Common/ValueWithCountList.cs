@@ -22,46 +22,50 @@ namespace Explorer.Common
             Add((value, TotalCount + count));
         }
 
-        public T GetRandomValue(Random rand, T @default)
+        public T GetRandomValue(Random rand)
         {
-            if (Count == 0)
-            {
-                return @default;
-            }
             var rcount = rand.NextLong(TotalCount);
-            return FindSubstring(rcount);
+            return FindValue(rcount);
         }
 
-        private T FindSubstring(long count)
+        public T FindValue(long count)
         {
+            if (TotalCount == 0)
+            {
+                throw new InvalidOperationException("Collection is empty.");
+            }
+            if (count < 0 || count >= TotalCount)
+            {
+                throw new ArgumentException($"The {nameof(count)} parameter should have a value between 0 and {TotalCount - 1}, inclusive.");
+            }
             var left = 0;
             var right = Count - 1;
             while (true)
             {
                 var middle = (left + right) / 2;
-                if (middle == 0 || middle == Count - 1)
-                {
-                    return this[middle].Value;
-                }
                 if (count < this[middle].Count)
                 {
-                    if (count >= this[middle - 1].Count)
-                    {
-                        return this[middle - 1].Value;
-                    }
-                    right = middle;
-                }
-                else if (count > this[middle].Count)
-                {
-                    if (count <= this[middle + 1].Count)
+                    if (middle == left)
                     {
                         return this[middle].Value;
                     }
-                    left = middle;
+                    if (count >= this[middle - 1].Count)
+                    {
+                        return this[middle].Value;
+                    }
+                    right = middle;
                 }
-                else
+                else if (count >= this[middle].Count)
                 {
-                    return this[middle].Value;
+                    if (middle == right)
+                    {
+                        return this[middle].Value;
+                    }
+                    if (count < this[middle + 1].Count)
+                    {
+                        return this[middle + 1].Value;
+                    }
+                    left = middle;
                 }
             }
         }
