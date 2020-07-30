@@ -34,12 +34,11 @@ namespace Explorer.Queries
                 DValueType.Date => DateComponents,
                 _ => throw new System.ArgumentException($"Expected Datetime, Date or Time, got {columnType}."),
             };
-
         }
 
         public string[] QueryComponents { get; }
 
-        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        public string BuildQueryStatement(string table, string column)
         {
             var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"{s}({column})"));
             var groupingSets = string.Join(", ", Enumerable.Range(2, QueryComponents.Length));

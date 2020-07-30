@@ -15,7 +15,7 @@ namespace Explorer.Queries
             this.length = length;
         }
 
-        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        public string BuildQueryStatement(string table, string column)
         {
             return $@"
                 select

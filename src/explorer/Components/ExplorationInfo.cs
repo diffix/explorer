@@ -17,11 +17,11 @@ namespace Explorer.Components
             this.ctx = ctx;
         }
 
-        public string DataSource { get => ctx.DataSource; }
+        public string DataSource => ctx.DataSource;
 
-        public string Table { get => ctx.Table.Name; }
+        public string Table => ctx.Table;
 
-        public string Column { get => ctx.Column.Name; }
+        public string Column => ctx.Column;
 
         [JsonConverter(typeof(DValueTypeEnumConverter))]
         public DValueType ColumnType { get => ctx.ColumnInfo.Type; }

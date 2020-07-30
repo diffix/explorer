@@ -35,7 +35,7 @@ namespace Explorer.Queries
             this.trimChars = trimChars;
         }
 
-        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        public string BuildQueryStatement(string table, string column)
         {
             var trimPosition = trimType.ToString().ToUpperInvariant();
 

@@ -50,27 +50,35 @@
         /// </summary>
         private class CheckedContext : ExplorerContext
         {
+            private readonly string quotedTable;
+            private readonly string quotedColumn;
+
             internal CheckedContext(AircloakConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
             {
                 Connection = connection;
                 DataSource = dataSource;
-                Table = new DSqlObjectName(table);
-                Column = new DSqlObjectName(column);
+                Table = table;
+                Column = column;
                 ColumnInfo = columnInfo;
+                quotedTable = Quote(table);
+                quotedColumn = Quote(column);
             }
 
             public AircloakConnection Connection { get; }
 
             public string DataSource { get; }
 
-            public DSqlObjectName Table { get; }
+            public string Table { get; }
 
-            public DSqlObjectName Column { get; }
+            public string Column { get; }
 
             public DColumnInfo ColumnInfo { get; }
 
             public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) =>
-                Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
+                Connection.Exec(query.BuildQueryStatement(quotedTable, quotedColumn), query.ParseRow);
+
+            private static string Quote(string name) =>
+                "\"" + name + "\"";
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Explorer.Queries
 
         public string[] QueryComponents { get; }
 
-        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        public string BuildQueryStatement(string table, string column)
         {
             var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"date_trunc('{s}', {column})"));
             var groupingSets = string.Join(", ", Enumerable.Range(2, QueryComponents.Length));

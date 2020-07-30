@@ -8,7 +8,7 @@ namespace Explorer.Queries
     public class BasicColumnStats<T> :
         DQuery<BasicColumnStats<T>.Result>
     {
-        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        public string BuildQueryStatement(string table, string column)
         {
             return $@"
                 select

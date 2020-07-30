@@ -17,7 +17,7 @@ namespace Explorer.Queries
             this.lowerBound = lowerBound;
         }
 
-        public string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column)
+        public string BuildQueryStatement(string table, string column)
         {
             var whereFragment = lowerBound.HasValue ?
                 $"where {column} between {lowerBound.Value} and {lowerBound.Value * 2}" :

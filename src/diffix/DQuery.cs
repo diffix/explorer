@@ -14,7 +14,7 @@
         /// <param name="table">The table name for which to build the query.</param>
         /// <param name="column">The column name for which to build the query.</param>
         /// <returns>The query string to submit.</returns>
-        string BuildQueryStatement(DSqlObjectName table, DSqlObjectName column);
+        string BuildQueryStatement(string table, string column);
 
         /// <summary>
         /// Parses a row instance.

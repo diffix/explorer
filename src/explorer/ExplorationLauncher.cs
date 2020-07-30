@@ -36,7 +36,7 @@ namespace Explorer
             var config = new ExplorationConfig(scope);
             config.UseContext(ctx);
             config.Compose(componentConfiguration);
-            return new ColumnExploration(config, scope, ctx.Column.Name);
+            return new ColumnExploration(config, scope, ctx.Column);
         }
 
         /// <summary>
