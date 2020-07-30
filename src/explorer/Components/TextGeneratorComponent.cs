@@ -88,7 +88,7 @@ namespace Explorer.Components
         private static string GenerateString(SubstringsData substrings, int minLength, Random rand)
         {
             var sb = new StringBuilder();
-            var len = rand.Next(minLength, substrings.Count);
+            var len = rand.Next(minLength, minLength + substrings.Count);
             for (var pos = 0; pos < substrings.Count && sb.Length < len; pos++)
             {
                 var str = substrings.GetRandomSubstring(pos, rand);
@@ -208,13 +208,14 @@ namespace Explorer.Components
         private async Task<IEnumerable<string>> GenerateEmails()
         {
             var (substrings, domains, tlds) = await Utilities.WhenAll(
-                ExploreSubstrings(
-                    conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
+                ExploreSubstrings(conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
                 ExploreEmailDomains(conn, ctx),
                 ExploreEmailTopLevelDomains(conn, ctx));
-
-            return await Task.Run(() => GenerateEmails(
-                    substrings, domains, tlds, SamplesToPublish, EmailDomainsCountThreshold));
+            if (substrings.Count == 0 || tlds.Count == 0)
+            {
+                return Enumerable.Empty<string>();
+            }
+            return GenerateEmails(substrings, domains, tlds, SamplesToPublish, EmailDomainsCountThreshold);
         }
 
         private async Task<IEnumerable<string>> GenerateStrings()
@@ -222,6 +223,10 @@ namespace Explorer.Components
             // the substring lengths 3 and 4 were determined empirically to work for column containing names
             var substrings = await ExploreSubstrings(
                 conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
+            if (substrings.Count == 0)
+            {
+                return Enumerable.Empty<string>();
+            }
             var rand = new Random(Environment.TickCount);
             return Enumerable.Range(0, SamplesToPublish).Select(_
                 => GenerateString(substrings, minLength: 3, rand));
