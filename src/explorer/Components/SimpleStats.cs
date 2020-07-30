@@ -26,8 +26,8 @@ namespace Explorer.Components
             var result = await ResultAsync;
 
             yield return new UntypedMetric("count", result.Count);
-            yield return new UntypedMetric("naive_min", result.Min!);
-            yield return new UntypedMetric("naive_max", result.Max!);
+            yield return new UntypedMetric("min", result.Min!);
+            yield return new UntypedMetric("max", result.Max!);
         }
 
         protected override async Task<SimpleStats<T>.Result> Explore()

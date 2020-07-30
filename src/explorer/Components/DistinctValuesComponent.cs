@@ -28,9 +28,11 @@ namespace Explorer.Components
 
         public IEnumerable<ExploreMetric> YieldMetrics(Result result)
         {
-            var valueCounts = result.ValueCounts;
-
-            if (valueCounts.SuppressedRowRatio < SuppressedRatioThreshold)
+            if (!result.IsCategorical)
+            {
+                yield return new UntypedMetric(name: "distinct.is_categorical", metric: false);
+            }
+            else
             {
                 // Only few of the values are suppressed. This means the data is already well-segmented and can be
                 // considered categorical or quasi-categorical.
@@ -56,15 +58,12 @@ namespace Explorer.Components
                     });
                 }
 
+                var valueCounts = result.ValueCounts;
                 yield return new UntypedMetric(name: "distinct.is_categorical", metric: true);
                 yield return new UntypedMetric(name: "distinct.values", metric: toPublish.ToList());
                 yield return new UntypedMetric(name: "distinct.null_count", metric: valueCounts.NullCount);
                 yield return new UntypedMetric(name: "distinct.suppressed_count", metric: valueCounts.SuppressedCount);
                 yield return new UntypedMetric(name: "distinct.value_count", metric: valueCounts.TotalCount);
-            }
-            else
-            {
-                yield return new UntypedMetric(name: "distinct.is_categorical", metric: false);
             }
         }
 
@@ -82,8 +81,8 @@ namespace Explorer.Components
             {
                 return new Result(Enumerable.Empty<ValueWithCount<JsonElement>>());
             }
-            var distinctValueQ = await conn.Exec(new DistinctColumnValues(ctx.Table, ctx.Column));
-            return new Result(distinctValueQ.Rows.OrderByDescending(r => r.Count));
+            var distinctValueResult = await conn.Exec(new DistinctColumnValues(ctx.Table, ctx.Column));
+            return new Result(distinctValueResult.Rows.OrderByDescending(r => r.Count));
         }
 
         public class Result
@@ -92,11 +91,14 @@ namespace Explorer.Components
             {
                 DistinctRows = distinctRows;
                 ValueCounts = ValueCounts.Compute(distinctRows);
+                IsCategorical = ValueCounts.SuppressedRowRatio < SuppressedRatioThreshold;
             }
 
             public IEnumerable<ValueWithCount<JsonElement>> DistinctRows { get; }
 
             public ValueCounts ValueCounts { get; }
+
+            public bool IsCategorical { get; }
         }
     }
 }

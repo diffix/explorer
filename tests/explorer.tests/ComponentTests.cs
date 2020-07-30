@@ -30,13 +30,21 @@ namespace Explorer.Tests
                 new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
                 vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
 
-            await scope.ResultTest<MinMaxRefiner, MinMaxRefiner.Result>(result =>
+            // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
+            var refiner = new MinMaxRefiner(
+                scope.Conn,
+                scope.Ctx,
+                new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null));
+
+            TestResult(await refiner.ResultAsync);
+
+            static void TestResult(MinMaxRefiner.Result result)
             {
                 const decimal expectedMin = 3303;
                 const decimal expectedMax = 495_103;
                 Assert.True(result.Min == expectedMin, $"Expected {expectedMin}, got {result.Min}");
                 Assert.True(result.Max == expectedMax, $"Expected {expectedMax}, got {result.Max}");
-            });
+            }
         }
 
         [Fact]
@@ -105,6 +113,25 @@ namespace Explorer.Tests
             });
         }
 
+        [Fact]
+        public async Task TestHistogramMinMaxComponent()
+        {
+            using var scope = testFixture.SimpleComponentTestScope(
+                "gda_banking",
+                "loans",
+                "duration",
+                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
+                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+
+            await scope.ResultTest<MinMaxFromHistogramComponent, MinMaxFromHistogramComponent.Result>(result =>
+            {
+                const decimal expectedMin = 12.0M;
+                const decimal expectedMax = 61.0M;
+                Assert.True(result.Min == expectedMin, $"Expected {expectedMin}, got {result.Min}");
+                Assert.True(result.Max == expectedMax, $"Expected {expectedMax}, got {result.Max}");
+            });
+        }
+
         private void CheckDistinctCategories<T>(
             DistinctValuesComponent.Result distinctValuesResult,
             IEnumerable<ValueWithCount<T>> expectedValues,
@@ -132,6 +159,16 @@ namespace Explorer.Tests
             Assert.True(
                 actualSuppressed == expectedSuppressed,
                 $"Expected total of {expectedSuppressed}, got {actualSuppressed}");
+        }
+
+        public class StaticResultProvider<T> : ResultProvider<T>
+        {
+            public StaticResultProvider(T result)
+            {
+                ResultAsync = Task.FromResult(result);
+            }
+
+            public Task<T> ResultAsync { get; }
         }
     }
 }
