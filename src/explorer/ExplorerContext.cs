@@ -1,4 +1,4 @@
-namespace Explorer.Common
+namespace Explorer
 {
     using System.Threading.Tasks;
 
