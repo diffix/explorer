@@ -14,9 +14,9 @@ namespace Aircloak.JsonApi.JsonConversion
     /// left unimplemented.</remarks>
     internal class JsonArrayConverter<TRow> : JsonConverter<TRow>
     {
-        private readonly DRowParser<TRow> rowParser;
+        private readonly JsonRowParser<TRow> rowParser;
 
-        public JsonArrayConverter(DRowParser<TRow> rowParser)
+        public JsonArrayConverter(JsonRowParser<TRow> rowParser)
         {
             this.rowParser = rowParser;
         }

@@ -77,6 +77,7 @@ namespace Aircloak.JsonApi
         /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="dataSource">The data source to run the query against.</param>
         /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
+        /// <param name="rowParser">A delegate used for parsing a result row.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <returns>A <see cref="QueryResult{TRow}"/> instance containing the success status and query Id.</returns>
@@ -88,7 +89,7 @@ namespace Aircloak.JsonApi
             Uri apiUrl,
             string dataSource,
             string query,
-            DRowParser<TRow> rowParser,
+            JsonRowParser<TRow> rowParser,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
@@ -145,6 +146,7 @@ namespace Aircloak.JsonApi
         /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
+        /// <param name="rowParser">A delegate used for parsing a result row.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
         /// <param name="cancellationToken">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <typeparam name="TRow">The type to use to deserialise each row returned in the query results.</typeparam>
@@ -156,7 +158,7 @@ namespace Aircloak.JsonApi
             Uri apiUrl,
             string queryId,
             string query,
-            DRowParser<TRow> rowParser,
+            JsonRowParser<TRow> rowParser,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {

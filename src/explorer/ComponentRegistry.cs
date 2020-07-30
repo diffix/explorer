@@ -27,7 +27,6 @@ namespace Explorer.Components
 
             // Services to be injected at runtime
             Injectable<ExplorerContext>();
-            Injectable<DConnection>();
         }
     }
 }

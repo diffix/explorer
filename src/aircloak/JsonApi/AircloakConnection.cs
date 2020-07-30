@@ -2,15 +2,24 @@ namespace Aircloak.JsonApi
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
 
     using Diffix;
 
     /// <summary>
+    /// Parses a row instance.
+    /// </summary>
+    /// <param name="reader">The <see cref="Utf8JsonReader"/> instance to use for parsing the result.</param>
+    /// <typeparam name="TRow">The type of the rows returned by the query.</typeparam>
+    /// <returns>The parsed value.</returns>
+    public delegate TRow JsonRowParser<TRow>(ref Utf8JsonReader reader);
+
+    /// <summary>
     /// Defines a connection to the Aircloak system that can be used for executing queries.
     /// </summary>
-    public class AircloakConnection : DConnection
+    public class AircloakConnection
     {
         private const int MaxConcurrentRequests = 10;
 
@@ -47,8 +56,14 @@ namespace Aircloak.JsonApi
             semaphore = Semaphores.GetOrAdd(apiUrl, _ => new SemaphoreSlim(MaxConcurrentRequests));
         }
 
-        /// <inheritdoc />
-        public async Task<DResult<TRow>> Exec<TRow>(string query, DRowParser<TRow> rowParser)
+        /// <summary>
+        /// Executes the query.
+        /// </summary>
+        /// <param name="query">An object defining the query to be executed.</param>
+        /// <param name="rowParser">A delegate used for parsing a result row.</param>
+        /// <typeparam name="TRow">The type of the rows returned by the query.</typeparam>
+        /// <returns>An object containing a collection with the rows returned by the query.</returns>
+        public async Task<DResult<TRow>> Exec<TRow>(string query, JsonRowParser<TRow> rowParser)
         {
             await semaphore.WaitAsync(cancellationToken);
 
