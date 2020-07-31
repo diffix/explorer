@@ -26,9 +26,8 @@ namespace Explorer.Tests
             using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "amount", this);
 
             // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
-            var refiner = new MinMaxRefiner(
-                scope.Context,
-                new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null));
+            var histogramMinMaxProvider = new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null);
+            var refiner = new MinMaxRefiner(histogramMinMaxProvider) { Context = scope.Context };
 
             TestResult(await refiner.ResultAsync);
 

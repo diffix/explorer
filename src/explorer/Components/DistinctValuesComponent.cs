@@ -15,12 +15,6 @@ namespace Explorer.Components
     {
         private const double SuppressedRatioThreshold = 0.1;
         private const int DefaultNumValuesToPublish = 10;
-        private readonly ExplorerContext ctx;
-
-        public DistinctValuesComponent(ExplorerContext ctx)
-        {
-            this.ctx = ctx;
-        }
 
         public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
 
@@ -75,11 +69,11 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            if (ctx.ColumnInfo.UserId)
+            if (Context.ColumnInfo.UserId)
             {
                 return new Result(Enumerable.Empty<ValueWithCount<JsonElement>>());
             }
-            var distinctValueResult = await ctx.Exec(new DistinctColumnValues());
+            var distinctValueResult = await Context.Exec(new DistinctColumnValues());
             return new Result(distinctValueResult.Rows.OrderByDescending(r => r.Count));
         }
 

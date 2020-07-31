@@ -14,14 +14,10 @@ namespace Explorer.Components
     public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>, PublisherComponent
     {
         private const int MaxIterations = 10;
-        private readonly ExplorerContext ctx;
         private readonly ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider;
 
-        public MinMaxRefiner(
-            ExplorerContext ctx,
-            ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
+        public MinMaxRefiner(ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
         {
-            this.ctx = ctx;
             this.histogramMinMaxProvider = histogramMinMaxProvider;
         }
 
@@ -107,13 +103,13 @@ namespace Explorer.Components
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound)
         {
-            var minQ = await ctx.Exec<Min.Result<decimal>>(new Min(upperBound));
+            var minQ = await Context.Exec<Min.Result<decimal>>(new Min(upperBound));
             return minQ.Rows.Single().Min;
         }
 
         private async Task<decimal?> GetMaxEstimate(decimal? lowerBound)
         {
-            var maxQ = await ctx.Exec<Max.Result<decimal>>(new Max(lowerBound));
+            var maxQ = await Context.Exec<Max.Result<decimal>>(new Max(lowerBound));
             return maxQ.Rows.Single().Max;
         }
 

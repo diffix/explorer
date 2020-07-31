@@ -14,13 +14,6 @@ namespace Explorer.Components
     {
         private const double SuppressedRatioThreshold = 0.1;
 
-        private readonly ExplorerContext ctx;
-
-        public LinearTimeBuckets(ExplorerContext ctx)
-        {
-            this.ctx = ctx;
-        }
-
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
@@ -33,7 +26,7 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            var queryResult = await ctx.Exec(new BucketedDatetimes(ctx.ColumnInfo.Type));
+            var queryResult = await Context.Exec(new BucketedDatetimes(Context.ColumnInfo.Type));
 
             var groupings = await Task.Run(() => ProcessLinearBuckets(queryResult.Rows));
 

@@ -19,16 +19,13 @@ namespace Explorer.Components
         public const int DefaultEmailDomainsCountThreshold = 5 * DefaultSamplesToPublish;
         public const int DefaultSubstringQueryColumnCount = 5;
 
-        private readonly ExplorerContext ctx;
         private readonly EmailCheckComponent emailChecker;
         private readonly DistinctValuesComponent distinctValues;
 
         public TextGeneratorComponent(
-            ExplorerContext ctx,
             EmailCheckComponent emailChecker,
             DistinctValuesComponent distinctValues)
         {
-            this.ctx = ctx;
             this.emailChecker = emailChecker;
             this.distinctValues = distinctValues;
             SamplesToPublish = DefaultSamplesToPublish;
@@ -63,18 +60,18 @@ namespace Explorer.Components
             return new Result(sampleValues.ToList());
         }
 
-        private static async Task<SubstringWithCountList> ExploreEmailDomains(ExplorerContext ctx)
+        private async Task<SubstringWithCountList> ExploreEmailDomains()
         {
-            var domains = await ctx.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
+            var domains = await Context.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
 
             return SubstringWithCountList.FromValueWithCountEnum(
                 domains.Rows
                     .Where(r => r.HasValue && r.Value.StartsWith("@", StringComparison.InvariantCulture)));
         }
 
-        private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(ExplorerContext ctx)
+        private async Task<SubstringWithCountList> ExploreEmailTopLevelDomains()
         {
-            var suffixes = await ctx.Exec(new TextColumnSuffix(3, 7));
+            var suffixes = await Context.Exec(new TextColumnSuffix(3, 7));
 
             return SubstringWithCountList.FromValueWithCountEnum(
                 suffixes.Rows
@@ -173,8 +170,7 @@ namespace Explorer.Components
         /// It uses a batch approach to query for several positions (specified using SubstringQueryColumnCount)
         /// using a single query.
         /// </summary>
-        private static async Task<SubstringsData> ExploreSubstrings(
-            ExplorerContext ctx,
+        private async Task<SubstringsData> ExploreSubstrings(
             int substringQueryColumnCount,
             params int[] substringLengths)
         {
@@ -185,7 +181,7 @@ namespace Explorer.Components
                 for (var pos = 0; hasRows; pos += substringQueryColumnCount)
                 {
                     var query = new TextColumnSubstring(pos, length, substringQueryColumnCount);
-                    var sstrResult = await ctx.Exec(query);
+                    var sstrResult = await Context.Exec(query);
                     hasRows = false;
                     foreach (var row in sstrResult.Rows)
                     {
@@ -203,9 +199,9 @@ namespace Explorer.Components
         private async Task<IEnumerable<string>> GenerateEmails()
         {
             var (substrings, domains, tlds) = await Utilities.WhenAll(
-                ExploreSubstrings(ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
-                ExploreEmailDomains(ctx),
-                ExploreEmailTopLevelDomains(ctx));
+                ExploreSubstrings(SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
+                ExploreEmailDomains(),
+                ExploreEmailTopLevelDomains());
             if (substrings.Count == 0 || tlds.Count == 0)
             {
                 return Enumerable.Empty<string>();
@@ -217,7 +213,7 @@ namespace Explorer.Components
         {
             // the substring lengths 3 and 4 were determined empirically to work for column containing names
             var substrings = await ExploreSubstrings(
-                ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
+                SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
             if (substrings.Count == 0)
             {
                 return Enumerable.Empty<string>();

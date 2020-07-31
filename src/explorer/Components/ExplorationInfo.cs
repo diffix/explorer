@@ -8,23 +8,16 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class ExplorationInfo : PublisherComponent
+    public class ExplorationInfo : ExplorerComponentBase, PublisherComponent
     {
-        private readonly ExplorerContext ctx;
+        public string DataSource => Context.DataSource;
 
-        public ExplorationInfo(ExplorerContext ctx)
-        {
-            this.ctx = ctx;
-        }
+        public string Table => Context.Table;
 
-        public string DataSource => ctx.DataSource;
-
-        public string Table => ctx.Table;
-
-        public string Column => ctx.Column;
+        public string Column => Context.Column;
 
         [JsonConverter(typeof(DValueTypeEnumConverter))]
-        public DValueType ColumnType { get => ctx.ColumnInfo.Type; }
+        public DValueType ColumnType => Context.ColumnInfo.Type;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
