@@ -1,36 +1,40 @@
 namespace Explorer.Tests
 {
+    using System.Threading.Tasks;
+
+    using Aircloak.JsonApi;
     using Diffix;
-    using Explorer.Common;
 
     public class ExplorerTestContext : ExplorerContext
     {
-        public ExplorerTestContext(DConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
+        private readonly string quotedTable;
+        private readonly string quotedColumn;
+
+        public ExplorerTestContext(AircloakConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
         {
             Connection = connection;
             DataSource = dataSource;
-            Table = new DSqlObjectName(table);
-            Column = new DSqlObjectName(column);
+            Table = table;
+            Column = column;
             ColumnInfo = columnInfo;
+            quotedTable = Quote(table);
+            quotedColumn = Quote(column);
         }
 
-        public ExplorerTestContext(ExplorerContext ctx)
-        {
-            Connection = ctx.Connection;
-            DataSource = ctx.DataSource;
-            Table = ctx.Table;
-            Column = ctx.Column;
-            ColumnInfo = ctx.ColumnInfo;
-        }
-
-        public DConnection Connection { get; }
+        public AircloakConnection Connection { get; }
 
         public string DataSource { get; set; }
 
-        public DSqlObjectName Table { get; set; }
+        public string Table { get; set; }
 
-        public DSqlObjectName Column { get; set; }
+        public string Column { get; set; }
 
         public DColumnInfo ColumnInfo { get; set; }
+
+        public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) =>
+            Connection.Exec(query.BuildQueryStatement(quotedTable, quotedColumn), query.ParseRow);
+
+        private static string Quote(string name) =>
+            "\"" + name + "\"";
     }
 }

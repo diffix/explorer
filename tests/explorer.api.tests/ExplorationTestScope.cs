@@ -76,7 +76,7 @@ namespace Explorer.Api.Tests
                 columnScopes.Add(scope);
 
                 return ExplorationLauncher.ExploreColumn(
-                    scope, conn, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type));
+                    scope, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type));
             });
 
             return new Exploration(dataSource, table, columnExplorations.ToList());
