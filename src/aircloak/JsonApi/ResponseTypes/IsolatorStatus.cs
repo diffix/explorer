@@ -17,13 +17,13 @@ namespace Aircloak.JsonApi.ResponseTypes
         }
 
         /// <summary>
-        /// The status of the isolator column check.
+        /// Gets the status of the isolator column check.
         /// </summary>
         /// <value>Can be "ok", "pending", "failed" or "unknown_column".</value>
         public string Status { get; }
 
         /// <summary>
-        /// Whether or not this column should be classes as isolating.
+        /// Gets a value indicating whether or not this column should be classes as isolating.
         /// </summary>
         /// <value>Always <c>true</c> unless the column isolator check has successfully determined otherwise.</value>
         public bool IsIsolator { get; }

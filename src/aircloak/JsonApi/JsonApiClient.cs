@@ -84,7 +84,7 @@ namespace Aircloak.JsonApi
         /// <typeparam name="TRow">The type that the query row will be deserialized to.</typeparam>
         /// <exception cref="Exceptions.ApiException">The Aircloak Api returned a Http Error code.</exception>
         /// <exception cref="Exceptions.QueryException">The Aircloak Api could not process the query.</exception>
-        /// <exception cref="Exceptions.ResultException">The Aircloak Api result status is "Error"</exception>
+        /// <exception cref="Exceptions.ResultException">The Aircloak Api result status is "Error".</exception>
         public async Task<QueryResult<TRow>> Query<TRow>(
             Uri apiUrl,
             string dataSource,
@@ -153,7 +153,7 @@ namespace Aircloak.JsonApi
         /// <returns>A QueryResult instance. If the query has finished executing, contains the query results, with each
         /// row seralised to type <c>TRow</c>.</returns>
         /// <exception cref="Exceptions.ApiException">The Aircloak Api returned a Http Error code.</exception>
-        /// <exception cref="Exceptions.ResultException">The Aircloak Api result status is "Error"</exception>
+        /// <exception cref="Exceptions.ResultException">The Aircloak Api result status is "Error".</exception>
         public async Task<QueryResult<TRow>> PollQueryUntilComplete<TRow>(
             Uri apiUrl,
             string queryId,
@@ -225,6 +225,43 @@ namespace Aircloak.JsonApi
         }
 
         /// <summary>
+        /// Sends a Http GET request to the /api/queries/{query_id}/cancel. Cancels a running query on the Aircloak
+        /// server.
+        /// </summary>
+        /// <param name="apiUrl">The Url of the Aircloak api.</param>
+        /// <param name="queryId">The id of the query to cancel.</param>
+        /// <returns>A <c>CancelResponse</c> instance indicating whether or not the query was indeed canceled.
+        /// </returns>
+        /// <exception cref="Exceptions.ApiException">The Aircloak Api returned a Http Error code.</exception>
+        public async Task<CancelResponse> CancelQuery(
+            Uri apiUrl,
+            string queryId)
+        {
+            var endPoint = new Uri(apiUrl, $"queries/{queryId}/cancel");
+            using var httpResponse = await ApiPostRequest(endPoint, null, CancellationToken.None);
+            return await ParseJson<CancelResponse>(httpResponse, DefaultJsonOptions, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Parses JSON data into an object.
+        /// </summary>
+        /// <param name="httpResponse">A <see cref="HttpResponseMessage" /> object containing the JSON data to be parsed.</param>
+        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
+        /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
+        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
+        /// to the provided return type.</returns>
+        /// <exception cref="JsonException">The JSON is invalid.
+        /// -or- <c>T</c> is not compatible with the JSON.
+        /// -or- There is remaining data in the stream.
+        /// </exception>
+        private static async Task<T> ParseJson<T>(HttpResponseMessage httpResponse, JsonSerializerOptions options, CancellationToken cancellationToken)
+        {
+            var stream = await httpResponse.Content.ReadAsStreamAsync();
+            return await JsonSerializer.DeserializeAsync<T>(stream, options, cancellationToken);
+        }
+
+        /// <summary>
         /// Turns the HTTP response into a custom error string.
         /// </summary>
         /// <param name="response">The HTTP response.</param>
@@ -246,24 +283,6 @@ namespace Aircloak.JsonApi
                     "The system might be overloaded. Try again later.",
                 _ => response.StatusCode.ToString(),
             };
-        }
-
-        /// <summary>
-        /// Sends a Http GET request to the /api/queries/{query_id}/cancel. Cancels a running query on the Aircloak
-        /// server.
-        /// </summary>
-        /// <param name="apiUrl">The Url of the Aircloak api.</param>
-        /// <param name="queryId">The id of the query to cancel.</param>
-        /// <returns>A <c>CancelResponse</c> instance indicating whether or not the query was indeed canceled.
-        /// </returns>
-        /// <exception cref="Exceptions.ApiException">The Aircloak Api returned a Http Error code.</exception>
-        public async Task<CancelResponse> CancelQuery(
-            Uri apiUrl,
-            string queryId)
-        {
-            var endPoint = new Uri(apiUrl, $"queries/{queryId}/cancel");
-            using var httpResponse = await ApiPostRequest(endPoint, null, CancellationToken.None);
-            return await ParseJson<CancelResponse>(httpResponse, DefaultJsonOptions, CancellationToken.None);
         }
 
         /// <summary>
@@ -346,25 +365,6 @@ namespace Aircloak.JsonApi
             }
 
             return response;
-        }
-
-        /// <summary>
-        /// Parses JSON data into an object.
-        /// </summary>
-        /// <param name="httpResponse">A <see cref="HttpResponseMessage" /> object containing the JSON data to be parsed.</param>
-        /// <param name="options">Overrides the default <c>JsonSerializerOptions</c>.</param>
-        /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
-        /// <typeparam name="T">The type to deserialize the JSON response to.</typeparam>
-        /// <returns>A <c>Task&lt;T&gt;</c> which, upon completion, contains the API response deserialized
-        /// to the provided return type.</returns>
-        /// <exception cref="JsonException">The JSON is invalid.
-        /// -or- <c>T</c> is not compatible with the JSON.
-        /// -or- There is remaining data in the stream.
-        /// </exception>
-        private static async Task<T> ParseJson<T>(HttpResponseMessage httpResponse, JsonSerializerOptions options, CancellationToken cancellationToken)
-        {
-            var stream = await httpResponse.Content.ReadAsStreamAsync();
-            return await JsonSerializer.DeserializeAsync<T>(stream, options, cancellationToken);
         }
     }
 }
