@@ -21,19 +21,19 @@ namespace Explorer.Components
 
         private readonly DConnection conn;
         private readonly ExplorerContext ctx;
-        private readonly EmailCheckComponent emailChecker;
-        private readonly DistinctValuesComponent distinctValues;
+        private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
+        private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
         public TextGeneratorComponent(
             DConnection conn,
             ExplorerContext ctx,
-            EmailCheckComponent emailChecker,
-            DistinctValuesComponent distinctValues)
+            ResultProvider<EmailCheckComponent.Result> emailCheckProvider,
+            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
         {
             this.conn = conn;
             this.ctx = ctx;
-            this.emailChecker = emailChecker;
-            this.distinctValues = distinctValues;
+            this.emailCheckProvider = emailCheckProvider;
+            this.distinctValuesProvider = distinctValuesProvider;
             SamplesToPublish = DefaultSamplesToPublish;
             EmailDomainsCountThreshold = DefaultEmailDomainsCountThreshold;
             SubstringQueryColumnCount = DefaultSubstringQueryColumnCount;
@@ -47,21 +47,21 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var distinctValuesResult = await distinctValues.ResultAsync;
+            var distinctValuesResult = await distinctValuesProvider.ResultAsync;
             if (!distinctValuesResult.IsCategorical)
             {
-            var result = await ResultAsync;
+                var result = await ResultAsync;
 
-            if (result.SampleValues.Count > 0)
-            {
-                yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
+                if (result.SampleValues.Count > 0)
+                {
+                    yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
+                }
             }
-        }
         }
 
         protected override async Task<Result> Explore()
         {
-                var emailCheckerResult = await emailChecker.ResultAsync;
+            var emailCheckerResult = await emailCheckProvider.ResultAsync;
             var sampleValues = emailCheckerResult.IsEmail ? await GenerateEmails() : await GenerateStrings();
             return new Result(sampleValues.ToList());
         }
