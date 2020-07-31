@@ -19,12 +19,7 @@
         [Fact]
         public async void TestNumericSampleGenerator()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "loans",
-                "amount",
-                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
-                ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "amount", this);
 
             await scope.MetricsTest<NumericSampleGenerator>(result =>
             {
@@ -36,12 +31,7 @@
         [Fact]
         public async void TestDistributionAnalysis()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "GiveMeSomeCredit",
-                "loans",
-                "age",
-                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
-                ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("GiveMeSomeCredit", "loans", "age", this);
 
             await scope.MetricsTest<DistributionAnalysisComponent>(result =>
                 Assert.True(result.Any()));
@@ -50,12 +40,7 @@
         [Fact]
         public async void TestDescriptiveStatsPublisher()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "GiveMeSomeCredit",
-                "loans",
-                "age",
-                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
-                ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("GiveMeSomeCredit", "loans", "age", this);
 
             await scope.MetricsTest<DescriptiveStatsPublisher>(result =>
                 Assert.True(result.Any()));

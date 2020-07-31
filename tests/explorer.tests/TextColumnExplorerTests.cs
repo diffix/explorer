@@ -22,12 +22,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestClientsEmail()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "clients",
-                "email",
-                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Isolating),
-                Cassette.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "clients", "email", this);
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
 
@@ -43,12 +38,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCardsEmail()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "cards",
-                "email",
-                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Isolating),
-                Cassette.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "email", this);
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
 
@@ -64,12 +54,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestFirstName()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "cards",
-                "firstname",
-                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Regular),
-                Cassette.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "firstname", this);
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
 
@@ -80,12 +65,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLastName()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "cards",
-                "lastname",
-                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Isolating),
-                Cassette.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "lastname", this);
 
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
 

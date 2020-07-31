@@ -19,12 +19,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLinearDateTimeComponentWithDateTimeColumn()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_taxi",
-                "rides",
-                "pickup_datetime",
-                new DColumnInfo(DValueType.Datetime, DColumnInfo.ColumnType.Regular),
-                ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_taxi", "rides", "pickup_datetime", this);
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
@@ -36,12 +31,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestLinearDateTimeComponentWithDateColumn()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_taxi",
-                "rides",
-                "birthdate",
-                new DColumnInfo(DValueType.Date, DColumnInfo.ColumnType.Isolating),
-                ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_taxi", "rides", "birthdate", this);
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
@@ -53,12 +43,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCyclicalDateTimeComponentWithDateTimeColumn()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_taxi",
-                "rides",
-                "pickup_datetime",
-                new DColumnInfo(DValueType.Datetime, DColumnInfo.ColumnType.Regular),
-                ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_taxi", "rides", "pickup_datetime", this);
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
@@ -71,12 +56,7 @@ namespace Explorer.Tests
         [Fact]
         public async void TestCyclicalDateTimeComponentWithDateColumn()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_taxi",
-                "rides",
-                "birthdate",
-                new DColumnInfo(DValueType.Date, DColumnInfo.ColumnType.Isolating),
-                ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_taxi", "rides", "birthdate", this);
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {

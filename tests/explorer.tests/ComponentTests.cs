@@ -23,16 +23,10 @@ namespace Explorer.Tests
         [Fact]
         public async Task TestMinMaxRefinerComponent()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "loans",
-                "amount",
-                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "amount", this);
 
             // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
             var refiner = new MinMaxRefiner(
-                scope.Connection,
                 scope.Context,
                 new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null));
 
@@ -50,12 +44,7 @@ namespace Explorer.Tests
         [Fact]
         public async Task TestDistinctValuesMetricContainsRemainder()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "loans",
-                "duration",
-                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "duration", this);
 
             scope.ConfigurePublisher<DistinctValuesComponent>(c => c.NumValuesToPublish = 1);
 
@@ -70,12 +59,7 @@ namespace Explorer.Tests
         [Fact]
         public async Task TestCategoricalBool()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "cov_clear",
-                "survey",
-                "fever",
-                new DColumnInfo(DValueType.Bool, DColumnInfo.ColumnType.Regular),
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("cov_clear", "survey", "fever", this);
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
@@ -92,12 +76,7 @@ namespace Explorer.Tests
         [Fact]
         public async Task TestCategoricalText()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "loans",
-                "status",
-                new DColumnInfo(DValueType.Text, DColumnInfo.ColumnType.Regular),
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "status", this);
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
@@ -116,12 +95,7 @@ namespace Explorer.Tests
         [Fact]
         public async Task TestHistogramMinMaxComponent()
         {
-            using var scope = testFixture.SimpleComponentTestScope(
-                "gda_banking",
-                "loans",
-                "duration",
-                new DColumnInfo(DValueType.Integer, DColumnInfo.ColumnType.Regular),
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "duration", this);
 
             await scope.ResultTest<MinMaxFromHistogramComponent, MinMaxFromHistogramComponent.Result>(result =>
             {

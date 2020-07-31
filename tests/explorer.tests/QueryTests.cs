@@ -23,14 +23,9 @@
         [Fact]
         public async void TestDistinctLoansDuration()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_banking",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "loans", "duration", this);
 
-            var result = await queryScope.QueryRows(
-                new DistinctColumnValues(
-                    tableName: new DSqlObjectName("loans"),
-                    columnName: new DSqlObjectName("duration")));
+            var result = await queryScope.QueryRows(new DistinctColumnValues());
 
             Assert.All(result, row =>
             {
@@ -45,14 +40,9 @@
         [Fact]
         public async void TestDistinctLoansPayments()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_banking",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "loans", "payments", this);
 
-            var realResult = await queryScope.QueryRows(
-                new DistinctColumnValues(
-                    tableName: new DSqlObjectName("loans"),
-                    columnName: new DSqlObjectName("payments")));
+            var realResult = await queryScope.QueryRows(new DistinctColumnValues());
 
             Assert.All(realResult, row =>
             {
@@ -66,14 +56,9 @@
         [Fact]
         public async void TestDistinctLoansGender()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_banking",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "loans", "gender", this);
 
-            var textResult = await queryScope.QueryRows(
-                new DistinctColumnValues(
-                    tableName: new DSqlObjectName("loans"),
-                    columnName: new DSqlObjectName("gender")));
+            var textResult = await queryScope.QueryRows(new DistinctColumnValues());
 
             Assert.All(textResult, row =>
             {
@@ -90,14 +75,9 @@
         [Fact]
         public async void TestDistinctDatetimes()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "cov_clear",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("cov_clear", "survey", "first_caught", this);
 
-            var datetimeResult = await queryScope.QueryRows(
-                new DistinctColumnValues(
-                    tableName: new DSqlObjectName("survey"),
-                    columnName: new DSqlObjectName("first_caught")));
+            var datetimeResult = await queryScope.QueryRows(new DistinctColumnValues());
 
             Assert.True(datetimeResult.Any());
             Assert.All(datetimeResult, row =>
@@ -111,16 +91,10 @@
         [Fact]
         public async void TestHistogramLoansAmount()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_banking",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "loans", "amount", this);
 
             var bucketSizes = new List<decimal> { 10_000, 20_000, 50_000 };
-            var result = await queryScope.QueryRows(
-                new SingleColumnHistogram(
-                    new DSqlObjectName("loans"),
-                    new DSqlObjectName("amount"),
-                    bucketSizes));
+            var result = await queryScope.QueryRows(new SingleColumnHistogram(bucketSizes));
 
             Assert.All(result, row =>
             {
@@ -135,14 +109,9 @@
         [Fact]
         public async void TestCyclicalDatetimeQueryTaxiPickupTimes()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_taxi",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_taxi", "rides", "pickup_datetime", this);
 
-            var result = await queryScope.QueryRows(
-                query: new CyclicalDatetimes(
-                    new DSqlObjectName("rides"),
-                    new DSqlObjectName("pickup_datetime")));
+            var result = await queryScope.QueryRows(new CyclicalDatetimes());
 
             Assert.All(result, row => Assert.True(row.Count > 0));
         }
@@ -150,15 +119,9 @@
         [Fact]
         public async void TestCyclicalDateQueryTaxiBirthdates()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_taxi",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_taxi", "rides", "birthdate", this);
 
-            var result = await queryScope.QueryRows(
-                query: new CyclicalDatetimes(
-                    new DSqlObjectName("rides"),
-                    new DSqlObjectName("birthdate"),
-                    DValueType.Date));
+            var result = await queryScope.QueryRows(new CyclicalDatetimes(DValueType.Date));
 
             Assert.All(result, row => Assert.True(row.Count > 0));
         }
@@ -166,14 +129,9 @@
         [Fact]
         public async void TestBucketedDatetimeQueryTaxiPickupTimes()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_taxi",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_taxi", "rides", "pickup_datetime", this);
 
-            var result = await queryScope.QueryRows(
-                query: new BucketedDatetimes(
-                    new DSqlObjectName("rides"),
-                    new DSqlObjectName("pickup_datetime")));
+            var result = await queryScope.QueryRows(new BucketedDatetimes());
 
             Assert.All(result, row => Assert.True(row.Count > 0));
         }
@@ -181,9 +139,7 @@
         [Fact]
         public async void TestRepeatingRows()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                RepeatingRowsQuery.DataSet,
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "loans", "duration", this);
 
             var queryResult = await queryScope.QueryRows(new RepeatingRowsQuery());
 
@@ -199,11 +155,7 @@
         [Fact]
         public async void TestCancelQuery()
         {
-            using var queryScope = testFixture
-                .PrepareTestScope()
-                .LoadCassette(ExplorerTestFixture.GenerateVcrFilename(this))
-                .OverrideVcrOptions(recordingOptions: VcrSharp.RecordingOptions.FailureOnly)
-                .WithConnectionParams(testFixture.ApiUri, LongRunningQuery.DataSet);
+            using var queryScope = await testFixture.CreateTestScope("gda_taxi", "rides", "pickup_datetime", this, VcrSharp.RecordingOptions.FailureOnly);
 
             var queryTask = Task.Run(() => queryScope.QueryRows(new LongRunningQuery()));
 
@@ -220,22 +172,18 @@
         [Fact]
         public async void TestBadQueryThrowsException()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                "gda_banking",
-                vcrFilename: ExplorerTestFixture.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "loans", "duration", this);
 
             await Assert.ThrowsAnyAsync<ApiException>(async () => await queryScope.QueryRows(new BadQuery()));
         }
 
         private class RepeatingRowsQuery : DQuery<RepeatingRowsQuery.Result>
         {
-            public const string DataSet = "gda_banking";
-
-            public string BuildQueryStatement()
+            public string BuildQueryStatement(string table, string column)
             {
-                return @"select 1, 2, 3
-                    from loans
-                    GROUP BY duration
+                return $@"select 1, 2, 3
+                    from {table}
+                    GROUP BY {column}
                     having count_noise(*) > 0";
             }
 
@@ -261,30 +209,28 @@
 
         private class LongRunningQuery : DQuery<LongRunningQuery.Result>
         {
-            public const string DataSet = "gda_taxi";
-
-            public string BuildQueryStatement()
+            public string BuildQueryStatement(string table, string column)
             {
-                return @"select
-                    date_trunc('year', pickup_datetime),
-                    date_trunc('quarter', pickup_datetime),
-                    date_trunc('month', pickup_datetime),
-                    date_trunc('day', pickup_datetime),
-                    date_trunc('hour', pickup_datetime),
-                    date_trunc('minute', pickup_datetime),
-                    date_trunc('second', pickup_datetime),
+                return $@"select
+                    date_trunc('year', {column}),
+                    date_trunc('quarter', {column}),
+                    date_trunc('month', {column}),
+                    date_trunc('day', {column}),
+                    date_trunc('hour', {column}),
+                    date_trunc('minute', {column}),
+                    date_trunc('second', {column}),
                     grouping_id(
-                        date_trunc('year', pickup_datetime),
-                        date_trunc('quarter', pickup_datetime),
-                        date_trunc('month', pickup_datetime),
-                        date_trunc('day', pickup_datetime),
-                        date_trunc('hour', pickup_datetime),
-                        date_trunc('minute', pickup_datetime),
-                        date_trunc('second', pickup_datetime)
+                        date_trunc('year', {column}),
+                        date_trunc('quarter', {column}),
+                        date_trunc('month', {column}),
+                        date_trunc('day', {column}),
+                        date_trunc('hour', {column}),
+                        date_trunc('minute', {column}),
+                        date_trunc('second', {column})
                     ),
                     count(*),
                     count_noise(*)
-                    from rides
+                    from {table}
                     group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
             }
 
@@ -305,7 +251,7 @@
 
         private class BadQuery : DQuery<BadQuery.Result>
         {
-            public string BuildQueryStatement()
+            public string BuildQueryStatement(string table, string column)
             {
                 return "this is not a query";
             }

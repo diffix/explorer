@@ -9,7 +9,6 @@ namespace Explorer.Tests
 
     public sealed class TextColumnTrimTests : IClassFixture<ExplorerTestFixture>
     {
-        private const string TestDataSource = "gda_banking";
         private readonly ExplorerTestFixture testFixture;
 
         public TextColumnTrimTests(ExplorerTestFixture testFixture)
@@ -20,16 +19,9 @@ namespace Explorer.Tests
         [Fact]
         public async void TestEmailPositive()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                TestDataSource,
-                VcrSharp.Cassette.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "clients", "email", this);
 
-            var result = await queryScope.QueryRows(
-                new TextColumnTrim(
-                    new DSqlObjectName("clients"),
-                    new DSqlObjectName("email"),
-                    TextColumnTrimType.Both,
-                    Constants.EmailAddressChars));
+            var result = await queryScope.QueryRows(new TextColumnTrim(TextColumnTrimType.Both, Constants.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 
@@ -43,16 +35,9 @@ namespace Explorer.Tests
         [Fact]
         public async void TestEmailNegative()
         {
-            using var queryScope = testFixture.SimpleQueryTestScope(
-                TestDataSource,
-                VcrSharp.Cassette.GenerateVcrFilename(this));
+            using var queryScope = await testFixture.CreateTestScope("gda_banking", "cards", "lastname", this);
 
-            var result = await queryScope.QueryRows(
-                new TextColumnTrim(
-                    new DSqlObjectName("cards"),
-                    new DSqlObjectName("lastname"),
-                    TextColumnTrimType.Both,
-                    Constants.EmailAddressChars));
+            var result = await queryScope.QueryRows(new TextColumnTrim(TextColumnTrimType.Both, Constants.EmailAddressChars));
 
             var counts = ValueCounts.Compute(result);
 
