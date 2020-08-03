@@ -7,7 +7,8 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class TextColumnSuffix :
-        DQuery<ValueWithCount<string>>
+        DQuery,
+        DResultParser<ValueWithCount<string>>
     {
         private readonly int minLength;
         private readonly int maxLength;
@@ -18,7 +19,7 @@ namespace Explorer.Queries
             this.maxLength = maxLength;
         }
 
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             var indexes = Enumerable.Range(minLength, maxLength - minLength + 1);
             var columnNames = string.Join(", ", indexes.Select(i => $"s{i}"));

@@ -7,7 +7,9 @@ namespace Explorer.Queries
     using Explorer.Common;
     using Explorer.JsonExtensions;
 
-    internal class TextColumnSubstring : DQuery<TextColumnSubstring.Result>
+    internal class TextColumnSubstring :
+        DQuery,
+        DResultParser<TextColumnSubstring.Result>
     {
         private readonly int pos;
         private readonly int length;
@@ -20,7 +22,7 @@ namespace Explorer.Queries
             this.count = count;
         }
 
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             var indexes = Enumerable.Range(0, count);
             var columnNames = string.Join(", ", indexes.Select(i => $"s{i}"));

@@ -6,9 +6,10 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     public class BasicColumnStats<T> :
-        DQuery<BasicColumnStats<T>.Result>
+        DQuery,
+        DResultParser<BasicColumnStats<T>.Result>
     {
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             return $@"
                 select
@@ -19,7 +20,7 @@ namespace Explorer.Queries
                 from {table}";
         }
 
-        Result DQuery<Result>.ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
+        Result DResultParser<Result>.ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 
         public class Result
         {

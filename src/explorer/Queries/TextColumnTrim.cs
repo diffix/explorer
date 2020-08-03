@@ -24,7 +24,8 @@ namespace Explorer.Queries
     }
 
     internal class TextColumnTrim :
-        DQuery<ValueWithCount<string>>
+        DQuery,
+        DResultParser<ValueWithCount<string>>
     {
         private readonly TextColumnTrimType trimType;
         private readonly string trimChars;
@@ -35,7 +36,7 @@ namespace Explorer.Queries
             this.trimChars = trimChars;
         }
 
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             var trimPosition = trimType.ToString().ToUpperInvariant();
 

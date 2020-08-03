@@ -6,9 +6,10 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     internal class Min :
-        DQuery<Min.Result<long>>,
-        DQuery<Min.Result<double>>,
-        DQuery<Min.Result<decimal>>
+        DQuery,
+        DResultParser<Min.Result<long>>,
+        DResultParser<Min.Result<double>>,
+        DResultParser<Min.Result<decimal>>
     {
         private readonly decimal? upperBound;
 
@@ -17,7 +18,25 @@ namespace Explorer.Queries
             this.upperBound = upperBound;
         }
 
-        public string GetQueryStatement(string table, string column)
+        Result<long> DResultParser<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
+            new Result<long>
+            {
+                Min = reader.ParseNullableMetric<long>(),
+            };
+
+        Result<double> DResultParser<Result<double>>.ParseRow(ref Utf8JsonReader reader) =>
+            new Result<double>
+            {
+                Min = reader.ParseNullableMetric<double>(),
+            };
+
+        Result<decimal> DResultParser<Result<decimal>>.ParseRow(ref Utf8JsonReader reader) =>
+            new Result<decimal>
+            {
+                Min = reader.ParseNullableMetric<decimal>(),
+            };
+
+        protected override string GetQueryStatement(string table, string column)
         {
             var whereFragment = upperBound.HasValue ?
                 $"where {column} between 0 and {upperBound.Value}" :
@@ -29,24 +48,6 @@ namespace Explorer.Queries
                 from {table}
                 {whereFragment}";
         }
-
-        Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
-            new Result<long>
-            {
-                Min = reader.ParseNullableMetric<long>(),
-            };
-
-        Result<double> DQuery<Result<double>>.ParseRow(ref Utf8JsonReader reader) =>
-            new Result<double>
-            {
-                Min = reader.ParseNullableMetric<double>(),
-            };
-
-        Result<decimal> DQuery<Result<decimal>>.ParseRow(ref Utf8JsonReader reader) =>
-            new Result<decimal>
-            {
-                Min = reader.ParseNullableMetric<decimal>(),
-            };
 
         public class Result<T>
             where T : struct

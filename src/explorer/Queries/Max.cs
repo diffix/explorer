@@ -6,9 +6,10 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     internal class Max :
-        DQuery<Max.Result<long>>,
-        DQuery<Max.Result<double>>,
-        DQuery<Max.Result<decimal>>
+        DQuery,
+        DResultParser<Max.Result<long>>,
+        DResultParser<Max.Result<double>>,
+        DResultParser<Max.Result<decimal>>
     {
         private readonly decimal? lowerBound;
 
@@ -17,7 +18,7 @@ namespace Explorer.Queries
             this.lowerBound = lowerBound;
         }
 
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             var whereFragment = lowerBound.HasValue ?
                 $"where {column} between {lowerBound.Value} and {lowerBound.Value * 2}" :
@@ -30,19 +31,19 @@ namespace Explorer.Queries
                 {whereFragment}";
         }
 
-        Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
+        Result<long> DResultParser<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<long>
             {
                 Max = reader.ParseNullableMetric<long>(),
             };
 
-        Result<double> DQuery<Result<double>>.ParseRow(ref Utf8JsonReader reader) =>
+        Result<double> DResultParser<Result<double>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<double>
             {
                 Max = reader.ParseNullableMetric<double>(),
             };
 
-        Result<decimal> DQuery<Result<decimal>>.ParseRow(ref Utf8JsonReader reader) =>
+        Result<decimal> DResultParser<Result<decimal>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<decimal>
             {
                 Max = reader.ParseNullableMetric<decimal>(),

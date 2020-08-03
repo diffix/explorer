@@ -5,9 +5,11 @@ namespace Explorer.Queries
     using Diffix;
     using Explorer.Common;
 
-    internal class DistinctLengths : DQuery<ValueWithCount<JsonElement>>
+    internal class DistinctLengths :
+        DQuery,
+        DResultParser<ValueWithCount<JsonElement>>
     {
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             return $@"
                 select

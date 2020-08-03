@@ -8,7 +8,8 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     public class SingleColumnHistogram :
-        DQuery<SingleColumnHistogram.Result>
+        DQuery,
+        DResultParser<SingleColumnHistogram.Result>
     {
         private readonly decimal[] buckets;
 
@@ -17,7 +18,7 @@ namespace Explorer.Queries
             this.buckets = buckets.ToArray();
         }
 
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             var bucketsFragment = string.Join(
                 ",",

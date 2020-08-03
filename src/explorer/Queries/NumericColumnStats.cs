@@ -6,11 +6,12 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     internal class NumericColumnStats :
-        DQuery<NumericColumnStats.Result<long>>,
-        DQuery<NumericColumnStats.Result<double>>,
-        DQuery<NumericColumnStats.Result<System.DateTime>>
+        DQuery,
+        DResultParser<NumericColumnStats.Result<long>>,
+        DResultParser<NumericColumnStats.Result<double>>,
+        DResultParser<NumericColumnStats.Result<System.DateTime>>
     {
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             return $@"
                 select
@@ -21,7 +22,7 @@ namespace Explorer.Queries
                 from {table}";
         }
 
-        Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader)
+        Result<long> DResultParser<Result<long>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<long>
             {
@@ -32,7 +33,7 @@ namespace Explorer.Queries
             };
         }
 
-        Result<double> DQuery<Result<double>>.ParseRow(ref Utf8JsonReader reader)
+        Result<double> DResultParser<Result<double>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<double>
             {
@@ -43,7 +44,7 @@ namespace Explorer.Queries
             };
         }
 
-        Result<System.DateTime> DQuery<Result<System.DateTime>>.ParseRow(ref Utf8JsonReader reader)
+        Result<System.DateTime> DResultParser<Result<System.DateTime>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<System.DateTime>
             {

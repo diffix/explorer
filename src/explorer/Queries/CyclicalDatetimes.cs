@@ -7,7 +7,8 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class CyclicalDatetimes :
-        DQuery<GroupingSetsResult<int>>
+        DQuery,
+        DResultParser<GroupingSetsResult<int>>
     {
         public static readonly string[] DateComponents = new[]
         {
@@ -38,7 +39,7 @@ namespace Explorer.Queries
 
         public string[] QueryComponents { get; }
 
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"{s}({column})"));
             var groupingSets = string.Join(", ", Enumerable.Range(2, QueryComponents.Length));

@@ -6,7 +6,8 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class TextColumnPrefix :
-        DQuery<ValueWithCount<string>>
+        DQuery,
+        DResultParser<ValueWithCount<string>>
     {
         private readonly int length;
 
@@ -15,7 +16,7 @@ namespace Explorer.Queries
             this.length = length;
         }
 
-        public string GetQueryStatement(string table, string column)
+        protected override string GetQueryStatement(string table, string column)
         {
             return $@"
                 select
