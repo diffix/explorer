@@ -36,6 +36,9 @@ namespace Explorer.Tests
 
             Scope = rootContainer.GetNestedContainer();
 
+            Scope.InjectDisposable(cts);
+            Scope.InjectDisposable(cassette);
+
             Connection = new AircloakConnection(
                 Scope.GetInstance<JsonApiClient>(),
                 apiUri,
@@ -44,14 +47,11 @@ namespace Explorer.Tests
                 cts.Token);
 
             Context = new ExplorerTestContext(Connection, dataSource, table, column, columnInfo);
+            Scope.Inject(Context);
 
             var vcrFactory = Scope.GetInstance<VcrApiHttpClientFactory>();
             vcrFactory.VcrMode = vcrMode;
             vcrFactory.RecordingOptions = recordingOptions;
-
-            Scope.Inject<ExplorerContext>(Context);
-            Scope.InjectDisposable(cts);
-            Scope.InjectDisposable(cassette);
         }
 
         public ExplorerTestContext Context { get; }
