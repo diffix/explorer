@@ -179,7 +179,7 @@
 
         private class RepeatingRowsQuery : DQuery<RepeatingRowsQuery.Result>
         {
-            public string BuildQueryStatement(string table, string column)
+            public string GetQueryStatement(string table, string column)
             {
                 return $@"select 1, 2, 3
                     from {table}
@@ -209,7 +209,7 @@
 
         private class LongRunningQuery : DQuery<LongRunningQuery.Result>
         {
-            public string BuildQueryStatement(string table, string column)
+            public string GetQueryStatement(string table, string column)
             {
                 return $@"select
                     date_trunc('year', {column}),
@@ -251,8 +251,10 @@
 
         private class BadQuery : DQuery<BadQuery.Result>
         {
-            public string BuildQueryStatement(string table, string column)
+            public string GetQueryStatement(string table, string column)
             {
+                _ = table;
+                _ = column;
                 return "this is not a query";
             }
 
