@@ -179,15 +179,7 @@
 
         private class RepeatingRowsQuery : DQuery<RepeatingRowsQuery.Result>
         {
-            public string GetQueryStatement(string table, string column)
-            {
-                return $@"select 1, 2, 3
-                    from {table}
-                    GROUP BY {column}
-                    having count_noise(*) > 0";
-            }
-
-            public Result ParseRow(ref Utf8JsonReader reader)
+            public override Result ParseRow(ref Utf8JsonReader reader)
             {
                 reader.Read();
                 var one = reader.GetInt32();
@@ -197,6 +189,14 @@
                 var three = reader.GetInt32();
 
                 return new Result { One = one, Two = two, Three = three };
+            }
+
+            protected override string GetQueryStatement(string table, string column)
+            {
+                return $@"select 1, 2, 3
+                    from {table}
+                    GROUP BY {column}
+                    having count_noise(*) > 0";
             }
 
             public struct Result
@@ -209,7 +209,17 @@
 
         private class LongRunningQuery : DQuery<LongRunningQuery.Result>
         {
-            public string GetQueryStatement(string table, string column)
+            public override Result ParseRow(ref Utf8JsonReader reader)
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    reader.Read();
+                }
+
+                return default;
+            }
+
+            protected override string GetQueryStatement(string table, string column)
             {
                 return $@"select
                     date_trunc('year', {column}),
@@ -234,16 +244,6 @@
                     group by grouping sets (1, 2, 3, 4, 5, 6, 7)";
             }
 
-            public Result ParseRow(ref Utf8JsonReader reader)
-            {
-                for (var i = 0; i < 10; i++)
-                {
-                    reader.Read();
-                }
-
-                return default;
-            }
-
             public struct Result
             {
             }
@@ -251,16 +251,14 @@
 
         private class BadQuery : DQuery<BadQuery.Result>
         {
-            public string GetQueryStatement(string table, string column)
-            {
-                _ = table;
-                _ = column;
-                return "this is not a query";
-            }
-
-            public Result ParseRow(ref Utf8JsonReader reader)
+            public override Result ParseRow(ref Utf8JsonReader reader)
             {
                 return default;
+            }
+
+            protected override string GetQueryStatement(string table, string column)
+            {
+                return "this is not a query ({table}.{column})";
             }
 
             public struct Result

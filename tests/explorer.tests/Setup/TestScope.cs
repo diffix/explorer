@@ -60,6 +60,13 @@ namespace Explorer.Tests
 
         private AircloakConnection Connection { get; }
 
+        public async Task<IEnumerable<TRow>> QueryRows<TQuery, TRow>(TQuery query)
+        where TQuery : DQueryBuilder, DResultParser<TRow>
+        {
+            var queryResult = await Context.Exec<TQuery, TRow>(query);
+            return queryResult.Rows;
+        }
+
         public async Task<IEnumerable<TRow>> QueryRows<TRow>(DQuery<TRow> query)
         {
             var queryResult = await Context.Exec(query);

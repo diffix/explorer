@@ -26,7 +26,15 @@ namespace Explorer.Tests
 
         public DColumnInfo ColumnInfo { get; set; }
 
-        public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) =>
-            Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
+        public Task<DResult<TRow>> Exec<TQuery, TRow>(TQuery query)
+        where TQuery : DQueryBuilder, DResultParser<TRow>
+        {
+            return Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
+        }
+
+        public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query)
+        {
+            return Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
+        }
     }
 }
