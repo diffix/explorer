@@ -6,7 +6,6 @@ namespace Explorer.Components
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
     using Explorer.Metrics;
 
@@ -15,12 +14,11 @@ namespace Explorer.Components
     {
         public const int DefaultSamplesToPublish = 20;
 
-        private static readonly JsonElement JsonNullElement = JsonDocument.Parse("null").RootElement;
-        private readonly DistinctValuesComponent distinctValues;
+        private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
-        public CategoricalSampleGenerator(DistinctValuesComponent distinctValues)
+        public CategoricalSampleGenerator(ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
         {
-            this.distinctValues = distinctValues;
+            this.distinctValuesProvider = distinctValuesProvider;
         }
 
         public int NumValuesToPublish { get; set; } = DefaultSamplesToPublish;
@@ -36,7 +34,7 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            var distinctValuesResult = await distinctValues.ResultAsync;
+            var distinctValuesResult = await distinctValuesProvider.ResultAsync;
             var sampleValues = Enumerable.Empty<JsonElement>();
             if (distinctValuesResult.IsCategorical)
             {

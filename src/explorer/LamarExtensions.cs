@@ -11,7 +11,7 @@ namespace Explorer.Components
             // Try to resolve using the PublisherComponent interface. If this doesn't work, auto-resolve
             // the concrete instance instead.
             var fromCollection = (T)scope.TryGetInstance<PublisherComponent>(typeof(T).NameInCode());
-          return fromCollection ?? scope.GetInstance<T>();
+            return fromCollection ?? scope.GetInstance<T>();
         }
     }
 }
