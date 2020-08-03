@@ -162,7 +162,7 @@
             var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
             {
 #pragma warning disable CS4014 // Consider applying the 'await' operator to the result of the call.
-                queryScope.CancelQuery(1000);
+                queryScope.CancelQueryAfter(1000);
 #pragma warning restore CS4014 // Consider applying the 'await' operator to the result of the call.
 
                 await queryTask;
