@@ -47,7 +47,7 @@ namespace Explorer.Tests
                 cts.Token);
 
             Context = new ExplorerTestContext(Connection, dataSource, table, column, columnInfo);
-            Scope.Inject(Context);
+            Scope.Inject<ExplorerContext>(Context);
 
             var vcrFactory = Scope.GetInstance<VcrApiHttpClientFactory>();
             vcrFactory.VcrMode = vcrMode;
