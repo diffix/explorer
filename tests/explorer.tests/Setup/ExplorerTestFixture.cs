@@ -74,7 +74,7 @@ namespace Explorer.Tests
 
         private async Task<DColumnInfo> GetColumnInfo(string dataSource, string table, string column)
         {
-            var apiClient = Container.GetNestedContainer().GetInstance<JsonApiClient>();
+            var apiClient = Container.GetInstance<JsonApiClient>();
             if (dataSources == null)
             {
                 dataSources = await apiClient.GetDataSources(ApiUri, CancellationToken.None);
