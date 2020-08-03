@@ -28,8 +28,6 @@ namespace Explorer.Components
             // Services to be injected at runtime
             Injectable<ExplorerContext>();
 
-            Injectable<DConnection>();
-
             // The following are not picked up by the scan for some reason, maybe because they close
             // primitive types (?)
             // RemoveAll(sd => sd.ImplementationType == typeof(SimpleStats<>));
