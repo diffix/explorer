@@ -19,6 +19,9 @@ namespace Explorer.Queries
             this.maxLength = maxLength;
         }
 
+        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCount<string>(ref reader);
+
         protected override string GetQueryStatement(string table, string column)
         {
             var indexes = Enumerable.Range(minLength, maxLength - minLength + 1);
@@ -41,8 +44,5 @@ namespace Explorer.Queries
                 group by suffix
                 order by sum(count) desc";
         }
-
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<string>(ref reader);
     }
 }

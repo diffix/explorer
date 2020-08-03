@@ -22,6 +22,8 @@ namespace Explorer.Queries
             this.count = count;
         }
 
+        public Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
+
         protected override string GetQueryStatement(string table, string column)
         {
             var indexes = Enumerable.Range(0, count);
@@ -50,8 +52,6 @@ namespace Explorer.Queries
                 group by {columnNames}
                 having length(sstr) = {length}";
         }
-
-        public Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 
         public class Result : ValueWithCount<string>
         {

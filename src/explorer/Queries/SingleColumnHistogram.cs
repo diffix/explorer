@@ -18,6 +18,9 @@ namespace Explorer.Queries
             this.buckets = buckets.ToArray();
         }
 
+        public Result ParseRow(ref Utf8JsonReader reader) =>
+            new Result(ref reader, buckets);
+
         protected override string GetQueryStatement(string table, string column)
         {
             var bucketsFragment = string.Join(
@@ -35,9 +38,6 @@ namespace Explorer.Queries
                 from {table}
                 group by grouping sets ({string.Join(",", Enumerable.Range(2, buckets.Length))})";
         }
-
-        public Result ParseRow(ref Utf8JsonReader reader) =>
-            new Result(ref reader, buckets);
 
         public class Result : IndexedGroupingSetsResult<decimal, double>
         {

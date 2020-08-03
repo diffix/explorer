@@ -9,6 +9,8 @@ namespace Explorer.Queries
         DQuery,
         DResultParser<BasicColumnStats<T>.Result>
     {
+        Result DResultParser<Result>.ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
+
         protected override string GetQueryStatement(string table, string column)
         {
             return $@"
@@ -19,8 +21,6 @@ namespace Explorer.Queries
                     count_noise(*)
                 from {table}";
         }
-
-        Result DResultParser<Result>.ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 
         public class Result
         {

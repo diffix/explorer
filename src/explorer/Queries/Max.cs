@@ -18,19 +18,6 @@ namespace Explorer.Queries
             this.lowerBound = lowerBound;
         }
 
-        protected override string GetQueryStatement(string table, string column)
-        {
-            var whereFragment = lowerBound.HasValue ?
-                $"where {column} between {lowerBound.Value} and {lowerBound.Value * 2}" :
-                string.Empty;
-
-            return $@"
-                select
-                    max({column})
-                from {table}
-                {whereFragment}";
-        }
-
         Result<long> DResultParser<Result<long>>.ParseRow(ref Utf8JsonReader reader) =>
             new Result<long>
             {
@@ -48,6 +35,19 @@ namespace Explorer.Queries
             {
                 Max = reader.ParseNullableMetric<decimal>(),
             };
+
+        protected override string GetQueryStatement(string table, string column)
+        {
+            var whereFragment = lowerBound.HasValue ?
+                $"where {column} between {lowerBound.Value} and {lowerBound.Value * 2}" :
+                string.Empty;
+
+            return $@"
+                select
+                    max({column})
+                from {table}
+                {whereFragment}";
+        }
 
         public class Result<T>
             where T : struct

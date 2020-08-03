@@ -9,6 +9,9 @@ namespace Explorer.Queries
         DQuery,
         DResultParser<ValueWithCount<JsonElement>>
     {
+        public ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCount<JsonElement>(ref reader);
+
         protected override string GetQueryStatement(string table, string column)
         {
             return $@"
@@ -19,8 +22,5 @@ namespace Explorer.Queries
                 from {table}
                 group by {column}";
         }
-
-        public ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<JsonElement>(ref reader);
     }
 }

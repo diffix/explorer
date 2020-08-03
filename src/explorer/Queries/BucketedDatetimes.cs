@@ -39,6 +39,9 @@ namespace Explorer.Queries
 
         public string[] QueryComponents { get; }
 
+        public GroupingSetsResult<DateTime> ParseRow(ref Utf8JsonReader reader) =>
+            new GroupingSetsResult<DateTime>(ref reader, QueryComponents);
+
         protected override string GetQueryStatement(string table, string column)
         {
             var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"date_trunc('{s}', {column})"));
@@ -55,8 +58,5 @@ namespace Explorer.Queries
                 from {table}
                 group by grouping sets ({groupingSets})";
         }
-
-        public GroupingSetsResult<DateTime> ParseRow(ref Utf8JsonReader reader) =>
-            new GroupingSetsResult<DateTime>(ref reader, QueryComponents);
     }
 }

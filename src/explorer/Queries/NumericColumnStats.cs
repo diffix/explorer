@@ -11,17 +11,6 @@ namespace Explorer.Queries
         DResultParser<NumericColumnStats.Result<double>>,
         DResultParser<NumericColumnStats.Result<System.DateTime>>
     {
-        protected override string GetQueryStatement(string table, string column)
-        {
-            return $@"
-                select
-                    min({column}),
-                    max({column}),
-                    count(*),
-                    count_noise(*)
-                from {table}";
-        }
-
         Result<long> DResultParser<Result<long>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<long>
@@ -53,6 +42,17 @@ namespace Explorer.Queries
                 Count = reader.ParseCount(),
                 CountNoise = reader.ParseCountNoise(),
             };
+        }
+
+        protected override string GetQueryStatement(string table, string column)
+        {
+            return $@"
+                select
+                    min({column}),
+                    max({column}),
+                    count(*),
+                    count_noise(*)
+                from {table}";
         }
 
         public class Result<T>

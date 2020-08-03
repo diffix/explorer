@@ -16,6 +16,9 @@ namespace Explorer.Queries
             this.length = length;
         }
 
+        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCount<string>(ref reader);
+
         protected override string GetQueryStatement(string table, string column)
         {
             return $@"
@@ -27,8 +30,5 @@ namespace Explorer.Queries
                 group by 1
                 having length(left({column}, {length})) = {length}";
         }
-
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<string>(ref reader);
     }
 }

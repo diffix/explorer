@@ -36,6 +36,9 @@ namespace Explorer.Queries
             this.trimChars = trimChars;
         }
 
+        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCount<string>(ref reader);
+
         protected override string GetQueryStatement(string table, string column)
         {
             var trimPosition = trimType.ToString().ToUpperInvariant();
@@ -48,8 +51,5 @@ namespace Explorer.Queries
                 from {table}
                 group by 1";
         }
-
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<string>(ref reader);
     }
 }
