@@ -18,7 +18,7 @@ namespace Explorer.Queries
             this.maxLength = maxLength;
         }
 
-        public string BuildQueryStatement(string table, string column)
+        public string GetQueryStatement(string table, string column)
         {
             var indexes = Enumerable.Range(minLength, maxLength - minLength + 1);
             var columnNames = string.Join(", ", indexes.Select(i => $"s{i}"));

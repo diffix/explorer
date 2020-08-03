@@ -7,9 +7,6 @@ namespace Explorer.Tests
 
     public class ExplorerTestContext : ExplorerContext
     {
-        private readonly string quotedTable;
-        private readonly string quotedColumn;
-
         public ExplorerTestContext(AircloakConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
         {
             Connection = connection;
@@ -17,8 +14,6 @@ namespace Explorer.Tests
             Table = table;
             Column = column;
             ColumnInfo = columnInfo;
-            quotedTable = Quote(table);
-            quotedColumn = Quote(column);
         }
 
         public AircloakConnection Connection { get; }
@@ -32,9 +27,6 @@ namespace Explorer.Tests
         public DColumnInfo ColumnInfo { get; set; }
 
         public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) =>
-            Connection.Exec(query.BuildQueryStatement(quotedTable, quotedColumn), query.ParseRow);
-
-        private static string Quote(string name) =>
-            "\"" + name + "\"";
+            Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
     }
 }

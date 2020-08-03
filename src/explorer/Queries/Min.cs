@@ -17,7 +17,7 @@ namespace Explorer.Queries
             this.upperBound = upperBound;
         }
 
-        public string BuildQueryStatement(string table, string column)
+        public string GetQueryStatement(string table, string column)
         {
             var whereFragment = upperBound.HasValue ?
                 $"where {column} between 0 and {upperBound.Value}" :

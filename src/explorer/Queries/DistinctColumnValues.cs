@@ -7,7 +7,7 @@ namespace Explorer.Queries
 
     internal class DistinctColumnValues : DQuery<ValueWithCount<JsonElement>>
     {
-        public string BuildQueryStatement(string table, string column)
+        public string GetQueryStatement(string table, string column)
         {
             return $@"
                 select

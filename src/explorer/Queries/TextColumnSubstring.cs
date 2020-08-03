@@ -20,7 +20,7 @@ namespace Explorer.Queries
             this.count = count;
         }
 
-        public string BuildQueryStatement(string table, string column)
+        public string GetQueryStatement(string table, string column)
         {
             var indexes = Enumerable.Range(0, count);
             var columnNames = string.Join(", ", indexes.Select(i => $"s{i}"));

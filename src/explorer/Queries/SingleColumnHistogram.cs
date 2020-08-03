@@ -17,7 +17,7 @@ namespace Explorer.Queries
             this.buckets = buckets.ToArray();
         }
 
-        public string BuildQueryStatement(string table, string column)
+        public string GetQueryStatement(string table, string column)
         {
             var bucketsFragment = string.Join(
                 ",",
