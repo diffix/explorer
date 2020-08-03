@@ -66,7 +66,7 @@ namespace Explorer.Tests
             return queryResult.Rows;
         }
 
-        public async Task CancelQuery(int millisecondDelay)
+        public async Task CancelQueryAfter(int millisecondDelay)
         {
             await Task.Delay(millisecondDelay);
             Scope.GetInstance<CancellationTokenSource>().Cancel();
