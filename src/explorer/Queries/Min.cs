@@ -6,7 +6,7 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     internal class Min :
-        DQuery,
+        DQueryBuilder,
         DResultParser<Min.Result<long>>,
         DResultParser<Min.Result<double>>,
         DResultParser<Min.Result<decimal>>

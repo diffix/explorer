@@ -6,8 +6,7 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class TextColumnPrefix :
-        DQuery,
-        DResultParser<ValueWithCount<string>>
+        DQuery<ValueWithCount<string>>
     {
         private readonly int length;
 
@@ -16,7 +15,7 @@ namespace Explorer.Queries
             this.length = length;
         }
 
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+        public override ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
             new ValueWithCount<string>(ref reader);
 
         protected override string GetQueryStatement(string table, string column)

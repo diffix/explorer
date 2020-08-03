@@ -8,8 +8,7 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class BucketedDatetimes :
-        DQuery,
-        DResultParser<GroupingSetsResult<DateTime>>
+        DQuery<GroupingSetsResult<DateTime>>
     {
         public static readonly string[] DateComponents = new[]
         {
@@ -39,7 +38,7 @@ namespace Explorer.Queries
 
         public string[] QueryComponents { get; }
 
-        public GroupingSetsResult<DateTime> ParseRow(ref Utf8JsonReader reader) =>
+        public override GroupingSetsResult<DateTime> ParseRow(ref Utf8JsonReader reader) =>
             new GroupingSetsResult<DateTime>(ref reader, QueryComponents);
 
         protected override string GetQueryStatement(string table, string column)

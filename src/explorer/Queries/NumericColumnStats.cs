@@ -6,7 +6,7 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     internal class NumericColumnStats :
-        DQuery,
+        DQueryBuilder,
         DResultParser<NumericColumnStats.Result<long>>,
         DResultParser<NumericColumnStats.Result<double>>,
         DResultParser<NumericColumnStats.Result<System.DateTime>>

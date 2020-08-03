@@ -16,5 +16,7 @@ namespace Explorer
 
         public Task<DResult<TRow>> Exec<TQuery, TRow>(TQuery query)
             where TQuery : DQueryBuilder, DResultParser<TRow>;
+
+        public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query);
     }
 }

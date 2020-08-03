@@ -8,8 +8,7 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     public class SingleColumnHistogram :
-        DQuery,
-        DResultParser<SingleColumnHistogram.Result>
+        DQuery<SingleColumnHistogram.Result>
     {
         private readonly decimal[] buckets;
 
@@ -18,7 +17,7 @@ namespace Explorer.Queries
             this.buckets = buckets.ToArray();
         }
 
-        public Result ParseRow(ref Utf8JsonReader reader) =>
+        public override Result ParseRow(ref Utf8JsonReader reader) =>
             new Result(ref reader, buckets);
 
         protected override string GetQueryStatement(string table, string column)

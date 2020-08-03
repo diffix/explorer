@@ -6,10 +6,9 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     public class BasicColumnStats<T> :
-        DQuery,
-        DResultParser<BasicColumnStats<T>.Result>
+        DQuery<BasicColumnStats<T>.Result>
     {
-        Result DResultParser<Result>.ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
+        public override Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 
         protected override string GetQueryStatement(string table, string column)
         {

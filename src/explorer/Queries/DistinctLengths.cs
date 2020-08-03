@@ -6,10 +6,9 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class DistinctLengths :
-        DQuery,
-        DResultParser<ValueWithCount<JsonElement>>
+        DQuery<ValueWithCount<JsonElement>>
     {
-        public ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
+        public override ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
             new ValueWithCount<JsonElement>(ref reader);
 
         protected override string GetQueryStatement(string table, string column)

@@ -7,8 +7,7 @@ namespace Explorer.Queries
     using Explorer.Common;
 
     internal class TextColumnSuffix :
-        DQuery,
-        DResultParser<ValueWithCount<string>>
+        DQuery<ValueWithCount<string>>
     {
         private readonly int minLength;
         private readonly int maxLength;
@@ -19,7 +18,7 @@ namespace Explorer.Queries
             this.maxLength = maxLength;
         }
 
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+        public override ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
             new ValueWithCount<string>(ref reader);
 
         protected override string GetQueryStatement(string table, string column)

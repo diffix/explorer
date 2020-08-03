@@ -6,7 +6,7 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     internal class Max :
-        DQuery,
+        DQueryBuilder,
         DResultParser<Max.Result<long>>,
         DResultParser<Max.Result<double>>,
         DResultParser<Max.Result<decimal>>
