@@ -1,12 +1,14 @@
 namespace Explorer.Common
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Text.Json.Serialization;
 
     using Explorer.Common.JsonConversion;
 
     [JsonConverter(typeof(BucketSizeConverter))]
-    public class BucketSize
+    public class BucketSize : IEquatable<BucketSize>
     {
 #pragma warning disable SA1137 // Elements should have the same indentation
         private static readonly decimal[] ValidSizes =
@@ -68,17 +70,14 @@ namespace Explorer.Common
             return new BucketSize(ValidSizes[index - steps]);
         }
 
-        public override bool Equals(object? obj)
-        {
-            if (obj == null || GetType() != obj.GetType())
-            {
-                return false;
-            }
+        public bool Equals([AllowNull] BucketSize other) =>
+            other != null && SnappedSize == other.SnappedSize;
 
-            return SnappedSize == ((BucketSize)obj).SnappedSize;
-        }
+        public override bool Equals(object? obj) =>
+            obj is BucketSize bucketSize && bucketSize.Equals(this);
 
-        public override int GetHashCode() => SnappedSize.GetHashCode();
+        public override int GetHashCode() =>
+            SnappedSize.GetHashCode();
 
         private static (decimal BucketSize, int Index) Snap(decimal size)
         {

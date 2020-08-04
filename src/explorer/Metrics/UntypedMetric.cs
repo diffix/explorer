@@ -1,3 +1,5 @@
+#pragma warning disable CA1815 // Struct type should override Equals
+
 namespace Explorer.Metrics
 {
     using System.Text.Json.Serialization;
@@ -19,3 +21,5 @@ namespace Explorer.Metrics
         public int Priority { get; }
     }
 }
+
+#pragma warning restore CA1815 // Struct type should override Equals
