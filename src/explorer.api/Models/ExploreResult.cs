@@ -38,11 +38,10 @@ namespace Explorer.Api.Models
 
         public ExplorationStatus Status { get; }
 
-#pragma warning disable CA1822 // member can be marked as static
-        // Note:
-        // It would be simpler to define the property as static instead of implementing this through a separate static
+        // Note: It would be simpler to define the property as static instead of implementing this through a separate static
         // member variable, however the default json serializer ignores static fields. This is a way to make sure the
         // VersionInfo is included in the serialized output.
+#pragma warning disable CA1822 // member can be marked as static
         public VersionInfo VersionInfo { get => VersionInfo.ForThisAssembly(); }
 #pragma warning restore CA1822 // member can be marked as static
 

@@ -74,6 +74,14 @@ namespace Explorer.Components
                 Rank = rank;
             }
 
+            public string Method { get; }
+
+            public double PValue { get; }
+
+            public bool Significant { get; }
+
+            public int Rank { get; }
+
             public static GoodnessMetric AndersonDarling(AndersonDarlingTest ad, int rank) =>
                 new GoodnessMetric("AndersonDarling", ad.PValue, ad.Significant, rank);
 
@@ -82,14 +90,6 @@ namespace Explorer.Components
 
             public static GoodnessMetric KolmogorovSmirnov(KolmogorovSmirnovTest ks, int rank) =>
                 new GoodnessMetric("KolmogorovSmirnov", ks.PValue, ks.Significant, rank);
-
-            public string Method { get; }
-
-            public double PValue { get; }
-
-            public bool Significant { get; }
-
-            public int Rank { get; }
         }
     }
 }

@@ -13,9 +13,8 @@
     public sealed class ApiTests : IClassFixture<TestWebAppFactory>
     {
         private const string ApiRoot = "api/v1";
-        private static readonly string exploreEndpoint = $"{ApiRoot}/explore";
-        private static readonly string resultEndpoint = $"{ApiRoot}/result";
-        private static string cancelEndpoint = $"{ApiRoot}/cancel";
+        private static readonly string ExploreEndpoint = $"{ApiRoot}/explore";
+        private static readonly string ResultEndpoint = $"{ApiRoot}/result";
 
         private static readonly Models.ExploreParams ValidData = new Models.ExploreParams
         {
@@ -40,14 +39,14 @@
         [Fact]
         public async Task Success()
         {
-            await TestApi(HttpMethod.Post, exploreEndpoint, ValidData, (response, _) =>
+            await TestApi(HttpMethod.Post, ExploreEndpoint, ValidData, (response, _) =>
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}."));
         }
 
         [Fact]
         public async Task SuccessWithContents()
         {
-            await TestApi(HttpMethod.Post, exploreEndpoint, ValidData, (response, content) =>
+            await TestApi(HttpMethod.Post, ExploreEndpoint, ValidData, (response, content) =>
             {
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
 
@@ -81,7 +80,7 @@
             };
             var testConfig = factory.GetTestConfig(nameof(ApiTests), nameof(SuccessWithResult));
 
-            var explorerGuid = await TestApi(HttpMethod.Post, exploreEndpoint, data, (response, content) =>
+            var explorerGuid = await TestApi(HttpMethod.Post, ExploreEndpoint, data, (response, content) =>
             {
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
 
@@ -188,7 +187,7 @@
         [InlineData("PUT")]
         public async Task FailWithBadMethod(string method)
         {
-            await TestApi(new HttpMethod(method), exploreEndpoint, ValidData, test: (response, content) =>
+            await TestApi(new HttpMethod(method), ExploreEndpoint, ValidData, test: (response, content) =>
             {
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 var jsonContent = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
@@ -207,7 +206,7 @@
                 Columns = new List<string>(),
             };
 
-            await TestApi(HttpMethod.Post, exploreEndpoint, data, test: (response, content) =>
+            await TestApi(HttpMethod.Post, ExploreEndpoint, data, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiUrl field is required.", content, StringComparison.InvariantCulture);
@@ -220,7 +219,7 @@
         [Fact]
         public async Task FailWithMissingFields()
         {
-            await TestApi(HttpMethod.Post, exploreEndpoint, new { }, test: (response, content) =>
+            await TestApi(HttpMethod.Post, ExploreEndpoint, new { }, test: (response, content) =>
             {
                 Assert.True(response.StatusCode == HttpStatusCode.BadRequest, content);
                 Assert.Contains("The ApiUrl field is required.", content, StringComparison.InvariantCulture);
@@ -244,7 +243,7 @@
 
             await TestApi(
                 HttpMethod.Post,
-                exploreEndpoint,
+                ExploreEndpoint,
                 data: invalidData,
                 test: (response, content) =>
                 {
@@ -258,7 +257,7 @@
         {
             await TestApi(
                 HttpMethod.Get,
-                $"{resultEndpoint}/11111111-1111-1111-1111-111111111111",
+                $"{ResultEndpoint}/11111111-1111-1111-1111-111111111111",
                 null,
                 test: (response, content) => Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
         }
@@ -274,7 +273,7 @@
             {
                 using var response = await factory.SendExplorerApiRequest(
                     method,
-                    $"{resultEndpoint}/{explorerGuid}",
+                    $"{ResultEndpoint}/{explorerGuid}",
                     null,
                     nameof(ApiTests),
                     vcrSessionName);

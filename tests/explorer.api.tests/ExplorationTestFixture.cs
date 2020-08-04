@@ -13,13 +13,6 @@
 
     public sealed class ExplorationTestFixture : IDisposable
     {
-        public static ExplorerConfig Config { get; } = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json")
-            .AddEnvironmentVariables()
-            .Build()
-            .GetSection("Explorer")
-            .Get<ExplorerConfig>();
-
         public ExplorationTestFixture()
         {
             RootContainer = new Container(registry =>
@@ -43,6 +36,13 @@
                 registry.IncludeRegistry<ComponentRegistry>();
             });
         }
+
+        public static ExplorerConfig Config { get; } = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.Development.json")
+            .AddEnvironmentVariables()
+            .Build()
+            .GetSection("Explorer")
+            .Get<ExplorerConfig>();
 
         public Container RootContainer { get; }
 
