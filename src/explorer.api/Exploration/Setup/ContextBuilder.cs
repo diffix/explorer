@@ -8,20 +8,25 @@
 
     using Aircloak.JsonApi;
     using Diffix;
-    using Explorer.Common;
 
     public class ContextBuilder
     {
-        private readonly JsonApiClient apiClient;
+        private readonly AircloakConnectionBuilder connectionBuilder;
 
-        public ContextBuilder(JsonApiClient apiClient)
+        public ContextBuilder(AircloakConnectionBuilder connectionBuilder)
         {
-            this.apiClient = apiClient;
+            this.connectionBuilder = connectionBuilder;
         }
 
-        public async Task<IEnumerable<ExplorerContext>> Build(AircloakConnection connection, Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
+        public async Task<IEnumerable<ExplorerContext>> Build(
+            Uri apiUrl,
+            string dataSource,
+            string table,
+            IEnumerable<string> columns,
+            CancellationToken cancellationToken)
         {
-            var dataSources = await apiClient.GetDataSources(apiUrl, CancellationToken.None);
+            var connection = connectionBuilder.Build(apiUrl, dataSource, cancellationToken);
+            var dataSources = await connection.GetDataSources();
 
             if (!dataSources.AsDict.TryGetValue(dataSource, out var dataSourceInfo))
             {
