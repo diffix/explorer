@@ -5,7 +5,7 @@ namespace Aircloak.JsonApi
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
-
+    using Aircloak.JsonApi.ResponseTypes;
     using Diffix;
 
     /// <summary>
@@ -82,5 +82,12 @@ namespace Aircloak.JsonApi
                 semaphore.Release();
             }
         }
+
+        /// <summary>
+        /// Get the list of datasources provided by this connection.
+        /// </summary>
+        /// <returns>A <see cref="DataSourceCollection" /> with all the datasources, tables and columns.</returns>
+        public async Task<DataSourceCollection> GetDataSources()
+            => await apiClient.GetDataSources(apiUrl, cancellationToken);
     }
 }

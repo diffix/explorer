@@ -38,8 +38,7 @@ namespace Explorer.Api.Controllers
             ExploreParams data,
             [FromServices] ExplorationLauncher launcher,
             [FromServices] IAircloakAuthenticationProvider authProvider,
-            [FromServices] ContextBuilder contextBuilder,
-            [FromServices] AircloakConnectionBuilder connectionBuilder)
+            [FromServices] ContextBuilder contextBuilder)
         {
             // Register the authentication token for this scope.
             if (authProvider is ExplorerApiAuthProvider auth)
@@ -49,8 +48,7 @@ namespace Explorer.Api.Controllers
 
             var apiUri = new Uri(data.ApiUrl);
             var cts = new CancellationTokenSource();
-            var conn = connectionBuilder.Build(apiUri, data.DataSource, cts.Token);
-            var ctxList = await contextBuilder.Build(conn, apiUri, data.DataSource, data.Table, data.Columns);
+            var ctxList = await contextBuilder.Build(apiUri, data.DataSource, data.Table, data.Columns, cts.Token);
             var configurations = ctxList.Select(ctx => new ComponentComposition(ctx));
             var exploration = launcher.LaunchExploration(data.DataSource, data.Table, configurations);
 
