@@ -13,17 +13,11 @@ namespace Explorer.Components
         ExplorerComponent<List<HistogramWithCounts>>
     {
         private const long ValuesPerBucketTarget = 20;
-        private readonly DConnection conn;
-        private readonly ExplorerContext ctx;
+
         private readonly ResultProvider<SimpleStats<double>.Result> statsResultProvider;
 
-        public NumericHistogramComponent(
-            DConnection conn,
-            ExplorerContext ctx,
-            ResultProvider<SimpleStats<double>.Result> statsResultProvider)
+        public NumericHistogramComponent(ResultProvider<SimpleStats<double>.Result> statsResultProvider)
         {
-            this.conn = conn;
-            this.ctx = ctx;
             this.statsResultProvider = statsResultProvider;
         }
 
@@ -36,9 +30,9 @@ namespace Explorer.Components
                 stats.Min,
                 stats.Max,
                 ValuesPerBucketTarget,
-                isIntegerColumn: ctx.ColumnInfo.Type == DValueType.Integer);
+                isIntegerColumn: Context.ColumnInfo.Type == DValueType.Integer);
 
-            var histogramQ = await conn.Exec(new SingleColumnHistogram(ctx.Table, ctx.Column, bucketsToSample));
+            var histogramQ = await Context.Exec(new SingleColumnHistogram(bucketsToSample));
 
             var histograms = Histogram.FromQueryRows(histogramQ.Rows);
 

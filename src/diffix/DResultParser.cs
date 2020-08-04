@@ -1,19 +1,18 @@
-namespace Diffix
+﻿namespace Diffix
 {
     using System.Text.Json;
 
     /// <summary>
-    /// Abstract base class for building query statements.
+    /// Interface for parsing query results.
     /// </summary>
     /// <typeparam name="TRow">A type representing a result row of a query.</typeparam>
-    public abstract class DQuery<TRow> : DQueryStatement, DResultParser<TRow>
+    public interface DResultParser<TRow>
     {
         /// <summary>
         /// Parses a row instance.
         /// </summary>
         /// <param name="reader">The <see cref="Utf8JsonReader"/> instance to use for parsing the result.</param>
         /// <returns>The parsed value.</returns>
-        public abstract TRow ParseRow(ref Utf8JsonReader reader);
+        public TRow ParseRow(ref Utf8JsonReader reader);
     }
 }
-

@@ -62,8 +62,8 @@ namespace Explorer.Api.Tests
             }
 
             // Create the Context and Connection objects for this exploration.
-            var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(apiUri, dataSource, table, columns);
             var conn = rootContainer.GetInstance<AircloakConnectionBuilder>().Build(apiUri, dataSource, CancellationToken.None);
+            var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(conn, apiUri, dataSource, table, columns);
 
             var columnExplorations = ctxList.Select(ctx =>
             {
@@ -76,7 +76,7 @@ namespace Explorer.Api.Tests
                 columnScopes.Add(scope);
 
                 return ExplorationLauncher.ExploreColumn(
-                    scope, conn, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type));
+                    scope, ctx, ComponentComposition.ColumnConfiguration(ctx.ColumnInfo.Type));
             });
 
             return new Exploration(dataSource, table, columnExplorations.ToList());

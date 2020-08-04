@@ -19,19 +19,13 @@ namespace Explorer.Components
         public const int DefaultEmailDomainsCountThreshold = 5 * DefaultSamplesToPublish;
         public const int DefaultSubstringQueryColumnCount = 5;
 
-        private readonly DConnection conn;
-        private readonly ExplorerContext ctx;
         private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
         public TextGeneratorComponent(
-            DConnection conn,
-            ExplorerContext ctx,
             ResultProvider<EmailCheckComponent.Result> emailCheckProvider,
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
         {
-            this.conn = conn;
-            this.ctx = ctx;
             this.emailCheckProvider = emailCheckProvider;
             this.distinctValuesProvider = distinctValuesProvider;
             SamplesToPublish = DefaultSamplesToPublish;
@@ -61,24 +55,24 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
+
             var emailCheckerResult = await emailCheckProvider.ResultAsync;
             var sampleValues = emailCheckerResult.IsEmail ? await GenerateEmails() : await GenerateStrings();
             return new Result(sampleValues.ToList());
         }
 
-        private static async Task<SubstringWithCountList> ExploreEmailDomains(DConnection conn, ExplorerContext ctx)
+        private async Task<SubstringWithCountList> ExploreEmailDomains()
         {
-            var domains = await conn.Exec(new TextColumnTrim(
-                ctx.Table, ctx.Column, TextColumnTrimType.Leading, Constants.EmailAddressChars));
+            var domains = await Context.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
 
             return SubstringWithCountList.FromValueWithCountEnum(
                 domains.Rows
                     .Where(r => r.HasValue && r.Value.StartsWith("@", StringComparison.InvariantCulture)));
         }
 
-        private static async Task<SubstringWithCountList> ExploreEmailTopLevelDomains(DConnection conn, ExplorerContext ctx)
+        private async Task<SubstringWithCountList> ExploreEmailTopLevelDomains()
         {
-            var suffixes = await conn.Exec(new TextColumnSuffix(ctx.Table, ctx.Column, 3, 7));
+            var suffixes = await Context.Exec(new TextColumnSuffix(3, 7));
 
             return SubstringWithCountList.FromValueWithCountEnum(
                 suffixes.Rows
@@ -177,9 +171,7 @@ namespace Explorer.Components
         /// It uses a batch approach to query for several positions (specified using SubstringQueryColumnCount)
         /// using a single query.
         /// </summary>
-        private static async Task<SubstringsData> ExploreSubstrings(
-            DConnection conn,
-            ExplorerContext ctx,
+        private async Task<SubstringsData> ExploreSubstrings(
             int substringQueryColumnCount,
             params int[] substringLengths)
         {
@@ -189,8 +181,8 @@ namespace Explorer.Components
                 var hasRows = true;
                 for (var pos = 0; hasRows; pos += substringQueryColumnCount)
                 {
-                    var query = new TextColumnSubstring(ctx.Table, ctx.Column, pos, length, substringQueryColumnCount);
-                    var sstrResult = await conn.Exec(query);
+                    var query = new TextColumnSubstring(pos, length, substringQueryColumnCount);
+                    var sstrResult = await Context.Exec(query);
                     hasRows = false;
                     foreach (var row in sstrResult.Rows)
                     {
@@ -208,9 +200,9 @@ namespace Explorer.Components
         private async Task<IEnumerable<string>> GenerateEmails()
         {
             var (substrings, domains, tlds) = await Utilities.WhenAll(
-                ExploreSubstrings(conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
-                ExploreEmailDomains(conn, ctx),
-                ExploreEmailTopLevelDomains(conn, ctx));
+                ExploreSubstrings(SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
+                ExploreEmailDomains(),
+                ExploreEmailTopLevelDomains());
             if (substrings.Count == 0 || tlds.Count == 0)
             {
                 return Enumerable.Empty<string>();
@@ -222,7 +214,7 @@ namespace Explorer.Components
         {
             // the substring lengths 3 and 4 were determined empirically to work for column containing names
             var substrings = await ExploreSubstrings(
-                conn, ctx, SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
+                SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 });
             if (substrings.Count == 0)
             {
                 return Enumerable.Empty<string>();

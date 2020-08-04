@@ -11,16 +11,6 @@ namespace Explorer.Components
 
     public class SimpleStats<T> : ExplorerComponent<SimpleStats<T>.Result>, PublisherComponent
     {
-        private readonly DConnection conn;
-
-        private readonly ExplorerContext ctx;
-
-        public SimpleStats(DConnection conn, ExplorerContext ctx)
-        {
-            this.conn = conn;
-            this.ctx = ctx;
-        }
-
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
@@ -32,7 +22,7 @@ namespace Explorer.Components
 
         protected override async Task<SimpleStats<T>.Result> Explore()
         {
-            var statsQ = await conn.Exec(new BasicColumnStats<T>(ctx.Table, ctx.Column));
+            var statsQ = await Context.Exec(new BasicColumnStats<T>());
 
             return new Result(statsQ.Rows.Single());
         }

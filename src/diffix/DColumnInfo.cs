@@ -1,7 +1,5 @@
-namespace Explorer.Common
+namespace Diffix
 {
-    using Diffix;
-
     /// <summary>
     /// Stores Diffix metadata information about a database column.
     /// </summary>

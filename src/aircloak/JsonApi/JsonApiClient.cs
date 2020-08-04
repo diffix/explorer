@@ -76,7 +76,8 @@ namespace Aircloak.JsonApi
         /// </summary>
         /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="dataSource">The data source to run the query against.</param>
-        /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
+        /// <param name="query">The query statement as a string.</param>
+        /// <param name="rowParser">A delegate used for parsing a result row.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
         /// <returns>A <see cref="QueryResult{TRow}"/> instance containing the success status and query Id.</returns>
@@ -87,12 +88,13 @@ namespace Aircloak.JsonApi
         public async Task<QueryResult<TRow>> Query<TRow>(
             Uri apiUrl,
             string dataSource,
-            DQuery<TRow> query,
+            string query,
+            JsonRowParser<TRow> rowParser,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
-            var queryResponse = await SubmitQuery(apiUrl, dataSource, query.QueryStatement, cancellationToken);
-            return await PollQueryUntilComplete(apiUrl, queryResponse.QueryId, query, pollFrequency, cancellationToken);
+            var queryResponse = await SubmitQuery(apiUrl, dataSource, query, cancellationToken);
+            return await PollQueryUntilComplete(apiUrl, queryResponse.QueryId, query, rowParser, pollFrequency, cancellationToken);
         }
 
         /// <summary>
@@ -144,6 +146,7 @@ namespace Aircloak.JsonApi
         /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="queryId">The query Id obtained via a previous call to the /api/query endpoint.</param>
         /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
+        /// <param name="rowParser">A delegate used for parsing a result row.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
         /// <param name="cancellationToken">A <c>CancellationToken</c> that cancels the returned <c>Task</c>.</param>
         /// <typeparam name="TRow">The type to use to deserialise each row returned in the query results.</typeparam>
@@ -154,7 +157,8 @@ namespace Aircloak.JsonApi
         public async Task<QueryResult<TRow>> PollQueryUntilComplete<TRow>(
             Uri apiUrl,
             string queryId,
-            DQuery<TRow> query,
+            string query,
+            JsonRowParser<TRow> rowParser,
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
@@ -164,7 +168,7 @@ namespace Aircloak.JsonApi
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
                 Converters =
                 {
-                    new JsonArrayConverter<DQuery<TRow>, TRow>(query),
+                    new JsonArrayConverter<TRow>(rowParser),
                     new DValueTypeEnumConverter(),
                 },
             };
@@ -211,12 +215,12 @@ namespace Aircloak.JsonApi
                 throw;
             }
 
-            static string GetQueryResultDetails(DQuery<TRow> query, QueryResult<TRow> queryResult)
+            static string GetQueryResultDetails(string query, QueryResult<TRow> queryResult)
             {
                 return $"DataSource: {queryResult.Query.DataSource.Name}.\n" +
                     $"Error: {queryResult.Query.Error}\n" +
                     $"Query Id: {queryResult.Query.Id}\n" +
-                    $"Query Statement: {query.QueryStatement}";
+                    $"Query Statement: {query}";
             }
         }
 

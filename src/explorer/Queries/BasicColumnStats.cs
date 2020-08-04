@@ -8,20 +8,18 @@ namespace Explorer.Queries
     public class BasicColumnStats<T> :
         DQuery<BasicColumnStats<T>.Result>
     {
-        public BasicColumnStats(DSqlObjectName tableName, DSqlObjectName columnName)
+        public override Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
+
+        protected override string GetQueryStatement(string table, string column)
         {
-            QueryStatement = $@"
+            return $@"
                 select
-                    min({columnName}),
-                    max({columnName}),
+                    min({column}),
+                    max({column}),
                     count(*),
                     count_noise(*)
-                from {tableName}";
+                from {table}";
         }
-
-        public string QueryStatement { get; }
-
-        Result DQuery<Result>.ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 
         public class Result
         {
