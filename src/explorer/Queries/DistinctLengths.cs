@@ -5,7 +5,7 @@ namespace Explorer.Queries
     using Diffix;
     using Explorer.Common;
 
-    internal class DistinctColumnValues :
+    internal class DistinctLengths :
         DQuery<ValueWithCount<JsonElement>>
     {
         public override ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
@@ -15,7 +15,7 @@ namespace Explorer.Queries
         {
             return $@"
                 select
-                    {column},
+                    length({column}),
                     count(*),
                     count_noise(*)
                 from {table}

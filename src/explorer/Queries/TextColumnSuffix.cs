@@ -9,14 +9,25 @@ namespace Explorer.Queries
     internal class TextColumnSuffix :
         DQuery<ValueWithCount<string>>
     {
-        public TextColumnSuffix(DSqlObjectName tableName, DSqlObjectName columnName, int minLength, int maxLength)
+        private readonly int minLength;
+        private readonly int maxLength;
+
+        public TextColumnSuffix(int minLength, int maxLength)
         {
-            // TODO: determine suffix length dynamically
+            this.minLength = minLength;
+            this.maxLength = maxLength;
+        }
+
+        public override ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCount<string>(ref reader);
+
+        protected override string GetQueryStatement(string table, string column)
+        {
             var indexes = Enumerable.Range(minLength, maxLength - minLength + 1);
             var columnNames = string.Join(", ", indexes.Select(i => $"s{i}"));
-            var suffixExpressions = string.Join(",\n", indexes.Select(i => $"    right({columnName}, {i}) as s{i}"));
+            var suffixExpressions = string.Join(",\n", indexes.Select(i => $"    right({column}, {i}) as s{i}"));
 
-            QueryStatement = $@"
+            return $@"
                 select
                     concat({columnNames}) as suffix,
                     sum(count),
@@ -26,16 +37,11 @@ namespace Explorer.Queries
                         {suffixExpressions},
                         count(*),
                         count_noise(*)
-                    from {tableName}
+                    from {table}
                     group by grouping sets ({columnNames})
                     ) as suffixes
                 group by suffix
                 order by sum(count) desc";
         }
-
-        public string QueryStatement { get; }
-
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<string>(ref reader);
     }
 }

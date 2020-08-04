@@ -26,22 +26,29 @@ namespace Explorer.Queries
     internal class TextColumnTrim :
         DQuery<ValueWithCount<string>>
     {
-        public TextColumnTrim(DSqlObjectName tableName, DSqlObjectName columnName, TextColumnTrimType trimType, string trimChars)
+        private readonly TextColumnTrimType trimType;
+        private readonly string trimChars;
+
+        public TextColumnTrim(TextColumnTrimType trimType, string trimChars)
+        {
+            this.trimType = trimType;
+            this.trimChars = trimChars;
+        }
+
+        public override ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCount<string>(ref reader);
+
+        protected override string GetQueryStatement(string table, string column)
         {
             var trimPosition = trimType.ToString().ToUpperInvariant();
 
-            QueryStatement = $@"
+            return $@"
                 select
-                    trim({trimPosition} '{trimChars}' FROM {columnName}),
+                    trim({trimPosition} '{trimChars}' FROM {column}),
                     count(*),
                     count_noise(*)
-                from {tableName}
+                from {table}
                 group by 1";
         }
-
-        public string QueryStatement { get; }
-
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<string>(ref reader);
     }
 }

@@ -6,24 +6,12 @@ namespace Explorer.Queries
     using Explorer.JsonExtensions;
 
     internal class NumericColumnStats :
-        DQuery<NumericColumnStats.Result<long>>,
-        DQuery<NumericColumnStats.Result<double>>,
-        DQuery<NumericColumnStats.Result<System.DateTime>>
+        DQueryStatement,
+        DResultParser<NumericColumnStats.Result<long>>,
+        DResultParser<NumericColumnStats.Result<double>>,
+        DResultParser<NumericColumnStats.Result<System.DateTime>>
     {
-        public NumericColumnStats(DSqlObjectName tableName, DSqlObjectName columnName)
-        {
-            QueryStatement = $@"
-                select
-                    min({columnName}),
-                    max({columnName}),
-                    count(*),
-                    count_noise(*)
-                from {tableName}";
-        }
-
-        public string QueryStatement { get; }
-
-        Result<long> DQuery<Result<long>>.ParseRow(ref Utf8JsonReader reader)
+        Result<long> DResultParser<Result<long>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<long>
             {
@@ -34,7 +22,7 @@ namespace Explorer.Queries
             };
         }
 
-        Result<double> DQuery<Result<double>>.ParseRow(ref Utf8JsonReader reader)
+        Result<double> DResultParser<Result<double>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<double>
             {
@@ -45,7 +33,7 @@ namespace Explorer.Queries
             };
         }
 
-        Result<System.DateTime> DQuery<Result<System.DateTime>>.ParseRow(ref Utf8JsonReader reader)
+        Result<System.DateTime> DResultParser<Result<System.DateTime>>.ParseRow(ref Utf8JsonReader reader)
         {
             return new Result<System.DateTime>
             {
@@ -54,6 +42,17 @@ namespace Explorer.Queries
                 Count = reader.ParseCount(),
                 CountNoise = reader.ParseCountNoise(),
             };
+        }
+
+        protected override string GetQueryStatement(string table, string column)
+        {
+            return $@"
+                select
+                    min({column}),
+                    max({column}),
+                    count(*),
+                    count_noise(*)
+                from {table}";
         }
 
         public class Result<T>

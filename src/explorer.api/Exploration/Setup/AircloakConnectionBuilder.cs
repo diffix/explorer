@@ -17,7 +17,7 @@ namespace Explorer.Api
             this.apiClient = apiClient;
         }
 
-        public DConnection Build(Uri apiUri, string dataSource, CancellationToken token)
+        public AircloakConnection Build(Uri apiUri, string dataSource, CancellationToken token)
         {
             return new AircloakConnection(
                 apiClient,

@@ -12,15 +12,6 @@ namespace Explorer.Components
     public class TextLengthComponent
         : ExplorerComponent<TextLengthComponent.Result>, PublisherComponent
     {
-        private readonly DConnection conn;
-        private readonly ExplorerContext ctx;
-
-        public TextLengthComponent(DConnection conn, ExplorerContext ctx)
-        {
-            this.ctx = ctx;
-            this.conn = conn;
-        }
-
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
@@ -45,13 +36,12 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-            if (ctx.ColumnInfo.Isolating)
+            if (Context.ColumnInfo.Isolating)
             {
                 return Result.Failed();
             }
 
-            var distinctResult = await conn.Exec(
-                new DistinctColumnValues(ctx.Table, $"length({ctx.Column})"));
+            var distinctResult = await Context.Exec(new DistinctLengths());
 
             return Result.Ok(new DistinctValuesComponent.Result(distinctResult.Rows));
         }

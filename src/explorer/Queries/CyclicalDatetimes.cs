@@ -25,7 +25,7 @@ namespace Explorer.Queries
             "second",
         };
 
-        public CyclicalDatetimes(DSqlObjectName tableName, DSqlObjectName columnName, DValueType columnType = DValueType.Datetime)
+        public CyclicalDatetimes(DValueType columnType = DValueType.Datetime)
         {
             QueryComponents = columnType switch
             {
@@ -34,11 +34,19 @@ namespace Explorer.Queries
                 DValueType.Date => DateComponents,
                 _ => throw new System.ArgumentException($"Expected Datetime, Date or Time, got {columnType}."),
             };
+        }
 
-            var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"{s}({columnName})"));
+        public string[] QueryComponents { get; }
+
+        public override GroupingSetsResult<int> ParseRow(ref Utf8JsonReader reader) =>
+            new GroupingSetsResult<int>(ref reader, QueryComponents);
+
+        protected override string GetQueryStatement(string table, string column)
+        {
+            var groupsFragment = string.Join(",\n", QueryComponents.Select(s => $"{s}({column})"));
             var groupingSets = string.Join(", ", Enumerable.Range(2, QueryComponents.Length));
 
-            QueryStatement = $@"
+            return $@"
                 select
                     grouping_id(
                         {groupsFragment}
@@ -46,15 +54,8 @@ namespace Explorer.Queries
                     {groupsFragment},
                     count(*),
                     count_noise(*)
-                from {tableName}
+                from {table}
                 group by grouping sets ({groupingSets})";
         }
-
-        public string[] QueryComponents { get; }
-
-        public string QueryStatement { get; }
-
-        public GroupingSetsResult<int> ParseRow(ref Utf8JsonReader reader) =>
-            new GroupingSetsResult<int>(ref reader, QueryComponents);
     }
 }

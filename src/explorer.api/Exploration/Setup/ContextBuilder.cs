@@ -19,7 +19,7 @@
             this.apiClient = apiClient;
         }
 
-        public async Task<IEnumerable<ExplorerContext>> Build(Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
+        public async Task<IEnumerable<ExplorerContext>> Build(AircloakConnection connection, Uri apiUrl, string dataSource, string table, IEnumerable<string> columns)
         {
             var dataSources = await apiClient.GetDataSources(apiUrl, CancellationToken.None);
 
@@ -40,7 +40,7 @@
                     throw new MetaDataCheckException($"Could not find column '{dataSource}.{table}.{column}'.");
                 }
                 var ci = new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
-                return new CheckedContext(dataSource, table, column, ci);
+                return new CheckedContext(connection, dataSource, table, column, ci);
             });
         }
 
@@ -50,21 +50,31 @@
         /// </summary>
         private class CheckedContext : ExplorerContext
         {
-            internal CheckedContext(string dataSource, string table, string column, DColumnInfo columnInfo)
+            internal CheckedContext(AircloakConnection connection, string dataSource, string table, string column, DColumnInfo columnInfo)
             {
+                Connection = connection;
                 DataSource = dataSource;
-                Table = new DSqlObjectName(table);
-                Column = new DSqlObjectName(column);
+                Table = table;
+                Column = column;
                 ColumnInfo = columnInfo;
             }
 
+            public AircloakConnection Connection { get; }
+
             public string DataSource { get; }
 
-            public DSqlObjectName Table { get; }
+            public string Table { get; }
 
-            public DSqlObjectName Column { get; }
+            public string Column { get; }
 
             public DColumnInfo ColumnInfo { get; }
+
+            public Task<DResult<TRow>> Exec<TQuery, TRow>(TQuery query)
+            where TQuery : DQueryStatement, DResultParser<TRow> =>
+                Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
+
+            public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) =>
+                Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
         }
     }
 }

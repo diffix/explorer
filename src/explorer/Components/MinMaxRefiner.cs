@@ -14,18 +14,11 @@ namespace Explorer.Components
     public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>, PublisherComponent
     {
         private const int MaxIterations = 10;
-        private readonly DConnection conn;
-        private readonly ExplorerContext ctx;
         private readonly ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider;
 
-        public MinMaxRefiner(
-            DConnection conn,
-            ExplorerContext ctx,
-            ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
+        public MinMaxRefiner(ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
         {
-            this.ctx = ctx;
             this.histogramMinMaxProvider = histogramMinMaxProvider;
-            this.conn = conn;
         }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
@@ -110,15 +103,13 @@ namespace Explorer.Components
 
         private async Task<decimal?> GetMinEstimate(decimal? upperBound)
         {
-            var minQ = await conn.Exec<Min.Result<decimal>>(
-                new Min(ctx.Table, ctx.Column, upperBound));
+            var minQ = await Context.Exec<Min, Min.Result<decimal>>(new Min(upperBound));
             return minQ.Rows.Single().Min;
         }
 
         private async Task<decimal?> GetMaxEstimate(decimal? lowerBound)
         {
-            var maxQ = await conn.Exec<Max.Result<decimal>>(
-                new Max(ctx.Table, ctx.Column, lowerBound));
+            var maxQ = await Context.Exec<Max, Max.Result<decimal>>(new Max(lowerBound));
             return maxQ.Rows.Single().Max;
         }
 

@@ -34,8 +34,6 @@
 
         public void UseContext(ExplorerContext ctx) => scope.Inject(ctx);
 
-        public void UseConnection(DConnection conn) => scope.Inject(conn);
-
         public ExplorationConfig Compose(Action<ExplorationConfig> action)
         {
             action(this);

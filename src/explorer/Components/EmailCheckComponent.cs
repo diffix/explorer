@@ -11,26 +11,15 @@ namespace Explorer.Components
 
     public class EmailCheckComponent : ExplorerComponent<EmailCheckComponent.Result>, PublisherComponent
     {
-        private readonly DConnection conn;
-        private readonly ExplorerContext ctx;
-
-        public EmailCheckComponent(DConnection conn, ExplorerContext ctx)
-        {
-            this.conn = conn;
-            this.ctx = ctx;
-        }
-
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             yield return new UntypedMetric(name: "is_email", metric: await ResultAsync);
         }
 
-        protected override Task<Result> Explore() => CheckIsEmail(conn, ctx);
-
-        private static async Task<Result> CheckIsEmail(DConnection conn, ExplorerContext ctx)
+        protected override async Task<Result> Explore()
         {
-            var emailCheck = await conn.Exec(
-                new TextColumnTrim(ctx.Table, ctx.Column, TextColumnTrimType.Both, Constants.EmailAddressChars));
+            var emailCheck = await Context.Exec(
+                new TextColumnTrim(TextColumnTrimType.Both, Constants.EmailAddressChars));
             var isEmail = emailCheck.Rows.All(r => r.IsNull || (!r.IsSuppressed && r.Value == "@"));
             return new Result(isEmail);
         }

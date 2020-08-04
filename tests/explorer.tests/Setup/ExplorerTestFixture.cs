@@ -7,7 +7,8 @@ namespace Explorer.Tests
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
-    using Explorer.Common;
+    using Aircloak.JsonApi.ResponseTypes;
+    using Diffix;
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
@@ -22,6 +23,8 @@ namespace Explorer.Tests
             .Build()
             .GetSection("Explorer")
             .Get<TestConfig>();
+
+        private static DataSourceCollection? dataSources;
 
         public ExplorerTestFixture()
         {
@@ -50,34 +53,49 @@ namespace Explorer.Tests
 
         public Container Container { get; }
 
-        public static string GenerateVcrFilename(object caller, [CallerMemberName] string name = "") =>
-            Cassette.GenerateVcrFilename(caller, name);
-
-        public TestScope PrepareTestScope() => new TestScope(Container);
-
-        public QueryableTestScope SimpleQueryTestScope(
-            string dataSource,
-            string vcrFilename) =>
-            PrepareTestScope()
-                .LoadCassette(vcrFilename)
-                .WithConnectionParams(ApiUri, dataSource);
-
-#pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (Allow calling context to dispose the scope.)
-        public ComponentTestScope SimpleComponentTestScope(
+        public async Task<TestScope> CreateTestScope(
             string dataSource,
             string table,
             string column,
-            DColumnInfo columnInfo,
-            string vcrFilename) =>
-            PrepareTestScope()
-                .LoadCassette(vcrFilename)
-                .WithConnectionParams(ApiUri, dataSource)
-                .WithContext(dataSource, table, column, columnInfo);
-#pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
+            object caller,
+            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
+            VCRMode vcrMode = VCRMode.Cache,
+            [CallerMemberName] string callerMemberName = "")
+        {
+            var vcrFileName = Cassette.GenerateVcrFilename(caller, callerMemberName);
+            var columnInfo = await GetColumnInfo(dataSource, table, column);
+            return new TestScope(Container, ApiUri, dataSource, table, column, columnInfo, vcrFileName, vcrMode, recordingOptions);
+        }
 
         public void Dispose()
         {
             Container.Dispose();
+        }
+
+        private async Task<DColumnInfo> GetColumnInfo(string dataSource, string table, string column)
+        {
+            var apiClient = Container.GetInstance<JsonApiClient>();
+            if (dataSources == null)
+            {
+                dataSources = await apiClient.GetDataSources(ApiUri, CancellationToken.None);
+            }
+
+            if (!dataSources.AsDict.TryGetValue(dataSource, out var dataSourceInfo))
+            {
+                throw new ArgumentException($"Could not find datasource '{dataSource}'.");
+            }
+
+            if (!dataSourceInfo.TableDict.TryGetValue(table, out var tableInfo))
+            {
+                throw new ArgumentException($"Could not find table '{dataSource}.{table}'.");
+            }
+
+            if (!tableInfo.ColumnDict.TryGetValue(column, out var columnInfo))
+            {
+                throw new ArgumentException($"Could not find column '{dataSource}.{table}.{column}'.");
+            }
+
+            return new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
         }
 
         private class TestConfig : IAircloakAuthenticationProvider

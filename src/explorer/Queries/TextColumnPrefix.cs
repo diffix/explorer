@@ -8,22 +8,26 @@ namespace Explorer.Queries
     internal class TextColumnPrefix :
         DQuery<ValueWithCount<string>>
     {
-        public TextColumnPrefix(DSqlObjectName tableName, DSqlObjectName columnName, int length)
+        private readonly int length;
+
+        public TextColumnPrefix(int length)
         {
-            // TODO: determine prefix length dynamically
-            QueryStatement = $@"
-                select
-                    left({columnName}, {length}),
-                    count(*),
-                    count_noise(*)
-                from {tableName}
-                group by 1
-                having length(left({columnName}, {length})) = {length}";
+            this.length = length;
         }
 
-        public string QueryStatement { get; }
-
-        public ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
+        public override ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
             new ValueWithCount<string>(ref reader);
+
+        protected override string GetQueryStatement(string table, string column)
+        {
+            return $@"
+                select
+                    left({column}, {length}),
+                    count(*),
+                    count_noise(*)
+                from {table}
+                group by 1
+                having length(left({column}, {length})) = {length}";
+        }
     }
 }
