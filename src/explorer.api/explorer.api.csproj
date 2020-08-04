@@ -4,13 +4,14 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <CodeAnalysisRuleSet>../../explorer.ruleset</CodeAnalysisRuleSet>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="../aircloak/aircloak.csproj" />
     <ProjectReference Include="../explorer/explorer.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Lamar" Version="4.3.1" />
     <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="4.3.1" />
