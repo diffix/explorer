@@ -26,7 +26,7 @@ namespace Explorer.Tests
             using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "amount", this);
 
             // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
-            var histogramMinMaxProvider = new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null);
+            var histogramMinMaxProvider = new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null!);
             var refiner = new MinMaxRefiner(histogramMinMaxProvider) { Context = scope.Context };
 
             TestResult(await refiner.ResultAsync);
@@ -116,10 +116,11 @@ namespace Explorer.Tests
             {
                 // Use dynamic here to make things simpler... to do this we assume that the dynamically
                 // resolved type (should be the type `T`) supports the equality operator.
-                dynamic actualVal = parseElement(actual.Value)!;
-                Assert.IsType<T>(actualVal);
+                var actualVal = parseElement(actual.Value);
+                dynamic dynActualVal = actualVal!;
+                Assert.IsType<T>(dynActualVal);
 
-                Assert.True(actualVal == expected.Value, $"Expected {expected}, got {actual}.");
+                Assert.True(dynActualVal == expected.Value, $"Expected {expected}, got {actual}.");
                 Assert.True(actual.Count == expected.Count, $"Expected {expected}, got {actual}.");
             }
 

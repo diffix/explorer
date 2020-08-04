@@ -99,7 +99,7 @@ namespace Explorer.Api.Tests
             IEnumerable<string> columns,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
-            var exploration = await RunExploration(dataSourceName, table, columns);
+            using var exploration = await RunExploration(dataSourceName, table, columns);
 
             await exploration.Completion;
             Assert.True(exploration.Completion.IsCompletedSuccessfully);
@@ -135,7 +135,7 @@ namespace Explorer.Api.Tests
             }
         }
 
-        private void CheckMetrics(
+        private static void CheckMetrics(
             Exploration exploration,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
