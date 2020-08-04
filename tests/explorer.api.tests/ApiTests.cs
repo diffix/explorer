@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Net;
     using System.Net.Http;
     using System.Runtime.CompilerServices;
@@ -22,7 +23,7 @@
             ApiKey = TestWebAppFactory.GetAircloakApiKeyFromEnvironment(),
             DataSource = "gda_banking",
             Table = "loans",
-            Columns = new List<string> { "amount" },
+            Columns = ImmutableArray.Create("amount"),
         };
 
         private readonly TestWebAppFactory factory;
@@ -76,7 +77,7 @@
                 ApiUrl = ValidData.ApiUrl,
                 DataSource = "gda_banking",
                 Table = "loans",
-                Columns = new[] { "amount", "firstname" },
+                Columns = ImmutableArray.Create("amount", "firstname"),
             };
             var testConfig = factory.GetTestConfig(nameof(ApiTests), nameof(SuccessWithResult));
 
@@ -137,7 +138,7 @@
 
                 if (status.GetString() == "Complete")
                 {
-                    Assert.Equal(data.Columns.Count, columns.GetArrayLength());
+                    Assert.Equal(data.Columns.Length, columns.GetArrayLength());
                     foreach (var item in columns.EnumerateArray())
                     {
                         Assert.True(item.TryGetProperty("column", out var column));
@@ -158,7 +159,7 @@
                         Assert.True(
                             row.ValueKind == JsonValueKind.Array,
                             $"Expected 'sampleData' property to contain array elements:\n{content}");
-                        Assert.Equal(data.Columns.Count, row.GetArrayLength());
+                        Assert.Equal(data.Columns.Length, row.GetArrayLength());
                     }
                 }
             });

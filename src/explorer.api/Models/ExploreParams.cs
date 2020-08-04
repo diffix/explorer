@@ -1,12 +1,13 @@
 namespace Explorer.Api.Models
 {
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.ComponentModel.DataAnnotations;
     using System.Globalization;
 
     public class ExploreParams
     {
-        private static readonly ICollection<string> EmptyColumns = new List<string>(0);
+        private static readonly ImmutableArray<string> EmptyColumns = ImmutableArray.Create<string>();
 
         private string apiUrl = string.Empty;
 
@@ -27,6 +28,6 @@ namespace Explorer.Api.Models
         public string Table { get; set; } = string.Empty;
 
         [Required]
-        public ICollection<string> Columns { get; set; } = EmptyColumns;
+        public ImmutableArray<string> Columns { get; set; } = EmptyColumns;
     }
 }

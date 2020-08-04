@@ -1,5 +1,6 @@
 namespace Explorer.Common
 {
+    using System.Collections.Immutable;
     using System.Text.Json;
 
     using Diffix;
@@ -7,7 +8,7 @@ namespace Explorer.Common
 
     public class IndexedGroupingSetsResult<TIndex, TGroupedValue> : CountableRow
     {
-        internal IndexedGroupingSetsResult(ref Utf8JsonReader reader, TIndex[] groupingLabels)
+        internal IndexedGroupingSetsResult(ref Utf8JsonReader reader, ImmutableArray<TIndex> groupingLabels)
         {
             GroupingLabels = groupingLabels;
             (GroupingId, DValue) = reader.ParseGroupingSet<TGroupedValue>(groupingLabels.Length);
@@ -23,7 +24,7 @@ namespace Explorer.Common
 
         public double? CountNoise { get; }
 
-        public TIndex[] GroupingLabels { get; }
+        public ImmutableArray<TIndex> GroupingLabels { get; }
 
         public TIndex GroupingLabel => GroupingLabels[GroupingIndex];
 
