@@ -1,6 +1,7 @@
+#pragma warning disable CA1056 // Change the type of property ExploreParams.ApiUrl from string to System.Uri.
+
 namespace Explorer.Api.Models
 {
-    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.ComponentModel.DataAnnotations;
     using System.Globalization;
@@ -31,3 +32,5 @@ namespace Explorer.Api.Models
         public ImmutableArray<string> Columns { get; set; } = EmptyColumns;
     }
 }
+
+#pragma warning restore CA1056 // Change the type of property ExploreParams.ApiUrl from string to System.Uri.

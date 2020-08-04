@@ -85,6 +85,8 @@ namespace Explorer.Api.Controllers
 
             if (explorationStatus != ExplorationStatus.New && explorationStatus != ExplorationStatus.Processing)
             {
+                // exception details are logged
+#pragma warning disable CA1031 // catch a more specific allowed exception type, or rethrow the exception;
                 try
                 {
                     // Await the completion task to force exceptions to the surface.
@@ -96,8 +98,7 @@ namespace Explorer.Api.Controllers
                     // A TaskCanceledException is expected when the client cancels an exploration.
                     logger.LogInformation($"Exploration {explorationId} was canceled.", null);
                 }
-                catch (Exception)
-                    when (!(exploration.Completion.Exception is null))
+                catch (Exception) when (exploration.Completion.Exception != null)
                 {
                     // Log any other exceptions from the explorer and add them to the response object.
                     logger.LogWarning($"Exceptions occurred in the exploration tasks for exploration {explorationId}.");
@@ -112,6 +113,7 @@ namespace Explorer.Api.Controllers
                 {
                     explorationRegistry.Remove(explorationId);
                 }
+#pragma warning restore CA1031 // catch a more specific allowed exception type, or rethrow the exception;
             }
 
             return Ok(exploreResult);
