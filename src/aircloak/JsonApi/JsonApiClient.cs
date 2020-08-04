@@ -76,7 +76,7 @@ namespace Aircloak.JsonApi
         /// </summary>
         /// <param name="apiUrl">The Url of the Aircloak api.</param>
         /// <param name="dataSource">The data source to run the query against.</param>
-        /// <param name="query">An instance of the <see cref="DQuery{TRow}"/> interface.</param>
+        /// <param name="query">The query statement as a string.</param>
         /// <param name="rowParser">A delegate used for parsing a result row.</param>
         /// <param name="pollFrequency">How often to poll the api endpoint. </param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> object that can be used to cancel the operation.</param>
