@@ -41,6 +41,6 @@ namespace Diffix.Values
         /// <remarks>
         /// Throws an exception, since accessing the value is an invalid operation.
         /// </remarks>
-        public T Value => throw new System.InvalidOperationException("Do not use NullValue.Value.");
+        public T Value => throw new System.InvalidOperationException("Do not use SuppressedValue.Value.");
     }
 }

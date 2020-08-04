@@ -14,6 +14,8 @@ namespace Explorer.Components
     {
         public const int DefaultSamplesToPublish = 20;
 
+        private static readonly JsonElement JsonNull = JsonDocument.Parse("null").RootElement;
+
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
         public CategoricalSampleGenerator(ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
@@ -39,7 +41,14 @@ namespace Explorer.Components
             if (distinctValuesResult.IsCategorical)
             {
                 var rand = new Random(Environment.TickCount);
-                var allValues = ValueWithCountList<JsonElement>.FromValueWithCountEnum(distinctValuesResult.DistinctRows);
+                var allValues = ValueWithCountList<JsonElement>.FromValueWithCountEnum(
+                    distinctValuesResult
+                        .DistinctRows
+                        .Where(r => !r.IsSuppressed)
+                        .Select(r => r.IsNull
+                            ? ValueWithCount<JsonElement>.ValueCount(JsonNull, r.Count, r.CountNoise)
+                            : r));
+
                 sampleValues = Enumerable
                     .Range(0, NumValuesToPublish)
                     .Select(_ => allValues.GetRandomValue(rand));
