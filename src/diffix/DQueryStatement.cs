@@ -3,7 +3,7 @@
     /// <summary>
     /// Abstract base class for building query statements.
     /// </summary>
-    public abstract class DQueryBuilder
+    public abstract class DQueryStatement
     {
         /// <summary>
         /// Helper method to build the query statement. This will quote table and column before calling <see cref="GetQueryStatement" />.

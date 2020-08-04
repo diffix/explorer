@@ -6,7 +6,7 @@ namespace Diffix
     /// Abstract base class for building query statements.
     /// </summary>
     /// <typeparam name="TRow">A type representing a result row of a query.</typeparam>
-    public abstract class DQuery<TRow> : DQueryBuilder, DResultParser<TRow>
+    public abstract class DQuery<TRow> : DQueryStatement, DResultParser<TRow>
     {
         /// <summary>
         /// Parses a row instance.

@@ -70,7 +70,7 @@
             public DColumnInfo ColumnInfo { get; }
 
             public Task<DResult<TRow>> Exec<TQuery, TRow>(TQuery query)
-            where TQuery : DQueryBuilder, DResultParser<TRow> =>
+            where TQuery : DQueryStatement, DResultParser<TRow> =>
                 Connection.Exec(query.BuildQueryStatement(Table, Column), query.ParseRow);
 
             public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query) =>
