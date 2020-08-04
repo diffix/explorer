@@ -54,8 +54,12 @@ namespace Explorer.Api.Tests
             }
 
             // Create the Context and Connection objects for this exploration.
-            var conn = rootContainer.GetInstance<AircloakConnectionBuilder>().Build(apiUri, dataSource, CancellationToken.None);
-            var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(conn, apiUri, dataSource, table, columns);
+            var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(
+                apiUri,
+                dataSource,
+                table,
+                columns,
+                CancellationToken.None);
 
             var columnScopes = ctxList.Select(ctx =>
             {
