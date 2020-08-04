@@ -16,7 +16,6 @@ namespace Explorer.Components
 
         public string Column => Context.Column;
 
-        [JsonConverter(typeof(DValueTypeEnumConverter))]
         public DValueType ColumnType => Context.ColumnInfo.Type;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
