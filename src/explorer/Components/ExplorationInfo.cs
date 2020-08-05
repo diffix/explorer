@@ -5,7 +5,6 @@ namespace Explorer.Components
 
     using Diffix;
     using Diffix.JsonConversion;
-    using Explorer.Common;
     using Explorer.Metrics;
 
     public class ExplorationInfo : ExplorerComponentBase, PublisherComponent
@@ -21,7 +20,13 @@ namespace Explorer.Components
 #pragma warning disable CS1998 // This async method lacks 'await' operators and will run synchronously.
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            yield return new UntypedMetric("exploration_info", this);
+            yield return new UntypedMetric("exploration_info", new
+            {
+                DataSource,
+                Table,
+                Column,
+                ColumnType,
+            });
         }
 #pragma warning restore CS1998 // This async method lacks 'await' operators and will run synchronously.
     }
