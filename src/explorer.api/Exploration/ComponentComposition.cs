@@ -9,23 +9,22 @@ namespace Explorer.Api
     {
         public static Action<ExplorationConfig> ColumnConfiguration(DValueType columnType)
         {
-            Action<ExplorationConfig> typeBasedConfiguration = columnType switch
-            {
-                DValueType.Integer => NumericExploration,
-                DValueType.Real => NumericExploration,
-                DValueType.Text => TextExploration,
-                DValueType.Timestamp => DatetimeExploration,
-                DValueType.Date => DatetimeExploration,
-                DValueType.Datetime => DatetimeExploration,
-                DValueType.Bool => BoolExploration,
-                _ => throw new ArgumentException(
-                    $"Cannot explore column type {columnType}.", nameof(columnType)),
-            };
-
             return config =>
             {
                 CommonConfiguration(config);
-                typeBasedConfiguration(config);
+                switch (columnType)
+                {
+                    case DValueType.Integer:
+                    case DValueType.Real: NumericExploration(config); break;
+                    case DValueType.Timestamp:
+                    case DValueType.Date:
+                    case DValueType.Datetime: DatetimeExploration(config); break;
+                    case DValueType.Bool: BoolExploration(config); break;
+                    case DValueType.Text: TextExploration(config); break;
+                    default:
+                        throw new ArgumentException(
+                            $"Cannot explore column type {columnType}.", nameof(columnType));
+                }
             };
         }
 
@@ -38,6 +37,7 @@ namespace Explorer.Api
 
         private static void BoolExploration(ExplorationConfig config)
         {
+            _ = config;
         }
 
         private static void NumericExploration(ExplorationConfig config)

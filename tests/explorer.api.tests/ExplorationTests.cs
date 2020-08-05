@@ -71,11 +71,11 @@ namespace Explorer.Api.Tests
                     metrics => Assert.True(metrics.Any()));
         }
 
-        // TODO: Find a table with a timestamp column
-        // [Fact]
-        // public async Task TestTimestampColumn()
-        // {
-        // }
+        [Fact]
+        public void TestTimestampColumn()
+        {
+            // TODO: Find a table with a timestamp column
+        }
 
         [Fact]
         public async Task TestDateColumn()

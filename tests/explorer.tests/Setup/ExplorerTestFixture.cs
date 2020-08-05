@@ -98,6 +98,7 @@ namespace Explorer.Tests
             return new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
         }
 
+#pragma warning disable CA1812 // ExplorerTestFixture.TestConfig is an internal class that is apparently never instantiated.
         private class TestConfig : IAircloakAuthenticationProvider
         {
             public string AircloakApiKey { get; set; } = string.Empty;
@@ -106,5 +107,6 @@ namespace Explorer.Tests
 
             public Task<string> GetAuthToken() => Task.FromResult(AircloakApiKey);
         }
+#pragma warning restore CA1812 // ExplorerTestFixture.TestConfig is an internal class that is apparently never instantiated.
     }
 }

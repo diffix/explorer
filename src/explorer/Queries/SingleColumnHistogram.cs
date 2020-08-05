@@ -1,6 +1,7 @@
 namespace Explorer.Queries
 {
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
     using System.Text.Json;
 
@@ -10,11 +11,11 @@ namespace Explorer.Queries
     public class SingleColumnHistogram :
         DQuery<SingleColumnHistogram.Result>
     {
-        private readonly decimal[] buckets;
+        private readonly ImmutableArray<decimal> buckets;
 
         public SingleColumnHistogram(IList<decimal> buckets)
         {
-            this.buckets = buckets.ToArray();
+            this.buckets = buckets.ToImmutableArray();
         }
 
         public override Result ParseRow(ref Utf8JsonReader reader) =>
@@ -40,7 +41,7 @@ namespace Explorer.Queries
 
         public class Result : IndexedGroupingSetsResult<decimal, double>
         {
-            internal Result(ref Utf8JsonReader reader, decimal[] buckets)
+            internal Result(ref Utf8JsonReader reader, ImmutableArray<decimal> buckets)
             : base(ref reader, buckets)
             {
             }

@@ -16,4 +16,3 @@ namespace Diffix
         public abstract TRow ParseRow(ref Utf8JsonReader reader);
     }
 }
-

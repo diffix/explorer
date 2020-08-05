@@ -2,7 +2,7 @@ namespace Explorer.Metrics
 {
     using System.Text.Json.Serialization;
 
-    public struct UntypedMetric : ExploreMetric
+    public class UntypedMetric : ExploreMetric
     {
         public UntypedMetric(string name, object metric, int priority = 0)
         {

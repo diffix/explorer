@@ -55,28 +55,9 @@ namespace Explorer.Components
 
         protected override async Task<Result> Explore()
         {
-
             var emailCheckerResult = await emailCheckProvider.ResultAsync;
             var sampleValues = emailCheckerResult.IsEmail ? await GenerateEmails() : await GenerateStrings();
             return new Result(sampleValues.ToList());
-        }
-
-        private async Task<SubstringWithCountList> ExploreEmailDomains()
-        {
-            var domains = await Context.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
-
-            return SubstringWithCountList.FromValueWithCountEnum(
-                domains.Rows
-                    .Where(r => r.HasValue && r.Value.StartsWith("@", StringComparison.InvariantCulture)));
-        }
-
-        private async Task<SubstringWithCountList> ExploreEmailTopLevelDomains()
-        {
-            var suffixes = await Context.Exec(new TextColumnSuffix(3, 7));
-
-            return SubstringWithCountList.FromValueWithCountEnum(
-                suffixes.Rows
-                    .Where(r => r.HasValue && r.Value.StartsWith(".", StringComparison.InvariantCulture)));
         }
 
         private static string GenerateString(SubstringsData substrings, int minLength, Random rand)
@@ -164,6 +145,24 @@ namespace Explorer.Components
                 }
             }
             return emails;
+        }
+
+        private async Task<SubstringWithCountList> ExploreEmailDomains()
+        {
+            var domains = await Context.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
+
+            return SubstringWithCountList.FromValueWithCountEnum(
+                domains.Rows
+                    .Where(r => r.HasValue && r.Value.StartsWith("@", StringComparison.InvariantCulture)));
+        }
+
+        private async Task<SubstringWithCountList> ExploreEmailTopLevelDomains()
+        {
+            var suffixes = await Context.Exec(new TextColumnSuffix(3, 7));
+
+            return SubstringWithCountList.FromValueWithCountEnum(
+                suffixes.Rows
+                    .Where(r => r.HasValue && r.Value.StartsWith(".", StringComparison.InvariantCulture)));
         }
 
         /// <summary>

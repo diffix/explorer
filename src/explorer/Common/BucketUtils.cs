@@ -1,6 +1,5 @@
 namespace Explorer.Common
 {
-
     internal static class BucketUtils
     {
         internal static decimal[] EstimateBucketResolutions(
