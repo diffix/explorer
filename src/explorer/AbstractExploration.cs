@@ -5,6 +5,8 @@
 
     using Explorer.Metrics;
 
+    using static ExplorationStatusEnum;
+
     public abstract class AbstractExploration
     {
         private Task? completionTask;
@@ -15,7 +17,7 @@
             // Otherwise, derive the ExplorationStatus from the TaskStatus.
             get => completionTask is null
                 ? ExplorationStatus.New
-                : ExplorationStatusConverter.FromTaskStatus(completionTask.Status);
+                : FromTaskStatus(completionTask.Status);
         }
 
         public abstract IEnumerable<ExploreMetric> PublishedMetrics { get; }

@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Runtime.CompilerServices;
@@ -242,6 +243,7 @@
         [Fact]
         public async Task FailWithInvalidApiKey()
         {
+            var testConfig = factory.GetTestConfig(nameof(ApiTests), nameof(SuccessWithResult));
             var invalidData = new Models.ExploreParams
             {
                 ApiKey = "INVALID_KEY",
@@ -251,15 +253,45 @@
                 Columns = ValidData.Columns,
             };
 
-            await TestApi(
+            var explorerGuid = await TestApi(
                 HttpMethod.Post,
                 ExploreEndpoint,
                 data: invalidData,
                 test: (response, content) =>
                 {
-                    Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-                    Assert.Contains("Unauthorized", content, StringComparison.InvariantCultureIgnoreCase);
+                    Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
+                    using var jsonContent = JsonDocument.Parse(content);
+                    var rootEl = jsonContent.RootElement;
+
+                    Assert.True(
+                        rootEl.ValueKind == JsonValueKind.Object,
+                        $"Expected a JSON object in the response:\n{content}");
+
+                    Assert.True(
+                        rootEl.TryGetProperty("id", out var id),
+                        $"Expected an 'id' property in:\n{content}");
+                    Assert.True(id.TryGetGuid(out var explorerGuid));
+
+                    return explorerGuid;
                 });
+
+            await Task.Delay(2000);
+
+            await TestExploreResult(HttpMethod.Get, explorerGuid, testConfig.PollFrequency, (response, content) =>
+            {
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
+                using var jsonContent = JsonDocument.Parse(content);
+                var rootEl = jsonContent.RootElement;
+                var status = rootEl.GetProperty("status").GetString();
+
+                Assert.Equal("Error", status);
+
+                const string expectedError = "Request Error: Unauthorized -- Your API token is wrong.";
+                var errors = rootEl.GetProperty("errors").EnumerateArray().Select(e => e.GetString()).ToList();
+                Assert.Contains(errors, e => e.Split("\n")[0] == expectedError);
+            });
         }
 
         [Fact]
@@ -296,7 +328,7 @@
                     $"Expected a JSON object in the response:\n{content}");
 
                 Assert.True(
-                    rootEl.TryGetProperty("status", out var status),
+                    rootEl.TryGetProperty("status", out var statusEl),
                     $"Expected a 'status' property in:\n{content}");
 
                 Assert.True(
@@ -304,9 +336,10 @@
                     $"Expected an 'id' property in:\n{content}");
                 Assert.True(id.GetGuid() == explorerGuid);
 
-                test(response, content);
-                if (status.GetString() == "Complete")
+                var status = statusEl.GetString();
+                if (status == "Complete" || status == "Error" || status == "Canceled")
                 {
+                    test(response, content);
                     break;
                 }
                 await Task.Delay(pollFrequency);

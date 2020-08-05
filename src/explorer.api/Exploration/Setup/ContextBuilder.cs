@@ -19,14 +19,15 @@
         }
 
         public async Task<IEnumerable<ExplorerContext>> Build(
-            Uri apiUrl,
-            string dataSource,
-            string table,
-            IEnumerable<string> columns,
+            Models.ExploreParams requestData,
             CancellationToken cancellationToken)
         {
-            var connection = connectionBuilder.Build(apiUrl, dataSource, cancellationToken);
+            var connection = connectionBuilder.Build(
+                new Uri(requestData.ApiUrl), requestData.DataSource, cancellationToken);
+
             var dataSources = await connection.GetDataSources();
+
+            var (dataSource, table, columns) = (requestData.DataSource, requestData.Table, requestData.Columns);
 
             if (!dataSources.AsDict.TryGetValue(dataSource, out var dataSourceInfo))
             {
