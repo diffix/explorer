@@ -4,9 +4,12 @@
 
 namespace Diffix
 {
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Represents the different data types an Aircloak column can take.
     /// </summary>
+    [JsonConverter(typeof(JsonConversion.DValueTypeEnumConverter))]
     public enum DValueType
     {
         Integer,

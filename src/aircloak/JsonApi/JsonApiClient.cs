@@ -35,7 +35,6 @@ namespace Aircloak.JsonApi
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
-            Converters = { new DValueTypeEnumConverter() },
         };
 
         private readonly HttpClient httpClient;
@@ -166,11 +165,7 @@ namespace Aircloak.JsonApi
             var jsonDeserializeOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
-                Converters =
-                {
-                    new JsonArrayConverter<TRow>(rowParser),
-                    new DValueTypeEnumConverter(),
-                },
+                Converters = { new JsonArrayConverter<TRow>(rowParser) },
             };
 
             var queryCompleted = false;
