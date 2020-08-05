@@ -3,16 +3,15 @@ namespace Explorer.Api.Controllers
     using System;
     using System.Linq;
     using System.Net.Mime;
-    using System.Threading;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
     using Explorer;
-    using Explorer.Api.Authentication;
     using Explorer.Api.Models;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
+
+    using static ExplorationStatusEnum;
 
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
@@ -34,28 +33,12 @@ namespace Explorer.Api.Controllers
         [Route("api/v{version:apiVersion}/explore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Explore(
-            ExploreParams data,
-            [FromServices] ExplorationLauncher launcher,
-            [FromServices] IAircloakAuthenticationProvider authProvider,
-            [FromServices] ContextBuilder contextBuilder)
+        public IActionResult Explore(ExploreParams data)
         {
-            // Register the authentication token for this scope.
-            if (authProvider is ExplorerApiAuthProvider auth)
-            {
-                auth.RegisterApiKey(data.ApiKey);
-            }
+            // Register the exploration.
+            var id = explorationRegistry.Register(data);
 
-            var apiUri = new Uri(data.ApiUrl);
-            var cts = new CancellationTokenSource();
-            var ctxList = await contextBuilder.Build(apiUri, data.DataSource, data.Table, data.Columns, cts.Token);
-            var configurations = ctxList.Select(ctx => new ComponentComposition(ctx));
-            var exploration = launcher.LaunchExploration(data.DataSource, data.Table, configurations);
-
-            // Register the exploration for future reference.
-            var id = explorationRegistry.Register(exploration, cts);
-
-            return Ok(new ExploreResult(id, ExplorationStatus.New, data.DataSource, data.Table));
+            return Ok(new ExploreResult(id, ExplorationStatus.New, data));
         }
 
         [ApiVersion("1.0")]
@@ -66,22 +49,43 @@ namespace Explorer.Api.Controllers
         public async Task<IActionResult> Result(
             Guid explorationId)
         {
-            Exploration exploration;
-            ExplorationStatus explorationStatus;
-
-            try
-            {
-                exploration = explorationRegistry.GetExploration(explorationId);
-                explorationStatus = explorationRegistry.GetStatus(explorationId);
-            }
-            catch (System.Collections.Generic.KeyNotFoundException)
+            if (!explorationRegistry.IsRegistered(explorationId))
             {
                 return NotFound($"Couldn't find exploration with id {explorationId}.");
             }
 
+            var explorationStatus = explorationRegistry.GetStatus(explorationId);
+            var explorationParams = explorationRegistry.GetExplorationParams(explorationId);
+
+            if (explorationStatus == ExplorationStatus.New || explorationStatus == ExplorationStatus.Validating)
+            {
+                return Ok(new ExploreResult(explorationId, explorationStatus, explorationParams));
+            }
+
+            var validationErrors = explorationRegistry.GetValidationErrors(explorationId);
+
+            if (validationErrors.Any())
+            {
+                var result = new ExploreResult(explorationId, explorationStatus, explorationParams);
+                logger.LogWarning("Exploration parameter validation failed.");
+                result.AddErrorMessage("Exploration parameter validation failed.");
+
+                foreach (var error in validationErrors)
+                {
+                    logger.LogWarning(error);
+                    result.AddErrorMessage(error);
+                }
+                explorationRegistry.Remove(explorationId);
+                return Ok(result);
+            }
+
+            var exploration = explorationRegistry.GetExploration(explorationId) ??
+                throw new InvalidOperationException(
+                    "Exploration validation should be completed before dereferencing the exploration.");
+
             var exploreResult = new ExploreResult(explorationId, exploration);
 
-            if (explorationStatus != ExplorationStatus.New && explorationStatus != ExplorationStatus.Processing)
+            if (explorationStatus.IsComplete())
             {
                 // exception details are logged
 #pragma warning disable CA1031 // catch a more specific allowed exception type, or rethrow the exception;
