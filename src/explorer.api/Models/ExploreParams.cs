@@ -8,8 +8,6 @@ namespace Explorer.Api.Models
 
     public class ExploreParams
     {
-        private static readonly ImmutableArray<string> EmptyColumns = ImmutableArray.Create<string>();
-
         private string apiUrl = string.Empty;
 
         [Required]
@@ -29,7 +27,7 @@ namespace Explorer.Api.Models
         public string Table { get; set; } = string.Empty;
 
         [Required]
-        public ImmutableArray<string> Columns { get; set; } = EmptyColumns;
+        public ImmutableArray<string> Columns { get; set; } = ImmutableArray<string>.Empty;
     }
 }
 
