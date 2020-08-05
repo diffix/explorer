@@ -123,7 +123,7 @@ namespace Explorer.Api
                     if (disposing)
                     {
                         tokenSource.Dispose();
-                        ValidationTask.Result?.Dispose();
+                        Exploration?.Dispose();
                     }
                     disposedValue = true;
                 }
