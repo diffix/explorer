@@ -2,26 +2,35 @@ namespace Explorer.Api
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
+    using System.Threading.Tasks;
     using Explorer;
+    using Explorer.Api.Models;
     using Microsoft.Extensions.Logging;
+
+    using static ExplorationStatusEnum;
 
     public class ExplorationRegistry
     {
         private readonly ConcurrentDictionary<Guid, Registration> registrations =
             new ConcurrentDictionary<Guid, Registration>();
 
-        public ExplorationRegistry(ILogger<ExplorationRegistry> logger)
+        private readonly ExplorationLauncher launcher;
+
+        public ExplorationRegistry(ExplorationLauncher launcher, ILogger<ExplorationRegistry> logger)
         {
+            this.launcher = launcher;
             Logger = logger;
         }
 
         public ILogger<ExplorationRegistry> Logger { get; }
 
-        public Guid Register(Exploration exploration, CancellationTokenSource tokenSource)
+        public Guid Register(ExploreParams requestData)
         {
             var id = Guid.NewGuid();
-            registrations[id] = new Registration(exploration, tokenSource);
+            registrations[id] = new Registration(launcher, requestData);
 
             return id;
         }
@@ -33,7 +42,7 @@ namespace Explorer.Api
                 return;
             }
 
-            if (registration.Status == ExplorationStatus.Processing || registration.Status == ExplorationStatus.New)
+            if (!registration.Status.IsComplete())
             {
                 throw new InvalidOperationException("Exploration should not be removed before completion.");
             }
@@ -41,9 +50,15 @@ namespace Explorer.Api
             registration.Dispose();
         }
 
+        public bool IsRegistered(Guid id) => registrations.ContainsKey(id);
+
         public ExplorationStatus GetStatus(Guid id) => registrations[id].Status;
 
-        public Exploration GetExploration(Guid id) => registrations[id].Exploration;
+        public ExploreParams GetExplorationParams(Guid id) => registrations[id].RequestData;
+
+        public Exploration? GetExploration(Guid id) => registrations[id].Exploration;
+
+        public IEnumerable<string> GetValidationErrors(Guid id) => registrations[id].ValidationErrors;
 
         public void CancelExploration(Guid id)
         {
@@ -52,17 +67,22 @@ namespace Explorer.Api
 
         private class Registration : IDisposable
         {
-            private readonly CancellationTokenSource tokenSource;
+            private readonly CancellationTokenSource tokenSource = new CancellationTokenSource();
 
             private bool disposedValue;
 
-            public Registration(Exploration exploration, CancellationTokenSource tokenSource)
+            public Registration(ExplorationLauncher launcher, ExploreParams requestData)
             {
-                Exploration = exploration;
-                this.tokenSource = tokenSource;
+                RequestData = requestData;
+                ValidationTask = Task.Run(async () =>
+                    Exploration = await launcher.ValidateAndLaunch(requestData, tokenSource.Token));
             }
 
-            public Exploration Exploration { get; }
+            public ExploreParams RequestData { get; }
+
+            public Task<Exploration> ValidationTask { get; }
+
+            public Exploration? Exploration { get; private set; }
 
             public ExplorationStatus Status
             {
@@ -72,9 +92,20 @@ namespace Explorer.Api
                     {
                         return ExplorationStatus.Canceled;
                     }
-                    return Exploration.Status;
+                    if (ValidationTask.IsCompletedSuccessfully)
+                    {
+                        return Exploration!.Status;
+                    }
+                    if (!ValidationTask.IsCompleted)
+                    {
+                        return ExplorationStatus.Validating;
+                    }
+                    return FromTaskStatus(ValidationTask.Status);
                 }
             }
+
+            public IEnumerable<string> ValidationErrors =>
+                ValidationTask.Exception?.Flatten().InnerExceptions.Select(ex => ex.Message) ?? Array.Empty<string>();
 
             public void CancelExploration() => tokenSource.Cancel();
 
@@ -92,7 +123,7 @@ namespace Explorer.Api
                     if (disposing)
                     {
                         tokenSource.Dispose();
-                        Exploration.Dispose();
+                        ValidationTask.Result?.Dispose();
                     }
                     disposedValue = true;
                 }

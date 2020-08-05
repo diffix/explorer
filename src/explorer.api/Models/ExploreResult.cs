@@ -6,15 +6,20 @@ namespace Explorer.Api.Models
 
     using Explorer;
 
+    using static ExplorationStatusEnum;
+
     internal class ExploreResult
     {
-        public ExploreResult(Guid explorationId, ExplorationStatus status, string dataSource, string table)
+        public ExploreResult(
+            Guid explorationId,
+            ExplorationStatus status,
+            ExploreParams exploreParams)
         {
             Id = explorationId;
             Status = status;
-            DataSource = dataSource;
-            Table = table;
-            Columns = new List<object>();
+            DataSource = exploreParams.DataSource;
+            Table = exploreParams.Table;
+            Columns = exploreParams.Columns.Select(s => new { Column = s } as object).ToList();
             SampleData = new List<List<object?>>();
         }
 

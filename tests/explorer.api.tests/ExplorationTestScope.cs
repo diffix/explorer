@@ -53,12 +53,17 @@ namespace Explorer.Api.Tests
                 auth.RegisterApiKey(apiKey);
             }
 
+            var testParams = new Models.ExploreParams
+            {
+                ApiUrl = apiUri.AbsoluteUri,
+                DataSource = dataSource,
+                Table = table,
+                Columns = columns.ToList(),
+            };
+
             // Create the Context and Connection objects for this exploration.
             var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(
-                apiUri,
-                dataSource,
-                table,
-                columns,
+                testParams,
                 CancellationToken.None);
 
             var columnScopes = ctxList.Select(ctx =>

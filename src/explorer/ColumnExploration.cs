@@ -48,14 +48,9 @@ namespace Explorer
             }
             catch (Exception ex)
             {
-                var wrappedEx =
-                    new ExplorerException("Exception occurred in column exploration", ex)
-                        .WithExtraContext(Ctx);
-
-                scope.Logger.LogError(
-                    ex,
-                    $"Error in column exploration for `{Ctx.DataSource}` / `{Ctx.Table}` / `{Column}`.",
-                    wrappedEx.ExtraContext);
+                var msg = $"Error in column exploration for `{Ctx.DataSource}` / `{Ctx.Table}` / `{Column}`.";
+                var wrappedEx = new ExplorerException(msg, ex).WithExtraContext(Ctx);
+                scope.Logger.LogError(ex, msg, wrappedEx.ExtraContext);
 
                 throw wrappedEx;
             }
