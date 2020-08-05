@@ -5,9 +5,7 @@ namespace Explorer.Api.Controllers
     using System.Net.Mime;
     using System.Threading.Tasks;
 
-    using Aircloak.JsonApi;
     using Explorer;
-    using Explorer.Api.Authentication;
     using Explorer.Api.Models;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;

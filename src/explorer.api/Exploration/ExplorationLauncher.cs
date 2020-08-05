@@ -23,9 +23,8 @@ namespace Explorer.Api
         /// <summary>
         /// Configure and launch an exploration.
         /// </summary>
-        /// <param name="dataSource">The data source name on which to execute the exploration.</param>
-        /// <param name="table">The table name on which to execute the exploration.</param>
-        /// <param name="configurators">The ExplorationConfigurators for the columns.</param>
+        /// <param name="requestData">The <see cref="Models.ExploreParams"/> submitted via the api.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the exploration.</param>
         /// <returns>A new Exploration object containing a running exploration.</returns>
         public async Task<Exploration> ValidateAndLaunch(
             Models.ExploreParams requestData,

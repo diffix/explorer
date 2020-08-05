@@ -2,6 +2,7 @@ namespace Explorer.Api.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -58,7 +59,7 @@ namespace Explorer.Api.Tests
                 ApiUrl = apiUri.AbsoluteUri,
                 DataSource = dataSource,
                 Table = table,
-                Columns = columns.ToList(),
+                Columns = ImmutableArray.Create(columns.ToArray()),
             };
 
             // Create the Context and Connection objects for this exploration.
