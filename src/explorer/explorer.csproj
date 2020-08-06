@@ -5,7 +5,6 @@
     <CodeAnalysisRuleSet>../../explorer.ruleset</CodeAnalysisRuleSet>
     <Nullable>enable</Nullable>
     <OutputType>library</OutputType>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
