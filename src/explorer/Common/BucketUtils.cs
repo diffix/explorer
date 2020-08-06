@@ -1,5 +1,7 @@
 namespace Explorer.Common
 {
+    using System.Linq;
+
     internal static class BucketUtils
     {
         internal static decimal[] EstimateBucketResolutions(
@@ -30,12 +32,16 @@ namespace Explorer.Common
                 ? System.Math.Max(targetBucketSize, 5)
                 : targetBucketSize);
 
-            return new decimal[]
+            return new[]
             {
-                bucketSizeEstimate.Smaller(steps: 2).SnappedSize,
-                bucketSizeEstimate.SnappedSize,
-                bucketSizeEstimate.Larger(steps: 2).SnappedSize,
-            };
+                bucketSizeEstimate.Smaller(steps: 2),
+                bucketSizeEstimate,
+                bucketSizeEstimate.Larger(steps: 2),
+            }
+            .Where(b => !(b is null))
+            .Select(b => b!.SnappedSize)
+            .Distinct()
+            .ToArray();
         }
     }
 }

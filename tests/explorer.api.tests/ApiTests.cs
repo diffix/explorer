@@ -12,6 +12,12 @@
 
     public sealed class ApiTests : IClassFixture<TestWebAppFactory>
     {
+        public static readonly IEnumerable<object[]> SuccessWithResultTestData = new object[][]
+        {
+            new[] { Array.Empty<string>() },
+            new[] { new[] { "amount", "firstname" } },
+        };
+
         private const string ApiRoot = "api/v1";
         private static readonly string ExploreEndpoint = $"{ApiRoot}/explore";
         private static readonly string ResultEndpoint = $"{ApiRoot}/result";
@@ -67,8 +73,9 @@
             });
         }
 
-        [Fact]
-        public async Task SuccessWithResult()
+        [Theory]
+        [MemberData(nameof(SuccessWithResultTestData))]
+        public async Task SuccessWithResult(string[] columnsArray)
         {
             var data = new Models.ExploreParams
             {
@@ -76,7 +83,7 @@
                 ApiUrl = ValidData.ApiUrl,
                 DataSource = "gda_banking",
                 Table = "loans",
-                Columns = ImmutableArray.Create("amount", "firstname"),
+                Columns = columnsArray.ToImmutableArray(),
             };
             var testConfig = factory.GetTestConfig(nameof(ApiTests), nameof(SuccessWithResult));
 
@@ -152,13 +159,16 @@
                                     $"Expected a '{propName}' property in {el}.")));
                     }
 
-                    Assert.True(sampleData.GetArrayLength() > 0, "SampleData is empty!");
-                    foreach (var row in sampleData.EnumerateArray())
+                    if (data.Columns.Length > 0)
                     {
-                        Assert.True(
-                            row.ValueKind == JsonValueKind.Array,
-                            $"Expected 'sampleData' property to contain array elements:\n{content}");
-                        Assert.Equal(data.Columns.Length, row.GetArrayLength());
+                        Assert.True(sampleData.GetArrayLength() > 0, "SampleData is empty!");
+                        foreach (var row in sampleData.EnumerateArray())
+                        {
+                            Assert.True(
+                                row.ValueKind == JsonValueKind.Array,
+                                $"Expected 'sampleData' property to contain array elements:\n{content}");
+                            Assert.Equal(data.Columns.Length, row.GetArrayLength());
+                        }
                     }
                 }
             });

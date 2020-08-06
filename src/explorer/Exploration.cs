@@ -39,7 +39,7 @@ namespace Explorer
                 var valuesList = ColumnExplorations
                     .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
                     .Select(metric => metric?.Cast<object?>());
-                var numSamples = valuesList.Max(col => col?.Count() ?? 0);
+                var numSamples = valuesList.DefaultIfEmpty().Max(col => col?.Count() ?? 0);
                 for (var i = 0; i < numSamples; i++)
                 {
                     yield return valuesList.Select(sampleColumn => sampleColumn?.ElementAtOrDefault(i));

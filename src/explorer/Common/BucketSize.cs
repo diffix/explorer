@@ -52,20 +52,20 @@ namespace Explorer.Common
 
         public decimal SnappedSize { get; }
 
-        public BucketSize Larger(int steps)
+        public BucketSize? Larger(int steps)
         {
             if (index + steps >= ValidSizes.Length)
             {
-                return new BucketSize(ValidSizes.Last());
+                return null;
             }
             return new BucketSize(ValidSizes[index + steps]);
         }
 
-        public BucketSize Smaller(int steps)
+        public BucketSize? Smaller(int steps)
         {
             if (index - steps < 0)
             {
-                return new BucketSize(ValidSizes[0]);
+                return null;
             }
             return new BucketSize(ValidSizes[index - steps]);
         }

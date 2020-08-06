@@ -74,7 +74,7 @@ namespace Explorer.Tests
         {
             var b = new BucketSize(1_300);
             Assert.Equal(1_000M, b.SnappedSize);
-            Assert.Equal(5_000M, b.Larger(2).SnappedSize);
+            Assert.Equal(5_000M, b.Larger(2)?.SnappedSize);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace Explorer.Tests
         {
             var b = new BucketSize(80);
             Assert.Equal(100M, b.SnappedSize);
-            Assert.Equal(20M, b.Smaller(2).SnappedSize);
+            Assert.Equal(20M, b.Smaller(2)?.SnappedSize);
         }
 
         [Fact]
@@ -90,7 +90,8 @@ namespace Explorer.Tests
         {
             var b = new BucketSize(3_300_000_000_000M);
             Assert.Equal(2_000_000_000_000M, b.SnappedSize);
-            Assert.Equal(5_000_000_000_000M, b.Larger(2).SnappedSize);
+            Assert.Equal(5_000_000_000_000M, b.Larger(1)?.SnappedSize);
+            Assert.Null(b.Larger(2));
         }
 
         [Fact]
@@ -98,7 +99,15 @@ namespace Explorer.Tests
         {
             var b = new BucketSize(0.00022M);
             Assert.Equal(0.0002M, b.SnappedSize);
-            Assert.Equal(0.0001M, b.Smaller(2).SnappedSize);
+            Assert.Equal(0.0001M, b.Smaller(1)?.SnappedSize);
+            Assert.Null(b.Smaller(2));
+        }
+
+        [Fact]
+        public void TestBucketEstimationNoDuplicates()
+        {
+            var buckets = BucketUtils.EstimateBucketResolutions(5_000, 0, 1, 1, false);
+            Assert.True(buckets.Length == 2);
         }
     }
 }
