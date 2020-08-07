@@ -7,6 +7,7 @@ namespace Explorer.Api
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Logging;
 
     public static class Program
     {
@@ -27,6 +28,8 @@ namespace Explorer.Api
                 {
                     builder.UseStartup<Startup>();
                     builder.UseConfiguration(config);
+                    builder.ConfigureLogging(loggerBuilder =>
+                        loggerBuilder.AddConsole(opts => opts.TimestampFormat = "[yyyy'-'MM'-'dd' 'HH':'mm':'ss] "));
                     builder.UseSentry();
 
                     builder.ConfigureServices((_, services) => services.AddControllers());
