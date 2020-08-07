@@ -40,7 +40,7 @@
             Error,
         }
 
-        public static ExplorationStatus FromTaskStatus(TaskStatus status) => status switch
+        public static ExplorationStatus ToExplorationStatus(this TaskStatus status) => status switch
         {
             TaskStatus.Canceled => ExplorationStatus.Canceled,
             TaskStatus.Created => ExplorationStatus.New,
