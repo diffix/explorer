@@ -16,12 +16,15 @@ namespace Explorer
 
         public ColumnExploration(ExplorationScope scope)
         {
-            if (scope.Context is null)
+            try
+            {
+                Context = scope.Context;
+            }
+            catch
             {
                 throw new InvalidOperationException(
-                    $"Can't build {GetType().Name} without a context object in scope!");
+                    $"{nameof(ColumnExploration)} requires a context object in the {nameof(ExplorationScope)}!");
             }
-
             this.scope = scope;
         }
 
@@ -29,7 +32,7 @@ namespace Explorer
 
         public DColumnInfo ColumnInfo { get => Context.ColumnInfo; }
 
-        public ExplorerContext Context { get => scope.Context!; }
+        public ExplorerContext Context { get; }
 
         public override IEnumerable<ExploreMetric> PublishedMetrics =>
             scope.MetricsPublisher.PublishedMetrics;

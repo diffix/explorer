@@ -27,7 +27,7 @@
 
         public MetricsPublisher MetricsPublisher { get => scope.GetInstance<MetricsPublisher>(); }
 
-        public ExplorerContext? Context { get => scope.TryGetInstance<ExplorerContext>(); }
+        public ExplorerContext Context { get => scope.GetInstance<ExplorerContext>(); }
 
         public ILogger Logger { get => logger; }
 

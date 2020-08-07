@@ -105,7 +105,7 @@ namespace Explorer.Api.Controllers
                     // Log any other exceptions from the explorer and add them to the response object.
                     logger.LogWarning($"Exceptions occurred in the exploration tasks for exploration {explorationId}.");
 
-                    foreach (var innerEx in exploration.Completion.Exception!.Flatten().InnerExceptions)
+                    foreach (var innerEx in exploration.Completion.Exception.Flatten().InnerExceptions)
                     {
                         logger.LogError(innerEx, "Exception occurred in exploration task.", innerEx.Data);
                         exploreResult.AddErrorMessage(innerEx.Message);
