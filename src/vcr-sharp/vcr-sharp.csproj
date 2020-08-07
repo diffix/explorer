@@ -5,7 +5,6 @@
     <!-- <CodeAnalysisRuleSet>../../explorer.ruleset</CodeAnalysisRuleSet> -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Nullable>disable</Nullable>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

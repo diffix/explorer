@@ -9,5 +9,5 @@ cache:
 install:
   - dotnet restore explorer.sln
 script:
-  - dotnet build explorer.sln
+  - dotnet build -warnAsError explorer.sln
   - dotnet test --verbosity normal explorer.sln
