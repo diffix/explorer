@@ -5,37 +5,12 @@ namespace Explorer.Api
     using Diffix;
     using Explorer.Components;
 
-    public class ComponentComposition : ExplorationConfigurator
+    public sealed class TypeBasedScopeBuilder : ExplorationScopeBuilder
     {
-        private readonly ExplorerContext ctx;
-
-        public ComponentComposition(ExplorerContext ctx)
+        protected override void Configure(ExplorationScope scope, ExplorerContext context)
         {
-            this.ctx = ctx;
-        }
-
-        public void Configure(ExplorationScope scope)
-        {
-            scope.UseContext(ctx);
             CommonConfiguration(scope);
-            ColumnConfiguration(scope);
-        }
-
-        public void ColumnConfiguration(ExplorationScope scope)
-        {
-            Action<ExplorationScope> configure = ctx.ColumnInfo.Type switch
-            {
-                DValueType.Integer => NumericExploration,
-                DValueType.Real => NumericExploration,
-                DValueType.Text => TextExploration,
-                DValueType.Timestamp => DatetimeExploration,
-                DValueType.Date => DatetimeExploration,
-                DValueType.Datetime => DatetimeExploration,
-                DValueType.Bool => BoolExploration,
-                _ => throw new InvalidOperationException($"Cannot explore column type {ctx.ColumnInfo.Type}."),
-            };
-
-            configure(scope);
+            ColumnConfiguration(scope, context);
         }
 
         private static void CommonConfiguration(ExplorationScope scope)
@@ -44,6 +19,26 @@ namespace Explorer.Api
             scope.AddPublisher<DistinctValuesComponent>();
             scope.AddPublisher<CategoricalSampleGenerator>();
         }
+
+        // Disabling this because the compiler can't infer Action<ExplorationScope>.
+#pragma warning disable IDE0007 // Use var instead of explicit type
+        private static void ColumnConfiguration(ExplorationScope scope, ExplorerContext context)
+        {
+            Action<ExplorationScope> configure = context.ColumnInfo.Type switch
+            {
+                DValueType.Integer => NumericExploration,
+                DValueType.Real => NumericExploration,
+                DValueType.Text => TextExploration,
+                DValueType.Timestamp => DatetimeExploration,
+                DValueType.Date => DatetimeExploration,
+                DValueType.Datetime => DatetimeExploration,
+                DValueType.Bool => BoolExploration,
+                _ => throw new InvalidOperationException($"Cannot explore column type {context.ColumnInfo.Type}."),
+            };
+
+            configure(scope);
+        }
+#pragma warning restore IDE0007 // Use var instead of explicit type
 
         private static void BoolExploration(ExplorationScope scope)
         {

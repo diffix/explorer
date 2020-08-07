@@ -43,14 +43,18 @@ namespace Explorer.Api
 
             // Singleton services
             services
-                .AddSingleton<ExplorationRegistry>()
-                .AddSingleton<ExplorationLauncher>();
+                .AddSingleton<ExplorationRegistry>();
 
             // Scoped services
             services
                 .AddScoped<MetricsPublisher, SimpleMetricsPublisher>()
                 .AddScoped<ContextBuilder>()
                 .AddScoped<AircloakConnectionBuilder>();
+
+            // Transient Services
+            services
+                .AddTransient<ExplorationScopeBuilder, TypeBasedScopeBuilder>()
+                .AddTransient<ExplorationLauncher>();
 
             // Register Explorer Components
             services.IncludeRegistry<ComponentRegistry>();

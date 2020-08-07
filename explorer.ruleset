@@ -3,7 +3,6 @@
   <Rules AnalyzerId="Microsoft.CodeAnalysis.FxCopAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.FxCopAnalyzers">
     <Rule Id="CA2007" Action="None" /> <!-- Consider using ConfigureAwait(false) -->
     <Rule Id="IDE1006" Action="None" /> <!-- Naming rule violation: Missing prefix: 's_' -->
-    <Rule Id="IDE0007" Action="None" /> <!-- use 'var' instead of explicit type -->
     <Rule Id="CA1062" Action="None" /> <!-- Validate that parameter is not null in public methods (disabled since nullable reference types are enabled) -->
     <Rule Id="CA1303" Action="None" /> <!-- Use a resource string for exception message instead of literal  -->
     <Rule Id="CA1715" Action="None" /> <!-- Prefix interface name with 'I' -->

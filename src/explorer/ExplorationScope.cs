@@ -43,19 +43,6 @@
 
         public void UseContext(ExplorerContext ctx) => scope.Inject(ctx);
 
-        public void Configure(ExplorationConfigurator configurator) => configurator.Configure(this);
-
-        public ColumnExploration Build()
-        {
-            if (Ctx is null)
-            {
-                throw new InvalidOperationException(
-                    $"Can't build {nameof(ColumnExploration)} without a context object!");
-            }
-
-            return new ColumnExploration(this);
-        }
-
         public void Dispose()
         {
             Dispose(disposing: true);

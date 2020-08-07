@@ -75,12 +75,7 @@ namespace Explorer.Api.Tests
                     scope.InjectDisposable(LoadedCassette);
                 }
 
-                var configurator = new ComponentComposition(ctx);
-
-                var explorationScope = new ExplorationScope(scope);
-                explorationScope.Configure(configurator);
-
-                return explorationScope;
+                return new TypeBasedScopeBuilder().Build(scope, ctx);
             });
 
             return new Exploration(dataSource, table, columnScopes);
@@ -112,7 +107,7 @@ namespace Explorer.Api.Tests
             CheckMetrics(exploration, check);
         }
 
-        private void CheckMetrics(
+        private static void CheckMetrics(
             Exploration exploration,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
