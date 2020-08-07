@@ -53,10 +53,10 @@ namespace Explorer
                     metric: new
                     {
                         ce.Column,
-                        ColumnType = ce.ColumnInfo?.Type ?? DValueType.Unknown,
+                        ColumnType = ce.ColumnInfo.Type,
                         ce.Status,
                         Metrics = ce.PublishedMetrics.ToList(),
-                    }) as ExploreMetric);
+                    }));
             }
         }
 
