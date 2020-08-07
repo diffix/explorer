@@ -41,9 +41,10 @@ namespace Explorer.Api
                 auth.RegisterApiKey(requestData.ApiKey);
             }
 
-            var ctxList = await contextBuilder.Build(requestData, cancellationToken);
+            var contextList = await contextBuilder.Build(requestData, cancellationToken);
 
-            var columnScopes = ctxList.Select(ctx => scopeBuilder.Build(rootContainer.GetNestedContainer(), ctx));
+            var columnScopes = contextList.Select(
+                context => scopeBuilder.Build(rootContainer.GetNestedContainer(), context));
 
             var exploration = new Exploration(requestData.DataSource, requestData.Table, columnScopes);
             exploration.Run();

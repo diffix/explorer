@@ -63,11 +63,11 @@ namespace Explorer.Api.Tests
             };
 
             // Create the Context and Connection objects for this exploration.
-            var ctxList = await rootContainer.GetInstance<ContextBuilder>().Build(
+            var contextList = await rootContainer.GetInstance<ContextBuilder>().Build(
                 testParams,
                 CancellationToken.None);
 
-            var columnScopes = ctxList.Select(ctx =>
+            var columnScopes = contextList.Select(context =>
             {
                 var scope = rootContainer.GetNestedContainer();
                 if (LoadedCassette != null)
@@ -75,7 +75,7 @@ namespace Explorer.Api.Tests
                     scope.InjectDisposable(LoadedCassette);
                 }
 
-                return new TypeBasedScopeBuilder().Build(scope, ctx);
+                return new TypeBasedScopeBuilder().Build(scope, context);
             });
 
             return new Exploration(dataSource, table, columnScopes);
