@@ -16,10 +16,10 @@ namespace Explorer.Api
 
         public SentryEvent Process(SentryEvent @event)
         {
-            if (serviceContext.TryGetInstance<ExplorerContext>() is ExplorerContext ctx)
+            if (serviceContext.TryGetInstance<ExplorerContext>() is ExplorerContext context)
             {
-                @event.SetTag("ColumnType", ctx.ColumnInfo.Type.ToString());
-                @event.SetExtra("ExplorationContext", ctx);
+                @event.SetTag("ColumnType", context.ColumnInfo.Type.ToString());
+                @event.SetExtra("ExplorationContext", context);
             }
 
             @event.SetTag("GitSha", ThisAssembly.Git.Sha);

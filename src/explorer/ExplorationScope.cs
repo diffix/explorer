@@ -27,7 +27,7 @@
 
         public MetricsPublisher MetricsPublisher { get => scope.GetInstance<MetricsPublisher>(); }
 
-        public ExplorerContext? Ctx { get => scope.TryGetInstance<ExplorerContext>(); }
+        public ExplorerContext? Context { get => scope.TryGetInstance<ExplorerContext>(); }
 
         public ILogger Logger { get => logger; }
 
@@ -41,7 +41,7 @@
             Tasks.Add(component.PublishMetrics(MetricsPublisher));
         }
 
-        public void UseContext(ExplorerContext ctx) => scope.Inject(ctx);
+        public void UseContext(ExplorerContext context) => scope.Inject(context);
 
         public void Dispose()
         {

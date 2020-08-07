@@ -29,15 +29,15 @@ namespace Explorer
 
         public ExplorationContext? ExtraContext { get; private set; }
 
-        public ExplorerException WithExtraContext(ExplorerContext? ctx)
+        public ExplorerException WithExtraContext(ExplorerContext? context)
         {
-            if (!(ctx is null))
+            if (!(context is null))
             {
                 ExtraContext = new ExplorationContext
                 {
-                    DataSource = ctx.DataSource,
-                    Table = ctx.Table,
-                    Columns = ImmutableDictionary<string, DColumnInfo>.Empty.Add(ctx.Column, ctx.ColumnInfo),
+                    DataSource = context.DataSource,
+                    Table = context.Table,
+                    Columns = ImmutableDictionary<string, DColumnInfo>.Empty.Add(context.Column, context.ColumnInfo),
                 };
                 Data[ExplorationContext.DataKey] = ExtraContext;
             }

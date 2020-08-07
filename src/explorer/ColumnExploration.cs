@@ -16,7 +16,7 @@ namespace Explorer
 
         public ColumnExploration(ExplorationScope scope)
         {
-            if (scope.Ctx is null)
+            if (scope.Context is null)
             {
                 throw new InvalidOperationException(
                     $"Can't build {GetType().Name} without a context object in scope!");
@@ -25,11 +25,11 @@ namespace Explorer
             this.scope = scope;
         }
 
-        public string Column { get => Ctx.Column; }
+        public string Column { get => Context.Column; }
 
-        public DColumnInfo ColumnInfo { get => Ctx.ColumnInfo; }
+        public DColumnInfo ColumnInfo { get => Context.ColumnInfo; }
 
-        public ExplorerContext Ctx { get => scope.Ctx!; }
+        public ExplorerContext Context { get => scope.Context!; }
 
         public override IEnumerable<ExploreMetric> PublishedMetrics =>
             scope.MetricsPublisher.PublishedMetrics;
@@ -48,8 +48,8 @@ namespace Explorer
             }
             catch (Exception ex)
             {
-                var msg = $"Error in column exploration for `{Ctx.DataSource}` / `{Ctx.Table}` / `{Column}`.";
-                var wrappedEx = new ExplorerException(msg, ex).WithExtraContext(Ctx);
+                var msg = $"Error in column exploration for `{Context.DataSource}` / `{Context.Table}` / `{Column}`.";
+                var wrappedEx = new ExplorerException(msg, ex).WithExtraContext(Context);
                 scope.Logger.LogError(ex, msg, wrappedEx.ExtraContext);
 
                 throw wrappedEx;
