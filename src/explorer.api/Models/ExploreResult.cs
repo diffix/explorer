@@ -3,7 +3,7 @@ namespace Explorer.Api.Models
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
+    using System.Text.Json.Serialization;
     using Explorer;
 
     using static ExplorationStatusEnum;
@@ -19,7 +19,7 @@ namespace Explorer.Api.Models
             Status = status;
             DataSource = exploreParams.DataSource;
             Table = exploreParams.Table;
-            Columns = exploreParams.Columns.Select(s => new { Column = s } as object).ToList();
+            ColumnMetrics = exploreParams.Columns.Select(s => new { Column = s } as object).ToList();
             SampleData = new List<List<object?>>();
         }
 
@@ -30,7 +30,7 @@ namespace Explorer.Api.Models
             DataSource = exploration.DataSource;
             Table = exploration.Table;
             SampleData = exploration.SampleData.Select(col => col.ToList()).ToList();
-            Columns = exploration.PublishedMetrics.Select(m => m.Metric).ToList();
+            ColumnMetrics = exploration.PublishedMetrics.Select(m => m.Metric).ToList();
         }
 
         public Guid Id { get; }
@@ -43,7 +43,8 @@ namespace Explorer.Api.Models
 
         public string Table { get; }
 
-        public List<object> Columns { get; }
+        [JsonPropertyName("columns")]
+        public List<object> ColumnMetrics { get; }
 
         public List<List<object?>> SampleData { get; }
 
