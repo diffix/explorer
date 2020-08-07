@@ -41,6 +41,26 @@ namespace Explorer.Tests
         }
 
         [Fact]
+        public async Task TestMinMaxRefinerComponentWithNegativeValues()
+        {
+            using var scope = await testFixture.CreateTestScope("taxi", "jan08", "pickup_longitude", this);
+
+            // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
+            var histogramMinMaxProvider = new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null!);
+            var refiner = new MinMaxRefiner(histogramMinMaxProvider) { Context = scope.Context };
+
+            TestResult(await refiner.ResultAsync);
+
+            static void TestResult(MinMaxRefiner.Result result)
+            {
+                const decimal aircloakMin = -106M;
+                const decimal aircloakMax = -6M;
+                Assert.True(result.Min < aircloakMin, $"Expected lower than {aircloakMin}, got {result.Min}");
+                Assert.True(result.Max > aircloakMax, $"Expected higher than {aircloakMax}, got {result.Max}");
+            }
+        }
+
+        [Fact]
         public async Task TestDistinctValuesMetricContainsRemainder()
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "duration", this);
