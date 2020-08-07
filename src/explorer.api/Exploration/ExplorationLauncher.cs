@@ -13,11 +13,16 @@ namespace Explorer.Api
     {
         private readonly IContainer rootContainer;
         private readonly ContextBuilder contextBuilder;
+        private readonly ExplorationScopeBuilder scopeBuilder;
 
-        public ExplorationLauncher(IContainer rootContainer, ContextBuilder contextBuilder)
+        public ExplorationLauncher(
+            IContainer rootContainer,
+            ContextBuilder contextBuilder,
+            ExplorationScopeBuilder scopeBuilder)
         {
-            this.contextBuilder = contextBuilder;
             this.rootContainer = rootContainer;
+            this.contextBuilder = contextBuilder;
+            this.scopeBuilder = scopeBuilder;
         }
 
         /// <summary>
@@ -36,17 +41,9 @@ namespace Explorer.Api
                 auth.RegisterApiKey(requestData.ApiKey);
             }
 
-            var apiUri = new Uri(requestData.ApiUrl);
             var ctxList = await contextBuilder.Build(requestData, cancellationToken);
 
-            var columnScopes = ctxList.Select(ctx =>
-            {
-                var configurator = new ComponentComposition(ctx);
-                var scope = new ExplorationScope(rootContainer.GetNestedContainer());
-                configurator.Configure(scope);
-
-                return scope;
-            });
+            var columnScopes = ctxList.Select(ctx => scopeBuilder.Build(rootContainer.GetNestedContainer(), ctx));
 
             var exploration = new Exploration(requestData.DataSource, requestData.Table, columnScopes);
             exploration.Run();
