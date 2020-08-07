@@ -5,8 +5,10 @@ namespace Explorer.Api.Controllers
     using System.Net.Mime;
     using System.Threading.Tasks;
 
+    using Aircloak.JsonApi.Exceptions;
     using Explorer;
     using Explorer.Api.Models;
+    using Microsoft.AspNetCore.Diagnostics;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -137,6 +139,23 @@ namespace Explorer.Api.Controllers
             {
                 return BadRequest($"Couldn't find exploration with id {explorationId}");
             }
+        }
+
+        [ApiVersion("1.0")]
+        [Route("api/v{version:apiVersion}/error")]
+        public IActionResult Error()
+        {
+            var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
+
+            if (context.Error is AircloakException acEx)
+            {
+                const string msg = "An error occurred while accessing the Aircloak Api";
+                logger.LogError(acEx, msg);
+
+                return (IActionResult)new AircloakApiProblemDetails(acEx);
+            }
+
+            return Problem();
         }
 
         [Route("/{**catchall}")]

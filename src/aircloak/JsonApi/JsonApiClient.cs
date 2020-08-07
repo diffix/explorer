@@ -189,8 +189,7 @@ namespace Aircloak.JsonApi
                             case "completed":
                                 return queryResult;
                             case "error":
-                                throw new Exceptions.ResultException("Aircloak API query error.\n" +
-                                    GetQueryResultDetails(query, queryResult));
+                                throw Exceptions.ResultException.FromQueryResult(queryResult);
                             case "cancelled":
                                 throw new OperationCanceledException("Aircloak API query canceled.\n" +
                                     GetQueryResultDetails(query, queryResult));
@@ -356,7 +355,8 @@ namespace Aircloak.JsonApi
             if (!response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();
-                throw new Exceptions.ApiException($"Request Error: {ServiceError(response)}.\n{requestMessage}\n{requestContent}\n{responseContent}");
+                throw new Exceptions.ApiException(
+                    ServiceError(response), requestMethod, apiEndpoint, response.StatusCode, responseContent);
             }
 
             return response;
