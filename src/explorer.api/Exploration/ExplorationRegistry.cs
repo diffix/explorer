@@ -100,7 +100,7 @@ namespace Explorer.Api
                     {
                         return ExplorationStatus.Validating;
                     }
-                    return FromTaskStatus(ValidationTask.Status);
+                    return ValidationTask.Status.ToExplorationStatus();
                 }
             }
 

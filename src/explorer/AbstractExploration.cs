@@ -15,9 +15,7 @@
         {
             // If completionTask is null, that means it has not yet been launched, so status is `New`.
             // Otherwise, derive the ExplorationStatus from the TaskStatus.
-            get => completionTask is null
-                ? ExplorationStatus.New
-                : FromTaskStatus(completionTask.Status);
+            get => completionTask?.Status.ToExplorationStatus() ?? ExplorationStatus.New;
         }
 
         public abstract IEnumerable<ExploreMetric> PublishedMetrics { get; }
