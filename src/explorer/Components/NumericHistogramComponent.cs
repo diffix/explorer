@@ -28,11 +28,15 @@ namespace Explorer.Components
             {
                 return null;
             }
+            if (stats.Min == null || stats.Max == null)
+            {
+                return null;
+            }
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count,
-                stats.Min,
-                stats.Max,
+                stats.Min.Value,
+                stats.Max.Value,
                 ValuesPerBucketTarget,
                 isIntegerColumn: Context.ColumnInfo.Type == DValueType.Integer);
 

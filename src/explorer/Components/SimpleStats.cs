@@ -10,6 +10,7 @@ namespace Explorer.Components
     using Explorer.Queries;
 
     public class SimpleStats<T> : ExplorerComponent<SimpleStats<T>.Result>, PublisherComponent
+    where T : unmanaged
     {
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
@@ -42,9 +43,9 @@ namespace Explorer.Components
 
             public long Count { get => Stats.Count; }
 
-            public T Min { get => Stats.Min; }
+            public T? Min { get => Stats.Min; }
 
-            public T Max { get => Stats.Max; }
+            public T? Max { get => Stats.Max; }
         }
     }
 }
