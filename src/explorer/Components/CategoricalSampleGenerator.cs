@@ -28,15 +28,20 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
-            if (result.SampleValues.Count > 0)
+            if (result?.SampleValues.Count > 0)
             {
                 yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
             }
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
             var distinctValuesResult = await distinctValuesProvider.ResultAsync;
+            if (distinctValuesResult == null)
+            {
+                return null;
+            }
+
             var sampleValues = Enumerable.Empty<JsonElement>();
             if (distinctValuesResult.IsCategorical)
             {

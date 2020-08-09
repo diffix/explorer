@@ -13,10 +13,16 @@ namespace Explorer.Components
     {
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            yield return new UntypedMetric(name: "is_email", metric: await ResultAsync);
+            var result = await ResultAsync;
+            if (result == null)
+            {
+                yield break;
+            }
+
+            yield return new UntypedMetric(name: "is_email", metric: result);
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
             var emailCheck = await Context.Exec(
                 new TextColumnTrim(TextColumnTrimType.Both, Constants.EmailAddressChars));

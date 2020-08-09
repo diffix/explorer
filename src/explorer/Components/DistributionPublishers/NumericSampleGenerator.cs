@@ -26,18 +26,28 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var distinctValues = await distinctValuesProvider.ResultAsync;
-            if (!distinctValues.IsCategorical)
+            if (distinctValues == null)
             {
-                var distribution = await distributionProvider.ResultAsync;
-
-                yield return new UntypedMetric(
-                    name: "sample_values",
-                    metric: distribution
-                            .Generate(SamplesToPublish)
-                            .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
-                            .OrderBy(_ => _)
-                            .ToArray());
+                yield break;
             }
+            if (distinctValues.IsCategorical)
+            {
+                yield break;
+            }
+
+            var distribution = await distributionProvider.ResultAsync;
+            if (distribution == null)
+            {
+                yield break;
+            }
+
+            yield return new UntypedMetric(
+                name: "sample_values",
+                metric: distribution
+                        .Generate(SamplesToPublish)
+                        .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
+                        .OrderBy(_ => _)
+                        .ToArray());
         }
     }
 }

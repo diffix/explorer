@@ -14,13 +14,17 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
+            if (result == null)
+            {
+                yield break;
+            }
 
             yield return new UntypedMetric("count", result.Count);
             yield return new UntypedMetric("min", result.Min!);
             yield return new UntypedMetric("max", result.Max!);
         }
 
-        protected override async Task<SimpleStats<T>.Result> Explore()
+        protected override async Task<SimpleStats<T>.Result?> Explore()
         {
             var statsQ = await Context.Exec(new BasicColumnStats<T>());
 

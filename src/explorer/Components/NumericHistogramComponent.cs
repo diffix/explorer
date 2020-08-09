@@ -21,9 +21,13 @@ namespace Explorer.Components
             this.statsResultProvider = statsResultProvider;
         }
 
-        protected async override Task<List<HistogramWithCounts>> Explore()
+        protected async override Task<List<HistogramWithCounts>?> Explore()
         {
             var stats = await statsResultProvider.ResultAsync;
+            if (stats == null)
+            {
+                return null;
+            }
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count,

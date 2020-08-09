@@ -16,6 +16,10 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
+            if (result == null)
+            {
+                yield break;
+            }
 
             foreach (var m in TimeUtilities.YieldMetrics<Result, int>("dates_cyclical", result))
             {
@@ -23,7 +27,7 @@ namespace Explorer.Components
             }
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
             var queryResult = await Context.Exec(new CyclicalDatetimes(Context.ColumnInfo.Type));
 

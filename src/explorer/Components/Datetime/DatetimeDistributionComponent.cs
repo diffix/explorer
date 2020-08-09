@@ -53,15 +53,21 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
+            if (result == null)
+            {
+                yield break;
+            }
 
-            yield return new UntypedMetric(
-                name: "descriptive_stats",
-                metric: result);
+            yield return new UntypedMetric(name: "descriptive_stats", metric: result);
         }
 
-        protected override async Task<DatetimeDistribution> Explore()
+        protected override async Task<DatetimeDistribution?> Explore()
         {
             var timeBuckets = await timeBucketsResultProvider.ResultAsync;
+            if (timeBuckets == null)
+            {
+                return null;
+            }
 
             return GenerateDistribution(timeBuckets);
         }

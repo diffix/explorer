@@ -24,23 +24,21 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var bounds = await ResultAsync;
-
-            if (!(bounds is null))
+            if (bounds == null)
             {
-                yield return new UntypedMetric("min", bounds.Min, priority: 10);
-                yield return new UntypedMetric("max", bounds.Max, priority: 10);
+                yield break;
             }
+
+            yield return new UntypedMetric("min", bounds.Min, priority: 10);
+            yield return new UntypedMetric("max", bounds.Max, priority: 10);
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
             var histogramBounds = await histogramMinMaxProvider.ResultAsync;
-
-#pragma warning disable CS8603 // Possible null reference return
             return histogramBounds is null
                 ? new Result(await RefinedMinEstimate(), await RefinedMaxEstimate())
                 : null;
-#pragma warning restore CS8603 // Possible null reference return
         }
 
         private async Task<decimal> RefinedMinEstimate()

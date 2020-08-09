@@ -41,21 +41,31 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var distinctValuesResult = await distinctValuesProvider.ResultAsync;
-            if (!distinctValuesResult.IsCategorical)
+            var result = await ResultAsync;
+            if (result?.SampleValues.Count > 0)
             {
-                var result = await ResultAsync;
-
-                if (result.SampleValues.Count > 0)
-                {
-                    yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
-                }
+                yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
             }
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
+            var distinctValuesResult = await distinctValuesProvider.ResultAsync;
+            if (distinctValuesResult == null)
+            {
+                return null;
+            }
+            if (distinctValuesResult.IsCategorical)
+            {
+                return null;
+            }
+
             var emailCheckerResult = await emailCheckProvider.ResultAsync;
+            if (emailCheckerResult == null)
+            {
+                return null;
+            }
+
             var sampleValues = emailCheckerResult.IsEmail ? await GenerateEmails() : await GenerateStrings();
             return new Result(sampleValues.ToList());
         }

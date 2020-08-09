@@ -22,6 +22,10 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var distribution = await distributionProvider.ResultAsync;
+            if (distribution == null)
+            {
+                yield break;
+            }
 
             yield return new UntypedMetric(
                 name: "sample_values",

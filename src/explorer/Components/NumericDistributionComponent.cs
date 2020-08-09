@@ -38,9 +38,13 @@
             return new NumericDistribution(dist);
         }
 
-        protected override async Task<NumericDistribution> Explore()
+        protected override async Task<NumericDistribution?> Explore()
         {
             var histogramResult = await histogramResultProvider.ResultAsync;
+            if (histogramResult == null)
+            {
+                return null;
+            }
 
             return GenerateDistribution(histogramResult.Histogram);
         }
