@@ -23,8 +23,8 @@ namespace Explorer.Tests
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
-                Assert.Single(result.Rows, r => r.Key == "minute");
-                Assert.Single(result.Rows, r => r.Key == "hour");
+                Assert.Single(result?.Rows, r => r.Key == "minute");
+                Assert.Single(result?.Rows, r => r.Key == "hour");
             });
         }
 
@@ -35,8 +35,8 @@ namespace Explorer.Tests
 
             await scope.ResultTest<LinearTimeBuckets, LinearTimeBuckets.Result>(result =>
             {
-                Assert.Single(result.Rows, r => r.Key == "year");
-                Assert.Single(result.Rows, r => r.Key == "quarter");
+                Assert.Single(result?.Rows, r => r.Key == "year");
+                Assert.Single(result?.Rows, r => r.Key == "quarter");
             });
         }
 
@@ -47,9 +47,9 @@ namespace Explorer.Tests
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
-                Assert.True(result.Rows.Count() == 2);
-                Assert.Single(result.Rows, r => r.Key == "second");
-                Assert.Single(result.Rows, r => r.Key == "minute");
+                Assert.True(result?.Rows.Count() == 2);
+                Assert.Single(result?.Rows, r => r.Key == "second");
+                Assert.Single(result?.Rows, r => r.Key == "minute");
             });
         }
 
@@ -60,11 +60,11 @@ namespace Explorer.Tests
 
             await scope.ResultTest<CyclicalTimeBuckets, CyclicalTimeBuckets.Result>(result =>
             {
-                Assert.True(result.Rows.Count() == 4);
-                Assert.Single(result.Rows, r => r.Key == "day");
-                Assert.Single(result.Rows, r => r.Key == "weekday");
-                Assert.Single(result.Rows, r => r.Key == "month");
-                Assert.Single(result.Rows, r => r.Key == "quarter");
+                Assert.True(result?.Rows.Count() == 4);
+                Assert.Single(result?.Rows, r => r.Key == "day");
+                Assert.Single(result?.Rows, r => r.Key == "weekday");
+                Assert.Single(result?.Rows, r => r.Key == "month");
+                Assert.Single(result?.Rows, r => r.Key == "quarter");
             });
         }
     }
