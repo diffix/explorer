@@ -6,6 +6,7 @@ namespace Explorer.Metrics
     {
         public string Name { get; }
 
+        [JsonPropertyName("value")]
         public object Metric { get; }
 
         [JsonIgnore]
