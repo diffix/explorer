@@ -2,6 +2,7 @@ namespace Explorer.Common
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
 
     internal class ValueWithCountList<T> : List<(T Value, long Count)>
     {
@@ -22,8 +23,14 @@ namespace Explorer.Common
             Add((value, TotalCount + count));
         }
 
+        [return: MaybeNull]
         public T GetRandomValue(Random rand)
         {
+            if (TotalCount == 0)
+            {
+                return default;
+            }
+
             var rcount = rand.NextLong(TotalCount);
             return FindValue(rcount);
         }

@@ -29,7 +29,7 @@ namespace Explorer.Common
             Substrings[pos].AddValueCount(s, count);
         }
 
-        public string GetRandomSubstring(int pos, Random rand)
+        public string? GetRandomSubstring(int pos, Random rand)
         {
             return Substrings[pos].GetRandomValue(rand);
         }
