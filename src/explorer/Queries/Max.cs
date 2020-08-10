@@ -38,9 +38,11 @@ namespace Explorer.Queries
 
         protected override string GetQueryStatement(string table, string column)
         {
-            var whereFragment = lowerBound.HasValue ?
-                $"where {column} between {lowerBound.Value} and {lowerBound.Value * 2}" :
-                string.Empty;
+            var whereFragment = lowerBound.HasValue
+                ? lowerBound >= 0
+                    ? $"where {column} between {lowerBound.Value} and {lowerBound.Value * 2}"
+                    : $"where {column} between {lowerBound.Value} and 0"
+                : string.Empty;
 
             return $@"
                 select

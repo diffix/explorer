@@ -47,12 +47,13 @@ namespace Explorer.Components
         {
             // initial unconstrained min or max
             var result = await GetMinEstimate(null);
+            var isPositive = result >= 0;
 
             // limit the number of iterations
             for (var i = 0; i < MaxIterations; i++)
             {
                 // If we have a zero result, it can't be improved upon anyway.
-                if (result == decimal.Zero)
+                if (isPositive && result == decimal.Zero)
                 {
                     break;
                 }
@@ -62,7 +63,8 @@ namespace Explorer.Components
 
                 // If there are no longer enough values in the constrained range to compute an anonymised min/max,
                 // the query will return `null` => we can't improve further on the result.
-                // Same thing if the results start to diverge (second part of if condition).
+                // Same thing if the results start to diverge, ie. if the current result no longer improves on the
+                // previous result (second part of if condition).
                 if ((!estimate.HasValue) || (estimate >= result))
                 {
                     break;
@@ -79,10 +81,17 @@ namespace Explorer.Components
         {
             // initial unconstrained min or max
             var result = await GetMaxEstimate(null);
+            var isNegative = result < 0;
 
             // limit the number of iterations
             for (var i = 0; i < MaxIterations; i++)
             {
+                // If we are working with negative numbers and have a zero result, assume we can't improve it.
+                if (isNegative && result == decimal.Zero)
+                {
+                    break;
+                }
+
                 // Constrained query to get an improved estimate
                 var estimate = await GetMaxEstimate(result);
 
