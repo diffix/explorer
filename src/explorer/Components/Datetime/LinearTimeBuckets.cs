@@ -5,7 +5,6 @@ namespace Explorer.Components
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
     using Explorer.Metrics;
     using Explorer.Queries;
@@ -32,7 +31,7 @@ namespace Explorer.Components
         {
             var queryResult = await Context.Exec(new BucketedDatetimes(Context.ColumnInfo.Type));
 
-            var groupings = await Task.Run(() => ProcessLinearBuckets(queryResult.Rows));
+            var groupings = ProcessLinearBuckets(queryResult.Rows).ToList();
 
             return new Result(
                 groupings.Select(g => g.Item1),
