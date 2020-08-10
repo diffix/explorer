@@ -6,9 +6,9 @@ namespace Explorer.Tests
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
     using Explorer.Components;
+    using Explorer.Queries;
     using Xunit;
 
     public class ComponentTests : IClassFixture<ExplorerTestFixture>
@@ -20,43 +20,40 @@ namespace Explorer.Tests
             this.testFixture = testFixture;
         }
 
-        [Fact]
-        public async Task TestMinMaxRefinerComponent()
+        public enum MinMaxRefinerTest
         {
-            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "amount", this);
+            /// <summary>Test the refined min and max.</summary>
+            Both,
 
-            // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
-            var histogramMinMaxProvider = new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null!);
-            var refiner = new MinMaxRefiner(histogramMinMaxProvider) { Context = scope.Context };
+            /// <summary>Test the refined min only.</summary>
+            MinOnly,
 
-            TestResult(await refiner.ResultAsync);
-
-            static void TestResult(MinMaxRefiner.Result result)
-            {
-                const decimal expectedMin = 3303;
-                const decimal expectedMax = 495_103;
-                Assert.True(result.Min == expectedMin, $"Expected {expectedMin}, got {result.Min}");
-                Assert.True(result.Max == expectedMax, $"Expected {expectedMax}, got {result.Max}");
-            }
+            /// <summary>Test the refined max only.</summary>
+            MaxOnly,
         }
 
-        [Fact]
-        public async Task TestMinMaxRefinerComponentWithNegativeValues()
+        [Theory]
+        [InlineData(MinMaxRefinerTest.Both, "gda_banking", "transactions", "amount")]
+        [InlineData(MinMaxRefinerTest.MaxOnly, "taxi", "jan08", "pickup_longitude")]
+        [InlineData(MinMaxRefinerTest.MinOnly, "scihub", "sep2015", "long")]
+        public async Task TestMinMaxRefinerComponent(MinMaxRefinerTest test, string dataSource, string table, string column)
         {
-            using var scope = await testFixture.CreateTestScope("taxi", "jan08", "pickup_longitude", this);
+            using var scope = await testFixture.CreateTestScope(dataSource, table, column, this);
 
             // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
             var histogramMinMaxProvider = new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null!);
             var refiner = new MinMaxRefiner(histogramMinMaxProvider) { Context = scope.Context };
+            var refined = await refiner.ResultAsync;
 
-            TestResult(await refiner.ResultAsync);
-
-            static void TestResult(MinMaxRefiner.Result result)
+            if (test != MinMaxRefinerTest.MaxOnly)
             {
-                const decimal aircloakMin = -106M;
-                const decimal aircloakMax = -6M;
-                Assert.True(result.Min < aircloakMin, $"Expected lower than {aircloakMin}, got {result.Min}");
-                Assert.True(result.Max > aircloakMax, $"Expected higher than {aircloakMax}, got {result.Max}");
+                var aircloakMin = (await scope.QueryRows<Min, Min.Result<decimal>>(new Min())).Single().Min;
+                Assert.True(refined.Min < aircloakMin, $"Expected lower than {aircloakMin}, got {refined.Min}");
+            }
+            if (test != MinMaxRefinerTest.MinOnly)
+            {
+                var aircloakMax = (await scope.QueryRows<Max, Max.Result<decimal>>(new Max())).Single().Max;
+                Assert.True(refined.Max > aircloakMax, $"Expected higher than {aircloakMax}, got {refined.Max}");
             }
         }
 
