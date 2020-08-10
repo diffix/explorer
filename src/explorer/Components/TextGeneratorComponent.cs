@@ -76,7 +76,7 @@ namespace Explorer.Components
             var len = rand.Next(minLength, minLength + substrings.Count);
             for (var pos = 0; pos < substrings.Count && sb.Length < len; pos++)
             {
-                var str = substrings.GetRandomSubstring(pos, rand);
+                var str = substrings.GetRandomSubstring(pos, rand) ?? "*";
                 sb.Append(str);
                 pos += str.Length;
             }
