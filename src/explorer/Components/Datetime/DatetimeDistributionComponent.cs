@@ -17,8 +17,13 @@ namespace Explorer.Components
             this.timeBucketsResultProvider = timeBucketsResultProvider;
         }
 
-        public static DatetimeDistribution GenerateDistribution(LinearTimeBuckets.Result timeBuckets)
+        public static DatetimeDistribution? GenerateDistribution(LinearTimeBuckets.Result timeBuckets)
         {
+            if (!timeBuckets.Rows.Any())
+            {
+                return null;
+            }
+
             var (bucketGroup, valueCounts) = timeBuckets.Rows.Zip(timeBuckets.ValueCounts).Last();
             var timeUnit = bucketGroup.Key;
 

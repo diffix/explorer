@@ -31,7 +31,7 @@ namespace Explorer.Components
         {
             var queryResult = await Context.Exec(new CyclicalDatetimes(Context.ColumnInfo.Type));
 
-            var groupings = await Task.Run(() => ProcessCyclicalBuckets(queryResult.Rows));
+            var groupings = ProcessCyclicalBuckets(queryResult.Rows).ToList();
 
             return new Result(
                 groupings.Select(g => g.Item1),
