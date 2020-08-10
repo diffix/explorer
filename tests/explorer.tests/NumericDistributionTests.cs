@@ -31,7 +31,7 @@
         [Fact]
         public async void TestDistributionAnalysis()
         {
-            using var scope = await testFixture.CreateTestScope("GiveMeSomeCredit", "loans", "age", this);
+            using var scope = await testFixture.CreateTestScope("GiveMeSomeCredit", "loans", "MonthlyIncome", this);
 
             await scope.MetricsTest<DistributionAnalysisComponent>(result =>
                 Assert.True(result.Any()));
@@ -40,7 +40,7 @@
         [Fact]
         public async void TestDescriptiveStatsPublisher()
         {
-            using var scope = await testFixture.CreateTestScope("GiveMeSomeCredit", "loans", "age", this);
+            using var scope = await testFixture.CreateTestScope("GiveMeSomeCredit", "loans", "MonthlyIncome", this);
 
             await scope.MetricsTest<DescriptiveStatsPublisher>(result =>
                 Assert.True(result.Any()));

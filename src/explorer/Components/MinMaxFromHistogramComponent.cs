@@ -20,19 +20,20 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var bounds = await ResultAsync;
-
-            if (!(bounds is null))
+            if (bounds == null)
             {
-                yield return new UntypedMetric("min", bounds.Min, priority: 10);
-                yield return new UntypedMetric("max", bounds.Max, priority: 10);
+                yield break;
             }
+
+            yield return new UntypedMetric("min", bounds.Min, priority: 10);
+            yield return new UntypedMetric("max", bounds.Max, priority: 10);
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
             var histograms = await histogramsProvider.ResultAsync;
 
-            return histograms
+            return histograms?
                 .Where(r => r.ValueCounts.SuppressedCount == 0)
                 .OrderBy(r => r.BucketSize.SnappedSize)
                 .Take(1)

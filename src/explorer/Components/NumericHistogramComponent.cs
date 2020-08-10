@@ -21,14 +21,22 @@ namespace Explorer.Components
             this.statsResultProvider = statsResultProvider;
         }
 
-        protected async override Task<List<HistogramWithCounts>> Explore()
+        protected async override Task<List<HistogramWithCounts>?> Explore()
         {
             var stats = await statsResultProvider.ResultAsync;
+            if (stats == null)
+            {
+                return null;
+            }
+            if (stats.Min == null || stats.Max == null)
+            {
+                return null;
+            }
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count,
-                stats.Min,
-                stats.Max,
+                stats.Min.Value,
+                stats.Max.Value,
                 ValuesPerBucketTarget,
                 isIntegerColumn: Context.ColumnInfo.Type == DValueType.Integer);
 

@@ -2,6 +2,7 @@ namespace Explorer.Components
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -15,60 +16,42 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
-
-            if (result.Success)
+            if (result == null)
             {
-                yield return new UntypedMetric("text.length.success", "true");
+                yield break;
+            }
 
-                yield return new UntypedMetric(
-                    "text.length.values",
-                    result.DistinctResult!.DistinctRows
-                        .Where(r => r.HasValue)
-                        .OrderBy(r => r.Value.GetInt32())
-                        .Select(r => new { r.Value, r.Count }));
-                yield return new UntypedMetric("text.length.counts", result.DistinctResult.ValueCounts);
-            }
-            else
-            {
-                yield return new UntypedMetric("text.length.success", "false");
-            }
+            yield return new UntypedMetric(
+                "text.length.values",
+                result.DistinctRows
+                    .Where(r => r.HasValue)
+                    .OrderBy(r => r.Value.GetInt32())
+                    .Select(r => new { r.Value, r.Count }));
+            yield return new UntypedMetric("text.length.counts", result.ValueCounts);
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
             if (Context.ColumnInfo.Isolating)
             {
-                return Result.Failed();
+                return null;
             }
 
             var distinctResult = await Context.Exec(new DistinctLengths());
-
-            return Result.Ok(new DistinctValuesComponent.Result(distinctResult.Rows));
+            return new Result(distinctResult.Rows);
         }
 
         public sealed class Result
         {
-            private Result(bool success)
+            public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
             {
-                Success = success;
+                DistinctRows = distinctRows;
+                ValueCounts = ValueCounts.Compute(distinctRows);
             }
 
-            public DistinctValuesComponent.Result? DistinctResult { get; private set; }
+            public IEnumerable<ValueWithCount<JsonElement>> DistinctRows { get; }
 
-            public bool Success { get; }
-
-            public static Result Failed()
-            {
-                return new Result(false);
-            }
-
-            public static Result Ok(DistinctValuesComponent.Result distinctResult)
-            {
-                return new Result(true)
-                {
-                    DistinctResult = distinctResult,
-                };
-            }
+            public ValueCounts ValueCounts { get; }
         }
     }
 }

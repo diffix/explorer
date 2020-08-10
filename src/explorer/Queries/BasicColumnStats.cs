@@ -7,6 +7,7 @@ namespace Explorer.Queries
 
     public class BasicColumnStats<T> :
         DQuery<BasicColumnStats<T>.Result>
+        where T : unmanaged
     {
         public override Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
 
@@ -25,15 +26,15 @@ namespace Explorer.Queries
         {
             public Result(ref Utf8JsonReader reader)
             {
-                Min = reader.ParseNonNullableMetric<T>();
-                Max = reader.ParseNonNullableMetric<T>();
+                Min = reader.ParseNullableMetric<T>();
+                Max = reader.ParseNullableMetric<T>();
                 Count = reader.ParseCount();
                 CountNoise = reader.ParseCountNoise();
             }
 
-            public T Min { get; set; }
+            public T? Min { get; set; }
 
-            public T Max { get; set; }
+            public T? Max { get; set; }
 
             public long Count { get; set; }
 

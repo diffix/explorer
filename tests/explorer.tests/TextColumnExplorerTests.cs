@@ -24,14 +24,14 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "clients", "email", this);
 
-            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
+            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r?.IsEmail));
 
             await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
             {
-                Assert.True(result.SampleValues.All(v => v.Length >= 3));
-                Assert.True(result.SampleValues.All(v => v.Count(c => c == '@') == 1));
-                Assert.True(result.SampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
-                Assert.True(result.SampleValues.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
+                Assert.True(result?.SampleValues.All(v => v.Length >= 3));
+                Assert.True(result?.SampleValues.All(v => v.Count(c => c == '@') == 1));
+                Assert.True(result?.SampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+                Assert.True(result?.SampleValues.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
             });
         }
 
@@ -40,14 +40,14 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "email", this);
 
-            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r.IsEmail));
+            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.True(r?.IsEmail));
 
             await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
             {
-                Assert.True(result.SampleValues.All(v => v.Length >= 3));
-                Assert.True(result.SampleValues.All(v => v.Count(c => c == '@') == 1));
-                Assert.True(result.SampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
-                Assert.True(result.SampleValues.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
+                Assert.True(result?.SampleValues.All(v => v.Length >= 3));
+                Assert.True(result?.SampleValues.All(v => v.Count(c => c == '@') == 1));
+                Assert.True(result?.SampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
+                Assert.True(result?.SampleValues.All(v => !v.Contains("..", StringComparison.InvariantCulture)));
             });
         }
 
@@ -56,10 +56,10 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "firstname", this);
 
-            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
+            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r?.IsEmail));
 
             await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
-                Assert.True(result.SampleValues.All(v => v.Length >= 3)));
+                Assert.True(result?.SampleValues.All(v => v.Length >= 3)));
         }
 
         [Fact]
@@ -67,10 +67,10 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "lastname", this);
 
-            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r.IsEmail));
+            await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r?.IsEmail));
 
             await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
-                Assert.True(result.SampleValues.All(v => v.Length >= 3)));
+                Assert.True(result?.SampleValues.All(v => v.Length >= 3)));
         }
     }
 }

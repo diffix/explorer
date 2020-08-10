@@ -14,33 +14,45 @@ namespace Explorer.Components
     public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>, PublisherComponent
     {
         private const int MaxIterations = 10;
+        private readonly ResultProvider<SimpleStats<decimal>.Result> statsProvider;
         private readonly ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider;
 
-        public MinMaxRefiner(ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
+        public MinMaxRefiner(
+            ResultProvider<SimpleStats<decimal>.Result> statsProvider,
+            ResultProvider<MinMaxFromHistogramComponent.Result> histogramMinMaxProvider)
         {
+            this.statsProvider = statsProvider;
             this.histogramMinMaxProvider = histogramMinMaxProvider;
         }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var bounds = await ResultAsync;
-
-            if (!(bounds is null))
+            if (bounds == null)
             {
-                yield return new UntypedMetric("min", bounds.Min, priority: 10);
-                yield return new UntypedMetric("max", bounds.Max, priority: 10);
+                yield break;
             }
+
+            yield return new UntypedMetric("min", bounds.Min, priority: 10);
+            yield return new UntypedMetric("max", bounds.Max, priority: 10);
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
-            var histogramBounds = await histogramMinMaxProvider.ResultAsync;
+            var stats = await statsProvider.ResultAsync;
+            if (stats == null)
+            {
+                return null;
+            }
+            if (stats.Min == null || stats.Max == null)
+            {
+                return null;
+            }
 
-#pragma warning disable CS8603 // Possible null reference return
+            var histogramBounds = await histogramMinMaxProvider.ResultAsync;
             return histogramBounds is null
                 ? new Result(await RefinedMinEstimate(), await RefinedMaxEstimate())
                 : null;
-#pragma warning restore CS8603 // Possible null reference return
         }
 
         private async Task<decimal> RefinedMinEstimate()

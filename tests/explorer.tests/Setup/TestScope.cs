@@ -79,7 +79,7 @@ namespace Explorer.Tests
             Scope.GetInstance<CancellationTokenSource>().Cancel();
         }
 
-        public async Task ResultTest<TComponent, TResult>(Action<TResult> test)
+        public async Task ResultTest<TComponent, TResult>(Action<TResult?> test)
         where TComponent : ResultProvider<TResult>
         where TResult : class
         {

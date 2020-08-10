@@ -20,6 +20,10 @@ namespace Explorer.Components
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var fits = await ResultAsync;
+            if (fits == null)
+            {
+                yield break;
+            }
 
             var goodFits = fits.Values
                 .Where(fit =>
@@ -56,9 +60,13 @@ namespace Explorer.Components
                 }));
         }
 
-        protected override async Task<GoodnessOfFitCollection> Explore()
+        protected override async Task<GoodnessOfFitCollection?> Explore()
         {
             var distribution = await distributionProvider.ResultAsync;
+            if (distribution == null)
+            {
+                return null;
+            }
 
             var analysis = new DistributionAnalysis();
             return analysis.Learn(distribution.Generate(10_000).ToArray());

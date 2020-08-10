@@ -61,13 +61,19 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            foreach (var m in YieldMetrics(await ResultAsync))
+            var result = await ResultAsync;
+            if (result == null)
+            {
+                yield break;
+            }
+
+            foreach (var m in YieldMetrics(result))
             {
                 yield return m;
             }
         }
 
-        protected override async Task<Result> Explore()
+        protected override async Task<Result?> Explore()
         {
             if (Context.ColumnInfo.UserId)
             {

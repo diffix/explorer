@@ -23,30 +23,39 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var distinctValues = await distinctValuesProvider.ResultAsync;
-
-            if (!distinctValues.IsCategorical)
+            var result = await ResultAsync;
+            if (result == null)
             {
-                var result = await ResultAsync;
-
-                yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values.Select(b => new
-                {
-                    BucketSize = b.BucketSize.SnappedSize,
-                    b.LowerBound,
-                    b.Count,
-                    b.CountNoise,
-                }));
-                yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
-                yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
-                yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
+                yield break;
             }
+
+            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values.Select(b => new
+            {
+                BucketSize = b.BucketSize.SnappedSize,
+                b.LowerBound,
+                b.Count,
+                b.CountNoise,
+            }));
+            yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
+            yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
+            yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
         }
 
-        protected override async Task<HistogramWithCounts> Explore()
+        protected override async Task<HistogramWithCounts?> Explore()
         {
+            var distinctValues = await distinctValuesProvider.ResultAsync;
+            if (distinctValues == null)
+            {
+                return null;
+            }
+            if (distinctValues.IsCategorical)
+            {
+                return null;
+            }
+
             var histograms = await histogramsProvider.ResultAsync;
 
-            return histograms
+            return histograms?
                 .OrderBy(h => h.BucketSize.SnappedSize)
                 .ThenBy(h => h.ValueCounts.SuppressedCount)
                 .First();

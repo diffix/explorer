@@ -38,12 +38,25 @@ namespace Explorer.Components
         {
             const int Precision = 6;
             var result = await ResultAsync;
+            if (result == null)
+            {
+                yield break;
+            }
 
             yield return new UntypedMetric(name: "average_estimate", metric: decimal.Round(result.Value, Precision));
         }
 
-        protected override async Task<Result> Explore() =>
-            new Result(await EstimateAverage(await histogramResultProvider.ResultAsync));
+        protected override async Task<Result?> Explore()
+        {
+            var histogramResult = await histogramResultProvider.ResultAsync;
+            if (histogramResult == null)
+            {
+                return null;
+            }
+
+            var average = await EstimateAverage(histogramResult);
+            return new Result(average);
+        }
 
         public class Result
         {

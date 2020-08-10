@@ -12,14 +12,14 @@ namespace Explorer.Components
         ExplorerComponent<QuartileEstimator.Result>, PublisherComponent
     {
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
-        private readonly ResultProvider<HistogramWithCounts> histogramResult;
+        private readonly ResultProvider<HistogramWithCounts> histogramResultProvider;
 
         public QuartileEstimator(
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
-            ResultProvider<HistogramWithCounts> histogramResult)
+            ResultProvider<HistogramWithCounts> histogramResultProvider)
         {
             this.distinctValuesProvider = distinctValuesProvider;
-            this.histogramResult = histogramResult;
+            this.histogramResultProvider = histogramResultProvider;
         }
 
         public static Task<List<double>> EstimateQuartiles(HistogramWithCounts hwc) =>
@@ -81,17 +81,34 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var distinctValues = await distinctValuesProvider.ResultAsync;
-            if (!distinctValues.IsCategorical)
+            var result = await ResultAsync;
+            if (result == null)
             {
-                var result = await ResultAsync;
-
-                yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
+                yield break;
             }
+
+            yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
         }
 
-        protected override async Task<Result> Explore() =>
-            new Result(await EstimateQuartiles(await histogramResult.ResultAsync));
+        protected override async Task<Result?> Explore()
+        {
+            var distinctValues = await distinctValuesProvider.ResultAsync;
+            if (distinctValues == null)
+            {
+                return null;
+            }
+            if (distinctValues.IsCategorical)
+            {
+                return null;
+            }
+
+            var histogramResult = await histogramResultProvider.ResultAsync;
+            if (histogramResult == null)
+            {
+                return null;
+            }
+            return new Result(await EstimateQuartiles(histogramResult));
+        }
 
         public class Result
         {

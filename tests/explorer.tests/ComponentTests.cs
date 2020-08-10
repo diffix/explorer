@@ -41,19 +41,20 @@ namespace Explorer.Tests
             using var scope = await testFixture.CreateTestScope(dataSource, table, column, this);
 
             // Construct MinMaxRefiner explicitly in order to inject a null result from MinMaxFromHistogramComponent
+            var simpleStatsProvider = new SimpleStats<decimal>() { Context = scope.Context };
             var histogramMinMaxProvider = new StaticResultProvider<MinMaxFromHistogramComponent.Result>(null!);
-            var refiner = new MinMaxRefiner(histogramMinMaxProvider) { Context = scope.Context };
+            var refiner = new MinMaxRefiner(simpleStatsProvider, histogramMinMaxProvider) { Context = scope.Context };
             var refined = await refiner.ResultAsync;
 
             if (test != MinMaxRefinerTest.MaxOnly)
             {
                 var aircloakMin = (await scope.QueryRows<Min, Min.Result<decimal>>(new Min())).Single().Min;
-                Assert.True(refined.Min < aircloakMin, $"Expected lower than {aircloakMin}, got {refined.Min}");
+                Assert.True(refined?.Min < aircloakMin, $"Expected lower than {aircloakMin}, got {refined?.Min}");
             }
             if (test != MinMaxRefinerTest.MinOnly)
             {
                 var aircloakMax = (await scope.QueryRows<Max, Max.Result<decimal>>(new Max())).Single().Max;
-                Assert.True(refined.Max > aircloakMax, $"Expected higher than {aircloakMax}, got {refined.Max}");
+                Assert.True(refined?.Max > aircloakMax, $"Expected higher than {aircloakMax}, got {refined?.Max}");
             }
         }
 
@@ -85,7 +86,8 @@ namespace Explorer.Tests
                     ValueWithCount<bool>.ValueCount(true, 592),
                 };
 
-                CheckDistinctCategories(result, expectedValues, el => el.GetBoolean());
+                Assert.NotNull(result);
+                CheckDistinctCategories(result!, expectedValues, el => el.GetBoolean());
             });
         }
 
@@ -104,7 +106,8 @@ namespace Explorer.Tests
                     ValueWithCount<string>.ValueCount("B", 30L),
                 };
 
-                CheckDistinctCategories(result, expectedValues, el => el.GetString());
+                Assert.NotNull(result);
+                CheckDistinctCategories(result!, expectedValues, el => el.GetString());
             });
         }
 
@@ -117,8 +120,8 @@ namespace Explorer.Tests
             {
                 const decimal expectedMin = 12.0M;
                 const decimal expectedMax = 61.0M;
-                Assert.True(result.Min == expectedMin, $"Expected {expectedMin}, got {result.Min}");
-                Assert.True(result.Max == expectedMax, $"Expected {expectedMax}, got {result.Max}");
+                Assert.True(result?.Min == expectedMin, $"Expected {expectedMin}, got {result?.Min}");
+                Assert.True(result?.Max == expectedMax, $"Expected {expectedMax}, got {result?.Max}");
             });
         }
 
@@ -153,13 +156,14 @@ namespace Explorer.Tests
         }
 
         public class StaticResultProvider<T> : ResultProvider<T>
+        where T : class
         {
-            public StaticResultProvider(T result)
+            public StaticResultProvider(T? result)
             {
                 ResultAsync = Task.FromResult(result);
             }
 
-            public Task<T> ResultAsync { get; }
+            public Task<T?> ResultAsync { get; }
         }
     }
 }
