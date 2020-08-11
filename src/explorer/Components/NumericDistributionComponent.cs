@@ -5,7 +5,6 @@
     using System.Threading.Tasks;
 
     using Accord.Statistics.Distributions.Univariate;
-    using Explorer.Common;
     using Explorer.Components.ResultTypes;
 
     public class NumericDistributionComponent : ExplorerComponent<NumericDistribution>
@@ -17,9 +16,14 @@
             this.histogramResultProvider = histogramResultProvider;
         }
 
-        public static NumericDistribution GenerateDistribution(Histogram histogram)
+        public static NumericDistribution? GenerateDistribution(HistogramWithCounts histogramResult)
         {
-            var samples = histogram.Buckets.Values.Select(bucket =>
+            if (histogramResult.ValueCounts.NonSuppressedNonNullCount == 0)
+            {
+                return null;
+            }
+
+            var samples = histogramResult.Histogram.Buckets.Values.Select(bucket =>
             {
                 var sampleValue = bucket.LowerBound + (bucket.BucketSize.SnappedSize / 2);
                 var sampleWeight = Convert.ToInt32(bucket.Count);
@@ -46,7 +50,7 @@
                 return null;
             }
 
-            return GenerateDistribution(histogramResult.Histogram);
+            return GenerateDistribution(histogramResult);
         }
     }
 }
