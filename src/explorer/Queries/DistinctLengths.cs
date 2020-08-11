@@ -19,7 +19,7 @@ namespace Explorer.Queries
                     count(*),
                     count_noise(*)
                 from {table}
-                group by {column}";
+                group by 1";
         }
     }
 }
