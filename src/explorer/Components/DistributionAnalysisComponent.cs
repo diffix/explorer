@@ -57,7 +57,8 @@ namespace Explorer.Components
                         }
                         .Where(gm => !(gm is null) && double.IsFinite(gm.PValue)),
                     };
-                }));
+                })
+                .ToList());
         }
 
         protected override async Task<GoodnessOfFitCollection?> Explore()

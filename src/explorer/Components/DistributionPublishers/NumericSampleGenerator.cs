@@ -47,7 +47,7 @@ namespace Explorer.Components
                         .Generate(SamplesToPublish)
                         .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
                         .OrderBy(_ => _)
-                        .ToArray());
+                        .ToList());
         }
     }
 }

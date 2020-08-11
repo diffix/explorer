@@ -37,16 +37,16 @@ namespace Explorer.Components
             {
                 Total = total,
                 Suppressed = suppressed,
-                Counts =
-                    from row in valueCounts
-                    where row.HasValue
-                    orderby row.GroupingIndex ascending
-                    select new
+                Counts = valueCounts
+                    .Where(row => row.HasValue)
+                    .OrderBy(row => row.GroupingIndex)
+                    .Select(row => new
                     {
                         row.Value,
                         row.Count,
                         row.CountNoise,
-                    },
+                    })
+                    .ToList(),
             };
         }
 

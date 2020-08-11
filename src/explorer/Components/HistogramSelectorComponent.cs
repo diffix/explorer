@@ -35,7 +35,8 @@ namespace Explorer.Components
                 b.LowerBound,
                 b.Count,
                 b.CountNoise,
-            }));
+            })
+            .ToList());
             yield return new UntypedMetric("histogram.suppressed_count", result.ValueCounts.SuppressedCount);
             yield return new UntypedMetric("histogram.suppressed_ratio", result.ValueCounts.SuppressedCountRatio);
             yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);

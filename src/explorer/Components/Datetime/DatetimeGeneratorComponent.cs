@@ -32,7 +32,7 @@ namespace Explorer.Components
                 metric: distribution
                         .Generate(SamplesToPublish)
                         .OrderBy(_ => _)
-                        .ToArray());
+                        .ToList());
         }
     }
 }

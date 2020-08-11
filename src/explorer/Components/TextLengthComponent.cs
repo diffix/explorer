@@ -26,7 +26,8 @@ namespace Explorer.Components
                 result.DistinctRows
                     .Where(r => r.HasValue)
                     .OrderBy(r => r.Value.GetInt32())
-                    .Select(r => new { r.Value, r.Count }));
+                    .Select(r => new { r.Value, r.Count })
+                    .ToList());
             yield return new UntypedMetric("text.length.counts", result.ValueCounts);
         }
 
