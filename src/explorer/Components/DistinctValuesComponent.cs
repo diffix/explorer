@@ -87,12 +87,12 @@ namespace Explorer.Components
         {
             public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
             {
-                DistinctRows = distinctRows;
+                DistinctRows = distinctRows.ToList();
                 ValueCounts = ValueCounts.Compute(distinctRows);
                 IsCategorical = ValueCounts.SuppressedRowRatio < SuppressedRatioThreshold;
             }
 
-            public IEnumerable<ValueWithCount<JsonElement>> DistinctRows { get; }
+            public List<ValueWithCount<JsonElement>> DistinctRows { get; }
 
             public ValueCounts ValueCounts { get; }
 
