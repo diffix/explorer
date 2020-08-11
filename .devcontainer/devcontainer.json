@@ -38,7 +38,8 @@
 		// "ASPNETCORE_Kestrel__Certificates__Default__Password": "SecurePwdGoesHere",
 		// "ASPNETCORE_Kestrel__Certificates__Default__Path": "/home/vscode/.aspnet/https/aspnetapp.pfx",
 		// A development api key can be imported from the local environment
-		"Explorer__AircloakApiKey": "${localEnv:AIRCLOAK_API_KEY}"
+		"Explorer__AircloakApiKey": "${localEnv:AIRCLOAK_API_KEY}",
+		"Sentry__ServerName": "${localEnv:USER}-${containerEnv:HOSTNAME}"
 	},
 	// Add the IDs of extensions you want installed when the container is created in the array below.
 	"extensions": [
