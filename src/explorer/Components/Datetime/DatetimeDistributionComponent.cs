@@ -19,7 +19,7 @@ namespace Explorer.Components
 
         public static DatetimeDistribution? GenerateDistribution(LinearTimeBuckets.Result timeBuckets)
         {
-            if (!timeBuckets.Rows.Any())
+            if (!timeBuckets.ValueCounts.Any(vc => vc.NonSuppressedNonNullCount > 0))
             {
                 return null;
             }
