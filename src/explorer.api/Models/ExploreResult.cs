@@ -48,7 +48,7 @@ namespace Explorer.Api.Models
 
         public List<List<object?>> SampleData { get; }
 
-        public List<string> Errors { get; } = new List<string>();
+        public HashSet<string> Errors { get; } = new HashSet<string>();
 
         public void AddErrorMessage(string message)
         {
