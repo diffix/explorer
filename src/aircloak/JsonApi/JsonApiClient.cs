@@ -1,6 +1,7 @@
 namespace Aircloak.JsonApi
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -11,7 +12,6 @@ namespace Aircloak.JsonApi
     using Aircloak.JsonApi.JsonConversion;
     using Aircloak.JsonApi.ResponseTypes;
     using Diffix;
-    using Diffix.JsonConversion;
 
     /// <summary>
     /// Convenience class providing GET and POST methods adapted to the
@@ -31,6 +31,15 @@ namespace Aircloak.JsonApi
     public class JsonApiClient
     {
         internal const string HttpClientName = "aircloak-api";
+        private const int MaxConcurrentDBJobs = 10;
+        private const int MaxConcurrentCloakJobs = 50;
+        private const int MaxConcurrentQueryJobs = MaxConcurrentDBJobs + MaxConcurrentCloakJobs;
+
+        private static readonly ConcurrentDictionary<Uri, SemaphoreSlim> DbSemaphores =
+            new ConcurrentDictionary<Uri, SemaphoreSlim>();
+
+        private static readonly ConcurrentDictionary<Uri, SemaphoreSlim> QuerySemaphores =
+            new ConcurrentDictionary<Uri, SemaphoreSlim>();
 
         private static readonly JsonSerializerOptions DefaultJsonOptions = new JsonSerializerOptions
         {
@@ -52,6 +61,12 @@ namespace Aircloak.JsonApi
             httpClient = httpClientFactory.CreateClient(HttpClientName);
             this.authProvider = authProvider;
         }
+
+        private SemaphoreSlim GetDbSemaphore(Uri apiUrl)
+            => DbSemaphores.GetOrAdd(apiUrl, _ => new SemaphoreSlim(MaxConcurrentDBJobs));
+
+        private SemaphoreSlim GetQuerySemaphore(Uri apiUrl)
+            => QuerySemaphores.GetOrAdd(apiUrl, _ => new SemaphoreSlim(MaxConcurrentQueryJobs));
 
         /// <summary>
         /// Sends a Http GET request to the Aircloak server's /api/data_sources endpoint.
@@ -92,8 +107,33 @@ namespace Aircloak.JsonApi
             TimeSpan pollFrequency,
             CancellationToken cancellationToken)
         {
-            var queryResponse = await SubmitQuery(apiUrl, dataSource, query, cancellationToken);
-            return await PollQueryUntilComplete(apiUrl, queryResponse.QueryId, query, rowParser, pollFrequency, cancellationToken);
+            var querySemaphore = GetQuerySemaphore(apiUrl);
+            var dbSemaphore = GetDbSemaphore(apiUrl);
+
+            try
+            {
+                await querySemaphore.WaitAsync(cancellationToken);
+
+                var queryResponse = await SubmitQuery(
+                    apiUrl,
+                    dataSource,
+                    query,
+                    cancellationToken,
+                    dbSemaphore);
+
+                return await PollQueryUntilComplete(
+                    apiUrl,
+                    queryResponse.QueryId,
+                    query,
+                    rowParser,
+                    pollFrequency,
+                    cancellationToken,
+                    dbSemaphore);
+            }
+            finally
+            {
+                querySemaphore.Release();
+            }
         }
 
         /// <summary>
@@ -110,7 +150,8 @@ namespace Aircloak.JsonApi
             Uri apiUrl,
             string dataSource,
             string queryStatement,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            SemaphoreSlim? dbSemaphore = null)
         {
             var queryBody = new
             {
@@ -123,11 +164,16 @@ namespace Aircloak.JsonApi
 
             var endPoint = new Uri(apiUrl, "queries");
             var requestContent = JsonSerializer.Serialize(queryBody);
+
+            await (dbSemaphore?.WaitAsync(cancellationToken) ?? Task.CompletedTask);
+
             using var httpResponse = await ApiPostRequest(endPoint, requestContent, cancellationToken);
             var queryResponse = await ParseJson<QueryResponse>(httpResponse, DefaultJsonOptions, cancellationToken);
 
             if (!queryResponse.Success)
             {
+                dbSemaphore?.Release();
+
                 throw new Exceptions.QueryException(
                     $"Unhandled Aircloak error returned for query to {dataSource}. " +
                     $"Query Statement: {queryStatement}.");
@@ -159,7 +205,8 @@ namespace Aircloak.JsonApi
             string query,
             JsonRowParser<TRow> rowParser,
             TimeSpan pollFrequency,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            SemaphoreSlim? dbSemaphore = null)
         {
             // Register the JsonArrayConverter so the TRow can be deserialized correctly
             var jsonDeserializeOptions = new JsonSerializerOptions
@@ -168,6 +215,7 @@ namespace Aircloak.JsonApi
                 Converters = { new JsonArrayConverter<TRow>(rowParser) },
             };
 
+            var waitingForDb = true;
             var queryCompleted = false;
             var speed = 16;
 
@@ -180,6 +228,12 @@ namespace Aircloak.JsonApi
                     var endPoint = new Uri(apiUrl, $"queries/{queryId}");
                     using var httpResponse = await ApiGetRequest(endPoint, cancellationToken);
                     var queryResult = await ParseJson<QueryResult<TRow>>(httpResponse, jsonDeserializeOptions, cancellationToken);
+
+                    if (waitingForDb && queryResult.Query.QueryState.EndsWith("processing", StringComparison.Ordinal))
+                    {
+                        waitingForDb = false;
+                        dbSemaphore?.Release();
+                    }
 
                     if (queryResult.Query.Completed)
                     {
@@ -208,6 +262,13 @@ namespace Aircloak.JsonApi
                     await CancelQuery(apiUrl, queryId);
                 }
                 throw;
+            }
+            finally
+            {
+                if (waitingForDb)
+                {
+                    dbSemaphore?.Release();
+                }
             }
 
             static string GetQueryResultDetails(string query, QueryResult<TRow> queryResult)

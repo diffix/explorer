@@ -1,7 +1,6 @@
 namespace Aircloak.JsonApi
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
@@ -21,17 +20,11 @@ namespace Aircloak.JsonApi
     /// </summary>
     public class AircloakConnection
     {
-        private const int MaxConcurrentRequests = 10;
-
-        private static readonly ConcurrentDictionary<Uri, SemaphoreSlim> Semaphores =
-            new ConcurrentDictionary<Uri, SemaphoreSlim>();
-
         private readonly string dataSourceName;
         private readonly Uri apiUrl;
         private readonly JsonApiClient apiClient;
         private readonly TimeSpan pollFrequency;
         private readonly CancellationToken cancellationToken;
-        private readonly SemaphoreSlim semaphore;
 
         /// <summary>
         /// Initializes a new  instance of the <see cref="AircloakConnection" /> class.
@@ -53,7 +46,6 @@ namespace Aircloak.JsonApi
             this.dataSourceName = dataSourceName;
             this.pollFrequency = pollFrequency;
             this.cancellationToken = cancellationToken;
-            semaphore = Semaphores.GetOrAdd(apiUrl, _ => new SemaphoreSlim(MaxConcurrentRequests));
         }
 
         /// <summary>
@@ -65,22 +57,13 @@ namespace Aircloak.JsonApi
         /// <returns>An object containing a collection with the rows returned by the query.</returns>
         public async Task<DResult<TRow>> Exec<TRow>(string query, JsonRowParser<TRow> rowParser)
         {
-            await semaphore.WaitAsync(cancellationToken);
-
-            try
-            {
-                return await apiClient.Query(
+            return await apiClient.Query(
                     apiUrl,
                     dataSourceName,
                     query,
                     rowParser,
                     pollFrequency,
                     cancellationToken);
-            }
-            finally
-            {
-                semaphore.Release();
-            }
         }
 
         /// <summary>
