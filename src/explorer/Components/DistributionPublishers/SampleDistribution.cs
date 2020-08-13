@@ -4,7 +4,7 @@ namespace Explorer.Components
 
     public interface SampleDistribution<T>
     {
-        public double Entropy { get; }
+        public double? Entropy { get; }
 
         public T Mean { get; }
 
