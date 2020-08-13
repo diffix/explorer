@@ -1,5 +1,6 @@
 ﻿namespace Explorer.Components
 {
+    using System;
     using System.Collections.Generic;
     using System.Text.Json.Serialization;
 
@@ -15,7 +16,20 @@
             this.distribution = distribution;
         }
 
-        public double Entropy => distribution.Entropy;
+        public double? Entropy
+        {
+            get
+            {
+                try
+                {
+                    return distribution.Entropy;
+                }
+                catch (InvalidOperationException)
+                {
+                    return null;
+                }
+            }
+        }
 
         public double Mean => distribution.Mean;
 

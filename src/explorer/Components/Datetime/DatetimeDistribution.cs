@@ -19,7 +19,20 @@
             this.distribution = distribution;
         }
 
-        public double Entropy { get => distribution.Entropy; }
+        public double? Entropy
+        {
+            get
+            {
+                try
+                {
+                    return distribution.Entropy;
+                }
+                catch (InvalidOperationException)
+                {
+                    return null;
+                }
+            }
+        }
 
         public DateTime Mean { get => ConvertTime(distribution.Mean); }
 
