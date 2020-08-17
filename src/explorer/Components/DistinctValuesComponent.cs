@@ -88,7 +88,7 @@ namespace Explorer.Components
             public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
             {
                 DistinctRows = distinctRows.ToList();
-                ValueCounts = ValueCounts.Compute(distinctRows);
+                ValueCounts = ValueCounts.Compute(DistinctRows);
                 IsCategorical = ValueCounts.SuppressedRowRatio < SuppressedRatioThreshold;
             }
 
