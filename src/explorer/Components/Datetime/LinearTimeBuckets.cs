@@ -11,8 +11,6 @@ namespace Explorer.Components
 
     public class LinearTimeBuckets : ExplorerComponent<LinearTimeBuckets.Result>, PublisherComponent
     {
-        private const double SuppressedRatioThreshold = 0.1;
-
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
@@ -44,7 +42,7 @@ namespace Explorer.Components
             foreach (var group in TimeUtilities.GroupByLabel(queryResult))
             {
                 var counts = ValueCounts.Compute(group);
-                if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
+                if (!counts.IsCategorical)
                 {
                     break;
                 }

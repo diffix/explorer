@@ -5,6 +5,8 @@ namespace Explorer.Common
 
     public sealed class ValueCounts
     {
+        private const double SuppressedRatioThreshold = 0.1;
+
         private ValueCounts()
         {
         }
@@ -35,6 +37,8 @@ namespace Explorer.Common
         // We can use this to estimate the proportion of unqiue values that have been suppressed. This may be a better
         // metric for estimating the cardinality of a column than the `SuppressedCountRatio`
         public double SuppressedRowRatio => MedianCount == 0 || TotalRows == 0 ? 1 : (double)SuppressedCount / MedianCount / TotalRows;
+
+        public bool IsCategorical => SuppressedRowRatio < SuppressedRatioThreshold;
 
         public static ValueCounts Compute(IList<CountableRow> rows)
         {
