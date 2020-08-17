@@ -43,9 +43,10 @@ namespace Explorer.Components
 
                 if (remaining.Any())
                 {
+                    using var jdoc = JsonDocument.Parse("\"--OTHER--\"");
                     toPublish = toPublish.Append(new
                     {
-                        Value = JsonDocument.Parse("\"--OTHER--\"").RootElement,
+                        Value = jdoc.RootElement.Clone(),
                         Count = remaining.Sum(distinct => distinct.Count),
                     });
                 }
