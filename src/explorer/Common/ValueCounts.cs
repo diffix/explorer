@@ -17,8 +17,6 @@ namespace Explorer.Common
 
         public long NullCount { get; private set; } = 0;
 
-        public long MedianCount { get; private set; } = 0;
-
         public long TotalRows { get; private set; } = 0;
 
         public long SuppressedRows { get; private set; } = 0;
@@ -33,23 +31,17 @@ namespace Explorer.Common
 
         public double SuppressedCountRatio => TotalCount == 0 ? 1 : (double)SuppressedCount / TotalCount;
 
-        // Note the `SuppressedCount / MedianCount` can be seen as a proxy for the number of suppressed rows in the original dataset.
+        // Note the `SuppressedCount / 4` can be seen as a proxy for the number of suppressed rows in the original dataset,
+        // where 4 average for the low-value filter, so a good estimate for the average count in a suppressed bucket is in fact 2.
         // We can use this to estimate the proportion of unqiue values that have been suppressed. This may be a better
         // metric for estimating the cardinality of a column than the `SuppressedCountRatio`
-        public double SuppressedRowRatio => MedianCount == 0 || TotalRows == 0 ? 1 : (double)SuppressedCount / MedianCount / TotalRows;
+        public double SuppressedRowRatio => TotalRows == 0 ? 1 : (double)SuppressedCount / 2 / TotalRows;
 
         public bool IsCategorical => SuppressedRowRatio < SuppressedRatioThreshold;
 
         public static ValueCounts Compute(IList<CountableRow> rows)
         {
-            var vc = rows.Aggregate(new ValueCounts(), AccumulateRow);
-            if (rows.Count != 0)
-            {
-                vc.MedianCount = rows.Count % 2 == 1 ?
-                        rows[(rows.Count - 1) / 2].Count :
-                        (rows[rows.Count / 2].Count + rows[(rows.Count / 2) - 1].Count) / 2;
-            }
-            return vc;
+            return rows.Aggregate(new ValueCounts(), AccumulateRow);
         }
 
         public static ValueCounts Compute(IEnumerable<CountableRow> rows)
