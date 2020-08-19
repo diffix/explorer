@@ -6,7 +6,6 @@ namespace Explorer.Components
     using System.Text;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
     using Explorer.Metrics;
     using Explorer.Queries;
@@ -16,7 +15,7 @@ namespace Explorer.Components
     public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
     {
         public const int DefaultSamplesToPublish = 20;
-        public const int DefaultEmailDomainsCountThreshold = 5 * DefaultSamplesToPublish;
+        public const int DefaultDistinctValuesBySamplesToPublishRatioThreshold = 5;
         public const int DefaultSubstringQueryColumnCount = 5;
 
         private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
@@ -29,13 +28,13 @@ namespace Explorer.Components
             this.emailCheckProvider = emailCheckProvider;
             this.distinctValuesProvider = distinctValuesProvider;
             SamplesToPublish = DefaultSamplesToPublish;
-            EmailDomainsCountThreshold = DefaultEmailDomainsCountThreshold;
+            DistinctValuesBySamplesToPublishRatioThreshold = DefaultDistinctValuesBySamplesToPublishRatioThreshold;
             SubstringQueryColumnCount = DefaultSubstringQueryColumnCount;
         }
 
         public int SamplesToPublish { get; set; }
 
-        public int EmailDomainsCountThreshold { get; set; }
+        public int DistinctValuesBySamplesToPublishRatioThreshold { get; set; }
 
         public int SubstringQueryColumnCount { get; set; }
 
@@ -55,7 +54,11 @@ namespace Explorer.Components
             {
                 return null;
             }
-            if (distinctValuesResult.IsCategorical)
+
+            // the sample data generation algorithm involving substrings is quite imprecise
+            // so we use a relaxed condition for when to do sampling directly from the available values
+            // (the default value for the ratio is intentionally quite small)
+            if (distinctValuesResult.ValueCounts.NonSuppressedRows > DistinctValuesBySamplesToPublishRatioThreshold * SamplesToPublish)
             {
                 return null;
             }
@@ -83,12 +86,11 @@ namespace Explorer.Components
             return sb.ToString();
         }
 
-        private static string GenerateEmail(
+        private string GenerateEmail(
             SubstringsData substrings,
             SubstringWithCountList domains,
             SubstringWithCountList tlds,
-            Random rand,
-            int domainsCountThreshold)
+            Random rand)
         {
             // create local-part section
             var str = GenerateString(substrings, minLength: 6, rand);
@@ -111,7 +113,7 @@ namespace Explorer.Components
             {
                 return string.Empty;
             }
-            if (domains.Count >= domainsCountThreshold)
+            if (domains.Count > DistinctValuesBySamplesToPublishRatioThreshold * SamplesToPublish)
             {
                 // if the number of distinct domains is big enough we select one from the extracted list
                 return localPart + domains.GetRandomValue(rand);
@@ -137,18 +139,16 @@ namespace Explorer.Components
             return localPart + "@" + domain + tlds.GetRandomValue(rand);
         }
 
-        private static IEnumerable<string> GenerateEmails(
+        private IEnumerable<string> GenerateEmails(
             SubstringsData substrings,
             SubstringWithCountList domains,
-            SubstringWithCountList tlds,
-            int generatedValuesCount,
-            int domainsCountThreshold)
+            SubstringWithCountList tlds)
         {
             var rand = new Random(Environment.TickCount);
-            var emails = new List<string>(generatedValuesCount);
-            for (var i = 0; emails.Count < generatedValuesCount && i < generatedValuesCount * 100; i++)
+            var emails = new List<string>(SamplesToPublish);
+            for (var i = 0; emails.Count < SamplesToPublish && i < SamplesToPublish * 100; i++)
             {
-                var email = GenerateEmail(substrings, domains, tlds, rand, domainsCountThreshold);
+                var email = GenerateEmail(substrings, domains, tlds, rand);
                 if (!string.IsNullOrEmpty(email))
                 {
                     emails.Add(email);
@@ -216,7 +216,7 @@ namespace Explorer.Components
             {
                 return Enumerable.Empty<string>();
             }
-            return GenerateEmails(substrings, domains, tlds, SamplesToPublish, EmailDomainsCountThreshold);
+            return GenerateEmails(substrings, domains, tlds);
         }
 
         private async Task<IEnumerable<string>> GenerateStrings()
