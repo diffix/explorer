@@ -15,14 +15,19 @@
             GetQueryStatement(Quote(table), Quote(column));
 
         /// <summary>
+        /// Quotes a string.
+        /// </summary>
+        /// <param name="name">The string to quote.</param>
+        /// <returns>The quoted string.</returns>
+        protected static string Quote(string name) =>
+            "\"" + name + "\"";
+
+        /// <summary>
         /// Gets the query statement that will generate rows that can be read into instances of <c>TRow</c>.
         /// </summary>
         /// <param name="table">The table name for which to build the query.</param>
         /// <param name="column">The column name for which to build the query.</param>
         /// <returns>The query string to submit.</returns>
         protected abstract string GetQueryStatement(string table, string column);
-
-        private static string Quote(string name) =>
-            "\"" + name + "\"";
     }
 }
