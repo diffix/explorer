@@ -5,7 +5,7 @@ namespace Explorer.Common
 
     public sealed class ValueCounts
     {
-        private const double SuppressedRatioThreshold = 0.1;
+        private const double SuppressedRatioThreshold = 0.01;
 
         private ValueCounts()
         {
@@ -31,13 +31,12 @@ namespace Explorer.Common
 
         public double SuppressedCountRatio => TotalCount == 0 ? 1 : (double)SuppressedCount / TotalCount;
 
-        // Note the `SuppressedCount / 4` can be seen as a proxy for the number of suppressed rows in the original dataset,
-        // where 4 average for the low-value filter, so a good estimate for the average count in a suppressed bucket is in fact 2.
-        // We can use this to estimate the proportion of unqiue values that have been suppressed. This may be a better
-        // metric for estimating the cardinality of a column than the `SuppressedCountRatio`
-        public double SuppressedRowRatio => TotalRows == 0 ? 1 : (double)SuppressedCount / 2 / TotalRows;
-
-        public bool IsCategorical => SuppressedRowRatio < SuppressedRatioThreshold;
+        /// <summary>
+        /// Gets a value indicating whether the columns contains categorical data or not.
+        /// A high count of suppressed values means that there are many values which are not part
+        /// of any bucket, so the column is not categorical.
+        /// </summary>
+        public bool IsCategorical => SuppressedCountRatio < SuppressedRatioThreshold;
 
         public static ValueCounts Compute(IList<CountableRow> rows)
         {
