@@ -1,5 +1,6 @@
 namespace Explorer.Common
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -35,8 +36,10 @@ namespace Explorer.Common
         /// Gets a value indicating whether the columns contains categorical data or not.
         /// A high count of suppressed values means that there are many values which are not part
         /// of any bucket, so the column is not categorical.
+        /// The maximum number of categories is also limited logarithmically by the total number of values, i.e.:
+        /// 100 values - 37 categories; 10_000 values - 55 categories; 1_000_000 values - 72 categories; 1_000_000_000 values - 98 categories.
         /// </summary>
-        public bool IsCategorical => SuppressedCountRatio < SuppressedRatioThreshold;
+        public bool IsCategorical => SuppressedCountRatio < SuppressedRatioThreshold && NonSuppressedRows <= 20 + Math.Log(NonSuppressedCount, 1.3);
 
         public static ValueCounts Compute(IList<CountableRow> rows)
         {
