@@ -10,32 +10,25 @@
 
     public class ColumnPairs : DQuery<ColumnPairs.Result>
     {
-        public ColumnPairs(IEnumerable<string> correlationColumns)
-        {
-            PairColumns = ImmutableArray.CreateRange(correlationColumns);
-        }
-
-        private ImmutableArray<string> PairColumns { get; set; } = ImmutableArray<string>.Empty;
-
-        private string? BaseColumn { get; set; }
+        private ImmutableArray<string> Columns { get; set; } = ImmutableArray<string>.Empty;
 
         public override Result ParseRow(ref Utf8JsonReader reader) => new Result(
-            ref reader, PairColumns.Prepend(BaseColumn!));
+            ref reader, Columns);
 
-        protected override string GetQueryStatement(string table, string baseColumn)
+        protected override string GetQueryStatement(string table, IEnumerable<string> quotedColumns)
         {
-            BaseColumn = baseColumn[1..^1];
-            var pairFragment = string.Join(",", PairColumns.Select(Quote));
-            var groups = Enumerable.Range(3, PairColumns.Length).Select(i => $"(2, {i})");
+            // Unquote the columns.
+            Columns = quotedColumns.Select(c => c[1..^1]).ToImmutableArray();
+
+            var columnsFragment = string.Join(",", quotedColumns);
+            var groups = Enumerable.Range(3, quotedColumns.Count()).Select(i => $"(2, {i})");
 
             return $@"
                 select
                     grouping_id(
-                        {baseColumn},
-                        {pairFragment}
+                        {columnsFragment}
                     ),
-                    {baseColumn},
-                    {pairFragment},
+                    {columnsFragment},
                     count(*),
                     count_noise(*)
                 from {table}
