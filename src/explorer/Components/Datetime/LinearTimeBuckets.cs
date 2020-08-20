@@ -42,7 +42,7 @@ namespace Explorer.Components
             foreach (var group in TimeUtilities.GroupByLabel(queryResult))
             {
                 var counts = ValueCounts.Compute(group);
-                if (!counts.IsCategorical)
+                if (TimeUtilities.TooManySuppressedValues(counts))
                 {
                     break;
                 }

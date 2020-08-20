@@ -81,7 +81,7 @@ namespace Explorer.Components
                 else
                 {
                     var counts = ValueCounts.Compute(group);
-                    if (!counts.IsCategorical)
+                    if (TimeUtilities.TooManySuppressedValues(counts))
                     {
                         // If a lot of rows are suppressed, stop.
                         break;

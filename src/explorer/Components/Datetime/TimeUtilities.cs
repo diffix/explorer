@@ -8,11 +8,16 @@ namespace Explorer.Components
 
     public static class TimeUtilities
     {
+        private const double SuppressedRatioThreshold = 0.2;
+
         public static IEnumerable<IGrouping<string, GroupingSetsResult<T>>> GroupByLabel<T>(
             IEnumerable<GroupingSetsResult<T>> queryResult)
         {
             return queryResult.GroupBy(row => row.GroupingLabel);
         }
+
+        internal static bool TooManySuppressedValues(ValueCounts counts)
+            => counts.SuppressedCountRatio > SuppressedRatioThreshold;
 
         internal static IEnumerable<ExploreMetric> YieldMetrics<TResult, T>(string metricName, TResult result)
         where TResult : GenericResult<T>
