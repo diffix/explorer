@@ -9,7 +9,7 @@
     using Aircloak.JsonApi;
     using Diffix;
 
-    public class ContextBuilder
+    public class ContextBuilder : ExplorerContextBuilder<Models.ExploreParams>
     {
         private readonly AircloakConnectionBuilder connectionBuilder;
 

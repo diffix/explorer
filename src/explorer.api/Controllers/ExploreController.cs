@@ -54,36 +54,15 @@ namespace Explorer.Api.Controllers
                 return NotFound($"Couldn't find exploration with id {explorationId}.");
             }
 
-            var explorationStatus = explorationRegistry.GetStatus(explorationId);
-            var explorationParams = explorationRegistry.GetExplorationParams(explorationId);
+            var (explorationParams, exploration) = explorationRegistry.GetExploration(explorationId);
+            var explorationStatus = exploration.Status;
 
             if (explorationStatus == ExplorationStatus.New || explorationStatus == ExplorationStatus.Validating)
             {
                 return Ok(new ExploreResult(explorationId, explorationStatus, explorationParams));
             }
 
-            var validationErrors = explorationRegistry.GetValidationErrors(explorationId);
-
-            if (validationErrors.Any())
-            {
-                var result = new ExploreResult(explorationId, explorationStatus, explorationParams);
-                logger.LogWarning("Exploration parameter validation failed.");
-                result.AddErrorMessage("Exploration parameter validation failed.");
-
-                foreach (var error in validationErrors)
-                {
-                    logger.LogWarning(error);
-                    result.AddErrorMessage(error);
-                }
-                explorationRegistry.Remove(explorationId);
-                return Ok(result);
-            }
-
-            var exploration = explorationRegistry.GetExploration(explorationId) ??
-                throw new InvalidOperationException(
-                    "Exploration validation should be completed before dereferencing the exploration.");
-
-            var exploreResult = new ExploreResult(explorationId, exploration);
+            var exploreResult = new ExploreResult(explorationId, exploration, explorationParams);
 
             if (explorationStatus.IsComplete())
             {

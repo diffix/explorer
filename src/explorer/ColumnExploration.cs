@@ -8,6 +8,7 @@ namespace Explorer
     using Diffix;
     using Explorer.Metrics;
     using Microsoft.Extensions.Logging;
+    using static Explorer.ExplorationStatusEnum;
 
     public sealed class ColumnExploration : AbstractExploration, IDisposable
     {
@@ -37,6 +38,8 @@ namespace Explorer
         public IEnumerable<ExploreMetric> PublishedMetrics =>
             scope.MetricsPublisher.PublishedMetrics;
 
+        public override ExplorationStatus Status { get; protected set; }
+
         public void Dispose()
         {
             Dispose(disposing: true);
@@ -47,10 +50,14 @@ namespace Explorer
         {
             try
             {
+                Status = ExplorationStatus.Processing;
                 await t;
+                Status = ExplorationStatus.Complete;
             }
             catch (Exception ex)
             {
+                Status = ExplorationStatus.Error;
+
                 var msg = $"Error in column exploration for `{Context.DataSource}` / `{Context.Table}` / `{Column}`.";
                 var wrappedEx = new ExplorerException(msg, ex).WithExtraContext(Context);
                 scope.Logger.LogError(ex, msg, wrappedEx.ExtraContext);
