@@ -13,7 +13,6 @@ namespace Explorer.Components
     public class DistinctValuesComponent
         : ExplorerComponent<DistinctValuesComponent.Result>, PublisherComponent
     {
-        private const double SuppressedRatioThreshold = 0.1;
         private const int DefaultNumValuesToPublish = 10;
 
         public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
@@ -89,8 +88,8 @@ namespace Explorer.Components
             public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
             {
                 DistinctRows = distinctRows.ToList();
-                ValueCounts = ValueCounts.Compute(distinctRows);
-                IsCategorical = ValueCounts.SuppressedRowRatio < SuppressedRatioThreshold;
+                ValueCounts = ValueCounts.Compute(DistinctRows);
+                IsCategorical = ValueCounts.IsCategorical;
             }
 
             public List<ValueWithCount<JsonElement>> DistinctRows { get; }

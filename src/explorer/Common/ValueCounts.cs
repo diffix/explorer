@@ -1,10 +1,13 @@
 namespace Explorer.Common
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
     public sealed class ValueCounts
     {
+        private const double SuppressedRatioThreshold = 0.01;
+
         private ValueCounts()
         {
         }
@@ -29,14 +32,23 @@ namespace Explorer.Common
 
         public double SuppressedCountRatio => TotalCount == 0 ? 1 : (double)SuppressedCount / TotalCount;
 
-        // Note the `SuppressedCount` can be seen as a proxy for the number of suppressed rows in the original dataset.
-        // We can use this to estimate the proportion of unqiue values that have been suppressed. This may be a better
-        // metric for estimating the cardinality of a column than the `SuppressedCountRatio`
-        public double SuppressedRowRatio => TotalRows == 0 ? 1 : (double)SuppressedCount / TotalRows;
+        /// <summary>
+        /// Gets a value indicating whether the columns contains categorical data or not.
+        /// A high count of suppressed values means that there are many values which are not part
+        /// of any bucket, so the column is not categorical.
+        /// The maximum number of categories is also limited logarithmically by the total number of values, i.e.:
+        /// 100 values - 37 categories; 10_000 values - 55 categories; 1_000_000 values - 72 categories; 1_000_000_000 values - 98 categories.
+        /// </summary>
+        public bool IsCategorical => SuppressedCountRatio < SuppressedRatioThreshold && NonSuppressedRows <= 20 + Math.Log(NonSuppressedCount, 1.3);
+
+        public static ValueCounts Compute(IList<CountableRow> rows)
+        {
+            return rows.Aggregate(new ValueCounts(), AccumulateRow);
+        }
 
         public static ValueCounts Compute(IEnumerable<CountableRow> rows)
         {
-            return rows.Aggregate(new ValueCounts(), AccumulateRow);
+            return Compute(rows.OrderBy(r => r.Count).ToList());
         }
 
         public ValueCounts AccumulateRow(CountableRow row)
@@ -58,7 +70,8 @@ namespace Explorer.Common
             return this;
         }
 
-        private static ValueCounts AccumulateRow(ValueCounts vc, CountableRow row)
+        private static ValueCounts AccumulateRow<T>(ValueCounts vc, T row)
+        where T : CountableRow
         {
             vc.AccumulateRow(row);
             return vc;

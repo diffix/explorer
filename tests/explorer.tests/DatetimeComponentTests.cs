@@ -2,8 +2,6 @@ namespace Explorer.Tests
 {
     using System.Linq;
 
-    using Diffix;
-    using Explorer.Common;
     using Explorer.Components;
     using Xunit;
 

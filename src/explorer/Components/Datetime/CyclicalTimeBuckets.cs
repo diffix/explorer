@@ -11,8 +11,6 @@ namespace Explorer.Components
 
     public class CyclicalTimeBuckets : ExplorerComponent<CyclicalTimeBuckets.Result>, PublisherComponent
     {
-        private const double SuppressedRatioThreshold = 0.1;
-
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
@@ -83,7 +81,7 @@ namespace Explorer.Components
                 else
                 {
                     var counts = ValueCounts.Compute(group);
-                    if (counts.SuppressedRowRatio > SuppressedRatioThreshold)
+                    if (TimeUtilities.TooManySuppressedValues(counts))
                     {
                         // If a lot of rows are suppressed, stop.
                         break;
