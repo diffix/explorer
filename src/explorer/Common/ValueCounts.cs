@@ -12,17 +12,17 @@ namespace Explorer.Common
         {
         }
 
-        public long TotalCount { get; private set; } = 0;
+        public long TotalCount { get; private set; }
 
-        public long SuppressedCount { get; private set; } = 0;
+        public long SuppressedCount { get; private set; }
 
-        public long NullCount { get; private set; } = 0;
+        public long NullCount { get; private set; }
 
-        public long TotalRows { get; private set; } = 0;
+        public long TotalRows { get; private set; }
 
-        public long SuppressedRows { get; private set; } = 0;
+        public long SuppressedRows { get; private set; }
 
-        public long NullRows { get; private set; } = 0;
+        public long NullRows { get; private set; }
 
         public long NonSuppressedRows => TotalRows - SuppressedRows;
 
