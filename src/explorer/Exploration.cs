@@ -33,7 +33,8 @@ namespace Explorer
         //     Table = table;
         //     ColumnExplorations = scopes.Select(scope => new ColumnExploration(scope)).ToList();
         // }
-        public ImmutableArray<ColumnExploration> ColumnExplorations { get; set; }
+        public ImmutableArray<ColumnExploration> ColumnExplorations { get; set; } 
+            = ImmutableArray<ColumnExploration>.Empty;
 
         public IEnumerable<IEnumerable<object?>> SampleData
         {
