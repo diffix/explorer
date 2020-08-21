@@ -21,10 +21,10 @@ namespace Explorer.Tests
             using var testScope = await testFixture.CreateTestScope(
                 "gda_banking",
                 "loans",
-                "disp_type",
+                new[] { "disp_type", "status", "duration" },
                 this);
 
-            var query = new ColumnPairs(new[] { "status", "duration" });
+            var query = new ColumnPairs();
 
             var rows = await testScope.QueryRows(query);
 

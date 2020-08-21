@@ -30,7 +30,7 @@
                 // Scoped services
                 registry
                     .AddScoped<MetricsPublisher, SimpleMetricsPublisher>()
-                    .AddScoped<ContextBuilder>()
+                    .AddScoped<JsonApiContextBuilder>()
                     .AddScoped<AircloakConnectionBuilder>();
 
                 registry.IncludeRegistry<ComponentRegistry>();

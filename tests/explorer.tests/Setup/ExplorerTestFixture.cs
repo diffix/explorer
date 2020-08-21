@@ -1,6 +1,8 @@
 namespace Explorer.Tests
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Net.Http;
     using System.Runtime.CompilerServices;
     using System.Threading;
@@ -67,12 +69,29 @@ namespace Explorer.Tests
             return new TestScope(Container, ApiUri, dataSource, table, column, columnInfo, vcrFileName, vcrMode, recordingOptions);
         }
 
+        public async Task<TestScope> CreateTestScope(
+            string dataSource,
+            string table,
+            IEnumerable<string> columns,
+            object caller,
+            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
+            VCRMode vcrMode = VCRMode.Cache,
+            [CallerMemberName] string callerMemberName = "")
+        {
+            var vcrFileName = Cassette.GenerateVcrFilename(caller, callerMemberName);
+            var columnInfo = await GetColumnInfo(dataSource, table, columns).Collect();
+            return new TestScope(Container, ApiUri, dataSource, table, columns, columnInfo, vcrFileName, vcrMode, recordingOptions);
+        }
+
         public void Dispose()
         {
             Container.Dispose();
         }
 
         private async Task<DColumnInfo> GetColumnInfo(string dataSource, string table, string column)
+            => (await GetColumnInfo(dataSource, table, new[] { column }).Collect()).Single();
+
+        private async IAsyncEnumerable<DColumnInfo> GetColumnInfo(string dataSource, string table, IEnumerable<string> columns)
         {
             var apiClient = Container.GetInstance<JsonApiClient>();
             if (dataSources == null)
@@ -90,12 +109,15 @@ namespace Explorer.Tests
                 throw new ArgumentException($"Could not find table '{dataSource}.{table}'.");
             }
 
-            if (!tableInfo.ColumnDict.TryGetValue(column, out var columnInfo))
+            foreach (var column in columns)
             {
-                throw new ArgumentException($"Could not find column '{dataSource}.{table}.{column}'.");
-            }
+                if (!tableInfo.ColumnDict.TryGetValue(column, out var columnInfo))
+                {
+                    throw new ArgumentException($"Could not find column '{dataSource}.{table}.{column}'.");
+                }
 
-            return new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
+                yield return new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
+            }
         }
 
 #pragma warning disable CA1812 // ExplorerTestFixture.TestConfig is an internal class that is apparently never instantiated.

@@ -5,14 +5,14 @@ namespace Explorer.Api
 
     public class ExplorationLauncher
     {
-        private readonly ContextBuilder contextBuilder;
+        private readonly JsonApiContextBuilder contextBuilder;
         private readonly Exploration exploration;
         private readonly IAircloakAuthenticationProvider authProvider;
 
         public ExplorationLauncher(
             Exploration exploration,
             IAircloakAuthenticationProvider authProvider,
-            ContextBuilder contextBuilder)
+            JsonApiContextBuilder contextBuilder)
         {
             this.authProvider = authProvider;
             this.exploration = exploration;

@@ -26,12 +26,23 @@ namespace Explorer
                 throw new InvalidOperationException(
                     $"{nameof(ColumnExploration)} requires a context object in the {nameof(ExplorationScope)}!");
             }
+
+            try
+            {
+                Column = Context.Column;
+                ColumnInfo = Context.ColumnInfo;
+            }
+            catch (InvalidOperationException)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(ColumnExploration)} requires a single-column context but context has {Context.Columns.Length} columns.");
+            }
             this.scope = scope;
         }
 
-        public string Column { get => Context.Column; }
+        public string Column { get; }
 
-        public DColumnInfo ColumnInfo { get => Context.ColumnInfo; }
+        public DColumnInfo ColumnInfo { get; }
 
         public ExplorerContext Context { get; }
 

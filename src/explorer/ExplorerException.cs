@@ -1,6 +1,8 @@
 namespace Explorer
 {
+    using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Linq;
     using Diffix;
 
     [System.Serializable]
@@ -37,7 +39,10 @@ namespace Explorer
                 {
                     DataSource = context.DataSource,
                     Table = context.Table,
-                    Columns = ImmutableDictionary<string, DColumnInfo>.Empty.Add(context.Column, context.ColumnInfo),
+                    Columns = ImmutableDictionary.CreateRange(
+                        context.Columns
+                            .Zip(context.ColumnInfos)
+                            .Select(kv => new KeyValuePair<string, DColumnInfo>(kv.First, kv.Second))),
                 };
                 Data[ExplorationContext.DataKey] = ExtraContext;
             }

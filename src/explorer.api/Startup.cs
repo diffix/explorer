@@ -48,7 +48,7 @@ namespace Explorer.Api
             // Scoped services
             services
                 .AddScoped<MetricsPublisher, SimpleMetricsPublisher>()
-                .AddScoped<ContextBuilder>()
+                .AddScoped<JsonApiContextBuilder>()
                 .AddScoped<AircloakConnectionBuilder>();
 
             // Transient Services

@@ -21,7 +21,7 @@
             Columns = quotedColumns.Select(c => c[1..^1]).ToImmutableArray();
 
             var columnsFragment = string.Join(",", quotedColumns);
-            var groups = Enumerable.Range(3, quotedColumns.Count()).Select(i => $"(2, {i})");
+            var groups = Enumerable.Range(3, quotedColumns.Count() - 1).Select(i => $"(2, {i})");
 
             return $@"
                 select

@@ -1,6 +1,8 @@
 namespace Explorer.Components
 {
     using System.Collections.Generic;
+    using System.Collections.Immutable;
+    using System.Linq;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -12,9 +14,9 @@ namespace Explorer.Components
 
         public string Table => Context.Table;
 
-        public string Column => Context.Column;
+        public ImmutableArray<string> Columns => Context.Columns;
 
-        public DValueType ColumnType => Context.ColumnInfo.Type;
+        public ImmutableArray<DValueType> ColumnTypes => Context.ColumnInfos.Select(ci => ci.Type).ToImmutableArray();
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
@@ -23,8 +25,8 @@ namespace Explorer.Components
             {
                 DataSource,
                 Table,
-                Column,
-                ColumnType,
+                Columns,
+                ColumnTypes,
             });
         }
     }
