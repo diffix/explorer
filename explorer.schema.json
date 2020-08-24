@@ -547,18 +547,138 @@
                         }
                     },
                     "then": {
-                        "properties": {
-                            "metrics": {
-                                "type": "array",
-                                "allOf": [
-                                    {
-                                        "contains": {
-                                            "$ref": "#/definitions/exploration_info"
-                                        }
+                        "oneOf": [
+                            {
+                                "description": "metrics for categorical integer columns",
+                                "properties": {
+                                    "metrics": {
+                                        "type": "array",
+                                        "allOf": [
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/exploration_info"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/sample_values::integer"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/min::integer"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/max::integer"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/distinct.values::integer"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/distinct.is_categorical"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/distinct.value_count"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/distinct.null_count"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/distinct.suppressed_count"
+                                                }
+                                            }
+                                        ]
                                     }
-                                ]
+                                }
+                            },
+                            {
+                                "description": "metrics for non-categorical integer columns",
+                                "properties": {
+                                    "metrics": {
+                                        "type": "array",
+                                        "allOf": [
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/exploration_info"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/sample_values::integer"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/descriptive_stats"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/histogram.value_counts"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/histogram.suppressed_count"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/histogram.suppressed_ratio"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/histogram.buckets"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/min::integer"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/max::integer"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/average_estimate"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/quartile_estimates"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/distinct.is_categorical"
+                                                }
+                                            },
+                                            {
+                                                "contains": {
+                                                    "$ref": "#/definitions/distribution_estimates"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
                             }
-                        }
+                        ]
                     }
                 },
                 {
