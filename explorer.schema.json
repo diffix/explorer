@@ -1,0 +1,723 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Diffix Explorer",
+    "description": "Schema for data produced by Diffix Explorer",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "New",
+                "Validating",
+                "Processing",
+                "Complete",
+                "Canceled",
+                "Error"
+            ]
+        },
+        "versionInfo": {
+            "type": "object",
+            "properties": {
+                "commitRef": {
+                    "type": "string"
+                },
+                "commitHash": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "commitRef",
+                "commitHash"
+            ]
+        },
+        "dataSource": {
+            "type": "string"
+        },
+        "table": {
+            "type": "string"
+        },
+        "columns": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/columnMetrics"
+            }
+        },
+        "sampleData": {
+            "type": "array",
+            "items": {
+                "type": "array"
+            }
+        },
+        "errors": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "additionalProperties": false,
+    "required": [
+        "id",
+        "status",
+        "versionInfo",
+        "dataSource",
+        "table",
+        "columns",
+        "sampleData",
+        "errors"
+    ],
+    "definitions": {
+        "exploration_info": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "exploration_info"
+                },
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "dataSource": {
+                            "type": "string"
+                        },
+                        "table": {
+                            "type": "string"
+                        },
+                        "column": {
+                            "type": "string"
+                        },
+                        "columnType": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "dataSource",
+                        "table",
+                        "column",
+                        "columnType"
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "histogram.value_counts": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "histogram.value_counts"
+                },
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "totalCount": {
+                            "type": "integer"
+                        },
+                        "suppressedCount": {
+                            "type": "integer"
+                        },
+                        "nullCount": {
+                            "type": "integer"
+                        },
+                        "totalRows": {
+                            "type": "integer"
+                        },
+                        "suppressedRows": {
+                            "type": "integer"
+                        },
+                        "nullRows": {
+                            "type": "integer"
+                        },
+                        "nonSuppressedRows": {
+                            "type": "integer"
+                        },
+                        "nonSuppressedCount": {
+                            "type": "integer"
+                        },
+                        "nonSuppressedNonNullCount": {
+                            "type": "integer"
+                        },
+                        "suppressedCountRatio": {
+                            "type": "number"
+                        },
+                        "isCategorical": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalItems": false,
+                    "required": [
+                        "totalCount",
+                        "suppressedCount",
+                        "nullCount",
+                        "totalRows",
+                        "suppressedRows",
+                        "nullRows",
+                        "nonSuppressedRows",
+                        "nonSuppressedCount",
+                        "nonSuppressedNonNullCount",
+                        "suppressedCountRatio",
+                        "isCategorical"
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "histogram.buckets": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "histogram.buckets"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "bucketSize": {
+                                "type": "number"
+                            },
+                            "lowerBound": {
+                                "type": "number"
+                            },
+                            "count": {
+                                "type": "integer"
+                            },
+                            "countNoise": {
+                                "type": "number"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "bucketSize",
+                            "lowerBound",
+                            "count",
+                            "countNoise"
+                        ]
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "histogram.suppressed_ratio": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "histogram.suppressed_ratio"
+                },
+                "value": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "histogram.suppressed_count": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "histogram.suppressed_count"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "descriptive_stats": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "descriptive_stats"
+                },
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "entropy": {
+                            "type": "number"
+                        },
+                        "mean": {
+                            "type": "number"
+                        },
+                        "mode": {
+                            "type": "number"
+                        },
+                        "quartiles": {
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                        },
+                        "standardDeviation": {
+                            "type": "number"
+                        },
+                        "variance": {
+                            "type": "number"
+                        }
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "quartile_estimates": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "quartile_estimates"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distribution_estimates": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distribution_estimates"
+                },
+                "value": {
+                    "type": "array",
+                    "description": "!!!TODO - add properties!!!",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "sample_values::integer": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "sample_values"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "min::integer": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "min"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "max::integer": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "max"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "average_estimate": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "max"
+                },
+                "value": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distinct.is_categorical": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distinct.is_categorical"
+                },
+                "value": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distinct.value_count": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distinct.value_count"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distinct.null_count": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distinct.null_count"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distinct.suppressed_count": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distinct.suppressed_count"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distinct.values::integer": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distinct.values"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "oneOf": [
+                                    {
+                                        "type": "integer"
+                                    },
+                                    {
+                                        "const": "--OTHER--"
+                                    }
+                                ]
+                            },
+                            "count": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "columnMetrics": {
+            "type": "object",
+            "properties": {
+                "column": {
+                    "type": "string"
+                },
+                "columnType": {
+                    "type": "string",
+                    "enum": [
+                        "integer",
+                        "real",
+                        "text",
+                        "timestamp",
+                        "date",
+                        "datetime",
+                        "boolean",
+                        "unknown"
+                    ]
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "New",
+                        "Validating",
+                        "Processing",
+                        "Complete",
+                        "Canceled",
+                        "Error"
+                    ]
+                },
+                "metrics": {
+                    "type": "array"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "column",
+                "columnType",
+                "status",
+                "metrics"
+            ],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "columnType": {
+                                "const": "integer"
+                            },
+                            "status": {
+                                "const": "Complete"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "metrics": {
+                                "type": "array",
+                                "allOf": [
+                                    {
+                                        "contains": {
+                                            "$ref": "#/definitions/exploration_info"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "columnType": {
+                                "const": "real"
+                            },
+                            "status": {
+                                "const": "Complete"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "metrics": {
+                                "type": "array",
+                                "allOf": [
+                                    {
+                                        "contains": {
+                                            "$ref": "#/definitions/exploration_info"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "columnType": {
+                                "const": "text"
+                            },
+                            "status": {
+                                "const": "Complete"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "metrics": {
+                                "type": "array",
+                                "allOf": [
+                                    {
+                                        "contains": {
+                                            "$ref": "#/definitions/exploration_info"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "columnType": {
+                                "const": "timestamp"
+                            },
+                            "status": {
+                                "const": "Complete"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "metrics": {
+                                "type": "array",
+                                "allOf": [
+                                    {
+                                        "contains": {
+                                            "$ref": "#/definitions/exploration_info"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "columnType": {
+                                "const": "date"
+                            },
+                            "status": {
+                                "const": "Complete"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "metrics": {
+                                "type": "array",
+                                "allOf": [
+                                    {
+                                        "contains": {
+                                            "$ref": "#/definitions/exploration_info"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "columnType": {
+                                "const": "datetime"
+                            },
+                            "status": {
+                                "const": "Complete"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "metrics": {
+                                "type": "array",
+                                "allOf": [
+                                    {
+                                        "contains": {
+                                            "$ref": "#/definitions/exploration_info"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "columnType": {
+                                "const": "bool"
+                            },
+                            "status": {
+                                "const": "Complete"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "metrics": {
+                                "type": "array",
+                                "allOf": [
+                                    {
+                                        "contains": {
+                                            "$ref": "#/definitions/exploration_info"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
