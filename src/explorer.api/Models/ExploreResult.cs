@@ -19,7 +19,16 @@ namespace Explorer.Api.Models
             Status = status;
             DataSource = exploreParams.DataSource;
             Table = exploreParams.Table;
-            ColumnMetrics = exploreParams.Columns.Select(s => new { Column = s } as object).ToList();
+            ColumnMetrics = exploreParams.Columns
+                .Select(s => new
+                {
+                    Column = s,
+                    ColumnType = Diffix.DValueType.Unknown,
+                    Status = ExplorationStatus.New,
+                    Metrics = Enumerable.Empty<Metrics.ExploreMetric>(),
+                })
+                .Cast<object>()
+                .ToList();
             SampleData = new List<List<object?>>();
         }
 
