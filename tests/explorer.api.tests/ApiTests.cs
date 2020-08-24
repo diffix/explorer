@@ -9,14 +9,24 @@
     using System.Runtime.CompilerServices;
     using System.Text.Json;
     using System.Threading.Tasks;
+
+    using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Schema;
     using Xunit;
 
     public sealed class ApiTests : IClassFixture<TestWebAppFactory>
     {
         public static readonly IEnumerable<object[]> SuccessWithResultTestData = new object[][]
         {
-            new[] { Array.Empty<string>() },
-            new[] { new[] { "amount", "firstname" } },
+            new[] { new Models.ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray<string>.Empty } },
+            new[] { new Models.ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("amount") } },
+            new[] { new Models.ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("duration") } },
+            new[] { new Models.ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("payments") } },
+            new[] { new Models.ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("status") } },
+            new[] { new Models.ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("firstname") } },
+            new[] { new Models.ExploreParams { DataSource = "gda_taxi", Table = "rides", Columns = ImmutableArray.Create("pickup_datetime") } },
+            new[] { new Models.ExploreParams { DataSource = "gda_taxi", Table = "rides", Columns = ImmutableArray.Create("birthdate") } },
+            new[] { new Models.ExploreParams { DataSource = "cov_clear", Table = "survey", Columns = ImmutableArray.Create("test_date", "fever", "how_anxious", "lat", "email") } },
         };
 
         private const string ApiRoot = "api/v1";
@@ -33,10 +43,12 @@
         };
 
         private readonly TestWebAppFactory factory;
+        private readonly JSchema explorerSchema;
 
         public ApiTests(TestWebAppFactory factory)
         {
             this.factory = factory;
+            explorerSchema = JSchema.Parse(System.IO.File.ReadAllText("../../../../../explorer.schema.json"));
         }
 
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
@@ -76,99 +88,91 @@
 
         [Theory]
         [MemberData(nameof(SuccessWithResultTestData))]
-        public async Task SuccessWithResult(string[] columnsArray)
+        public async Task SuccessWithResult(Models.ExploreParams pdata)
         {
             var data = new Models.ExploreParams
             {
                 ApiKey = ValidData.ApiKey,
                 ApiUrl = ValidData.ApiUrl,
-                DataSource = "gda_banking",
-                Table = "loans",
-                Columns = columnsArray.ToImmutableArray(),
+                DataSource = pdata.DataSource,
+                Table = pdata.Table,
+                Columns = pdata.Columns,
             };
-            var testConfig = factory.GetTestConfig(nameof(ApiTests), nameof(SuccessWithResult));
 
             var explorerGuid = await TestApi(HttpMethod.Post, ExploreEndpoint, data, (response, content) =>
             {
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
 
-                using var jsonContent = JsonDocument.Parse(content);
-                var rootEl = jsonContent.RootElement;
+                var jsonContent = JObject.Parse(content);
+                var errorMessages = new List<string>() as IList<string>;
+                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
+                Assert.True(isValidContent, string.Join('\n', errorMessages));
 
                 Assert.True(
-                    rootEl.ValueKind == JsonValueKind.Object,
+                    jsonContent.Type == JTokenType.Object,
                     $"Expected a JSON object in the response:\n{content}");
 
                 Assert.True(
-                    rootEl.TryGetProperty("id", out var id),
+                    jsonContent.TryGetValue("id", out var id),
                     $"Expected an 'id' property in:\n{content}");
-                Assert.True(id.TryGetGuid(out var explorerGuid));
-
-                Assert.True(
-                    rootEl.TryGetProperty("status", out var status),
-                    $"Expected a 'status' property in:\n{content}");
-
-                Assert.True(
-                    rootEl.TryGetProperty("columns", out var columns),
-                    $"Expected a 'columns' property in:\n{content}");
-
-                Assert.True(
-                    columns.ValueKind == JsonValueKind.Array,
-                    $"Expected 'columns' property to contain an array:\n{content}");
+                Assert.True(Guid.TryParse(id.Value<string>(), out var explorerGuid));
 
                 return explorerGuid;
             });
 
+            var testConfig = factory.GetTestConfig(nameof(ApiTests), nameof(SuccessWithResult));
             await TestExploreResult(HttpMethod.Get, explorerGuid, testConfig.PollFrequency, (response, content) =>
             {
                 Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
 
-                using var jsonContent = JsonDocument.Parse(content);
-                var rootEl = jsonContent.RootElement;
-                Assert.True(
-                    rootEl.TryGetProperty("status", out var status),
-                    $"Expected a 'status' property in:\n{content}");
+                var jsonContent = JObject.Parse(content);
+                var errorMessages = new List<string>() as IList<string>;
+                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
+                Assert.True(isValidContent, string.Join('\n', errorMessages));
 
-                Assert.True(
-                    rootEl.TryGetProperty("columns", out var columns),
-                    $"Expected a 'columns' property in:\n{content}");
-                Assert.True(
-                    columns.ValueKind == JsonValueKind.Array,
-                    $"Expected 'columns' property to contain an array:\n{content}");
+                Assert.Contains("status", jsonContent);
+                var status = (string)jsonContent["status"];
 
-                Assert.True(
-                    rootEl.TryGetProperty("sampleData", out var sampleData),
-                    $"Expected a 'sampleData' property in:\n{content}");
-                Assert.True(
-                    sampleData.ValueKind == JsonValueKind.Array,
-                    $"Expected 'sampleData' property to contain an array:\n{content}");
+                Assert.Contains("columns", jsonContent);
+                var columns = (JArray)jsonContent["columns"];
+                Assert.NotNull(columns);
 
-                if (status.GetString() == "Complete")
+                Assert.Contains("sampleData", jsonContent);
+                var sampleData = (JArray)jsonContent["sampleData"];
+                Assert.NotNull(sampleData);
+
+                if (status == "Complete")
                 {
-                    Assert.Equal(data.Columns.Length, columns.GetArrayLength());
-                    foreach (var item in columns.EnumerateArray())
+                    Assert.Equal(data.Columns.Length, columns.Count);
+                    foreach (var jitem in columns)
                     {
-                        Assert.True(item.TryGetProperty("column", out var column));
-                        Assert.Contains(column.GetString(), data.Columns);
+                        Assert.Equal(JTokenType.Object, jitem.Type);
+                        var item = (JObject)jitem;
+                        Assert.True(item.ContainsKey("column"));
+                        var column = (string)item["column"];
+                        Assert.Contains(column, data.Columns);
 
-                        Assert.True(item.TryGetProperty("metrics", out var metrics));
-                        Assert.True(metrics.GetArrayLength() > 0, $"Metrics for column {column} are empty!");
-                        Assert.All(metrics.EnumerateArray(), el =>
-                            Assert.All(new List<string> { "name", "value" }, propName =>
-                                Assert.True(
-                                    el.TryGetProperty(propName, out var _),
-                                    $"Expected a '{propName}' property in {el}.")));
+                        Assert.True(item.ContainsKey("metrics"));
+                        var metrics = (JArray)item["metrics"];
+                        Assert.True(metrics.Count > 0, $"Metrics for column {column} are empty!");
+                        Assert.All(metrics, jmetric =>
+                        {
+                            Assert.Equal(JTokenType.Object, jmetric.Type);
+                            var metric = (JObject)jmetric;
+                            Assert.True(metric.ContainsKey("name"));
+                            Assert.True(metric.ContainsKey("value"));
+                        });
                     }
 
                     if (data.Columns.Length > 0)
                     {
-                        Assert.True(sampleData.GetArrayLength() > 0, "SampleData is empty!");
-                        foreach (var row in sampleData.EnumerateArray())
+                        Assert.True(sampleData.Count > 0, "SampleData is empty!");
+                        foreach (var row in sampleData)
                         {
                             Assert.True(
-                                row.ValueKind == JsonValueKind.Array,
+                                row.Type == JTokenType.Array,
                                 $"Expected 'sampleData' property to contain array elements:\n{content}");
-                            Assert.Equal(data.Columns.Length, row.GetArrayLength());
+                            Assert.Equal(data.Columns.Length, row.Count());
                         }
                     }
                 }
