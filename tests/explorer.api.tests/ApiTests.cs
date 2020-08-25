@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.IO;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -13,6 +14,7 @@
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Schema;
     using Xunit;
+    using YamlDotNet.Serialization;
 
     public sealed class ApiTests : IClassFixture<TestWebAppFactory>
     {
@@ -48,7 +50,25 @@
         public ApiTests(TestWebAppFactory factory)
         {
             this.factory = factory;
-            explorerSchema = JSchema.Parse(System.IO.File.ReadAllText("../../../../../explorer.schema.json"));
+
+            using var schemaReader = File.OpenText("../../../../../explorer.schema.yaml");
+            var deserializer = new DeserializerBuilder().Build();
+            var yamlSchema = deserializer.Deserialize(schemaReader);
+            if (yamlSchema == null)
+            {
+                throw new InvalidDataException("YAML explorer schema is invalid.");
+            }
+
+            using var jsonSchemaWriter = new StringWriter();
+            Newtonsoft.Json.JsonSerializer
+                .Create(new Newtonsoft.Json.JsonSerializerSettings { Formatting = Newtonsoft.Json.Formatting.Indented })
+                .Serialize(jsonSchemaWriter, yamlSchema);
+            var jsonSchema = jsonSchemaWriter.ToString();
+            explorerSchema = JSchema.Parse(jsonSchema);
+
+            // for debugging the JSON schema
+            // File.WriteAllText("../../../../../explorer.schema.json", jsonSchema);
+            // explorerSchema = JSchema.Parse(File.ReadAllText("../../../../../explorer.schema.json"));
         }
 
         private delegate void ApiTestActionWithContent(HttpResponseMessage response, string content);
