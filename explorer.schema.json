@@ -442,14 +442,30 @@
                 "value"
             ]
         },
-        "distinct.is_categorical": {
+        "distinct.is_categorical::true": {
             "type": "object",
             "properties": {
                 "name": {
                     "const": "distinct.is_categorical"
                 },
                 "value": {
-                    "type": "boolean"
+                    "const": true
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distinct.is_categorical::false": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distinct.is_categorical"
+                },
+                "value": {
+                    "const": false
                 }
             },
             "additionalProperties": false,
@@ -716,7 +732,7 @@
                                         },
                                         {
                                             "contains": {
-                                                "$ref": "#/definitions/distinct.is_categorical"
+                                                "$ref": "#/definitions/distinct.is_categorical::true"
                                             }
                                         },
                                         {
@@ -801,7 +817,7 @@
                                         },
                                         {
                                             "contains": {
-                                                "$ref": "#/definitions/distinct.is_categorical"
+                                                "$ref": "#/definitions/distinct.is_categorical::false"
                                             }
                                         },
                                         {
@@ -873,7 +889,7 @@
                                         },
                                         {
                                             "contains": {
-                                                "$ref": "#/definitions/distinct.is_categorical"
+                                                "$ref": "#/definitions/distinct.is_categorical::true"
                                             }
                                         },
                                         {
@@ -894,6 +910,46 @@
                                         {
                                             "contains": {
                                                 "$ref": "#/definitions/distinct.suppressed_count"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/is_email"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/text.length.counts"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/text.length.values"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "description": "metrics for non-categorical text columns",
+                            "properties": {
+                                "metrics": {
+                                    "type": "array",
+                                    "allOf": [
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/exploration_info"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/sample_values::string"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.is_categorical::false"
                                             }
                                         },
                                         {
