@@ -109,6 +109,58 @@
                 "value"
             ]
         },
+        "value_counts": {
+            "type": "object",
+            "properties": {
+                "totalCount": {
+                    "type": "integer"
+                },
+                "suppressedCount": {
+                    "type": "integer"
+                },
+                "nullCount": {
+                    "type": "integer"
+                },
+                "totalRows": {
+                    "type": "integer"
+                },
+                "suppressedRows": {
+                    "type": "integer"
+                },
+                "nullRows": {
+                    "type": "integer"
+                },
+                "nonSuppressedRows": {
+                    "type": "integer"
+                },
+                "nonSuppressedCount": {
+                    "type": "integer"
+                },
+                "nonSuppressedNonNullCount": {
+                    "type": "integer"
+                },
+                "suppressedCountRatio": {
+                    "type": "number"
+                },
+                "isCategorical": {
+                    "type": "boolean"
+                }
+            },
+            "additionalItems": false,
+            "required": [
+                "totalCount",
+                "suppressedCount",
+                "nullCount",
+                "totalRows",
+                "suppressedRows",
+                "nullRows",
+                "nonSuppressedRows",
+                "nonSuppressedCount",
+                "nonSuppressedNonNullCount",
+                "suppressedCountRatio",
+                "isCategorical"
+            ]
+        },
         "histogram.value_counts": {
             "type": "object",
             "properties": {
@@ -116,56 +168,7 @@
                     "const": "histogram.value_counts"
                 },
                 "value": {
-                    "type": "object",
-                    "properties": {
-                        "totalCount": {
-                            "type": "integer"
-                        },
-                        "suppressedCount": {
-                            "type": "integer"
-                        },
-                        "nullCount": {
-                            "type": "integer"
-                        },
-                        "totalRows": {
-                            "type": "integer"
-                        },
-                        "suppressedRows": {
-                            "type": "integer"
-                        },
-                        "nullRows": {
-                            "type": "integer"
-                        },
-                        "nonSuppressedRows": {
-                            "type": "integer"
-                        },
-                        "nonSuppressedCount": {
-                            "type": "integer"
-                        },
-                        "nonSuppressedNonNullCount": {
-                            "type": "integer"
-                        },
-                        "suppressedCountRatio": {
-                            "type": "number"
-                        },
-                        "isCategorical": {
-                            "type": "boolean"
-                        }
-                    },
-                    "additionalItems": false,
-                    "required": [
-                        "totalCount",
-                        "suppressedCount",
-                        "nullCount",
-                        "totalRows",
-                        "suppressedRows",
-                        "nullRows",
-                        "nonSuppressedRows",
-                        "nonSuppressedCount",
-                        "nonSuppressedNonNullCount",
-                        "suppressedCountRatio",
-                        "isCategorical"
-                    ]
+                    "$ref": "#/definitions/value_counts"
                 }
             },
             "additionalProperties": false,
@@ -347,6 +350,25 @@
                 "value"
             ]
         },
+        "sample_values::text": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "sample_values"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
         "min::integer": {
             "type": "object",
             "properties": {
@@ -387,6 +409,31 @@
                 },
                 "value": {
                     "type": "number"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        },
+        "distinct.is_email": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "is_email"
+                },
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "is_email": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "is_email"
+                    ]
                 }
             },
             "additionalProperties": false,
@@ -483,7 +530,46 @@
                             "count": {
                                 "type": "integer"
                             }
-                        }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "value",
+                            "count"
+                        ]
+                    }
+                }
+            }
+        },
+        "distinct.values::string": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "distinct.values"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "const": "--OTHER--"
+                                    }
+                                ]
+                            },
+                            "count": {
+                                "type": "integer"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "value",
+                            "count"
+                        ]
                     }
                 }
             },
@@ -493,351 +579,449 @@
                 "value"
             ]
         },
-        "columnMetrics": {
+        "text.length.values": {
             "type": "object",
             "properties": {
-                "column": {
-                    "type": "string"
+                "name": {
+                    "const": "text.length.values"
                 },
-                "columnType": {
-                    "type": "string",
-                    "enum": [
-                        "integer",
-                        "real",
-                        "text",
-                        "timestamp",
-                        "date",
-                        "datetime",
-                        "boolean",
-                        "unknown"
-                    ]
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "New",
-                        "Validating",
-                        "Processing",
-                        "Complete",
-                        "Canceled",
-                        "Error"
-                    ]
-                },
-                "metrics": {
-                    "type": "array"
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "integer"
+                            },
+                            "count": {
+                                "type": "integer"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "value",
+                            "count"
+                        ]
+                    }
                 }
             },
             "additionalProperties": false,
             "required": [
-                "column",
-                "columnType",
-                "status",
-                "metrics"
-            ],
-            "allOf": [
-                {
-                    "if": {
-                        "properties": {
-                            "columnType": {
-                                "const": "integer"
-                            },
-                            "status": {
-                                "const": "Complete"
-                            }
+                "name",
+                "value"
+            ]
+        },
+        "text.length.counts": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "const": "text.length.counts"
+                },
+                "value": {
+                    "$ref": "#/definitions/value_counts"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "value"
+            ]
+        }
+    },
+    "columnMetrics": {
+        "type": "object",
+        "properties": {
+            "column": {
+                "type": "string"
+            },
+            "columnType": {
+                "type": "string",
+                "enum": [
+                    "integer",
+                    "real",
+                    "text",
+                    "timestamp",
+                    "date",
+                    "datetime",
+                    "boolean",
+                    "unknown"
+                ]
+            },
+            "status": {
+                "type": "string",
+                "enum": [
+                    "New",
+                    "Validating",
+                    "Processing",
+                    "Complete",
+                    "Canceled",
+                    "Error"
+                ]
+            },
+            "metrics": {
+                "type": "array"
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "column",
+            "columnType",
+            "status",
+            "metrics"
+        ],
+        "allOf": [
+            {
+                "if": {
+                    "properties": {
+                        "columnType": {
+                            "const": "integer"
+                        },
+                        "status": {
+                            "const": "Complete"
                         }
-                    },
-                    "then": {
-                        "oneOf": [
-                            {
-                                "description": "metrics for categorical integer columns",
-                                "properties": {
-                                    "metrics": {
-                                        "type": "array",
-                                        "allOf": [
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/exploration_info"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/sample_values::integer"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/min::integer"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/max::integer"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/distinct.values::integer"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/distinct.is_categorical"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/distinct.value_count"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/distinct.null_count"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/distinct.suppressed_count"
-                                                }
+                    }
+                },
+                "then": {
+                    "oneOf": [
+                        {
+                            "description": "metrics for categorical integer columns",
+                            "properties": {
+                                "metrics": {
+                                    "type": "array",
+                                    "allOf": [
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/exploration_info"
                                             }
-                                        ]
-                                    }
-                                }
-                            },
-                            {
-                                "description": "metrics for non-categorical integer columns",
-                                "properties": {
-                                    "metrics": {
-                                        "type": "array",
-                                        "allOf": [
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/exploration_info"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/sample_values::integer"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/descriptive_stats"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/histogram.value_counts"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/histogram.suppressed_count"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/histogram.suppressed_ratio"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/histogram.buckets"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/min::integer"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/max::integer"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/average_estimate"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/quartile_estimates"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/distinct.is_categorical"
-                                                }
-                                            },
-                                            {
-                                                "contains": {
-                                                    "$ref": "#/definitions/distribution_estimates"
-                                                }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/sample_values::integer"
                                             }
-                                        ]
-                                    }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/min::integer"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/max::integer"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.values::integer"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.is_categorical"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.value_count"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.null_count"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.suppressed_count"
+                                            }
+                                        }
+                                    ]
                                 }
                             }
-                        ]
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "columnType": {
-                                "const": "real"
-                            },
-                            "status": {
-                                "const": "Complete"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "metrics": {
-                                "type": "array",
-                                "allOf": [
-                                    {
-                                        "contains": {
-                                            "$ref": "#/definitions/exploration_info"
+                        },
+                        {
+                            "description": "metrics for non-categorical integer columns",
+                            "properties": {
+                                "metrics": {
+                                    "type": "array",
+                                    "allOf": [
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/exploration_info"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/sample_values::integer"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/descriptive_stats"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/histogram.value_counts"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/histogram.suppressed_count"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/histogram.suppressed_ratio"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/histogram.buckets"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/min::integer"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/max::integer"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/average_estimate"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/quartile_estimates"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.is_categorical"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distribution_estimates"
+                                            }
                                         }
-                                    }
-                                ]
+                                    ]
+                                }
                             }
                         }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "columnType": {
-                                "const": "text"
-                            },
-                            "status": {
-                                "const": "Complete"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "metrics": {
-                                "type": "array",
-                                "allOf": [
-                                    {
-                                        "contains": {
-                                            "$ref": "#/definitions/exploration_info"
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "columnType": {
-                                "const": "timestamp"
-                            },
-                            "status": {
-                                "const": "Complete"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "metrics": {
-                                "type": "array",
-                                "allOf": [
-                                    {
-                                        "contains": {
-                                            "$ref": "#/definitions/exploration_info"
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "columnType": {
-                                "const": "date"
-                            },
-                            "status": {
-                                "const": "Complete"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "metrics": {
-                                "type": "array",
-                                "allOf": [
-                                    {
-                                        "contains": {
-                                            "$ref": "#/definitions/exploration_info"
-                                        }
-                                    }
-                                ]
-                            }
+                    ]
+                }
+            },
+            {
+                "if": {
+                    "properties": {
+                        "columnType": {
+                            "const": "real"
+                        },
+                        "status": {
+                            "const": "Complete"
                         }
                     }
                 },
-                {
-                    "if": {
-                        "properties": {
-                            "columnType": {
-                                "const": "datetime"
-                            },
-                            "status": {
-                                "const": "Complete"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "metrics": {
-                                "type": "array",
-                                "allOf": [
-                                    {
-                                        "contains": {
-                                            "$ref": "#/definitions/exploration_info"
-                                        }
+                "then": {
+                    "properties": {
+                        "metrics": {
+                            "type": "array",
+                            "allOf": [
+                                {
+                                    "contains": {
+                                        "$ref": "#/definitions/exploration_info"
                                     }
-                                ]
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "columnType": {
-                                "const": "bool"
-                            },
-                            "status": {
-                                "const": "Complete"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "metrics": {
-                                "type": "array",
-                                "allOf": [
-                                    {
-                                        "contains": {
-                                            "$ref": "#/definitions/exploration_info"
-                                        }
-                                    }
-                                ]
-                            }
+                                }
+                            ]
                         }
                     }
                 }
-            ]
-        }
+            },
+            {
+                "if": {
+                    "properties": {
+                        "columnType": {
+                            "const": "text"
+                        },
+                        "status": {
+                            "const": "Complete"
+                        }
+                    }
+                },
+                "then": {
+                    "oneOf": [
+                        {
+                            "description": "metrics for categorical text columns",
+                            "properties": {
+                                "metrics": {
+                                    "type": "array",
+                                    "allOf": [
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/exploration_info"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/sample_values::string"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.is_categorical"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.values::string"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.value_count"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.null_count"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/distinct.suppressed_count"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/is_email"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/text.length.counts"
+                                            }
+                                        },
+                                        {
+                                            "contains": {
+                                                "$ref": "#/definitions/text.length.values"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "if": {
+                    "properties": {
+                        "columnType": {
+                            "const": "timestamp"
+                        },
+                        "status": {
+                            "const": "Complete"
+                        }
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "metrics": {
+                            "type": "array",
+                            "allOf": [
+                                {
+                                    "contains": {
+                                        "$ref": "#/definitions/exploration_info"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "properties": {
+                        "columnType": {
+                            "const": "date"
+                        },
+                        "status": {
+                            "const": "Complete"
+                        }
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "metrics": {
+                            "type": "array",
+                            "allOf": [
+                                {
+                                    "contains": {
+                                        "$ref": "#/definitions/exploration_info"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "properties": {
+                        "columnType": {
+                            "const": "datetime"
+                        },
+                        "status": {
+                            "const": "Complete"
+                        }
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "metrics": {
+                            "type": "array",
+                            "allOf": [
+                                {
+                                    "contains": {
+                                        "$ref": "#/definitions/exploration_info"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "properties": {
+                        "columnType": {
+                            "const": "bool"
+                        },
+                        "status": {
+                            "const": "Complete"
+                        }
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "metrics": {
+                            "type": "array",
+                            "allOf": [
+                                {
+                                    "contains": {
+                                        "$ref": "#/definitions/exploration_info"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
     }
 }
