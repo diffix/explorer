@@ -44,7 +44,7 @@ namespace Explorer
             }
         }
 
-        public override IEnumerable<ExploreMetric> PublishedMetrics
+        public IEnumerable<ExploreMetric> PublishedMetrics
         {
             get
             {

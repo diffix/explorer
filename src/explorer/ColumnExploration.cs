@@ -34,7 +34,7 @@ namespace Explorer
 
         public ExplorerContext Context { get; }
 
-        public override IEnumerable<ExploreMetric> PublishedMetrics =>
+        public IEnumerable<ExploreMetric> PublishedMetrics =>
             scope.MetricsPublisher.PublishedMetrics;
 
         public void Dispose()

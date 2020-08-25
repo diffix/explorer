@@ -18,8 +18,6 @@
             get => completionTask?.Status.ToExplorationStatus() ?? ExplorationStatus.New;
         }
 
-        public abstract IEnumerable<ExploreMetric> PublishedMetrics { get; }
-
         public Task Completion
         {
             get
