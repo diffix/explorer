@@ -44,22 +44,6 @@ namespace Explorer
             }
         }
 
-        public IEnumerable<ExploreMetric> PublishedMetrics
-        {
-            get
-            {
-                return ColumnExplorations.Select(ce => new UntypedMetric(
-                    name: "column_metrics",
-                    metric: new
-                    {
-                        ce.Column,
-                        ColumnType = ce.ColumnInfo.Type,
-                        ce.Status,
-                        Metrics = ce.PublishedMetrics.ToList(),
-                    }));
-            }
-        }
-
         public void Dispose()
         {
             Dispose(disposing: true);
