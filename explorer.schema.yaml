@@ -155,7 +155,7 @@ definitions:
         type: integer
     additionalProperties: !!bool false
     required: [name, value]
-  descriptive_stats:
+  descriptive_stats__integer:
     type: object
     properties:
       name:
@@ -179,6 +179,39 @@ definitions:
             type: number
           variance:
             type: number
+        required: ["entropy", "mean", "mode", "quartiles", "standardDeviation", "variance"]
+        additionalProperties: !!bool false
+    additionalProperties: !!bool false
+    required: [name, value]
+  descriptive_stats__datetime:
+    type: object
+    properties:
+      name:
+        const: descriptive_stats
+      value:
+        type: object
+        properties:
+          entropy:
+            type: number
+          mean:
+            type: string
+            format: date-time
+          mode:
+            type: string
+            format: date-time
+          quartiles:
+            type: array
+            items:
+              type: string
+              format: date-time
+            minItems: !!int 3
+            maxItems: !!int 3
+          standardDeviation:
+            type: number
+          variance:
+            type: number
+        required: ["entropy", "mean", "mode", "quartiles", "standardDeviation", "variance"]
+        additionalProperties: !!bool false
     additionalProperties: !!bool false
     required: [name, value]
   quartile_estimates:
@@ -242,6 +275,20 @@ definitions:
         items:
           oneOf:
           - type: boolean
+          - const: null
+    additionalProperties: !!bool false
+    required: [name, value]
+  sample_values__datetime:
+    type: object
+    properties:
+      name:
+        const: sample_values
+      value:
+        type: array
+        items:
+          oneOf:
+          - type: string
+            format: date-time
           - const: null
     additionalProperties: !!bool false
     required: [name, value]
@@ -414,6 +461,221 @@ definitions:
         "$ref": "#/definitions/value_counts"
     additionalProperties: !!bool false
     required: [name, value]
+  dates_cyclical__second:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.second
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 59
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+  dates_cyclical__minute:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.minute
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 59
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+  dates_cyclical__hour:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.hour
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 23
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+  dates_cyclical__weekday:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.weekday
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 7
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+  dates_cyclical__day:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.day
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 1
+                  maximum: !!int 31
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+  dates_cyclical__month:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.month
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 1
+                  maximum: !!int 12
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+  dates_cyclical__year:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.year
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
   column_metrics:
     type: object
     properties:
@@ -459,7 +721,7 @@ definitions:
               allOf:
               - contains: {"$ref": "#/definitions/exploration_info"}
               - contains: {"$ref": "#/definitions/sample_values__integer"}
-              - contains: {"$ref": "#/definitions/descriptive_stats"}
+              - contains: {"$ref": "#/definitions/descriptive_stats__integer"}
               - contains: {"$ref": "#/definitions/histogram__value_counts"}
               - contains: {"$ref": "#/definitions/histogram__suppressed_count"}
               - contains: {"$ref": "#/definitions/histogram__suppressed_ratio"}
@@ -516,6 +778,14 @@ definitions:
             type: array
             allOf:
             - contains: {"$ref": "#/definitions/exploration_info"}
+            - contains: {"$ref": "#/definitions/sample_values__datetime"}
+            anyOf:
+            - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+            - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__second"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
     - if:
         properties:
           columnType:
@@ -528,6 +798,15 @@ definitions:
             type: array
             allOf:
             - contains: {"$ref": "#/definitions/exploration_info"}
+            - contains: {"$ref": "#/definitions/sample_values__datetime"}
+            anyOf:
+            - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+            - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__day"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__month"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__year"}
     - if:
         properties:
           columnType:
@@ -540,6 +819,18 @@ definitions:
             type: array
             allOf:
             - contains: {"$ref": "#/definitions/exploration_info"}
+            - contains: {"$ref": "#/definitions/sample_values__datetime"}
+            anyOf:
+            - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+            - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__second"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__day"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__month"}
+            - contains: {"$ref": "#/definitions/dates_cyclical__year"}
     - if:
         properties:
           columnType:
