@@ -29,7 +29,9 @@ properties:
       type: string
 additionalProperties: !!bool false
 required: [id, status, versionInfo, dataSource, table, columns, sampleData, errors]
+
 definitions:
+
   exploration_status:
     type: string
     enum:
@@ -39,6 +41,7 @@ definitions:
     - Complete
     - Canceled
     - Error
+
   column_type:
     type: string
     enum:
@@ -50,6 +53,7 @@ definitions:
     - datetime
     - boolean
     - unknown
+
   version_info:
     type: object
     properties:
@@ -59,6 +63,7 @@ definitions:
         type: string
     additionalProperties: !!bool false
     required: [commitRef, commitHash]
+
   exploration_info:
     type: object
     properties:
@@ -79,6 +84,7 @@ definitions:
         required: [dataSource, table, column, columnType]
     additionalProperties: !!bool false
     required: [name, value]
+
   value_counts:
     type: object
     properties:
@@ -106,6 +112,7 @@ definitions:
         type: boolean
     additionalItems: !!bool false
     required: [totalCount, suppressedCount, nullCount, totalRows, suppressedRows, nullRows, nonSuppressedRows, nonSuppressedCount, nonSuppressedNonNullCount, suppressedCountRatio, isCategorical]
+
   histogram__value_counts:
     type: object
     properties:
@@ -115,6 +122,7 @@ definitions:
         "$ref": "#/definitions/value_counts"
     additionalProperties: !!bool false
     required: [name, value]
+
   histogram__buckets:
     type: object
     properties:
@@ -137,6 +145,7 @@ definitions:
           required: [bucketSize, lowerBound, count, countNoise]
     additionalProperties: !!bool false
     required: [name, value]
+
   histogram__suppressed_ratio:
     type: object
     properties:
@@ -146,6 +155,7 @@ definitions:
         type: number
     additionalProperties: !!bool false
     required: [name, value]
+
   histogram__suppressed_count:
     type: object
     properties:
@@ -155,6 +165,7 @@ definitions:
         type: integer
     additionalProperties: !!bool false
     required: [name, value]
+
   descriptive_stats__integer:
     type: object
     properties:
@@ -183,6 +194,7 @@ definitions:
         additionalProperties: !!bool false
     additionalProperties: !!bool false
     required: [name, value]
+
   descriptive_stats__datetime:
     type: object
     properties:
@@ -214,6 +226,7 @@ definitions:
         additionalProperties: !!bool false
     additionalProperties: !!bool false
     required: [name, value]
+
   quartile_estimates:
     type: object
     properties:
@@ -227,6 +240,7 @@ definitions:
         maxItems: !!int 3
     additionalProperties: !!bool false
     required: [name, value]
+
   distribution_estimates:
     type: object
     properties:
@@ -239,6 +253,7 @@ definitions:
           type: object
     additionalProperties: !!bool false
     required: [name, value]
+
   sample_values__integer:
     type: object
     properties:
@@ -252,6 +267,7 @@ definitions:
           - const: null
     additionalProperties: !!bool false
     required: [name, value]
+
   sample_values__string:
     type: object
     properties:
@@ -265,6 +281,7 @@ definitions:
           - const: null
     additionalProperties: !!bool false
     required: [name, value]
+
   sample_values__boolean:
     type: object
     properties:
@@ -278,6 +295,7 @@ definitions:
           - const: null
     additionalProperties: !!bool false
     required: [name, value]
+
   sample_values__datetime:
     type: object
     properties:
@@ -292,6 +310,7 @@ definitions:
           - const: null
     additionalProperties: !!bool false
     required: [name, value]
+
   min__integer:
     type: object
     properties:
@@ -301,6 +320,7 @@ definitions:
         type: integer
     additionalProperties: !!bool false
     required: [name, value]
+
   max__integer:
     type: object
     properties:
@@ -310,6 +330,7 @@ definitions:
         type: integer
     additionalProperties: !!bool false
     required: [name, value]
+
   average_estimate:
     type: object
     properties:
@@ -319,6 +340,7 @@ definitions:
         type: number
     additionalProperties: !!bool false
     required: [name, value]
+
   is_email:
     type: object
     properties:
@@ -333,6 +355,7 @@ definitions:
         required: [isEmail]
     additionalProperties: !!bool false
     required: [name, value]
+
   distinct__is_categorical__true:
     type: object
     properties:
@@ -342,6 +365,7 @@ definitions:
         const: !!bool true
     additionalProperties: !!bool false
     required: [name, value]
+
   distinct__is_categorical__false:
     type: object
     properties:
@@ -351,6 +375,7 @@ definitions:
         const: !!bool false
     additionalProperties: !!bool false
     required: [name, value]
+
   distinct__value_count:
     type: object
     properties:
@@ -360,6 +385,7 @@ definitions:
         type: integer
     additionalProperties: !!bool false
     required: [name, value]
+
   distinct__null_count:
     type: object
     properties:
@@ -369,6 +395,7 @@ definitions:
         type: integer
     additionalProperties: !!bool false
     required: [name, value]
+
   distinct__suppressed_count:
     type: object
     properties:
@@ -378,6 +405,7 @@ definitions:
         type: integer
     additionalProperties: !!bool false
     required: [name, value]
+
   distinct__values__integer:
     type: object
     properties:
@@ -396,6 +424,7 @@ definitions:
               type: integer
           additionalProperties: !!bool false
           required: [value, count]
+
   distinct__values__string:
     type: object
     properties:
@@ -416,6 +445,7 @@ definitions:
           required: [value, count]
     additionalProperties: !!bool false
     required: [name, value]
+
   distinct__values__boolean:
     type: object
     properties:
@@ -434,6 +464,7 @@ definitions:
           required: [value, count]
     additionalProperties: !!bool false
     required: [name, value]
+
   text__length__values:
     type: object
     properties:
@@ -452,6 +483,7 @@ definitions:
           required: [value, count]
     additionalProperties: !!bool false
     required: [name, value]
+
   text__length__counts:
     type: object
     properties:
@@ -461,6 +493,7 @@ definitions:
         "$ref": "#/definitions/value_counts"
     additionalProperties: !!bool false
     required: [name, value]
+
   dates_cyclical__second:
     type: object
     properties:
@@ -492,6 +525,7 @@ definitions:
         required: [total, suppressed, counts]
     additionalProperties: !!bool false
     required: [name, value]
+
   dates_cyclical__minute:
     type: object
     properties:
@@ -523,6 +557,7 @@ definitions:
         required: [total, suppressed, counts]
     additionalProperties: !!bool false
     required: [name, value]
+
   dates_cyclical__hour:
     type: object
     properties:
@@ -554,6 +589,7 @@ definitions:
         required: [total, suppressed, counts]
     additionalProperties: !!bool false
     required: [name, value]
+
   dates_cyclical__weekday:
     type: object
     properties:
@@ -585,6 +621,7 @@ definitions:
         required: [total, suppressed, counts]
     additionalProperties: !!bool false
     required: [name, value]
+
   dates_cyclical__day:
     type: object
     properties:
@@ -616,6 +653,7 @@ definitions:
         required: [total, suppressed, counts]
     additionalProperties: !!bool false
     required: [name, value]
+
   dates_cyclical__month:
     type: object
     properties:
@@ -647,6 +685,7 @@ definitions:
         required: [total, suppressed, counts]
     additionalProperties: !!bool false
     required: [name, value]
+
   dates_cyclical__year:
     type: object
     properties:
@@ -676,6 +715,7 @@ definitions:
         required: [total, suppressed, counts]
     additionalProperties: !!bool false
     required: [name, value]
+
   column_metrics:
     type: object
     properties:
@@ -690,6 +730,7 @@ definitions:
     additionalProperties: !!bool false
     required: [column, columnType, status, metrics]
     allOf:
+
     - if:
         properties:
           columnType:
@@ -732,6 +773,7 @@ definitions:
               - contains: {"$ref": "#/definitions/quartile_estimates"}
               - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
               - contains: {"$ref": "#/definitions/distribution_estimates"}
+
     - if:
         properties:
           columnType:
@@ -766,6 +808,7 @@ definitions:
               - contains: {"$ref": "#/definitions/is_email"}
               - contains: {"$ref": "#/definitions/text__length__counts"}
               - contains: {"$ref": "#/definitions/text__length__values"}
+
     - if:
         properties:
           columnType:
@@ -773,6 +816,7 @@ definitions:
           status:
             const: Complete
       then:
+        description: metrics for timestamp columns
         properties:
           metrics:
             type: array
@@ -786,6 +830,7 @@ definitions:
             - contains: {"$ref": "#/definitions/dates_cyclical__second"}
             - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
             - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
+
     - if:
         properties:
           columnType:
@@ -793,6 +838,7 @@ definitions:
           status:
             const: Complete
       then:
+        description: metrics for date columns
         properties:
           metrics:
             type: array
@@ -807,6 +853,7 @@ definitions:
             - contains: {"$ref": "#/definitions/dates_cyclical__day"}
             - contains: {"$ref": "#/definitions/dates_cyclical__month"}
             - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+
     - if:
         properties:
           columnType:
@@ -814,6 +861,7 @@ definitions:
           status:
             const: Complete
       then:
+        description: metrics for datetime columns
         properties:
           metrics:
             type: array
@@ -831,6 +879,7 @@ definitions:
             - contains: {"$ref": "#/definitions/dates_cyclical__day"}
             - contains: {"$ref": "#/definitions/dates_cyclical__month"}
             - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+
     - if:
         properties:
           columnType:
@@ -838,6 +887,7 @@ definitions:
           status:
             const: Complete
       then:
+        description: metrics for boolean columns
         properties:
           metrics:
             type: array
