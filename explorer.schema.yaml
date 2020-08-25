@@ -232,6 +232,19 @@ definitions:
           - const: null
     additionalProperties: !!bool false
     required: [name, value]
+  sample_values__boolean:
+    type: object
+    properties:
+      name:
+        const: sample_values
+      value:
+        type: array
+        items:
+          oneOf:
+          - type: boolean
+          - const: null
+    additionalProperties: !!bool false
+    required: [name, value]
   min__integer:
     type: object
     properties:
@@ -350,6 +363,24 @@ definitions:
               oneOf:
               - type: string
               - const: "--OTHER--"
+            count:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count]
+    additionalProperties: !!bool false
+    required: [name, value]
+  distinct__values__boolean:
+    type: object
+    properties:
+      name:
+        const: distinct.values
+      value:
+        type: array
+        items:
+          type: object
+          properties:
+            value:
+              type: boolean
             count:
               type: integer
           additionalProperties: !!bool false
@@ -521,3 +552,9 @@ definitions:
             type: array
             allOf:
             - contains: {"$ref": "#/definitions/exploration_info"}
+            - contains: {"$ref": "#/definitions/sample_values__boolean"}
+            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+            - contains: {"$ref": "#/definitions/distinct__values__boolean"}
+            - contains: {"$ref": "#/definitions/distinct__value_count"}
+            - contains: {"$ref": "#/definitions/distinct__null_count"}
+            - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
