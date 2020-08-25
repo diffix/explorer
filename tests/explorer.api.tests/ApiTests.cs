@@ -141,94 +141,101 @@
                 Columns = pdata.Columns,
             };
 
+            // The vcr cache has to be cleared when there are schema changes.
             var explorerGuid = await TestApi(
                 HttpMethod.Post,
                 ExploreEndpoint,
                 data,
-                (response, content) =>
-                {
-                    Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
-
-                    var jsonContent = JObject.Parse(content);
-                    var errorMessages = new List<string>() as IList<string>;
-                    var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
-                    Assert.True(isValidContent, string.Join('\n', errorMessages));
-
-                    Assert.True(
-                        jsonContent.Type == JTokenType.Object,
-                        $"Expected a JSON object in the response:\n{content}");
-
-                    Assert.True(
-                        jsonContent.TryGetValue("id", out var id),
-                        $"Expected an 'id' property in:\n{content}");
-                    Assert.True(Guid.TryParse(id.Value<string>(), out var explorerGuid));
-
-                    return explorerGuid;
-                },
-                vcrSessionName);
+                ReadExplorationGuid,
+                vcrSessionName,
+                VcrSharp.VCRMode.Cache);
 
             var testConfig = factory.GetTestConfig(nameof(ApiTests), vcrSessionName);
             await TestExploreResult(
                 HttpMethod.Get,
                 explorerGuid,
                 testConfig.PollFrequency,
-                (response, content) =>
+                CheckExploreResult,
+                vcrSessionName,
+                VcrSharp.VCRMode.Cache);
+
+            Guid ReadExplorationGuid(HttpResponseMessage response, string content)
+            {
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
+                var jsonContent = JObject.Parse(content);
+                var errorMessages = new List<string>() as IList<string>;
+                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
+                Assert.True(isValidContent, string.Join('\n', errorMessages));
+
+                Assert.True(
+                    jsonContent.Type == JTokenType.Object,
+                    $"Expected a JSON object in the response:\n{content}");
+
+                Assert.True(
+                    jsonContent.TryGetValue("id", out var id),
+                    $"Expected an 'id' property in:\n{content}");
+                Assert.True(Guid.TryParse(id.Value<string>(), out var explorerGuid));
+
+                return explorerGuid;
+            }
+
+            void CheckExploreResult(HttpResponseMessage response, string content)
+            {
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
+                var jsonContent = JObject.Parse(content);
+                var errorMessages = new List<string>() as IList<string>;
+                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
+                Assert.True(isValidContent, string.Join('\n', errorMessages));
+
+                Assert.Contains("status", jsonContent);
+                var status = (string)jsonContent["status"];
+
+                Assert.Contains("columns", jsonContent);
+                var columns = (JArray)jsonContent["columns"];
+                Assert.NotNull(columns);
+
+                Assert.Contains("sampleData", jsonContent);
+                var sampleData = (JArray)jsonContent["sampleData"];
+                Assert.NotNull(sampleData);
+
+                if (status == "Complete")
                 {
-                    Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
-
-                    var jsonContent = JObject.Parse(content);
-                    var errorMessages = new List<string>() as IList<string>;
-                    var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
-                    Assert.True(isValidContent, string.Join('\n', errorMessages));
-
-                    Assert.Contains("status", jsonContent);
-                    var status = (string)jsonContent["status"];
-
-                    Assert.Contains("columns", jsonContent);
-                    var columns = (JArray)jsonContent["columns"];
-                    Assert.NotNull(columns);
-
-                    Assert.Contains("sampleData", jsonContent);
-                    var sampleData = (JArray)jsonContent["sampleData"];
-                    Assert.NotNull(sampleData);
-
-                    if (status == "Complete")
+                    Assert.Equal(data.Columns.Length, columns.Count);
+                    foreach (var jitem in columns)
                     {
-                        Assert.Equal(data.Columns.Length, columns.Count);
-                        foreach (var jitem in columns)
-                        {
-                            Assert.Equal(JTokenType.Object, jitem.Type);
-                            var item = (JObject)jitem;
-                            Assert.True(item.ContainsKey("column"));
-                            var column = (string)item["column"];
-                            Assert.Contains(column, data.Columns);
+                        Assert.Equal(JTokenType.Object, jitem.Type);
+                        var item = (JObject)jitem;
+                        Assert.True(item.ContainsKey("column"));
+                        var column = (string)item["column"];
+                        Assert.Contains(column, data.Columns);
 
-                            Assert.True(item.ContainsKey("metrics"));
-                            var metrics = (JArray)item["metrics"];
-                            Assert.True(metrics.Count > 0, $"Metrics for column {column} are empty!");
-                            Assert.All(metrics, jmetric =>
-                            {
-                                Assert.Equal(JTokenType.Object, jmetric.Type);
-                                var metric = (JObject)jmetric;
-                                Assert.True(metric.ContainsKey("name"));
-                                Assert.True(metric.ContainsKey("value"));
-                            });
-                        }
-
-                        if (data.Columns.Length > 0)
+                        Assert.True(item.ContainsKey("metrics"));
+                        var metrics = (JArray)item["metrics"];
+                        Assert.True(metrics.Count > 0, $"Metrics for column {column} are empty!");
+                        Assert.All(metrics, jmetric =>
                         {
-                            Assert.True(sampleData.Count > 0, "SampleData is empty!");
-                            foreach (var row in sampleData)
-                            {
-                                Assert.True(
-                                    row.Type == JTokenType.Array,
-                                    $"Expected 'sampleData' property to contain array elements:\n{content}");
-                                Assert.Equal(data.Columns.Length, row.Count());
-                            }
+                            Assert.Equal(JTokenType.Object, jmetric.Type);
+                            var metric = (JObject)jmetric;
+                            Assert.True(metric.ContainsKey("name"));
+                            Assert.True(metric.ContainsKey("value"));
+                        });
+                    }
+
+                    if (data.Columns.Length > 0)
+                    {
+                        Assert.True(sampleData.Count > 0, "SampleData is empty!");
+                        foreach (var row in sampleData)
+                        {
+                            Assert.True(
+                                row.Type == JTokenType.Array,
+                                $"Expected 'sampleData' property to contain array elements:\n{content}");
+                            Assert.Equal(data.Columns.Length, row.Count());
                         }
                     }
-                },
-                vcrSessionName);
+                }
+            }
         }
 
         [Theory]
@@ -365,7 +372,8 @@
             Guid explorerGuid,
             TimeSpan pollFrequency,
             ApiTestActionWithContent test,
-            [CallerMemberName] string vcrSessionName = "")
+            [CallerMemberName] string vcrSessionName = "",
+            VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Record)
         {
             while (true)
             {
@@ -374,7 +382,8 @@
                     $"{ResultEndpoint}/{explorerGuid}",
                     null,
                     nameof(ApiTests),
-                    vcrSessionName);
+                    vcrSessionName,
+                    vcrMode);
 
                 var content = await response.Content.ReadAsStringAsync();
                 using var jsonContent = JsonDocument.Parse(content);
@@ -407,9 +416,10 @@
             string endpoint,
             object? data,
             ApiTestActionWithContent test,
-            [CallerMemberName] string vcrSessionName = "")
+            [CallerMemberName] string vcrSessionName = "",
+            VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Record)
         {
-            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ApiTests), vcrSessionName);
+            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ApiTests), vcrSessionName, vcrMode);
             var responseString = await response.Content.ReadAsStringAsync();
             test(response, responseString);
         }
@@ -419,9 +429,10 @@
             string endpoint,
             object? data,
             ApiTestActionWithContent<T> test,
-            [CallerMemberName] string vcrSessionName = "")
+            [CallerMemberName] string vcrSessionName = "",
+            VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Record)
         {
-            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ApiTests), vcrSessionName);
+            using var response = await factory.SendExplorerApiRequest(method, endpoint, data, nameof(ApiTests), vcrSessionName, vcrMode);
             var responseString = await response.Content.ReadAsStringAsync();
             return test(response, responseString);
         }

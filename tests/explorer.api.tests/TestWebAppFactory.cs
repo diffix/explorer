@@ -42,12 +42,17 @@
             return Config.AircloakApiKey;
         }
 
-        public async Task<HttpResponseMessage> SendExplorerApiRequest(HttpMethod method, string endpoint, object? data, string testClassName, string vcrSessionName)
+        public async Task<HttpResponseMessage> SendExplorerApiRequest(
+            HttpMethod method,
+            string endpoint,
+            object? data,
+            string testClassName,
+            string vcrSessionName,
+            VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Record)
         {
-            // For the explorer interactions we never want to use the cache so override the vcr mode.
-            // We actually don't need to use the vcr at all but it's useful for debugging...
-            // So we set the vcr mode to always record.
-            var testConfig = GetTestConfig(testClassName, vcrSessionName, VcrSharp.VCRMode.Record);
+            // For the explorer interactions, most of the times, we don't want to use the cache
+            // So we set the default vcr mode to always record.
+            var testConfig = GetTestConfig(testClassName, vcrSessionName, vcrMode);
             var cassette = LoadCassette(testConfig.VcrCassettePath);
 
             using var request = new HttpRequestMessage(method, endpoint);
