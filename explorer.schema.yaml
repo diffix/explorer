@@ -400,7 +400,9 @@ definitions:
     - if:
         properties:
           columnType:
-            const: integer
+            oneOf:
+            - const: integer
+            - const: real
           status:
             const: Complete
       then:
@@ -437,18 +439,6 @@ definitions:
               - contains: {"$ref": "#/definitions/quartile_estimates"}
               - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
               - contains: {"$ref": "#/definitions/distribution_estimates"}
-    - if:
-        properties:
-          columnType:
-            const: real
-          status:
-            const: Complete
-      then:
-        properties:
-          metrics:
-            type: array
-            allOf:
-            - contains: {"$ref": "#/definitions/exploration_info"}
     - if:
         properties:
           columnType:
