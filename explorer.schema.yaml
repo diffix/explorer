@@ -716,6 +716,91 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
+  dates_linear__value:
+    type: object
+    properties:
+      total:
+        type: integer
+      suppressed:
+        type: integer
+      counts:
+        type: array
+        items:
+        - type: object
+          properties:
+            value:
+              type: string
+              format: date-time
+            count:
+              type: integer
+            countNoise:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count, countNoise]
+    additionalProperties: !!bool false
+    required: [total, suppressed, counts]
+
+  dates_linear__second:
+    type: object
+    properties:
+      name:
+        const: dates_linear.second
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__minute:
+    type: object
+    properties:
+      name:
+        const: dates_linear.minute
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__hour:
+    type: object
+    properties:
+      name:
+        const: dates_linear.hour
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__day:
+    type: object
+    properties:
+      name:
+        const: dates_linear.day
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__month:
+    type: object
+    properties:
+      name:
+        const: dates_linear.month
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__year:
+    type: object
+    properties:
+      name:
+        const: dates_linear.year
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+
   column_metrics:
     type: object
     properties:
@@ -729,173 +814,160 @@ definitions:
         type: array
     additionalProperties: !!bool false
     required: [column, columnType, status, metrics]
-    allOf:
+    if:
+      properties:
+        status:
+          const: Complete
+      then:
+        allOf:
 
-    - if:
-        properties:
-          columnType:
+        - if: { properties: { columnType: { oneOf: [ { const: integer }, { const: real } ] } } }
+          then:
             oneOf:
-            - const: integer
-            - const: real
-          status:
-            const: Complete
-      then:
-        oneOf:
-        - description: metrics for categorical integer columns
-          properties:
-            metrics:
-              type: array
-              allOf:
-              - contains: {"$ref": "#/definitions/exploration_info"}
-              - contains: {"$ref": "#/definitions/sample_values__integer"}
-              - contains: {"$ref": "#/definitions/min__integer"}
-              - contains: {"$ref": "#/definitions/max__integer"}
-              - contains: {"$ref": "#/definitions/distinct__values__integer"}
-              - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-              - contains: {"$ref": "#/definitions/distinct__value_count"}
-              - contains: {"$ref": "#/definitions/distinct__null_count"}
-              - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
-        - description: metrics for non-categorical integer columns
-          properties:
-            metrics:
-              type: array
-              allOf:
-              - contains: {"$ref": "#/definitions/exploration_info"}
-              - contains: {"$ref": "#/definitions/sample_values__integer"}
-              - contains: {"$ref": "#/definitions/descriptive_stats__integer"}
-              - contains: {"$ref": "#/definitions/histogram__value_counts"}
-              - contains: {"$ref": "#/definitions/histogram__suppressed_count"}
-              - contains: {"$ref": "#/definitions/histogram__suppressed_ratio"}
-              - contains: {"$ref": "#/definitions/histogram__buckets"}
-              - contains: {"$ref": "#/definitions/min__integer"}
-              - contains: {"$ref": "#/definitions/max__integer"}
-              - contains: {"$ref": "#/definitions/average_estimate"}
-              - contains: {"$ref": "#/definitions/quartile_estimates"}
-              - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
-              - contains: {"$ref": "#/definitions/distribution_estimates"}
+            - description: metrics for categorical integer columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__integer"}
+                  - contains: {"$ref": "#/definitions/min__integer"}
+                  - contains: {"$ref": "#/definitions/max__integer"}
+                  - contains: {"$ref": "#/definitions/distinct__values__integer"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                  - contains: {"$ref": "#/definitions/distinct__value_count"}
+                  - contains: {"$ref": "#/definitions/distinct__null_count"}
+                  - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
 
-    - if:
-        properties:
-          columnType:
-            const: text
-          status:
-            const: Complete
-      then:
-        oneOf:
-        - description: metrics for categorical text columns
-          properties:
-            metrics:
-              type: array
-              allOf:
-              - contains: {"$ref": "#/definitions/exploration_info"}
-              - contains: {"$ref": "#/definitions/sample_values__string"}
-              - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-              - contains: {"$ref": "#/definitions/distinct__values__string"}
-              - contains: {"$ref": "#/definitions/distinct__value_count"}
-              - contains: {"$ref": "#/definitions/distinct__null_count"}
-              - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
-              - contains: {"$ref": "#/definitions/is_email"}
-              - contains: {"$ref": "#/definitions/text__length__counts"}
-              - contains: {"$ref": "#/definitions/text__length__values"}
-        - description: metrics for non-categorical text columns
-          properties:
-            metrics:
-              type: array
-              allOf:
-              - contains: {"$ref": "#/definitions/exploration_info"}
-              - contains: {"$ref": "#/definitions/sample_values__string"}
-              - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
-              - contains: {"$ref": "#/definitions/is_email"}
-              - contains: {"$ref": "#/definitions/text__length__counts"}
-              - contains: {"$ref": "#/definitions/text__length__values"}
+            - description: metrics for non-categorical integer columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__integer"}
+                  - contains: {"$ref": "#/definitions/descriptive_stats__integer"}
+                  - contains: {"$ref": "#/definitions/histogram__value_counts"}
+                  - contains: {"$ref": "#/definitions/histogram__suppressed_count"}
+                  - contains: {"$ref": "#/definitions/histogram__suppressed_ratio"}
+                  - contains: {"$ref": "#/definitions/histogram__buckets"}
+                  - contains: {"$ref": "#/definitions/min__integer"}
+                  - contains: {"$ref": "#/definitions/max__integer"}
+                  - contains: {"$ref": "#/definitions/average_estimate"}
+                  - contains: {"$ref": "#/definitions/quartile_estimates"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                  - contains: {"$ref": "#/definitions/distribution_estimates"}
 
-    - if:
-        properties:
-          columnType:
-            const: timestamp
-          status:
-            const: Complete
-      then:
-        description: metrics for timestamp columns
-        properties:
-          metrics:
-            type: array
-            allOf:
-            - contains: {"$ref": "#/definitions/exploration_info"}
-            - contains: {"$ref": "#/definitions/sample_values__datetime"}
-            anyOf:
-            - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
-            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-            - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__second"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
+        - if: { properties: { columnType: { const: text } } }
+          then:
+            oneOf:
+            - description: metrics for categorical text columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__string"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                  - contains: {"$ref": "#/definitions/distinct__values__string"}
+                  - contains: {"$ref": "#/definitions/distinct__value_count"}
+                  - contains: {"$ref": "#/definitions/distinct__null_count"}
+                  - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
+                  - contains: {"$ref": "#/definitions/is_email"}
+                  - contains: {"$ref": "#/definitions/text__length__counts"}
+                  - contains: {"$ref": "#/definitions/text__length__values"}
 
-    - if:
-        properties:
-          columnType:
-            const: date
-          status:
-            const: Complete
-      then:
-        description: metrics for date columns
-        properties:
-          metrics:
-            type: array
-            allOf:
-            - contains: {"$ref": "#/definitions/exploration_info"}
-            - contains: {"$ref": "#/definitions/sample_values__datetime"}
-            anyOf:
-            - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
-            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-            - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__day"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__month"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+            - description: metrics for non-categorical text columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__string"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                  - contains: {"$ref": "#/definitions/is_email"}
+                  - contains: {"$ref": "#/definitions/text__length__counts"}
+                  - contains: {"$ref": "#/definitions/text__length__values"}
 
-    - if:
-        properties:
-          columnType:
-            const: datetime
-          status:
-            const: Complete
-      then:
-        description: metrics for datetime columns
-        properties:
-          metrics:
-            type: array
-            allOf:
-            - contains: {"$ref": "#/definitions/exploration_info"}
-            - contains: {"$ref": "#/definitions/sample_values__datetime"}
-            anyOf:
-            - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
-            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-            - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__second"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__day"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__month"}
-            - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+        - if: { properties: { columnType: { const: timestamp } } }
+          then:
+            description: metrics for timestamp columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__datetime"}
+                anyOf:
+                - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__second"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
+                - contains: {"$ref": "#/definitions/dates_linear__second"}
+                - contains: {"$ref": "#/definitions/dates_linear__minute"}
+                - contains: {"$ref": "#/definitions/dates_linear__hour"}
 
-    - if:
-        properties:
-          columnType:
-            const: bool
-          status:
-            const: Complete
-      then:
-        description: metrics for boolean columns
-        properties:
-          metrics:
-            type: array
-            allOf:
-            - contains: {"$ref": "#/definitions/exploration_info"}
-            - contains: {"$ref": "#/definitions/sample_values__boolean"}
-            - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-            - contains: {"$ref": "#/definitions/distinct__values__boolean"}
-            - contains: {"$ref": "#/definitions/distinct__value_count"}
-            - contains: {"$ref": "#/definitions/distinct__null_count"}
-            - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
+        - if: { properties: { columnType: { const: date } } }
+          then:
+            description: metrics for date columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__datetime"}
+                anyOf:
+                - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__day"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__month"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+                - contains: {"$ref": "#/definitions/dates_linear__day"}
+                - contains: {"$ref": "#/definitions/dates_linear__month"}
+                - contains: {"$ref": "#/definitions/dates_linear__year"}
+
+        - if: { properties: { columnType: { const: datetime } } }
+          then:
+            description: metrics for datetime columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__datetime"}
+                anyOf:
+                - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__second"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__day"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__month"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+                - contains: {"$ref": "#/definitions/dates_linear__second"}
+                - contains: {"$ref": "#/definitions/dates_linear__minute"}
+                - contains: {"$ref": "#/definitions/dates_linear__hour"}
+                - contains: {"$ref": "#/definitions/dates_linear__day"}
+                - contains: {"$ref": "#/definitions/dates_linear__month"}
+                - contains: {"$ref": "#/definitions/dates_linear__year"}
+
+        - if: { properties: { columnType: { const: bool } } }
+          then:
+            description: metrics for boolean columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__boolean"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__values__boolean"}
+                - contains: {"$ref": "#/definitions/distinct__value_count"}
+                - contains: {"$ref": "#/definitions/distinct__null_count"}
+                - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
