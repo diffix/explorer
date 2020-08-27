@@ -1,13 +1,9 @@
 namespace Explorer.Tests
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
 
-    using Diffix;
-    using Explorer.Common;
     using Explorer.Components;
-    using VcrSharp;
     using Xunit;
 
     public sealed class TextColumnExplorerTests : IClassFixture<ExplorerTestFixture>
@@ -17,6 +13,55 @@ namespace Explorer.Tests
         public TextColumnExplorerTests(ExplorerTestFixture testFixture)
         {
             this.testFixture = testFixture;
+        }
+
+        [Fact]
+        public async void TestLenghtDistributionLoansStatus()
+        {
+            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "status", this);
+
+            var textLenDistribution = new TextLengthDistribution() { Context = scope.Context };
+            var r = await textLenDistribution.ComputeIsolatorLengthDistribution();
+            Assert.NotNull(r);
+            var d0 = r!.Distribution;
+            Assert.Single(d0);
+            Assert.Equal(1, d0[0].Value);
+
+            await scope.ResultTest<TextLengthDistribution, TextLengthDistribution.Result>(r =>
+            {
+                Assert.NotNull(r);
+                var d1 = r!.Distribution;
+                Assert.Single(d1);
+                Assert.Equal(1, d1[0].Value);
+
+                Assert.True(Math.Abs(d0[0].Count - d1[0].Count) < 0.01 * d0[0].Count);
+            });
+        }
+
+        [Fact]
+        public async void TestLengthDistributionLoansDispType()
+        {
+            using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "disp_type", this);
+
+            var textLenDistribution = new TextLengthDistribution() { Context = scope.Context };
+            var r = await textLenDistribution.ComputeIsolatorLengthDistribution();
+            Assert.NotNull(r);
+            var d0 = r!.Distribution;
+            Assert.Equal(2, d0.Count);
+            Assert.Equal(5, d0[0].Value); // "OWNER"
+            Assert.Equal(9, d0[1].Value); // "DISPONENT"
+
+            await scope.ResultTest<TextLengthDistribution, TextLengthDistribution.Result>(r =>
+            {
+                Assert.NotNull(r);
+                var d1 = r!.Distribution;
+                Assert.Equal(2, d1.Count);
+                Assert.Equal(5, d1[0].Value); // "OWNER"
+                Assert.Equal(9, d1[1].Value); // "DISPONENT"
+
+                Assert.True(Math.Abs(d0[0].Count - d1[0].Count) < 0.01 * d0[0].Count);
+                Assert.True(Math.Abs(d0[1].Count - d1[1].Count) < 0.01 * d0[1].Count);
+            });
         }
 
         [Fact]

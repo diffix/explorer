@@ -60,7 +60,7 @@ namespace Explorer.Api
         {
             scope.AddPublisher<EmailCheckComponent>();
             scope.AddPublisher<TextGeneratorComponent>();
-            scope.AddPublisher<TextLengthComponent>();
+            scope.AddPublisher<TextLengthDistribution>();
         }
 
         private static void DatetimeExploration(ExplorationScope scope)

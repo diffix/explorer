@@ -18,6 +18,16 @@ namespace Explorer.Common
             return ret;
         }
 
+        public static ValueWithCountList<T> FromTupleEnum(IEnumerable<(T Value, long Count)> valueCounts)
+        {
+            var ret = new ValueWithCountList<T>();
+            foreach (var vc in valueCounts)
+            {
+                ret.AddValueCount(vc.Value, vc.Count);
+            }
+            return ret;
+        }
+
         public void AddValueCount(T value, long count)
         {
             Add((value, TotalCount + count));

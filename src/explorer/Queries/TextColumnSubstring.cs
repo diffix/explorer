@@ -13,12 +13,14 @@ namespace Explorer.Queries
         private readonly int pos;
         private readonly int length;
         private readonly int count;
+        private readonly int filterLength;
 
-        public TextColumnSubstring(int pos, int length, int count)
+        public TextColumnSubstring(int pos, int length, int count, int filterLength)
         {
             this.pos = pos;
             this.length = length;
             this.count = count;
+            this.filterLength = filterLength;
         }
 
         public override Result ParseRow(ref Utf8JsonReader reader) => new Result(ref reader);
@@ -49,7 +51,7 @@ namespace Explorer.Queries
                     group by grouping sets ({columnNames})
                     ) as substring_counts
                 group by {columnNames}
-                having length(sstr) = {length}";
+                having length(sstr) = {filterLength}";
         }
 
         public class Result : ValueWithCount<string>
