@@ -18,7 +18,7 @@ namespace Explorer.Queries
                 select
                     count(*)
                 from {table}
-                where trim(BOTH '{Constants.EmailAddressChars}' FROM {column}) = '@'";
+                where right({column}, 4) LIKE '%.%' AND {column} LIKE '%@%'";
         }
     }
 }
