@@ -4,7 +4,10 @@ namespace Explorer.Api.Models
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json.Serialization;
+
+    using Diffix;
     using Explorer;
+    using Explorer.Metrics;
 
     using static ExplorationStatusEnum;
 
@@ -19,7 +22,7 @@ namespace Explorer.Api.Models
             Status = status;
             DataSource = exploreParams.DataSource;
             Table = exploreParams.Table;
-            ColumnMetrics = exploreParams.Columns.Select(s => new { Column = s } as object).ToList();
+            ColumnMetrics = exploreParams.Columns.Select(c => new ColumnMetricsType(c)).ToList();
             SampleData = new List<List<object?>>();
         }
 
@@ -30,7 +33,7 @@ namespace Explorer.Api.Models
             DataSource = exploration.DataSource;
             Table = exploration.Table;
             SampleData = exploration.SampleData.Select(col => col.ToList()).ToList();
-            ColumnMetrics = exploration.PublishedMetrics.Select(m => m.Metric).ToList();
+            ColumnMetrics = exploration.ColumnExplorations.Select(ce => new ColumnMetricsType(ce)).ToList();
         }
 
         public Guid Id { get; }
@@ -44,7 +47,7 @@ namespace Explorer.Api.Models
         public string Table { get; }
 
         [JsonPropertyName("columns")]
-        public List<object> ColumnMetrics { get; }
+        public List<ColumnMetricsType> ColumnMetrics { get; }
 
         public List<List<object?>> SampleData { get; }
 
@@ -53,6 +56,33 @@ namespace Explorer.Api.Models
         public void AddErrorMessage(string message)
         {
             Errors.Add(message);
+        }
+
+        public class ColumnMetricsType
+        {
+            public ColumnMetricsType(string column)
+            {
+                Column = column;
+                ColumnType = DValueType.Unknown;
+                Status = ExplorationStatus.New;
+                Metrics = new List<ExploreMetric>(0);
+            }
+
+            public ColumnMetricsType(ColumnExploration columnExploration)
+            {
+                Column = columnExploration.Column;
+                ColumnType = columnExploration.ColumnInfo.Type;
+                Status = columnExploration.Status;
+                Metrics = columnExploration.PublishedMetrics.ToList();
+            }
+
+            public string Column { get; }
+
+            public DValueType ColumnType { get; }
+
+            public ExplorationStatus Status { get; }
+
+            public IList<ExploreMetric> Metrics { get; }
         }
     }
 }

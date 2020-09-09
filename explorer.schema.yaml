@@ -1,0 +1,973 @@
+---
+"$schema": http://json-schema.org/draft-07/schema#
+title: Diffix Explorer API v1 Output Schema
+description: Schema for validating of the shape of the results produced by Diffix Explorer under API version 1.
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  status:
+    "$ref": "#/definitions/exploration_status"
+  versionInfo:
+    "$ref": "#/definitions/version_info"
+  dataSource:
+    type: string
+  table:
+    type: string
+  columns:
+    type: array
+    items:
+      "$ref": "#/definitions/column_metrics"
+  sampleData:
+    type: array
+    items:
+      type: array
+  errors:
+    type: array
+    items:
+      type: string
+additionalProperties: !!bool false
+required: [id, status, versionInfo, dataSource, table, columns, sampleData, errors]
+
+definitions:
+
+  exploration_status:
+    type: string
+    enum:
+    - New
+    - Validating
+    - Processing
+    - Complete
+    - Canceled
+    - Error
+
+  column_type:
+    type: string
+    enum:
+    - integer
+    - real
+    - text
+    - timestamp
+    - date
+    - datetime
+    - boolean
+    - unknown
+
+  version_info:
+    type: object
+    properties:
+      commitRef:
+        type: string
+      commitHash:
+        type: string
+    additionalProperties: !!bool false
+    required: [commitRef, commitHash]
+
+  exploration_info:
+    type: object
+    properties:
+      name:
+        const: exploration_info
+      value:
+        type: object
+        properties:
+          dataSource:
+            type: string
+          table:
+            type: string
+          column:
+            type: string
+          columnType:
+            type: string
+        additionalProperties: !!bool false
+        required: [dataSource, table, column, columnType]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  value_counts:
+    type: object
+    properties:
+      totalCount:
+        type: integer
+      suppressedCount:
+        type: integer
+      nullCount:
+        type: integer
+      totalRows:
+        type: integer
+      suppressedRows:
+        type: integer
+      nullRows:
+        type: integer
+      nonSuppressedRows:
+        type: integer
+      nonSuppressedCount:
+        type: integer
+      nonSuppressedNonNullCount:
+        type: integer
+      suppressedCountRatio:
+        type: number
+      isCategorical:
+        type: boolean
+    additionalItems: !!bool false
+    required: [totalCount, suppressedCount, nullCount, totalRows, suppressedRows, nullRows, nonSuppressedRows, nonSuppressedCount, nonSuppressedNonNullCount, suppressedCountRatio, isCategorical]
+
+  histogram__value_counts:
+    type: object
+    properties:
+      name:
+        const: histogram.value_counts
+      value:
+        "$ref": "#/definitions/value_counts"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  histogram__buckets:
+    type: object
+    properties:
+      name:
+        const: histogram.buckets
+      value:
+        type: array
+        items:
+          type: object
+          properties:
+            bucketSize:
+              type: number
+            lowerBound:
+              type: number
+            count:
+              type: integer
+            countNoise:
+              type: number
+          additionalProperties: !!bool false
+          required: [bucketSize, lowerBound, count, countNoise]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  histogram__suppressed_ratio:
+    type: object
+    properties:
+      name:
+        const: histogram.suppressed_ratio
+      value:
+        type: number
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  histogram__suppressed_count:
+    type: object
+    properties:
+      name:
+        const: histogram.suppressed_count
+      value:
+        type: integer
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  descriptive_stats__integer:
+    type: object
+    properties:
+      name:
+        const: descriptive_stats
+      value:
+        type: object
+        properties:
+          entropy:
+            type: number
+          mean:
+            type: number
+          mode:
+            type: number
+          quartiles:
+            type: array
+            items:
+              type: number
+            minItems: !!int 3
+            maxItems: !!int 3
+          standardDeviation:
+            type: number
+          variance:
+            type: number
+        required: ["entropy", "mean", "mode", "quartiles", "standardDeviation", "variance"]
+        additionalProperties: !!bool false
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  descriptive_stats__datetime:
+    type: object
+    properties:
+      name:
+        const: descriptive_stats
+      value:
+        type: object
+        properties:
+          entropy:
+            type: number
+          mean:
+            type: string
+            format: date-time
+          mode:
+            type: string
+            format: date-time
+          quartiles:
+            type: array
+            items:
+              type: string
+              format: date-time
+            minItems: !!int 3
+            maxItems: !!int 3
+          standardDeviation:
+            type: number
+          variance:
+            type: number
+        required: ["entropy", "mean", "mode", "quartiles", "standardDeviation", "variance"]
+        additionalProperties: !!bool false
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  quartile_estimates:
+    type: object
+    properties:
+      name:
+        const: quartile_estimates
+      value:
+        type: array
+        items:
+          type: number
+        minItems: !!int 3
+        maxItems: !!int 3
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distribution_estimates:
+    type: object
+    properties:
+      name:
+        const: distribution_estimates
+      value:
+        type: array
+        description: "!!!TODO - add properties!!!"
+        items:
+          type: object
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  sample_values__integer:
+    type: object
+    properties:
+      name:
+        const: sample_values
+      value:
+        type: array
+        items:
+          oneOf:
+          - type: integer
+          - const: null
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  sample_values__string:
+    type: object
+    properties:
+      name:
+        const: sample_values
+      value:
+        type: array
+        items:
+          oneOf:
+          - type: string
+          - const: null
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  sample_values__boolean:
+    type: object
+    properties:
+      name:
+        const: sample_values
+      value:
+        type: array
+        items:
+          oneOf:
+          - type: boolean
+          - const: null
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  sample_values__datetime:
+    type: object
+    properties:
+      name:
+        const: sample_values
+      value:
+        type: array
+        items:
+          oneOf:
+          - type: string
+            format: date-time
+          - const: null
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  min__integer:
+    type: object
+    properties:
+      name:
+        const: min
+      value:
+        type: integer
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  max__integer:
+    type: object
+    properties:
+      name:
+        const: max
+      value:
+        type: integer
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  average_estimate:
+    type: object
+    properties:
+      name:
+        const: max
+      value:
+        type: number
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  is_email:
+    type: object
+    properties:
+      name:
+        const: is_email
+      value:
+        type: object
+        properties:
+          isEmail:
+            type: boolean
+        additionalProperties: !!bool false
+        required: [isEmail]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distinct__is_categorical__true:
+    type: object
+    properties:
+      name:
+        const: distinct.is_categorical
+      value:
+        const: !!bool true
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distinct__is_categorical__false:
+    type: object
+    properties:
+      name:
+        const: distinct.is_categorical
+      value:
+        const: !!bool false
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distinct__value_count:
+    type: object
+    properties:
+      name:
+        const: distinct.value_count
+      value:
+        type: integer
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distinct__null_count:
+    type: object
+    properties:
+      name:
+        const: distinct.null_count
+      value:
+        type: integer
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distinct__suppressed_count:
+    type: object
+    properties:
+      name:
+        const: distinct.suppressed_count
+      value:
+        type: integer
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distinct__values__integer:
+    type: object
+    properties:
+      name:
+        const: distinct.values
+      value:
+        type: array
+        items:
+          type: object
+          properties:
+            value:
+              oneOf:
+              - type: integer
+              - const: "--OTHER--"
+            count:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count]
+
+  distinct__values__string:
+    type: object
+    properties:
+      name:
+        const: distinct.values
+      value:
+        type: array
+        items:
+          type: object
+          properties:
+            value:
+              oneOf:
+              - type: string
+              - const: "--OTHER--"
+            count:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  distinct__values__boolean:
+    type: object
+    properties:
+      name:
+        const: distinct.values
+      value:
+        type: array
+        items:
+          type: object
+          properties:
+            value:
+              type: boolean
+            count:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  text__length__values:
+    type: object
+    properties:
+      name:
+        const: text.length.values
+      value:
+        type: array
+        items:
+          type: object
+          properties:
+            value:
+              type: integer
+            count:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  text__length__counts:
+    type: object
+    properties:
+      name:
+        const: text.length.counts
+      value:
+        "$ref": "#/definitions/value_counts"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_cyclical__second:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.second
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 59
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_cyclical__minute:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.minute
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 59
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_cyclical__hour:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.hour
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 23
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_cyclical__weekday:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.weekday
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 0
+                  maximum: !!int 7
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_cyclical__day:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.day
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 1
+                  maximum: !!int 31
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_cyclical__month:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.month
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                  minimum: !!int 1
+                  maximum: !!int 12
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_cyclical__year:
+    type: object
+    properties:
+      name:
+        const: dates_cyclical.year
+      value:
+        type: object
+        properties:
+          total:
+            type: integer
+          suppressed:
+            type: integer
+          counts:
+            type: array
+            items:
+            - type: object
+              properties:
+                value:
+                  type: integer
+                count:
+                  type: integer
+                countNoise:
+                  type: integer
+              additionalProperties: !!bool false
+              required: [value, count, countNoise]
+        additionalProperties: !!bool false
+        required: [total, suppressed, counts]
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__value:
+    type: object
+    properties:
+      total:
+        type: integer
+      suppressed:
+        type: integer
+      counts:
+        type: array
+        items:
+        - type: object
+          properties:
+            value:
+              type: string
+              format: date-time
+            count:
+              type: integer
+            countNoise:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count, countNoise]
+    additionalProperties: !!bool false
+    required: [total, suppressed, counts]
+
+  dates_linear__second:
+    type: object
+    properties:
+      name:
+        const: dates_linear.second
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__minute:
+    type: object
+    properties:
+      name:
+        const: dates_linear.minute
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__hour:
+    type: object
+    properties:
+      name:
+        const: dates_linear.hour
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__day:
+    type: object
+    properties:
+      name:
+        const: dates_linear.day
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__month:
+    type: object
+    properties:
+      name:
+        const: dates_linear.month
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+  dates_linear__year:
+    type: object
+    properties:
+      name:
+        const: dates_linear.year
+      value:
+        "$ref": "#/definitions/dates_linear__value"
+    additionalProperties: !!bool false
+    required: [name, value]
+
+
+  column_metrics:
+    type: object
+    properties:
+      column:
+        type: string
+      columnType:
+        "$ref": "#/definitions/column_type"
+      status:
+        "$ref": "#/definitions/exploration_status"
+      metrics:
+        type: array
+    additionalProperties: !!bool false
+    required: [column, columnType, status, metrics]
+    if:
+      properties:
+        status:
+          const: Complete
+      then:
+        allOf:
+
+        - if: { properties: { columnType: { oneOf: [ { const: integer }, { const: real } ] } } }
+          then:
+            oneOf:
+            - description: metrics for categorical integer columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__integer"}
+                  - contains: {"$ref": "#/definitions/min__integer"}
+                  - contains: {"$ref": "#/definitions/max__integer"}
+                  - contains: {"$ref": "#/definitions/distinct__values__integer"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                  - contains: {"$ref": "#/definitions/distinct__value_count"}
+                  - contains: {"$ref": "#/definitions/distinct__null_count"}
+                  - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
+
+            - description: metrics for non-categorical integer columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__integer"}
+                  - contains: {"$ref": "#/definitions/descriptive_stats__integer"}
+                  - contains: {"$ref": "#/definitions/histogram__value_counts"}
+                  - contains: {"$ref": "#/definitions/histogram__suppressed_count"}
+                  - contains: {"$ref": "#/definitions/histogram__suppressed_ratio"}
+                  - contains: {"$ref": "#/definitions/histogram__buckets"}
+                  - contains: {"$ref": "#/definitions/min__integer"}
+                  - contains: {"$ref": "#/definitions/max__integer"}
+                  - contains: {"$ref": "#/definitions/average_estimate"}
+                  - contains: {"$ref": "#/definitions/quartile_estimates"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                  - contains: {"$ref": "#/definitions/distribution_estimates"}
+
+        - if: { properties: { columnType: { const: text } } }
+          then:
+            oneOf:
+            - description: metrics for categorical text columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__string"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                  - contains: {"$ref": "#/definitions/distinct__values__string"}
+                  - contains: {"$ref": "#/definitions/distinct__value_count"}
+                  - contains: {"$ref": "#/definitions/distinct__null_count"}
+                  - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
+                  - contains: {"$ref": "#/definitions/is_email"}
+                  - contains: {"$ref": "#/definitions/text__length__counts"}
+                  - contains: {"$ref": "#/definitions/text__length__values"}
+
+            - description: metrics for non-categorical text columns
+              properties:
+                metrics:
+                  type: array
+                  allOf:
+                  - contains: {"$ref": "#/definitions/exploration_info"}
+                  - contains: {"$ref": "#/definitions/sample_values__string"}
+                  - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                  - contains: {"$ref": "#/definitions/is_email"}
+                  - contains: {"$ref": "#/definitions/text__length__counts"}
+                  - contains: {"$ref": "#/definitions/text__length__values"}
+
+        - if: { properties: { columnType: { const: timestamp } } }
+          then:
+            description: metrics for timestamp columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__datetime"}
+                anyOf:
+                - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__second"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
+                - contains: {"$ref": "#/definitions/dates_linear__second"}
+                - contains: {"$ref": "#/definitions/dates_linear__minute"}
+                - contains: {"$ref": "#/definitions/dates_linear__hour"}
+
+        - if: { properties: { columnType: { const: date } } }
+          then:
+            description: metrics for date columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__datetime"}
+                anyOf:
+                - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__day"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__month"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+                - contains: {"$ref": "#/definitions/dates_linear__day"}
+                - contains: {"$ref": "#/definitions/dates_linear__month"}
+                - contains: {"$ref": "#/definitions/dates_linear__year"}
+
+        - if: { properties: { columnType: { const: datetime } } }
+          then:
+            description: metrics for datetime columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__datetime"}
+                anyOf:
+                - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__second"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__day"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__month"}
+                - contains: {"$ref": "#/definitions/dates_cyclical__year"}
+                - contains: {"$ref": "#/definitions/dates_linear__second"}
+                - contains: {"$ref": "#/definitions/dates_linear__minute"}
+                - contains: {"$ref": "#/definitions/dates_linear__hour"}
+                - contains: {"$ref": "#/definitions/dates_linear__day"}
+                - contains: {"$ref": "#/definitions/dates_linear__month"}
+                - contains: {"$ref": "#/definitions/dates_linear__year"}
+
+        - if: { properties: { columnType: { const: bool } } }
+          then:
+            description: metrics for boolean columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__boolean"}
+                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/distinct__values__boolean"}
+                - contains: {"$ref": "#/definitions/distinct__value_count"}
+                - contains: {"$ref": "#/definitions/distinct__null_count"}
+                - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
