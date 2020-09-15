@@ -33,10 +33,13 @@ namespace Explorer.Api.Controllers
         [Route("api/v{version:apiVersion}/explore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Explore(ExploreParams data)
+        public IActionResult Explore(
+            [FromServices] ExplorationLauncher launcher,
+            ExploreParams data)
         {
-            // Register the exploration.
-            var id = explorationRegistry.Register(data);
+            // Launch and register the exploration.
+            var exploration = launcher.Launch(data);
+            var id = explorationRegistry.Register(data, exploration);
 
             return Ok(new ExploreResult(id, ExplorationStatus.New, data));
         }
@@ -64,40 +67,49 @@ namespace Explorer.Api.Controllers
 
             var exploreResult = new ExploreResult(explorationId, exploration, explorationParams);
 
-            if (explorationStatus.IsComplete())
+            if (!explorationStatus.IsComplete())
             {
-                // exception details are logged
-#pragma warning disable CA1031 // catch a more specific allowed exception type, or rethrow the exception;
-                try
-                {
-                    // Await the completion task to force exceptions to the surface.
-                    await exploration.Completion;
-                }
-                catch (TaskCanceledException)
-                {
-                    // Do nothing, just log the occurrence.
-                    // A TaskCanceledException is expected when the client cancels an exploration.
-                    logger.LogInformation($"Exploration {explorationId} was canceled.", null);
-                }
-                catch (Exception) when (exploration.Completion.Exception != null)
-                {
-                    // Log any other exceptions from the explorer and add them to the response object.
-                    logger.LogWarning($"Exceptions occurred in the exploration tasks for exploration {explorationId}.");
-
-                    foreach (var innerEx in exploration.Completion.Exception.Flatten().InnerExceptions)
-                    {
-                        logger.LogError(innerEx, "Exception occurred in exploration task.", innerEx.Data);
-                        exploreResult.AddErrorMessage(innerEx.Message);
-                    }
-                }
-                finally
-                {
-                    explorationRegistry.Remove(explorationId);
-                }
-#pragma warning restore CA1031 // catch a more specific allowed exception type, or rethrow the exception;
+                return Ok(exploreResult);
             }
 
-            return Ok(exploreResult);
+            // exception details are logged
+#pragma warning disable CA1031 // catch a more specific allowed exception type, or rethrow the exception;
+            try
+            {
+                // Await the completion task to force exceptions to the surface.
+                await exploration.Completion;
+            }
+            catch (TaskCanceledException)
+            {
+                // Do nothing, just log the occurrence.
+                // A TaskCanceledException is expected when the client cancels an exploration.
+                logger.LogInformation($"Exploration {explorationId} was canceled.", null);
+            }
+            catch (Exception) when (exploration.Completion.Exception != null)
+            {
+                // Log any other exceptions from the explorer and add them to the response object.
+                logger.LogWarning($"Exceptions occurred in the exploration tasks for exploration {explorationId}.");
+
+                foreach (var innerEx in exploration.Completion.Exception.Flatten().InnerExceptions)
+                {
+                    logger.LogError(innerEx, "Exception occurred in exploration task.", innerEx.Data);
+                    exploreResult.AddErrorMessage(innerEx.Message);
+                }
+            }
+            finally
+            {
+                // explorationRegistry.Remove(explorationId);
+            }
+#pragma warning restore CA1031 // catch a more specific allowed exception type, or rethrow the exception;
+
+            try
+            {
+                return Ok(exploreResult);
+            }
+            finally
+            {
+                explorationRegistry.Remove(explorationId);
+            }
         }
 
         [ApiVersion("1.0")]

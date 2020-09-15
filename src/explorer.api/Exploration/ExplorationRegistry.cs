@@ -13,20 +13,16 @@ namespace Explorer.Api
         private readonly ConcurrentDictionary<Guid, Registration> registrations =
             new ConcurrentDictionary<Guid, Registration>();
 
-        private readonly ExplorationLauncher launcher;
-
-        public ExplorationRegistry(ExplorationLauncher launcher, ILogger<ExplorationRegistry> logger)
+        public ExplorationRegistry(ILogger<ExplorationRegistry> logger)
         {
-            this.launcher = launcher;
             Logger = logger;
         }
 
         public ILogger<ExplorationRegistry> Logger { get; }
 
-        public Guid Register(ExploreParams requestData)
+        public Guid Register(ExploreParams requestData, Exploration exploration)
         {
             var id = Guid.NewGuid();
-            var exploration = launcher.Launch(requestData);
 
             registrations[id] = new Registration(requestData, exploration);
 
