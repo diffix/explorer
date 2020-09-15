@@ -7,7 +7,6 @@ namespace Explorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Explorer.Metrics;
     using Lamar;
     using static Explorer.ExplorationStatusEnum;
 
@@ -27,13 +26,7 @@ namespace Explorer
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        // public Exploration(string dataSource, string table, IEnumerable<ExplorationScope> scopes)
-        // {
-        //     DataSource = dataSource;
-        //     Table = table;
-        //     ColumnExplorations = scopes.Select(scope => new ColumnExploration(scope)).ToList();
-        // }
-        public ImmutableArray<ColumnExploration> ColumnExplorations { get; set; } 
+        public ImmutableArray<ColumnExploration> ColumnExplorations { get; set; }
             = ImmutableArray<ColumnExploration>.Empty;
 
         public IEnumerable<IEnumerable<object?>> SampleData
