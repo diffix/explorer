@@ -95,10 +95,6 @@ namespace Explorer.Api.Controllers
                     exploreResult.AddErrorMessage(innerEx.Message);
                 }
             }
-            finally
-            {
-                // explorationRegistry.Remove(explorationId);
-            }
 #pragma warning restore CA1031 // catch a more specific allowed exception type, or rethrow the exception;
 
             try
