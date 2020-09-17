@@ -5,8 +5,8 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
+    using Explorer.Common.Utils;
     using Explorer.Components.ResultTypes;
-    using Explorer.Metrics;
 
     public class QuartileEstimator :
         ExplorerComponent<QuartileEstimator.Result>, PublisherComponent

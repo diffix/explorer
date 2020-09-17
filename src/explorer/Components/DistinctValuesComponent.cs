@@ -5,9 +5,8 @@ namespace Explorer.Components
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
-    using Explorer.Metrics;
+    using Explorer.Common.Utils;
     using Explorer.Queries;
 
     public class DistinctValuesComponent

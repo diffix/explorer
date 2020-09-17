@@ -1,4 +1,4 @@
-namespace Explorer.Common
+namespace Explorer.Common.Utils
 {
     using System;
     using System.Collections.Generic;

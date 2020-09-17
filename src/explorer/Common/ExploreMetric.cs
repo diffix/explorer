@@ -1,4 +1,4 @@
-namespace Explorer.Metrics
+namespace Explorer.Common
 {
     using System.Text.Json.Serialization;
 

@@ -3,8 +3,7 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
-    using Explorer.Common;
-    using Explorer.JsonExtensions;
+    using Explorer.Common.JsonConversion;
 
     internal class EmailCheck :
         DQuery<long>

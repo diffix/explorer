@@ -1,4 +1,4 @@
-namespace Explorer.JsonExtensions
+namespace Explorer.Common.JsonConversion
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
@@ -6,7 +6,7 @@ namespace Explorer.JsonExtensions
     using System.Text.Json;
 
     using Diffix;
-    using Explorer.Common;
+    using Explorer.Common.Utils;
 
     /// <summary>
     /// Extension methods for <see cref="Utf8JsonReader"/>.

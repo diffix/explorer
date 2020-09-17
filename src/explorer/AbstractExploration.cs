@@ -1,9 +1,6 @@
 ﻿namespace Explorer
 {
-    using System.Collections.Generic;
     using System.Threading.Tasks;
-
-    using Explorer.Metrics;
 
     using static ExplorationStatusEnum;
 

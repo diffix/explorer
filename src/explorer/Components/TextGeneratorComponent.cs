@@ -7,11 +7,11 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
-    using Explorer.Metrics;
+    using Explorer.Common.Utils;
     using Explorer.Queries;
 
-    using LengthDistribution = Explorer.Common.ValueWithCountList<long>;
-    using SubstringWithCountList = Explorer.Common.ValueWithCountList<string>;
+    using LengthDistribution = Explorer.Common.Utils.ValueWithCountList<long>;
+    using SubstringWithCountList = Explorer.Common.Utils.ValueWithCountList<string>;
 
     public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
     {

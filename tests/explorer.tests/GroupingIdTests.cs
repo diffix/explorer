@@ -2,7 +2,7 @@ namespace Explorer.Queries.Tests
 {
     using System;
     using System.Linq;
-    using Explorer.Common;
+    using Explorer.Common.Utils;
     using Xunit;
 
     public sealed class GroupingIdTests

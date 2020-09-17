@@ -1,6 +1,6 @@
 namespace Explorer.Components.ResultTypes
 {
-    using Explorer.Common;
+    using Explorer.Common.Utils;
 
     public class HistogramWithCounts
     {

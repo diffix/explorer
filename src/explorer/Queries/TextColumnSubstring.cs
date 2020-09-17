@@ -4,8 +4,8 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
-    using Explorer.Common;
-    using Explorer.JsonExtensions;
+    using Explorer.Common.JsonConversion;
+    using Explorer.Common.Utils;
 
     internal class TextColumnSubstring :
         DQuery<TextColumnSubstring.Result>

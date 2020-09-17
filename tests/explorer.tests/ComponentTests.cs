@@ -7,6 +7,7 @@ namespace Explorer.Tests
     using System.Threading.Tasks;
 
     using Explorer.Common;
+    using Explorer.Common.Utils;
     using Explorer.Components;
     using Explorer.Queries;
     using Xunit;

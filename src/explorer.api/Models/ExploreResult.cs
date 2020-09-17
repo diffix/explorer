@@ -7,7 +7,7 @@ namespace Explorer.Api.Models
 
     using Diffix;
     using Explorer;
-    using Explorer.Metrics;
+    using Explorer.Common;
 
     using static ExplorationStatusEnum;
 

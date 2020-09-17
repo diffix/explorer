@@ -4,7 +4,7 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Diffix;
-    using Explorer.Metrics;
+    using Explorer.Common;
 
     public class ExplorationInfo : ExplorerComponentBase, PublisherComponent
     {
