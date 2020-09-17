@@ -3,7 +3,7 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
-    using Explorer.JsonExtensions;
+    using Explorer.Common.JsonConversion;
 
     internal class Max :
         DQueryStatement,

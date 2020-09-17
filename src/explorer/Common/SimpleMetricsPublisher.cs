@@ -1,4 +1,4 @@
-namespace Explorer.Metrics
+namespace Explorer.Common
 {
     using System.Collections.Concurrent;
     using System.Collections.Generic;

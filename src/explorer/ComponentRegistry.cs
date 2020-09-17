@@ -1,10 +1,10 @@
-namespace Explorer.Components
+namespace Explorer
 {
     using System.Linq;
-    using BaselineTypeDiscovery;
-    using Diffix;
-    using Explorer.Common;
 
+    using BaselineTypeDiscovery;
+    using Explorer.Common;
+    using Explorer.Components;
     using Lamar;
     using Lamar.Scanning.Conventions;
     using LamarCodeGeneration;

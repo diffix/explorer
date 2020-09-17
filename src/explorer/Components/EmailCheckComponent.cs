@@ -4,7 +4,7 @@ namespace Explorer.Components
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Explorer.Metrics;
+    using Explorer.Common;
     using Explorer.Queries;
 
     public class EmailCheckComponent : ExplorerComponent<EmailCheckComponent.Result>, PublisherComponent

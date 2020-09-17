@@ -1,10 +1,10 @@
-namespace Explorer.Common
+namespace Explorer.Common.Utils
 {
     using System.Collections.Immutable;
     using System.Text.Json;
 
     using Diffix;
-    using Explorer.JsonExtensions;
+    using Explorer.Common.JsonConversion;
 
     public class IndexedGroupingSetsResult<TIndex, TGroupedValue> : CountableRow
     {

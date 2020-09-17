@@ -2,7 +2,7 @@ namespace Explorer.Components
 {
     using System.Collections.Generic;
 
-    using Explorer.Metrics;
+    using Explorer.Common;
 
     public class DescriptiveStatsPublisher : PublisherComponent
     {

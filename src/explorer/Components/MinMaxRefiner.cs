@@ -5,10 +5,8 @@ namespace Explorer.Components
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
     using Explorer.Components.ResultTypes;
-    using Explorer.Metrics;
     using Explorer.Queries;
 
     public class MinMaxRefiner : ExplorerComponent<MinMaxRefiner.Result>, PublisherComponent

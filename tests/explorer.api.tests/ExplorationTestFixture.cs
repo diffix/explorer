@@ -4,8 +4,7 @@
     using System.Net.Http;
 
     using Aircloak.JsonApi;
-    using Explorer.Components;
-    using Explorer.Metrics;
+    using Explorer.Common;
     using Lamar;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;

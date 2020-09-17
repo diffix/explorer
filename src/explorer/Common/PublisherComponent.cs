@@ -1,9 +1,7 @@
-namespace Explorer.Components
+namespace Explorer.Common
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
-
-    using Explorer.Metrics;
 
     public interface PublisherComponent
     {

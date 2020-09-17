@@ -1,4 +1,4 @@
-namespace Explorer.Components
+namespace Explorer.Common
 {
     public abstract class ExplorerComponentBase
     {

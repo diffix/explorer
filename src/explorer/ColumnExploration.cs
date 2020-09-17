@@ -6,7 +6,7 @@ namespace Explorer
     using System.Threading.Tasks;
 
     using Diffix;
-    using Explorer.Metrics;
+    using Explorer.Common;
     using Microsoft.Extensions.Logging;
     using static Explorer.ExplorationStatusEnum;
 

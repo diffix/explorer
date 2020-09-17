@@ -6,7 +6,7 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Accord.Statistics.Distributions.Univariate;
-    using Explorer.Metrics;
+    using Explorer.Common;
 
     public class DatetimeDistributionComponent : ExplorerComponent<DatetimeDistribution>, PublisherComponent
     {

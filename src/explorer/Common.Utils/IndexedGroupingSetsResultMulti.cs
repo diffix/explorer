@@ -1,4 +1,4 @@
-namespace Explorer.Common
+namespace Explorer.Common.Utils
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
@@ -6,7 +6,7 @@ namespace Explorer.Common
     using System.Text.Json;
 
     using Diffix;
-    using Explorer.JsonExtensions;
+    using Explorer.Common.JsonConversion;
 
     public class IndexedGroupingSetsResultMulti<TIndex> : CountableRow
     {

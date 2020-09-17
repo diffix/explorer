@@ -7,8 +7,7 @@ namespace Explorer.Tests
 
     using Aircloak.JsonApi;
     using Diffix;
-    using Explorer.Components;
-    using Explorer.Metrics;
+    using Explorer.Common;
     using Lamar;
     using VcrSharp;
     using Xunit;

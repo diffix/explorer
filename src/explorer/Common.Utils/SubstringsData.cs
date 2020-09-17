@@ -1,9 +1,9 @@
-namespace Explorer.Common
+namespace Explorer.Common.Utils
 {
     using System;
     using System.Collections.Generic;
 
-    using SubstringWithCountList = Explorer.Common.ValueWithCountList<string>;
+    using SubstringWithCountList = ValueWithCountList<string>;
 
     /// <summary>
     /// Stores the substrings at each position in a column,

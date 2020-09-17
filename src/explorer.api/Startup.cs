@@ -2,9 +2,7 @@ namespace Explorer.Api
 {
     using Aircloak.JsonApi;
     using Explorer.Api.Authentication;
-    using Explorer.Api.Models;
-    using Explorer.Components;
-    using Explorer.Metrics;
+    using Explorer.Common;
     using Lamar;
 
     using Microsoft.AspNetCore.Builder;
