@@ -7,7 +7,7 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
-    using Explorer.Metrics;
+    using Explorer.Common.Utils;
 
     public class CategoricalSampleGenerator
         : ExplorerComponent<CategoricalSampleGenerator.Result>, PublisherComponent

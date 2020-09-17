@@ -4,9 +4,7 @@ namespace Explorer.Components
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
-    using Explorer.Metrics;
     using Explorer.Queries;
 
     public class SimpleStats<T> : ExplorerComponent<SimpleStats<T>.Result>, PublisherComponent

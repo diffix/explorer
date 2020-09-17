@@ -4,8 +4,8 @@ namespace Explorer.Components
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Explorer.Common;
     using Explorer.Components.ResultTypes;
-    using Explorer.Metrics;
 
     public class MinMaxFromHistogramComponent :
         ExplorerComponent<MinMaxFromHistogramComponent.Result>, PublisherComponent

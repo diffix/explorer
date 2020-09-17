@@ -4,7 +4,7 @@ namespace Explorer.Components
     using System.Linq;
 
     using Explorer.Common;
-    using Explorer.Metrics;
+    using Explorer.Common.Utils;
 
     public static class TimeUtilities
     {

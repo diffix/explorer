@@ -6,7 +6,7 @@ namespace Explorer.Components
 
     using Accord.Statistics.Analysis;
     using Accord.Statistics.Testing;
-    using Explorer.Metrics;
+    using Explorer.Common;
 
     public class DistributionAnalysisComponent : ExplorerComponent<GoodnessOfFitCollection>, PublisherComponent
     {

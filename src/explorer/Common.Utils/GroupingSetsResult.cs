@@ -1,4 +1,4 @@
-namespace Explorer.Common
+namespace Explorer.Common.Utils
 {
     using System.Collections.Immutable;
     using System.Text.Json;

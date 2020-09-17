@@ -1,6 +1,6 @@
 namespace Explorer.Common.Tests
 {
-    using Explorer.Common;
+    using Explorer.Common.Utils;
     using Xunit;
 
     public sealed class NoisyCountTests

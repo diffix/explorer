@@ -11,8 +11,7 @@ namespace Explorer.Tests
     using Aircloak.JsonApi;
     using Aircloak.JsonApi.ResponseTypes;
     using Diffix;
-    using Explorer.Components;
-    using Explorer.Metrics;
+    using Explorer.Common;
     using Lamar;
     using Microsoft.Extensions.Configuration;
     using VcrSharp;

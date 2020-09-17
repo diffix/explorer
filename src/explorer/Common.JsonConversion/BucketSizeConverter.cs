@@ -4,6 +4,8 @@ namespace Explorer.Common.JsonConversion
     using System.Text.Json;
     using System.Text.Json.Serialization;
 
+    using Explorer.Common.Utils;
+
     public class BucketSizeConverter : JsonConverter<BucketSize>
     {
         public override BucketSize Read(

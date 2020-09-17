@@ -6,6 +6,7 @@ namespace Explorer.Components
 
     using Diffix;
     using Explorer.Common;
+    using Explorer.Common.Utils;
     using Explorer.Components.ResultTypes;
     using Explorer.Queries;
 

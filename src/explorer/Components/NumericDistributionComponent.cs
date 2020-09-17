@@ -5,6 +5,7 @@
     using System.Threading.Tasks;
 
     using Accord.Statistics.Distributions.Univariate;
+    using Explorer.Common;
     using Explorer.Components.ResultTypes;
 
     public class NumericDistributionComponent : ExplorerComponent<NumericDistribution>

@@ -3,7 +3,7 @@ namespace Explorer.Queries
     using System.Text.Json;
 
     using Diffix;
-    using Explorer.Common;
+    using Explorer.Common.Utils;
 
     internal class DistinctColumnValues :
         DQuery<ValueWithCount<JsonElement>>

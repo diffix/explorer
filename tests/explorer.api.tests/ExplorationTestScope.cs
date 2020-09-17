@@ -8,7 +8,7 @@ namespace Explorer.Api.Tests
 
     using Aircloak.JsonApi;
     using Explorer.Api.Authentication;
-    using Explorer.Metrics;
+    using Explorer.Common;
     using Lamar;
     using VcrSharp;
     using Xunit;

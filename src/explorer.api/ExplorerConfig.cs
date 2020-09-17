@@ -1,12 +1,9 @@
 namespace Explorer.Api
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
-    using Explorer.Components;
-    using Explorer.Metrics;
 
     public class ExplorerConfig : IAircloakAuthenticationProvider
     {

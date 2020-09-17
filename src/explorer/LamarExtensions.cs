@@ -1,5 +1,6 @@
-namespace Explorer.Components
+namespace Explorer
 {
+    using Explorer.Common;
     using Lamar;
     using LamarCodeGeneration;
 

@@ -6,7 +6,7 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
-    using Explorer.Metrics;
+    using Explorer.Common.Utils;
     using Explorer.Queries;
 
     public class LinearTimeBuckets : ExplorerComponent<LinearTimeBuckets.Result>, PublisherComponent

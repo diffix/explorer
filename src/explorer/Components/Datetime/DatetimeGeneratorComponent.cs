@@ -1,10 +1,9 @@
 namespace Explorer.Components
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
 
-    using Explorer.Metrics;
+    using Explorer.Common;
 
     public class DatetimeGeneratorComponent : PublisherComponent
     {
