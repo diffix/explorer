@@ -4,7 +4,9 @@ namespace Explorer.Api.Controllers
     using System.Net.Mime;
     using System.Threading.Tasks;
 
+    using Aircloak.JsonApi;
     using Explorer;
+    using Explorer.Api.Authentication;
     using Explorer.Api.Models;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -33,11 +35,21 @@ namespace Explorer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Explore(
-            [FromServices] ExplorationLauncher launcher,
+            [FromServices] Exploration exploration,
+            [FromServices] JsonApiContextBuilder contextBuilder,
+            [FromServices] IAircloakAuthenticationProvider authProvider,
             ExploreParams data)
         {
+            // Register the authentication token for this scope.
+            if (authProvider is ExplorerApiAuthProvider auth)
+            {
+                auth.RegisterApiKey(data.ApiKey);
+            }
+
             // Launch and register the exploration.
-            var exploration = launcher.Launch(data);
+            exploration.Initialise(contextBuilder, data);
+            exploration.Run();
+
             var id = explorationRegistry.Register(data, exploration);
 
             return Ok(new ExploreResult(id, ExplorationStatus.New, data));
