@@ -1,5 +1,6 @@
 namespace Explorer.Common
 {
+    using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
 
@@ -25,6 +26,20 @@ namespace Explorer.Common
                 metric.Name,
                 _ => metric,
                 (_, old) => metric.Priority >= old.Priority ? metric : old);
+        }
+
+        public T FindMetric<T>(MetricDefinition<T> metricInfo)
+        where T : notnull
+        {
+            if (!store.TryGetValue(metricInfo.Name, out var metric))
+            {
+                throw new ArgumentException($"Value was not found for metric '{metricInfo.Name}`.");
+            }
+            if (!(metric is ExploreMetric<T> tmetric))
+            {
+                throw new ArgumentException($"Incorrect type specified for metric '{metricInfo.Name}`.");
+            }
+            return tmetric.TMetric;
         }
     }
 }
