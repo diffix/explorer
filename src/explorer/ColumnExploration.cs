@@ -29,6 +29,16 @@ namespace Explorer
 
             try
             {
+                MetricsPublisher = scope.MetricsPublisher;
+            }
+            catch
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(ColumnExploration)} requires a {nameof(MetricsPublisher)} object in the {nameof(ExplorationScope)}!");
+            }
+
+            try
+            {
                 Column = Context.Column;
                 ColumnInfo = Context.ColumnInfo;
             }
@@ -37,6 +47,7 @@ namespace Explorer
                 throw new InvalidOperationException(
                     $"{nameof(ColumnExploration)} requires a single-column context but context has {Context.Columns.Length} columns.");
             }
+
             this.scope = scope;
         }
 
@@ -46,10 +57,17 @@ namespace Explorer
 
         public ExplorerContext Context { get; }
 
-        public IEnumerable<ExploreMetric> PublishedMetrics =>
-            scope.MetricsPublisher.PublishedMetrics;
+        public IEnumerable<ExploreMetric> PublishedMetrics => MetricsPublisher.PublishedMetrics;
 
         public override ExplorationStatus Status { get; protected set; }
+
+        private MetricsPublisher MetricsPublisher { get; }
+
+        public T FindMetric<T>(MetricDefinition<T> metricInfo)
+        where T : notnull
+        {
+            return MetricsPublisher.FindMetric(metricInfo);
+        }
 
         public void Dispose()
         {

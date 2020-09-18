@@ -14,5 +14,8 @@ namespace Explorer.Common
             await Task.CompletedTask;
             PublishMetric(metric);
         }
+
+        public T FindMetric<T>(MetricDefinition<T> metricInfo)
+        where T : notnull;
     }
 }
