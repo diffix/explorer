@@ -11,5 +11,17 @@ namespace Explorer.Common
 
         [JsonIgnore]
         public int Priority { get; }
+
+        public static TypedMetric<T> Create<T>(MetricDefinition<T> definition, T metric, int priority = 0)
+        where T : notnull
+        {
+            return new TypedMetric<T>(definition, metric, priority);
+        }
+    }
+
+    public interface ExploreMetric<T> : ExploreMetric
+    {
+        [JsonPropertyName("value")]
+        public T TMetric { get; }
     }
 }
