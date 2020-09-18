@@ -43,7 +43,10 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric(name: "average_estimate", metric: decimal.Round(result.Value, Precision));
+            yield return ExploreMetric.Create(MetricDefinitions.AverageEstimate, decimal.Round(result.Value, Precision));
+
+            // alternative syntax:
+            // yield return AverageEstimate.Create(decimal.Round(result.Value, Precision));
         }
 
         protected override async Task<Result?> Explore()
