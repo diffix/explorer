@@ -1,26 +1,19 @@
 namespace Explorer.Common
 {
-    using System.Text.Json.Serialization;
-
-    public sealed class TypedMetric<T> : ExploreMetric<T>
+    public sealed class TypedMetric<T> : ExploreMetric
     where T : notnull
     {
         public TypedMetric(MetricDefinition<T> metricDefinition, T metric, int priority = 0)
         {
             Name = metricDefinition.Name;
-            TMetric = metric;
+            Metric = metric;
             Priority = priority;
         }
 
         public string Name { get; }
 
-        [JsonPropertyName("value")]
-        public object Metric { get => TMetric; }
+        public object Metric { get; }
 
-        [JsonIgnore]
-        public T TMetric { get; }
-
-        [JsonIgnore]
         public int Priority { get; }
     }
 }

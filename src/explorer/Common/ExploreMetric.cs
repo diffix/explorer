@@ -18,10 +18,4 @@ namespace Explorer.Common
             return new TypedMetric<T>(definition, metric, priority);
         }
     }
-
-    public interface ExploreMetric<T> : ExploreMetric
-    {
-        [JsonPropertyName("value")]
-        public T TMetric { get; }
-    }
 }

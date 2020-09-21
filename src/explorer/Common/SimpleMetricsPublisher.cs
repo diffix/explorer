@@ -3,7 +3,6 @@ namespace Explorer.Common
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-
     using Microsoft.Extensions.Logging;
 
     public class SimpleMetricsPublisher : MetricsPublisher
@@ -35,11 +34,11 @@ namespace Explorer.Common
             {
                 throw new ArgumentException($"Value was not found for metric '{metricInfo.Name}`.");
             }
-            if (!(metric is ExploreMetric<T> tmetric))
+            if (!(metric.Metric is T metricValue))
             {
                 throw new ArgumentException($"Incorrect type specified for metric '{metricInfo.Name}`.");
             }
-            return tmetric.TMetric;
+            return metricValue;
         }
     }
 }

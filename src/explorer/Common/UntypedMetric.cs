@@ -1,7 +1,5 @@
 namespace Explorer.Common
 {
-    using System.Text.Json.Serialization;
-
     public class UntypedMetric : ExploreMetric
     {
         public UntypedMetric(string name, object metric, int priority = 0)
@@ -15,7 +13,6 @@ namespace Explorer.Common
 
         public object Metric { get; }
 
-        [JsonIgnore]
         public int Priority { get; }
     }
 }
