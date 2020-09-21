@@ -30,7 +30,7 @@ namespace Explorer.Components
             var result = await ResultAsync;
             if (result?.SampleValues.Count > 0)
             {
-                yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
+                yield return ExploreMetric.Create(MetricDefinitions.SampleValues, result.SampleValues);
             }
         }
 
