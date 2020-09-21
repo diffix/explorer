@@ -3,27 +3,31 @@ namespace Explorer
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
-    using Diffix;
-    using Explorer.Metrics;
+    using Lamar;
+    using static Explorer.ExplorationStatusEnum;
 
     public sealed class Exploration : AbstractExploration, IDisposable
     {
+        private readonly IContainer rootContainer;
+        private readonly ExplorationScopeBuilder scopeBuilder;
+        private readonly CancellationTokenSource cancellationTokenSource;
         private bool disposedValue;
 
-        public Exploration(string dataSource, string table, IEnumerable<ExplorationScope> scopes)
+        public Exploration(
+            IContainer rootContainer,
+            ExplorationScopeBuilder scopeBuilder)
         {
-            DataSource = dataSource;
-            Table = table;
-            ColumnExplorations = scopes.Select(scope => new ColumnExploration(scope)).ToList();
+            this.rootContainer = rootContainer;
+            this.scopeBuilder = scopeBuilder;
+            cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public string DataSource { get; }
-
-        public string Table { get; }
-
-        public List<ColumnExploration> ColumnExplorations { get; }
+        public ImmutableArray<ColumnExploration> ColumnExplorations { get; set; }
+            = ImmutableArray<ColumnExploration>.Empty;
 
         public IEnumerable<IEnumerable<object?>> SampleData
         {
@@ -44,13 +48,69 @@ namespace Explorer
             }
         }
 
+        public override ExplorationStatus Status { get; protected set; }
+
+        private Func<Task<IEnumerable<ExplorerContext>>>? ValidationTask { get; set; }
+
+        public void Initialise<TBuilderArgs>(
+                ExplorerContextBuilder<TBuilderArgs> contextBuilder,
+                TBuilderArgs builderArgs)
+            => ValidationTask = async () => await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
+
+        public void CancelExploration()
+        {
+            cancellationTokenSource.Cancel();
+            Status = ExplorationStatus.Canceled;
+        }
+
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
 
-        protected override Task RunTask() => Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+        protected override async Task RunTask()
+        {
+            // Validation
+            await RunStage(
+                ExplorationStatus.Validating,
+                async () =>
+                {
+                    var contexts = await (ValidationTask?.Invoke()
+                        ?? throw new InvalidOperationException("No validation task specified."));
+
+                    ColumnExplorations = contexts
+                        .Select(context =>
+                        {
+                            var scope = scopeBuilder.Build(rootContainer.GetNestedContainer(), context);
+                            return new ColumnExploration(scope);
+                        })
+                        .ToImmutableArray();
+                });
+
+            // Single-column analyses
+            await RunStage(
+                ExplorationStatus.Processing,
+                async () => await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion)));
+
+            // Multi-column analyses
+            // We have access to all the ColumnExplorations here, so we should be able to extract some
+            // context around which column combinations are promising candidates for multi-column analysis.
+        }
+
+        private async Task RunStage(ExplorationStatus initialStatus, Func<Task> t)
+        {
+            Status = initialStatus;
+            try
+            {
+                await t();
+            }
+            catch
+            {
+                Status = ExplorationStatus.Error;
+                throw;
+            }
+        }
 
         private void Dispose(bool disposing)
         {
@@ -62,6 +122,7 @@ namespace Explorer
                     {
                         item.Dispose();
                     }
+                    cancellationTokenSource.Dispose();
                 }
                 disposedValue = true;
             }

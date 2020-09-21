@@ -4,7 +4,6 @@ namespace Explorer.Api.Tests
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Aircloak.JsonApi;
@@ -36,7 +35,7 @@ namespace Explorer.Api.Tests
             return this;
         }
 
-        public async Task<Exploration> PrepareExploration(
+        public Exploration PrepareExploration(
             string dataSource,
             string table,
             IEnumerable<string> columns,
@@ -62,23 +61,10 @@ namespace Explorer.Api.Tests
                 Columns = ImmutableArray.Create(columns.ToArray()),
             };
 
-            // Create the Context and Connection objects for this exploration.
-            var contextList = await rootContainer.GetInstance<ContextBuilder>().Build(
-                testParams,
-                CancellationToken.None);
+            var exploration = new Exploration(rootContainer, new TypeBasedScopeBuilder());
+            exploration.Initialise(rootContainer.GetInstance<JsonApiContextBuilder>(), testParams);
 
-            var columnScopes = contextList.Select(context =>
-            {
-                var scope = rootContainer.GetNestedContainer();
-                if (LoadedCassette != null)
-                {
-                    scope.InjectDisposable(LoadedCassette);
-                }
-
-                return new TypeBasedScopeBuilder().Build(scope, context);
-            });
-
-            return new Exploration(dataSource, table, columnScopes);
+            return exploration;
         }
 
         public async Task RunAndCheckMetrics(
@@ -98,7 +84,7 @@ namespace Explorer.Api.Tests
             IEnumerable<string> columns,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
-            using var exploration = await PrepareExploration(dataSourceName, table, columns);
+            using var exploration = PrepareExploration(dataSourceName, table, columns);
 
             await exploration.Completion;
             Assert.True(exploration.Completion.IsCompletedSuccessfully);

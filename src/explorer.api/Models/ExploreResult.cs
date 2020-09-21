@@ -26,12 +26,12 @@ namespace Explorer.Api.Models
             SampleData = new List<List<object?>>();
         }
 
-        public ExploreResult(Guid explorationId, Exploration exploration)
+        public ExploreResult(Guid explorationId, Exploration exploration, ExploreParams exploreParams)
         {
             Id = explorationId;
             Status = exploration.Status;
-            DataSource = exploration.DataSource;
-            Table = exploration.Table;
+            DataSource = exploreParams.DataSource;
+            Table = exploreParams.Table;
             SampleData = exploration.SampleData.Select(col => col.ToList()).ToList();
             ColumnMetrics = exploration.ColumnExplorations.Select(ce => new ColumnMetricsType(ce)).ToList();
         }

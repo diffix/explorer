@@ -375,7 +375,9 @@
             [CallerMemberName] string vcrSessionName = "",
             VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Record)
         {
-            while (true)
+            const int pollMax = 10;
+
+            for (var poll = 0; poll < pollMax; poll++)
             {
                 using var response = await factory.SendExplorerApiRequest(
                     method,
@@ -405,8 +407,11 @@
                 if (status == "Complete" || status == "Error" || status == "Canceled")
                 {
                     test(response, content);
-                    break;
+                    return;
                 }
+
+                Assert.True(poll < pollMax, $"Polled {pollMax} times without getting a result. Aborting.\n{content}");
+
                 await Task.Delay(pollFrequency);
             }
         }

@@ -1,6 +1,8 @@
 namespace Explorer.JsonExtensions
 {
     using System.Collections.Generic;
+    using System.Collections.Immutable;
+    using System.Linq;
     using System.Text.Json;
 
     using Diffix;
@@ -83,6 +85,28 @@ namespace Explorer.JsonExtensions
             return ParseNonNullableMetric<int>(ref reader);
         }
 
+        /// <summary>
+        /// Parses a single value from a grouped set of values obtained via the `group by grouping sets` sql command.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Expects a single non-null value in the group. If multiple values are grouped, will return the last
+        /// value from the group, *not* the whole group. The first value returned by the query must be the grouping_id.
+        /// </para>
+        /// <para>
+        /// In other words, this is compatible with queries such as:
+        /// <c>select grouping_id(a, b, c), a, b, c from myTable group by grouping sets (a, b, c)</c>.
+        /// </para>
+        /// <para>
+        /// It incompatible with:
+        /// <c>select grouping_id(a, b, c), a, b, c from myTable group by grouping sets ((a, b), (b, c), (a, c))</c>.
+        /// </para>
+        /// <para>Nor is it compatible with <c>group by cube</c> statements.</para>
+        /// </remarks>
+        /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
+        /// <param name="groupSize">The size of the grouped set.</param>
+        /// <typeparam name="T">The type of the expected value from the group.</typeparam>
+        /// <returns>The groupingId and the corresponding value.</returns>
         public static (int, DValue<T>) ParseGroupingSet<T>(this ref Utf8JsonReader reader, int groupSize)
         {
             var groupingId = reader.ParseGroupingId();
@@ -104,6 +128,37 @@ namespace Explorer.JsonExtensions
             return (
                 groupingId,
                 groupValue ?? throw new System.Exception("Unable to Parse result from grouping set."));
+        }
+
+        /// <summary>
+        /// Parses multiple values from a grouped set of values obtained via the `group by grouping sets` or
+        /// `group by cube` sql command.
+        /// </summary>
+        /// <param name="reader">The <see cref="Utf8JsonReader"/>.</param>
+        /// <param name="groupSize">The size of the grouped set.</param>
+        /// <returns>The groupingId and the corresponding values as raw <see cref="JsonElement" />s.</returns>
+        public static (int, ImmutableArray<DValue<JsonElement>>) ParseMultiGroupingSet(
+            this ref Utf8JsonReader reader, int groupSize)
+        {
+            var groupingId = reader.ParseGroupingId();
+            var converter = GroupingIdConverter.GetConverter(groupSize);
+
+            var indices = converter.IndicesFromGroupingId(groupingId);
+            var values = new List<DValue<JsonElement>>();
+
+            for (var i = 0; i < groupSize; i++)
+            {
+                if (indices.Contains(i))
+                {
+                    values.Add(reader.ParseDValue<JsonElement>());
+                }
+                else
+                {
+                    reader.Read();
+                }
+            }
+
+            return (groupingId, values.ToImmutableArray());
         }
 
         /// <summary>

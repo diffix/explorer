@@ -1,11 +1,12 @@
 namespace Explorer.Api.Controllers
 {
     using System;
-    using System.Linq;
     using System.Net.Mime;
     using System.Threading.Tasks;
 
+    using Aircloak.JsonApi;
     using Explorer;
+    using Explorer.Api.Authentication;
     using Explorer.Api.Models;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -33,10 +34,23 @@ namespace Explorer.Api.Controllers
         [Route("api/v{version:apiVersion}/explore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult Explore(ExploreParams data)
+        public IActionResult Explore(
+            [FromServices] Exploration exploration,
+            [FromServices] JsonApiContextBuilder contextBuilder,
+            [FromServices] IAircloakAuthenticationProvider authProvider,
+            ExploreParams data)
         {
-            // Register the exploration.
-            var id = explorationRegistry.Register(data);
+            // Register the authentication token for this scope.
+            if (authProvider is ExplorerApiAuthProvider auth)
+            {
+                auth.RegisterApiKey(data.ApiKey);
+            }
+
+            // Launch and register the exploration.
+            exploration.Initialise(contextBuilder, data);
+            exploration.Run();
+
+            var id = explorationRegistry.Register(data, exploration);
 
             return Ok(new ExploreResult(id, ExplorationStatus.New, data));
         }
@@ -54,71 +68,55 @@ namespace Explorer.Api.Controllers
                 return NotFound($"Couldn't find exploration with id {explorationId}.");
             }
 
-            var explorationStatus = explorationRegistry.GetStatus(explorationId);
-            var explorationParams = explorationRegistry.GetExplorationParams(explorationId);
+            var (explorationParams, exploration) = explorationRegistry.GetExploration(explorationId);
+            var explorationStatus = exploration.Status;
 
             if (explorationStatus == ExplorationStatus.New || explorationStatus == ExplorationStatus.Validating)
             {
                 return Ok(new ExploreResult(explorationId, explorationStatus, explorationParams));
             }
 
-            var validationErrors = explorationRegistry.GetValidationErrors(explorationId);
+            var exploreResult = new ExploreResult(explorationId, exploration, explorationParams);
 
-            if (validationErrors.Any())
+            if (!explorationStatus.IsComplete())
             {
-                var result = new ExploreResult(explorationId, explorationStatus, explorationParams);
-                logger.LogWarning("Exploration parameter validation failed.");
-                result.AddErrorMessage("Exploration parameter validation failed.");
-
-                foreach (var error in validationErrors)
-                {
-                    logger.LogWarning(error);
-                    result.AddErrorMessage(error);
-                }
-                explorationRegistry.Remove(explorationId);
-                return Ok(result);
+                return Ok(exploreResult);
             }
 
-            var exploration = explorationRegistry.GetExploration(explorationId) ??
-                throw new InvalidOperationException(
-                    "Exploration validation should be completed before dereferencing the exploration.");
-
-            var exploreResult = new ExploreResult(explorationId, exploration);
-
-            if (explorationStatus.IsComplete())
-            {
-                // exception details are logged
+            // exception details are logged
 #pragma warning disable CA1031 // catch a more specific allowed exception type, or rethrow the exception;
-                try
-                {
-                    // Await the completion task to force exceptions to the surface.
-                    await exploration.Completion;
-                }
-                catch (TaskCanceledException)
-                {
-                    // Do nothing, just log the occurrence.
-                    // A TaskCanceledException is expected when the client cancels an exploration.
-                    logger.LogInformation($"Exploration {explorationId} was canceled.", null);
-                }
-                catch (Exception) when (exploration.Completion.Exception != null)
-                {
-                    // Log any other exceptions from the explorer and add them to the response object.
-                    logger.LogWarning($"Exceptions occurred in the exploration tasks for exploration {explorationId}.");
-
-                    foreach (var innerEx in exploration.Completion.Exception.Flatten().InnerExceptions)
-                    {
-                        logger.LogError(innerEx, "Exception occurred in exploration task.", innerEx.Data);
-                        exploreResult.AddErrorMessage(innerEx.Message);
-                    }
-                }
-                finally
-                {
-                    explorationRegistry.Remove(explorationId);
-                }
-#pragma warning restore CA1031 // catch a more specific allowed exception type, or rethrow the exception;
+            try
+            {
+                // Await the completion task to force exceptions to the surface.
+                await exploration.Completion;
             }
+            catch (TaskCanceledException)
+            {
+                // Do nothing, just log the occurrence.
+                // A TaskCanceledException is expected when the client cancels an exploration.
+                logger.LogInformation($"Exploration {explorationId} was canceled.", null);
+            }
+            catch (Exception) when (exploration.Completion.Exception != null)
+            {
+                // Log any other exceptions from the explorer and add them to the response object.
+                logger.LogWarning($"Exceptions occurred in the exploration tasks for exploration {explorationId}.");
 
-            return Ok(exploreResult);
+                foreach (var innerEx in exploration.Completion.Exception.Flatten().InnerExceptions)
+                {
+                    logger.LogError(innerEx, "Exception occurred in exploration task.", innerEx.Data);
+                    exploreResult.AddErrorMessage(innerEx.Message);
+                }
+            }
+#pragma warning restore CA1031 // catch a more specific allowed exception type, or rethrow the exception;
+
+            try
+            {
+                return Ok(exploreResult);
+            }
+            finally
+            {
+                explorationRegistry.Remove(explorationId);
+            }
         }
 
         [ApiVersion("1.0")]

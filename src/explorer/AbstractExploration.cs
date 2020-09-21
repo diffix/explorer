@@ -11,12 +11,7 @@
     {
         private Task? completionTask;
 
-        public ExplorationStatus Status
-        {
-            // If completionTask is null, that means it has not yet been launched, so status is `New`.
-            // Otherwise, derive the ExplorationStatus from the TaskStatus.
-            get => completionTask?.Status.ToExplorationStatus() ?? ExplorationStatus.New;
-        }
+        public abstract ExplorationStatus Status { get; protected set; }
 
         public Task Completion
         {

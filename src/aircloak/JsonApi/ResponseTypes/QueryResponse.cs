@@ -16,7 +16,7 @@ namespace Aircloak.JsonApi.ResponseTypes
         {
             return Success
                 ? $"Query Accepted, ID: {QueryId}"
-                : $"Query Failed";
+                : "Query Failed";
         }
     }
 }

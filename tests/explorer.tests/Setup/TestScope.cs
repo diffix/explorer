@@ -28,6 +28,31 @@ namespace Explorer.Tests
             VCRMode vcrMode = VCRMode.Cache,
             RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
             int pollFrequencySecs = 2)
+        : this(
+            rootContainer,
+            apiUri,
+            dataSource,
+            table,
+            new[] { column },
+            new[] { columnInfo },
+            vcrFileName,
+            vcrMode,
+            recordingOptions,
+            pollFrequencySecs)
+        {
+        }
+
+        public TestScope(
+            Container rootContainer,
+            Uri apiUri,
+            string dataSource,
+            string table,
+            IEnumerable<string> columns,
+            IEnumerable<DColumnInfo> columnInfo,
+            string vcrFileName,
+            VCRMode vcrMode = VCRMode.Cache,
+            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
+            int pollFrequencySecs = 2)
         {
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (lifetime is managed by container.)
             var cts = new CancellationTokenSource();
@@ -46,7 +71,7 @@ namespace Explorer.Tests
                 TimeSpan.FromSeconds(pollFrequencySecs),
                 cts.Token);
 
-            Context = new ExplorerTestContext(Connection, dataSource, table, column, columnInfo);
+            Context = new ExplorerTestContext(Connection, dataSource, table, columns, columnInfo);
             Scope.Inject<ExplorerContext>(Context);
 
             var vcrFactory = Scope.GetInstance<VcrApiHttpClientFactory>();
