@@ -40,13 +40,14 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric(
-                name: "sample_values",
-                metric: distribution
-                        .Generate(SamplesToPublish)
-                        .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
-                        .OrderBy(_ => _)
-                        .ToList());
+            var sampleValues = distribution
+                    .Generate(SamplesToPublish)
+                    .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
+                    .OrderBy(_ => _)
+                    .Cast<object>()
+                    .ToList();
+
+            yield return ExploreMetric.Create(MetricDefinitions.SampleValues, sampleValues);
         }
     }
 }

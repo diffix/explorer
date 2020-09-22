@@ -44,7 +44,7 @@ namespace Explorer.Components
             var result = await ResultAsync;
             if (result?.SampleValues.Count > 0)
             {
-                yield return new UntypedMetric(name: "sample_values", metric: result.SampleValues);
+                yield return ExploreMetric.Create(MetricDefinitions.SampleValues, result.SampleValues);
             }
         }
 
@@ -79,7 +79,7 @@ namespace Explorer.Components
             var sampleValues = emailCheckerResult.IsEmail ?
                 await GenerateEmails(textLengthDistributionResult.Distribution) :
                 await GenerateStrings(textLengthDistributionResult.Distribution);
-            return new Result(sampleValues.ToList());
+            return new Result(sampleValues.Cast<object>().ToList());
         }
 
         private static string GenerateString(
@@ -250,12 +250,12 @@ namespace Explorer.Components
 
         public class Result
         {
-            public Result(IList<string> sampleValues)
+            public Result(IList<object> sampleValues)
             {
                 SampleValues = sampleValues;
             }
 
-            public IList<string> SampleValues { get; }
+            public IList<object> SampleValues { get; }
         }
     }
 }

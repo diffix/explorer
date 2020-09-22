@@ -26,12 +26,13 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric(
-                name: "sample_values",
-                metric: distribution
-                        .Generate(SamplesToPublish)
-                        .OrderBy(_ => _)
-                        .ToList());
+            var sampleValues = distribution
+                    .Generate(SamplesToPublish)
+                    .OrderBy(_ => _)
+                    .Cast<object>()
+                    .ToList();
+
+            yield return ExploreMetric.Create(MetricDefinitions.SampleValues, sampleValues);
         }
     }
 }

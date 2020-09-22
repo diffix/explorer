@@ -7,7 +7,10 @@ namespace Explorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+
+    using Explorer.Common;
     using Lamar;
+
     using static Explorer.ExplorationStatusEnum;
 
     public sealed class Exploration : AbstractExploration, IDisposable
@@ -38,7 +41,7 @@ namespace Explorer
                     yield break;
                 }
                 var valuesList = ColumnExplorations
-                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
+                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == MetricDefinitions.SampleValues.Name)?.Metric as IEnumerable)
                     .Select(metric => metric?.Cast<object?>());
                 var numSamples = valuesList.DefaultIfEmpty().Max(col => col?.Count() ?? 0);
                 for (var i = 0; i < numSamples; i++)

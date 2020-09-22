@@ -58,17 +58,17 @@ namespace Explorer.Components
                     .Range(0, NumValuesToPublish)
                     .Select(_ => allValues.GetRandomValue(rand));
             }
-            return new Result(sampleValues.ToList());
+            return new Result(sampleValues.Cast<object>().ToList());
         }
 
         public class Result
         {
-            public Result(IList<JsonElement> sampleValues)
+            public Result(IList<object> sampleValues)
             {
                 SampleValues = sampleValues;
             }
 
-            public IList<JsonElement> SampleValues { get; }
+            public IList<object> SampleValues { get; }
         }
     }
 }
