@@ -5,6 +5,7 @@ namespace Explorer.Components
     using System.Linq;
 
     using Explorer.Common;
+    using Explorer.Metrics;
 
     public class NumericSampleGenerator : ExplorerComponentBase, PublisherComponent
     {
