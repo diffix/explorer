@@ -20,7 +20,7 @@ namespace Explorer.Components
         {
             if (!result.IsCategorical)
             {
-                yield return new UntypedMetric(name: "distinct.is_categorical", metric: false);
+                yield return ExploreMetric.Create(MetricDefinitions.IsCategorical, false);
             }
             else
             {
@@ -50,7 +50,7 @@ namespace Explorer.Components
                 }
 
                 var valueCounts = result.ValueCounts;
-                yield return new UntypedMetric(name: "distinct.is_categorical", metric: true);
+                yield return ExploreMetric.Create(MetricDefinitions.IsCategorical, true);
                 yield return new UntypedMetric(name: "distinct.values", metric: toPublish.ToList());
                 yield return new UntypedMetric(name: "distinct.null_count", metric: valueCounts.NullCount);
                 yield return new UntypedMetric(name: "distinct.suppressed_count", metric: valueCounts.SuppressedCount);
