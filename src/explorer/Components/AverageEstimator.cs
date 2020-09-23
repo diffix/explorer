@@ -23,14 +23,12 @@ namespace Explorer.Components
 
         public static Task<decimal> EstimateAverage(Histogram histogram) => Task.Run(() =>
         {
-            (decimal Sum, long Total) sumzero = (0M, 0L);
-            var (sum, total) = histogram.Buckets.Values
-                .Aggregate(
-                    sumzero,
+            var halfBucketSize = histogram.GetSnappedBucketSize() / 2;
+            var (sum, total) = histogram.Buckets.Aggregate(
+                    (Sum: 0M, Total: 0L),
                     (sums, bucket) => (
-                            sums.Sum + (bucket.Count * (bucket.LowerBound + (histogram.BucketSize.SnappedSize / 2))),
-                            sums.Total + bucket.Count));
-
+                        sums.Sum + (bucket.Count * (bucket.LowerBound + halfBucketSize)),
+                        sums.Total + bucket.Count));
             return sum / total;
         });
 

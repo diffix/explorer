@@ -10,7 +10,7 @@ namespace Explorer.Components.ResultTypes
             Histogram = histogram;
         }
 
-        public BucketSize BucketSize => Histogram.BucketSize;
+        public decimal SnappedBucketSize => Histogram.GetSnappedBucketSize();
 
         public ValueCounts ValueCounts { get; }
 
