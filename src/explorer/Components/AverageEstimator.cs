@@ -5,21 +5,17 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
-    using Explorer.Common.Utils;
-    using Explorer.Components.ResultTypes;
+    using Explorer.Metrics;
 
     public class AverageEstimator :
         ExplorerComponent<AverageEstimator.Result>, PublisherComponent
     {
-        private readonly ResultProvider<HistogramWithCounts> histogramResultProvider;
+        private readonly ResultProvider<Histogram> histogramResultProvider;
 
-        public AverageEstimator(ResultProvider<HistogramWithCounts> histogramResultProvider)
+        public AverageEstimator(ResultProvider<Histogram> histogramResultProvider)
         {
             this.histogramResultProvider = histogramResultProvider;
         }
-
-        public static Task<decimal> EstimateAverage(HistogramWithCounts hwc) =>
-            EstimateAverage(hwc.Histogram);
 
         public static Task<decimal> EstimateAverage(Histogram histogram) => Task.Run(() =>
         {

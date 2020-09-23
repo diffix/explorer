@@ -6,26 +6,25 @@
 
     using Accord.Statistics.Distributions.Univariate;
     using Explorer.Common;
-    using Explorer.Components.ResultTypes;
     using Explorer.Metrics;
 
     public class NumericDistributionComponent : ExplorerComponent<NumericDistribution>
     {
-        private readonly ResultProvider<HistogramWithCounts> histogramResultProvider;
+        private readonly ResultProvider<Histogram> histogramResultProvider;
 
-        public NumericDistributionComponent(ResultProvider<HistogramWithCounts> histogramResultProvider)
+        public NumericDistributionComponent(ResultProvider<Histogram> histogramResultProvider)
         {
             this.histogramResultProvider = histogramResultProvider;
         }
 
-        public static NumericDistribution? GenerateDistribution(HistogramWithCounts histogramResult)
+        public static NumericDistribution? GenerateDistribution(Histogram histogramResult)
         {
             if (histogramResult.ValueCounts.NonSuppressedNonNullCount == 0)
             {
                 return null;
             }
 
-            var samples = histogramResult.Histogram.Buckets.Select(bucket =>
+            var samples = histogramResult.Buckets.Select(bucket =>
             {
                 var sampleValue = bucket.LowerBound + (bucket.BucketSize.SnappedSize / 2);
                 var sampleWeight = Convert.ToInt32(bucket.Count);

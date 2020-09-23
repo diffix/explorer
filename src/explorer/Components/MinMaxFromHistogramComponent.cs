@@ -6,13 +6,14 @@ namespace Explorer.Components
 
     using Explorer.Common;
     using Explorer.Components.ResultTypes;
+    using Explorer.Metrics;
 
     public class MinMaxFromHistogramComponent :
         ExplorerComponent<MinMaxFromHistogramComponent.Result>, PublisherComponent
     {
-        private readonly ResultProvider<List<HistogramWithCounts>> histogramsProvider;
+        private readonly ResultProvider<List<Histogram>> histogramsProvider;
 
-        public MinMaxFromHistogramComponent(ResultProvider<List<HistogramWithCounts>> histogramsProvider)
+        public MinMaxFromHistogramComponent(ResultProvider<List<Histogram>> histogramsProvider)
         {
             this.histogramsProvider = histogramsProvider;
         }
@@ -35,9 +36,9 @@ namespace Explorer.Components
 
             return histograms?
                 .Where(r => r.ValueCounts.SuppressedCount == 0)
-                .OrderBy(r => r.SnappedBucketSize)
+                .OrderBy(r => r.GetSnappedBucketSize())
                 .Take(1)
-                .Select(r => new Result(r.Histogram.GetBounds()))
+                .Select(r => new Result(r.GetBounds()))
                 .SingleOrDefault();
         }
 

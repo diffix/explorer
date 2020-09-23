@@ -5,17 +5,17 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
-    using Explorer.Components.ResultTypes;
+    using Explorer.Metrics;
 
     public class HistogramSelectorComponent :
-        ExplorerComponent<HistogramWithCounts>, PublisherComponent
+        ExplorerComponent<Histogram>, PublisherComponent
     {
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
-        private readonly ResultProvider<List<HistogramWithCounts>> histogramsProvider;
+        private readonly ResultProvider<List<Histogram>> histogramsProvider;
 
         public HistogramSelectorComponent(
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
-            ResultProvider<List<HistogramWithCounts>> histogramsProvider)
+            ResultProvider<List<Histogram>> histogramsProvider)
         {
             this.distinctValuesProvider = distinctValuesProvider;
             this.histogramsProvider = histogramsProvider;
@@ -29,7 +29,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Select(b => new
+            yield return new UntypedMetric("histogram.buckets", result.Buckets.Select(b => new
             {
                 BucketSize = b.BucketSize.SnappedSize,
                 b.LowerBound,
@@ -42,7 +42,7 @@ namespace Explorer.Components
             yield return new UntypedMetric("histogram.value_counts", result.ValueCounts);
         }
 
-        protected override async Task<HistogramWithCounts?> Explore()
+        protected override async Task<Histogram?> Explore()
         {
             var distinctValues = await distinctValuesProvider.ResultAsync;
             if (distinctValues == null)
@@ -57,7 +57,7 @@ namespace Explorer.Components
             var histograms = await histogramsProvider.ResultAsync;
 
             return histograms?
-                .OrderBy(h => h.SnappedBucketSize)
+                .OrderBy(h => h.GetSnappedBucketSize())
                 .ThenBy(h => h.ValueCounts.SuppressedCount)
                 .First();
         }
