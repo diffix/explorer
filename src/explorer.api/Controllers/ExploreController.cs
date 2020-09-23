@@ -8,6 +8,7 @@ namespace Explorer.Api.Controllers
     using Explorer;
     using Explorer.Api.Authentication;
     using Explorer.Api.Models;
+    using Lamar;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -35,7 +36,8 @@ namespace Explorer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Explore(
-            [FromServices] Exploration exploration,
+            [FromServices] IContainer rootContainer,
+            [FromServices] ExplorationScopeBuilder scopeBuilder,
             [FromServices] JsonApiContextBuilder contextBuilder,
             [FromServices] IAircloakAuthenticationProvider authProvider,
             ExploreParams data)
@@ -47,6 +49,7 @@ namespace Explorer.Api.Controllers
             }
 
             // Launch and register the exploration.
+            var exploration = new Exploration(rootContainer.GetNestedContainer(), scopeBuilder);
             exploration.Initialise(contextBuilder, data);
             exploration.Run();
 

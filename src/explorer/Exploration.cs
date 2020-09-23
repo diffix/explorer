@@ -12,16 +12,16 @@ namespace Explorer
 
     public sealed class Exploration : AbstractExploration, IDisposable
     {
-        private readonly IContainer rootContainer;
+        private readonly IContainer explorationRootContainer;
         private readonly ExplorationScopeBuilder scopeBuilder;
         private readonly CancellationTokenSource cancellationTokenSource;
         private bool disposedValue;
 
         public Exploration(
-            IContainer rootContainer,
+            INestedContainer rootContainer,
             ExplorationScopeBuilder scopeBuilder)
         {
-            this.rootContainer = rootContainer;
+            explorationRootContainer = (IContainer)rootContainer;
             this.scopeBuilder = scopeBuilder;
             cancellationTokenSource = new CancellationTokenSource();
         }
@@ -82,7 +82,7 @@ namespace Explorer
                     ColumnExplorations = contexts
                         .Select(context =>
                         {
-                            var scope = scopeBuilder.Build(rootContainer.GetNestedContainer(), context);
+                            var scope = scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context);
                             return new ColumnExploration(scope);
                         })
                         .ToImmutableArray();
@@ -96,20 +96,18 @@ namespace Explorer
             // Multi-column analyses
             // We have access to all the ColumnExplorations here, so we should be able to extract some
             // context around which column combinations are promising candidates for multi-column analysis.
-        }
+            await RunStage(
+                ExplorationStatus.Processing,
+                async () =>
+                {
+                    // start with column pairs
+                    var multiColumnExploration = new MultiColumnExploration(ColumnExplorations);
 
-        private async Task RunStage(ExplorationStatus initialStatus, Func<Task> t)
-        {
-            Status = initialStatus;
-            try
-            {
-                await t();
-            }
-            catch
-            {
-                Status = ExplorationStatus.Error;
-                throw;
-            }
+                    await multiColumnExploration.Completion;
+                });
+
+            // Completed successfully
+            Status = ExplorationStatus.Complete;
         }
 
         private void Dispose(bool disposing)
@@ -122,6 +120,7 @@ namespace Explorer
                     {
                         item.Dispose();
                     }
+                    explorationRootContainer.Dispose();
                     cancellationTokenSource.Dispose();
                 }
                 disposedValue = true;
