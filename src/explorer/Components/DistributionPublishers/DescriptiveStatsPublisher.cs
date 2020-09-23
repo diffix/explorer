@@ -3,6 +3,7 @@ namespace Explorer.Components
     using System.Collections.Generic;
 
     using Explorer.Common;
+    using Explorer.Metrics;
 
     public class DescriptiveStatsPublisher : PublisherComponent
     {
@@ -21,9 +22,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric(
-                name: "descriptive_stats",
-                metric: distribution);
+            yield return ExploreMetric.Create(MetricDefinitions.NumericDescriptiveStats, distribution);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Explorer.Components
+﻿namespace Explorer.Metrics
 {
     using System;
     using System.Collections.Generic;

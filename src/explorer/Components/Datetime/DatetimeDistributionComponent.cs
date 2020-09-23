@@ -7,6 +7,7 @@ namespace Explorer.Components
 
     using Accord.Statistics.Distributions.Univariate;
     using Explorer.Common;
+    using Explorer.Metrics;
 
     public class DatetimeDistributionComponent : ExplorerComponent<DatetimeDistribution>, PublisherComponent
     {
@@ -63,7 +64,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric(name: "descriptive_stats", metric: result);
+            yield return ExploreMetric.Create(MetricDefinitions.DateTimeDescriptiveStats, result);
         }
 
         protected override async Task<DatetimeDistribution?> Explore()

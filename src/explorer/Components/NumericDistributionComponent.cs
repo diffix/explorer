@@ -7,6 +7,7 @@
     using Accord.Statistics.Distributions.Univariate;
     using Explorer.Common;
     using Explorer.Components.ResultTypes;
+    using Explorer.Metrics;
 
     public class NumericDistributionComponent : ExplorerComponent<NumericDistribution>
     {
