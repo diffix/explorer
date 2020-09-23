@@ -113,56 +113,40 @@ definitions:
     additionalItems: !!bool false
     required: [totalCount, suppressedCount, nullCount, totalRows, suppressedRows, nullRows, nonSuppressedRows, nonSuppressedCount, nonSuppressedNonNullCount, suppressedCountRatio, isCategorical]
 
-  histogram__value_counts:
+  histogram_bucket:
     type: object
     properties:
-      name:
-        const: histogram.value_counts
-      value:
-        "$ref": "#/definitions/value_counts"
-    additionalProperties: !!bool false
-    required: [name, value]
-
-  histogram__buckets:
-    type: object
-    properties:
-      name:
-        const: histogram.buckets
-      value:
-        type: array
-        items:
-          type: object
-          properties:
-            bucketSize:
-              type: number
-            lowerBound:
-              type: number
-            count:
-              type: integer
-            countNoise:
-              type: number
-          additionalProperties: !!bool false
-          required: [bucketSize, lowerBound, count, countNoise]
-    additionalProperties: !!bool false
-    required: [name, value]
-
-  histogram__suppressed_ratio:
-    type: object
-    properties:
-      name:
-        const: histogram.suppressed_ratio
-      value:
+      bucketSize:
+        type: number
+      lowerBound:
+        type: number
+      count:
+        type: integer
+      countNoise:
         type: number
     additionalProperties: !!bool false
-    required: [name, value]
+    required: [bucketSize, lowerBound, count, countNoise]
 
-  histogram__suppressed_count:
+  histogram:
     type: object
     properties:
       name:
-        const: histogram.suppressed_count
+        const: histogram
       value:
-        type: integer
+        type: object
+        properties:
+          buckets:
+            type: array
+            items:
+              "$ref": "#/definitions/histogram_bucket"
+          value_counts:
+            "$ref": "#/definitions/value_counts"
+          suppressed_ratio:
+            type: number
+          suppressed_count:
+            type: integer
+        additionalProperties: !!bool false
+        required: [buckets, value_counts, suppressed_ratio, suppressed_count]
     additionalProperties: !!bool false
     required: [name, value]
 
@@ -848,10 +832,7 @@ definitions:
                   - contains: {"$ref": "#/definitions/sample_values__integer"}
                   - contains: {"$ref": "#/definitions/is_categorical__false"}
                   - contains: {"$ref": "#/definitions/descriptive_stats__integer"}
-                  - contains: {"$ref": "#/definitions/histogram__value_counts"}
-                  - contains: {"$ref": "#/definitions/histogram__suppressed_count"}
-                  - contains: {"$ref": "#/definitions/histogram__suppressed_ratio"}
-                  - contains: {"$ref": "#/definitions/histogram__buckets"}
+                  - contains: {"$ref": "#/definitions/histogram"}
                   - contains: {"$ref": "#/definitions/min__integer"}
                   - contains: {"$ref": "#/definitions/max__integer"}
                   - contains: {"$ref": "#/definitions/average_estimate"}
