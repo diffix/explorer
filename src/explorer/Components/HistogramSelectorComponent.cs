@@ -29,7 +29,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Values.Select(b => new
+            yield return new UntypedMetric("histogram.buckets", result.Histogram.Buckets.Select(b => new
             {
                 BucketSize = b.BucketSize.SnappedSize,
                 b.LowerBound,
@@ -57,7 +57,7 @@ namespace Explorer.Components
             var histograms = await histogramsProvider.ResultAsync;
 
             return histograms?
-                .OrderBy(h => h.BucketSize.SnappedSize)
+                .OrderBy(h => h.SnappedBucketSize)
                 .ThenBy(h => h.ValueCounts.SuppressedCount)
                 .First();
         }

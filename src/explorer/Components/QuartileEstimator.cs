@@ -28,11 +28,11 @@ namespace Explorer.Components
         public static Task<List<double>> EstimateQuartiles(Histogram histogram) => Task.Run(() =>
         {
             var quartileEstimates = new List<double>();
-            var quartileCount = histogram.Buckets.Sum(h => h.Value.Count) / 4;
+            var quartileCount = histogram.Buckets.Sum(h => h.Count) / 4;
             var quartile = 1;
             var processed = 0L;
 
-            foreach (var (lowerBound, bucket) in histogram.Buckets)
+            foreach (var bucket in histogram.Buckets)
             {
                 if (processed + bucket.Count < quartileCount * quartile)
                 {
@@ -43,7 +43,7 @@ namespace Explorer.Components
                 {
                     // one or more quartiles in this bucket
                     var remaining = bucket.Count;
-                    var start = (double)lowerBound;
+                    var start = (double)bucket.LowerBound;
                     var range = (double)bucket.BucketSize.SnappedSize;
 
                     do

@@ -25,7 +25,7 @@
                 return null;
             }
 
-            var samples = histogramResult.Histogram.Buckets.Values.Select(bucket =>
+            var samples = histogramResult.Histogram.Buckets.Select(bucket =>
             {
                 var sampleValue = bucket.LowerBound + (bucket.BucketSize.SnappedSize / 2);
                 var sampleWeight = Convert.ToInt32(bucket.Count);

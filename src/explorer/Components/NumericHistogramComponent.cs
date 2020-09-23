@@ -41,11 +41,18 @@ namespace Explorer.Components
                 ValuesPerBucketTarget,
                 isIntegerColumn: Context.ColumnInfo.Type == DValueType.Integer);
 
-            var histogramQ = await Context.Exec(new SingleColumnHistogram(bucketsToSample));
+            var histogramResult = await Context.Exec(new SingleColumnHistogram(bucketsToSample));
 
-            var histograms = Histogram.FromQueryRows(histogramQ.Rows);
+            var histograms = histogramResult.Rows
+                    .Where(row => row.HasValue)
+                    .GroupBy(row => row.BucketSize, (bucketSize, rows) =>
+                    {
+                        var bs = new BucketSize(bucketSize);
+                        return new Histogram(rows.Select(b => new HistogramBucket(
+                            (decimal)b.LowerBound, bs, NoisyCount.FromCountableRow(b))));
+                    });
 
-            var valueCounts = histogramQ.Rows
+            var valueCounts = histogramResult.Rows
                 .GroupBy(
                     row => row.BucketSize,
                     (bs, rows) => (BucketSize: new BucketSize(bs), Rows: ValueCounts.Compute(rows)));
@@ -54,7 +61,7 @@ namespace Explorer.Components
                 .Join(
                     histograms,
                     v => v.BucketSize.SnappedSize,
-                    h => h.BucketSize.SnappedSize,
+                    h => h.GetSnappedBucketSize(),
                     (v, h) => new HistogramWithCounts(v.Rows, h))
                 .ToList();
         }
