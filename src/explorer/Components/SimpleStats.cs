@@ -18,9 +18,9 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return ExploreMetric.Create(MetricDefinitions.Count, result.Count);
-            yield return ExploreMetric.Create(MetricDefinitions.Min<T>(), (T)result.Min!);
-            yield return ExploreMetric.Create(MetricDefinitions.Max<T>(), (T)result.Max!);
+            yield return ExploreMetric.Create(MetricDefinitions.SimpleStatsCount, result.Count);
+            yield return ExploreMetric.Create(MetricDefinitions.SimpleStatsMin<T>(), (T)result.Min!);
+            yield return ExploreMetric.Create(MetricDefinitions.SimpleStatsMax<T>(), (T)result.Max!);
         }
 
         protected override async Task<SimpleStats<T>.Result?> Explore()
