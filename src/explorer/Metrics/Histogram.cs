@@ -1,8 +1,10 @@
-namespace Explorer.Common.Utils
+namespace Explorer.Metrics
 {
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+
+    using Explorer.Common.Utils;
 
     public class Histogram
     {
@@ -10,8 +12,9 @@ namespace Explorer.Common.Utils
         private readonly decimal upperBound;
         private readonly BucketSize bucketSize;
 
-        public Histogram(IEnumerable<HistogramBucket> buckets)
+        public Histogram(IEnumerable<HistogramBucket> buckets, ValueCounts valueCounts)
         {
+            ValueCounts = valueCounts;
             Buckets = buckets.OrderBy(b => b.LowerBound).ToList();
             bucketSize = Buckets[0].BucketSize;
             lowerBound = Buckets[0].LowerBound;
@@ -23,6 +26,8 @@ namespace Explorer.Common.Utils
         }
 
         public IReadOnlyList<HistogramBucket> Buckets { get; }
+
+        public ValueCounts ValueCounts { get; }
 
         public (decimal, decimal) GetBounds() => (upperBound, lowerBound);
 

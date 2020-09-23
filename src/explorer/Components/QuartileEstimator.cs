@@ -5,25 +5,21 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Explorer.Common;
-    using Explorer.Common.Utils;
-    using Explorer.Components.ResultTypes;
+    using Explorer.Metrics;
 
     public class QuartileEstimator :
         ExplorerComponent<QuartileEstimator.Result>, PublisherComponent
     {
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
-        private readonly ResultProvider<HistogramWithCounts> histogramResultProvider;
+        private readonly ResultProvider<Histogram> histogramResultProvider;
 
         public QuartileEstimator(
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
-            ResultProvider<HistogramWithCounts> histogramResultProvider)
+            ResultProvider<Histogram> histogramResultProvider)
         {
             this.distinctValuesProvider = distinctValuesProvider;
             this.histogramResultProvider = histogramResultProvider;
         }
-
-        public static Task<List<double>> EstimateQuartiles(HistogramWithCounts hwc) =>
-            EstimateQuartiles(hwc.Histogram);
 
         public static Task<List<double>> EstimateQuartiles(Histogram histogram) => Task.Run(() =>
         {

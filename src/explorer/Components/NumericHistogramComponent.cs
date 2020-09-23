@@ -7,11 +7,11 @@ namespace Explorer.Components
     using Diffix;
     using Explorer.Common;
     using Explorer.Common.Utils;
-    using Explorer.Components.ResultTypes;
+    using Explorer.Metrics;
     using Explorer.Queries;
 
     public class NumericHistogramComponent :
-        ExplorerComponent<List<HistogramWithCounts>>
+        ExplorerComponent<List<Histogram>>
     {
         private const long ValuesPerBucketTarget = 20;
 
@@ -22,7 +22,7 @@ namespace Explorer.Components
             this.statsResultProvider = statsResultProvider;
         }
 
-        protected async override Task<List<HistogramWithCounts>?> Explore()
+        protected async override Task<List<Histogram>?> Explore()
         {
             var stats = await statsResultProvider.ResultAsync;
             if (stats == null)
@@ -35,11 +35,11 @@ namespace Explorer.Components
             }
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
-                stats.Count,
-                stats.Min.Value,
-                stats.Max.Value,
-                ValuesPerBucketTarget,
-                isIntegerColumn: Context.ColumnInfo.Type == DValueType.Integer);
+                    stats.Count,
+                    stats.Min.Value,
+                    stats.Max.Value,
+                    ValuesPerBucketTarget,
+                    isIntegerColumn: Context.ColumnInfo.Type == DValueType.Integer);
 
             var histogramResult = await Context.Exec(new SingleColumnHistogram(bucketsToSample));
 
@@ -48,22 +48,23 @@ namespace Explorer.Components
                     .GroupBy(row => row.BucketSize, (bucketSize, rows) =>
                     {
                         var bs = new BucketSize(bucketSize);
-                        return new Histogram(rows.Select(b => new HistogramBucket(
-                            (decimal)b.LowerBound, bs, NoisyCount.FromCountableRow(b))));
+                        return (
+                            SnappedBucketSize: bs.SnappedSize,
+                            Buckets: rows.Select(b =>
+                                new HistogramBucket((decimal)b.LowerBound, bs, NoisyCount.FromCountableRow(b))));
                     });
 
             var valueCounts = histogramResult.Rows
-                .GroupBy(
-                    row => row.BucketSize,
-                    (bs, rows) => (BucketSize: new BucketSize(bs), Rows: ValueCounts.Compute(rows)));
+                    .GroupBy(row => row.BucketSize, (bs, rows) =>
+                        (BucketSize: new BucketSize(bs), Rows: ValueCounts.Compute(rows)));
 
             return valueCounts
-                .Join(
-                    histograms,
-                    v => v.BucketSize.SnappedSize,
-                    h => h.GetSnappedBucketSize(),
-                    (v, h) => new HistogramWithCounts(v.Rows, h))
-                .ToList();
+                    .Join(
+                        histograms,
+                        v => v.BucketSize.SnappedSize,
+                        h => h.SnappedBucketSize,
+                        (v, h) => new Histogram(h.Buckets, v.Rows))
+                    .ToList();
         }
     }
 }

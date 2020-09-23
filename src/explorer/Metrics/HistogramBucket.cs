@@ -1,6 +1,8 @@
-namespace Explorer.Common.Utils
+namespace Explorer.Metrics
 {
     using System;
+
+    using Explorer.Common.Utils;
 
     public struct HistogramBucket : IEquatable<HistogramBucket>
     {
