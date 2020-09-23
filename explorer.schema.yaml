@@ -356,21 +356,21 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  distinct__is_categorical__true:
+  is_categorical__true:
     type: object
     properties:
       name:
-        const: distinct.is_categorical
+        const: is_categorical
       value:
         const: !!bool true
     additionalProperties: !!bool false
     required: [name, value]
 
-  distinct__is_categorical__false:
+  is_categorical__false:
     type: object
     properties:
       name:
-        const: distinct.is_categorical
+        const: is_categorical
       value:
         const: !!bool false
     additionalProperties: !!bool false
@@ -831,10 +831,10 @@ definitions:
                   allOf:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__integer"}
+                  - contains: {"$ref": "#/definitions/is_categorical__true"}
                   - contains: {"$ref": "#/definitions/min__integer"}
                   - contains: {"$ref": "#/definitions/max__integer"}
                   - contains: {"$ref": "#/definitions/distinct__values__integer"}
-                  - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
                   - contains: {"$ref": "#/definitions/distinct__value_count"}
                   - contains: {"$ref": "#/definitions/distinct__null_count"}
                   - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
@@ -846,6 +846,7 @@ definitions:
                   allOf:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__integer"}
+                  - contains: {"$ref": "#/definitions/is_categorical__false"}
                   - contains: {"$ref": "#/definitions/descriptive_stats__integer"}
                   - contains: {"$ref": "#/definitions/histogram__value_counts"}
                   - contains: {"$ref": "#/definitions/histogram__suppressed_count"}
@@ -855,7 +856,6 @@ definitions:
                   - contains: {"$ref": "#/definitions/max__integer"}
                   - contains: {"$ref": "#/definitions/average_estimate"}
                   - contains: {"$ref": "#/definitions/quartile_estimates"}
-                  - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
                   - contains: {"$ref": "#/definitions/distribution_estimates"}
 
         - if: { properties: { columnType: { const: text } } }
@@ -868,7 +868,7 @@ definitions:
                   allOf:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__string"}
-                  - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                  - contains: {"$ref": "#/definitions/is_categorical__true"}
                   - contains: {"$ref": "#/definitions/distinct__values__string"}
                   - contains: {"$ref": "#/definitions/distinct__value_count"}
                   - contains: {"$ref": "#/definitions/distinct__null_count"}
@@ -884,7 +884,7 @@ definitions:
                   allOf:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__string"}
-                  - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
+                  - contains: {"$ref": "#/definitions/is_categorical__false"}
                   - contains: {"$ref": "#/definitions/is_email"}
                   - contains: {"$ref": "#/definitions/text__length__counts"}
                   - contains: {"$ref": "#/definitions/text__length__values"}
@@ -899,9 +899,9 @@ definitions:
                 - contains: {"$ref": "#/definitions/exploration_info"}
                 - contains: {"$ref": "#/definitions/sample_values__datetime"}
                 anyOf:
+                - contains: {"$ref": "#/definitions/is_categorical__true"}
+                - contains: {"$ref": "#/definitions/is_categorical__false"}
                 - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
-                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__second"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
@@ -919,9 +919,9 @@ definitions:
                 - contains: {"$ref": "#/definitions/exploration_info"}
                 - contains: {"$ref": "#/definitions/sample_values__datetime"}
                 anyOf:
+                - contains: {"$ref": "#/definitions/is_categorical__true"}
+                - contains: {"$ref": "#/definitions/is_categorical__false"}
                 - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
-                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__weekday"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__day"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__month"}
@@ -940,9 +940,9 @@ definitions:
                 - contains: {"$ref": "#/definitions/exploration_info"}
                 - contains: {"$ref": "#/definitions/sample_values__datetime"}
                 anyOf:
+                - contains: {"$ref": "#/definitions/is_categorical__true"}
+                - contains: {"$ref": "#/definitions/is_categorical__false"}
                 - contains: {"$ref": "#/definitions/descriptive_stats__datetime"}
-                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
-                - contains: {"$ref": "#/definitions/distinct__is_categorical__false"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__second"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__minute"}
                 - contains: {"$ref": "#/definitions/dates_cyclical__hour"}
@@ -966,7 +966,7 @@ definitions:
                 allOf:
                 - contains: {"$ref": "#/definitions/exploration_info"}
                 - contains: {"$ref": "#/definitions/sample_values__boolean"}
-                - contains: {"$ref": "#/definitions/distinct__is_categorical__true"}
+                - contains: {"$ref": "#/definitions/is_categorical__true"}
                 - contains: {"$ref": "#/definitions/distinct__values__boolean"}
                 - contains: {"$ref": "#/definitions/distinct__value_count"}
                 - contains: {"$ref": "#/definitions/distinct__null_count"}
