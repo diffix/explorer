@@ -18,9 +18,9 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric("count", result.Count);
-            yield return new UntypedMetric("min", result.Min!);
-            yield return new UntypedMetric("max", result.Max!);
+            yield return ExploreMetric.Create(MetricDefinitions.Count, result.Count);
+            yield return ExploreMetric.Create(MetricDefinitions.Min<T>(), (T)result.Min!);
+            yield return ExploreMetric.Create(MetricDefinitions.Max<T>(), (T)result.Max!);
         }
 
         protected override async Task<SimpleStats<T>.Result?> Explore()

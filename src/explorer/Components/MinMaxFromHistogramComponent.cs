@@ -25,8 +25,8 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric("min", bounds.Min, priority: 10);
-            yield return new UntypedMetric("max", bounds.Max, priority: 10);
+            yield return ExploreMetric.Create(MetricDefinitions.Min<decimal>(), bounds.Min, priority: 10);
+            yield return ExploreMetric.Create(MetricDefinitions.Max<decimal>(), bounds.Max, priority: 10);
         }
 
         protected override async Task<Result?> Explore()
