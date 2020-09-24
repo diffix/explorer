@@ -83,7 +83,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric(name: "quartile_estimates", metric: result.AsList);
+            yield return ExploreMetric.Create(MetricDefinitions.QuartileEstimates, result.AsList);
         }
 
         protected override async Task<Result?> Explore()
