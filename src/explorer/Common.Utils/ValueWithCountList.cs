@@ -8,7 +8,7 @@ namespace Explorer.Common.Utils
     {
         public long TotalCount => Count == 0 ? 0 : this[^1].Count;
 
-        public static ValueWithCountList<T> FromValueWithCountEnum(IEnumerable<ValueWithCount<T>> valueCounts)
+        public static ValueWithCountList<T> FromValueWithCountEnum(IEnumerable<ValueWithCountRow<T>> valueCounts)
         {
             var ret = new ValueWithCountList<T>();
             foreach (var vc in valueCounts)

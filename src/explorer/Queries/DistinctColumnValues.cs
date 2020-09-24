@@ -6,10 +6,10 @@ namespace Explorer.Queries
     using Explorer.Common.Utils;
 
     internal class DistinctColumnValues :
-        DQuery<ValueWithCount<JsonElement>>
+        DQuery<ValueWithCountRow<JsonElement>>
     {
-        public override ValueWithCount<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<JsonElement>(ref reader);
+        public override ValueWithCountRow<JsonElement> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCountRow<JsonElement>(ref reader);
 
         protected override string GetQueryStatement(string table, string column)
         {

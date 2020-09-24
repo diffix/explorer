@@ -51,7 +51,7 @@ namespace Explorer.Components
                         .DistinctRows
                         .Where(r => !r.IsSuppressed)
                         .Select(r => r.IsNull
-                            ? ValueWithCount<JsonElement>.ValueCount(JsonNull, r.Count, r.CountNoise)
+                            ? ValueWithCountRow<JsonElement>.ValueCount(JsonNull, r.Count, r.CountNoise)
                             : r));
 
                 sampleValues = Enumerable
