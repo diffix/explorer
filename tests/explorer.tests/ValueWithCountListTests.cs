@@ -27,7 +27,7 @@ namespace Explorer.Tests
         public void FindValueTest(int count)
         {
             var vals = ValueWithCountList<int>.FromValueWithCountEnum(
-                Enumerable.Range(0, count).Select(i => ValueWithCount<int>.ValueCount(i, 1L)));
+                Enumerable.Range(0, count).Select(i => ValueWithCountRow<int>.ValueCount(i, 1L)));
             for (var i = 0; i < vals.Count; i++)
             {
                 Assert.Equal(i, vals.FindValue(i));
@@ -39,7 +39,7 @@ namespace Explorer.Tests
         [Fact]
         public void FindValueFromEmptyList()
         {
-            var vals = ValueWithCountList<string>.FromValueWithCountEnum(Enumerable.Empty<ValueWithCount<string>>());
+            var vals = ValueWithCountList<string>.FromValueWithCountEnum(Enumerable.Empty<ValueWithCountRow<string>>());
             Assert.Throws<InvalidOperationException>(() => vals.FindValue(1));
         }
     }

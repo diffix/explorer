@@ -80,7 +80,7 @@ namespace Explorer.Components
                 Distribution = ValueWithCountList<long>.FromTupleEnum(distribution);
             }
 
-            internal Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
+            internal Result(IEnumerable<ValueWithCountRow<JsonElement>> distinctRows)
             {
                 ValueCounts = ValueCounts.Compute(distinctRows);
                 Distribution = ValueWithCountList<long>.FromTupleEnum(distinctRows

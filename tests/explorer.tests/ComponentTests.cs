@@ -81,10 +81,10 @@ namespace Explorer.Tests
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
-                var expectedValues = new List<ValueWithCount<bool>>
+                var expectedValues = new List<ValueWithCountRow<bool>>
                 {
-                    ValueWithCount<bool>.ValueCount(false, 3_468),
-                    ValueWithCount<bool>.ValueCount(true, 592),
+                    ValueWithCountRow<bool>.ValueCount(false, 3_468),
+                    ValueWithCountRow<bool>.ValueCount(true, 592),
                 };
 
                 Assert.NotNull(result);
@@ -99,12 +99,12 @@ namespace Explorer.Tests
 
             await scope.ResultTest<DistinctValuesComponent, DistinctValuesComponent.Result>(result =>
             {
-                var expectedValues = new List<ValueWithCount<string>>
+                var expectedValues = new List<ValueWithCountRow<string>>
                 {
-                    ValueWithCount<string>.ValueCount("C", 491L),
-                    ValueWithCount<string>.ValueCount("A", 258L),
-                    ValueWithCount<string>.ValueCount("D", 45L),
-                    ValueWithCount<string>.ValueCount("B", 30L),
+                    ValueWithCountRow<string>.ValueCount("C", 491L),
+                    ValueWithCountRow<string>.ValueCount("A", 258L),
+                    ValueWithCountRow<string>.ValueCount("D", 45L),
+                    ValueWithCountRow<string>.ValueCount("B", 30L),
                 };
 
                 Assert.NotNull(result);
@@ -128,7 +128,7 @@ namespace Explorer.Tests
 
         private void CheckDistinctCategories<T>(
             DistinctValuesComponent.Result distinctValuesResult,
-            IEnumerable<ValueWithCount<T>> expectedValues,
+            IEnumerable<ValueWithCountRow<T>> expectedValues,
             Func<JsonElement, T> parseElement)
         {
             var distinctValues = distinctValuesResult.DistinctRows;

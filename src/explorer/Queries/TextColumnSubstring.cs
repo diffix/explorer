@@ -54,7 +54,7 @@ namespace Explorer.Queries
                 having length(sstr) = {filterLength}";
         }
 
-        public class Result : ValueWithCount<string>
+        public class Result : ValueWithCountRow<string>
         {
             public Result(ref Utf8JsonReader reader)
                 : base(ref reader)

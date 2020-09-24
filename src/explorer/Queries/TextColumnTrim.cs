@@ -24,7 +24,7 @@ namespace Explorer.Queries
     }
 
     internal class TextColumnTrim :
-        DQuery<ValueWithCount<string>>
+        DQuery<ValueWithCountRow<string>>
     {
         private readonly TextColumnTrimType trimType;
         private readonly string trimChars;
@@ -35,8 +35,8 @@ namespace Explorer.Queries
             this.trimChars = trimChars;
         }
 
-        public override ValueWithCount<string> ParseRow(ref Utf8JsonReader reader) =>
-            new ValueWithCount<string>(ref reader);
+        public override ValueWithCountRow<string> ParseRow(ref Utf8JsonReader reader) =>
+            new ValueWithCountRow<string>(ref reader);
 
         protected override string GetQueryStatement(string table, string column)
         {

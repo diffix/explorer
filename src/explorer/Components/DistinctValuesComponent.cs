@@ -70,7 +70,7 @@ namespace Explorer.Components
         {
             if (Context.ColumnInfo.UserId)
             {
-                return new Result(Enumerable.Empty<ValueWithCount<JsonElement>>());
+                return new Result(Enumerable.Empty<ValueWithCountRow<JsonElement>>());
             }
             var distinctValueResult = await Context.Exec(new DistinctColumnValues());
             return new Result(distinctValueResult.Rows.OrderByDescending(r => r.Count));
@@ -78,13 +78,13 @@ namespace Explorer.Components
 
         public class Result
         {
-            public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
+            public Result(IEnumerable<ValueWithCountRow<JsonElement>> distinctRows)
             {
                 DistinctRows = distinctRows.ToList();
                 ValueCounts = ValueCounts.Compute(DistinctRows);
             }
 
-            public List<ValueWithCount<JsonElement>> DistinctRows { get; }
+            public List<ValueWithCountRow<JsonElement>> DistinctRows { get; }
 
             public ValueCounts ValueCounts { get; }
 
