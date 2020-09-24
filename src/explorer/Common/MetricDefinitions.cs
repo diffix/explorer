@@ -7,7 +7,7 @@ namespace Explorer.Common
     public static class MetricDefinitions
     {
         public static readonly MetricDefinition<ExplorationInfo> ExplorationInfo = new MetricDefinition<ExplorationInfo>("exploration_info");
-        public static readonly MetricDefinition<IEnumerable<object>> SampleValues = new MetricDefinition<IEnumerable<object>>("sample_values");
+        public static readonly MetricDefinition<IList<object>> SampleValues = new MetricDefinition<IList<object>>("sample_values");
         public static readonly MetricDefinition<bool> IsCategorical = new MetricDefinition<bool>("is_categorical");
         public static readonly MetricDefinition<decimal> Min = new MetricDefinition<decimal>("min");
         public static readonly MetricDefinition<decimal> Max = new MetricDefinition<decimal>("max");
