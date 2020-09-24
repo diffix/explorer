@@ -14,6 +14,7 @@ namespace Explorer.Components
         : ExplorerComponent<DistinctValuesComponent.Result>, PublisherComponent
     {
         private const int DefaultNumValuesToPublish = 10;
+        private const double SuppressedRatioThreshold = 0.01;
 
         public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
 
@@ -81,14 +82,22 @@ namespace Explorer.Components
             {
                 DistinctRows = distinctRows.ToList();
                 ValueCounts = ValueCounts.Compute(DistinctRows);
-                IsCategorical = ValueCounts.IsCategorical;
             }
 
             public List<ValueWithCount<JsonElement>> DistinctRows { get; }
 
             public ValueCounts ValueCounts { get; }
 
-            public bool IsCategorical { get; }
+            /// <summary>
+            /// Gets a value indicating whether the columns contains categorical data or not.
+            /// A high count of suppressed values means that there are many values which are not part
+            /// of any bucket, so the column is not categorical.
+            /// The maximum number of categories is also limited logarithmically by the total number of values, i.e.:
+            /// 100 values - 37 categories; 10_000 values - 55 categories; 1_000_000 values - 72 categories; 1_000_000_000 values - 98 categories.
+            /// </summary>
+            public bool IsCategorical =>
+                ValueCounts.SuppressedCountRatio < SuppressedRatioThreshold &&
+                ValueCounts.NonSuppressedRows <= 20 + System.Math.Log(ValueCounts.NonSuppressedCount, 1.3);
         }
     }
 }
