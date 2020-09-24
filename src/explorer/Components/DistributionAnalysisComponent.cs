@@ -5,7 +5,6 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Accord.Statistics.Analysis;
-    using Accord.Statistics.Testing;
     using Explorer.Common;
     using Explorer.Metrics;
 
@@ -32,34 +31,32 @@ namespace Explorer.Components
                     fit.ChiSquareRank == 0 ||
                     fit.KolmogorovSmirnovRank == 0);
 
-            yield return new UntypedMetric(
-                name: "distribution_estimates",
-                metric: goodFits.Select(fit =>
-                {
-                    var ad = fit.Analysis.AndersonDarling[fit.Index];
-                    var cs = fit.Analysis.ChiSquare[fit.Index];
-                    var ks = fit.Analysis.KolmogorovSmirnov[fit.Index];
+            var estimates = goodFits.Select(fit =>
+            {
+                var ad = fit.Analysis.AndersonDarling[fit.Index];
+                var cs = fit.Analysis.ChiSquare[fit.Index];
+                var ks = fit.Analysis.KolmogorovSmirnov[fit.Index];
 
-                    return new
+                return new DistributionEstimate(
+                    fit.Name,
+                    fit.Distribution.ToString(),
+                    new GoodnessMetric?[]
                     {
-                        fit.Name,
-                        Distribution = fit.Distribution.ToString(),
-                        Goodness = new GoodnessMetric?[]
-                        {
-                            ad is null
-                                ? null
-                                : GoodnessMetric.AndersonDarling(ad, fit.AndersonDarlingRank),
-                            cs is null
-                                ? null
-                                : GoodnessMetric.ChiSquare(cs, fit.ChiSquareRank),
-                            ks is null
-                                ? null
-                                : GoodnessMetric.KolmogorovSmirnov(ks, fit.KolmogorovSmirnovRank),
-                        }
-                        .Where(gm => !(gm is null) && double.IsFinite(gm.PValue)),
-                    };
-                })
-                .ToList());
+                        ad is null
+                            ? null
+                            : GoodnessMetric.AndersonDarling(ad, fit.AndersonDarlingRank),
+                        cs is null
+                            ? null
+                            : GoodnessMetric.ChiSquare(cs, fit.ChiSquareRank),
+                        ks is null
+                            ? null
+                            : GoodnessMetric.KolmogorovSmirnov(ks, fit.KolmogorovSmirnovRank),
+                    }
+                    .Where(gm => !(gm is null) && double.IsFinite(gm.PValue))
+                    .Cast<GoodnessMetric>());
+            });
+
+            yield return ExploreMetric.Create(MetricDefinitions.DistributionEstimates, estimates.ToList());
         }
 
         protected override async Task<GoodnessOfFitCollection?> Explore()
@@ -72,34 +69,6 @@ namespace Explorer.Components
 
             var analysis = new DistributionAnalysis();
             return analysis.Learn(distribution.Generate(10_000).ToArray());
-        }
-
-        private class GoodnessMetric
-        {
-            private GoodnessMetric(string method, double pValue, bool significant, int rank)
-            {
-                Method = method;
-                PValue = pValue;
-                Significant = significant;
-                Rank = rank;
-            }
-
-            public string Method { get; }
-
-            public double PValue { get; }
-
-            public bool Significant { get; }
-
-            public int Rank { get; }
-
-            public static GoodnessMetric AndersonDarling(AndersonDarlingTest ad, int rank) =>
-                new GoodnessMetric("AndersonDarling", ad.PValue, ad.Significant, rank);
-
-            public static GoodnessMetric ChiSquare(ChiSquareTest cs, int rank) =>
-                new GoodnessMetric("ChiSquare", cs.PValue, cs.Significant, rank);
-
-            public static GoodnessMetric KolmogorovSmirnov(KolmogorovSmirnovTest ks, int rank) =>
-                new GoodnessMetric("KolmogorovSmirnov", ks.PValue, ks.Significant, rank);
         }
     }
 }
