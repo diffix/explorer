@@ -20,14 +20,14 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "status", this);
 
-            var textLenDistribution = new TextLengthDistribution() { Context = scope.Context };
+            var textLenDistribution = new TextLengthDistributionComponent() { Context = scope.Context };
             var r = await textLenDistribution.ComputeIsolatorLengthDistribution();
             Assert.NotNull(r);
             var d0 = r!.Distribution;
             Assert.Single(d0);
             Assert.Equal(1, d0[0].Value);
 
-            await scope.ResultTest<TextLengthDistribution, TextLengthDistribution.Result>(r =>
+            await scope.ResultTest<TextLengthDistributionComponent, TextLengthDistributionComponent.Result>(r =>
             {
                 Assert.NotNull(r);
                 var d1 = r!.Distribution;
@@ -43,7 +43,7 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "disp_type", this);
 
-            var textLenDistribution = new TextLengthDistribution() { Context = scope.Context };
+            var textLenDistribution = new TextLengthDistributionComponent() { Context = scope.Context };
             var r = await textLenDistribution.ComputeIsolatorLengthDistribution();
             Assert.NotNull(r);
             var d0 = r!.Distribution;
@@ -51,7 +51,7 @@ namespace Explorer.Tests
             Assert.Equal(5, d0[0].Value); // "OWNER"
             Assert.Equal(9, d0[1].Value); // "DISPONENT"
 
-            await scope.ResultTest<TextLengthDistribution, TextLengthDistribution.Result>(r =>
+            await scope.ResultTest<TextLengthDistributionComponent, TextLengthDistributionComponent.Result>(r =>
             {
                 Assert.NotNull(r);
                 var d1 = r!.Distribution;

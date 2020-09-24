@@ -10,8 +10,8 @@ namespace Explorer.Components
     using Explorer.Metrics;
     using Explorer.Queries;
 
-    public class TextLengthDistribution
-        : ExplorerComponent<TextLengthDistribution.Result>, PublisherComponent
+    public class TextLengthDistributionComponent
+        : ExplorerComponent<TextLengthDistributionComponent.Result>, PublisherComponent
     {
         private const int DefaultSubstringQueryColumnCount = 5;
 
@@ -25,10 +25,12 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric("text.length.values", result.Distribution);
+            var distribution = result.Distribution.Select(item => new ValueWithCount<long>(item.Value, item.Count));
+            yield return ExploreMetric.Create(MetricDefinitions.TextLengthDistribution, new TextLengthDistribution(distribution));
+
             if (result.ValueCounts != null)
             {
-                yield return new UntypedMetric("text.length.counts", result.ValueCounts);
+                yield return ExploreMetric.Create(MetricDefinitions.TextLengthCounts, result.ValueCounts);
             }
         }
 
