@@ -5,6 +5,7 @@ namespace Explorer.Components
 
     using Explorer.Common;
     using Explorer.Common.Utils;
+    using Explorer.Metrics;
 
     public static class TimeUtilities
     {
