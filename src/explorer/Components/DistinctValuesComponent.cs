@@ -31,11 +31,7 @@ namespace Explorer.Components
                     from row in result.DistinctRows
                     where row.HasValue
                     orderby row.Count descending
-                    select new
-                    {
-                        row.Value,
-                        row.Count,
-                    };
+                    select new CategoricalValueCount(row.Value, row.Count);
 
                 var toPublish = distinctValues.Take(NumValuesToPublish);
                 var remaining = distinctValues.Skip(NumValuesToPublish);
@@ -43,19 +39,15 @@ namespace Explorer.Components
                 if (remaining.Any())
                 {
                     using var jdoc = JsonDocument.Parse("\"--OTHER--\"");
-                    toPublish = toPublish.Append(new
-                    {
-                        Value = jdoc.RootElement.Clone(),
-                        Count = remaining.Sum(distinct => distinct.Count),
-                    });
+                    toPublish = toPublish.Append(new CategoricalValueCount(
+                        jdoc.RootElement.Clone(),
+                        remaining.Sum(distinct => distinct.Count)));
                 }
 
                 var valueCounts = result.ValueCounts;
                 yield return ExploreMetric.Create(MetricDefinitions.IsCategorical, true);
-                yield return new UntypedMetric(name: "distinct.values", metric: toPublish.ToList());
-                yield return new UntypedMetric(name: "distinct.null_count", metric: valueCounts.NullCount);
-                yield return new UntypedMetric(name: "distinct.suppressed_count", metric: valueCounts.SuppressedCount);
-                yield return new UntypedMetric(name: "distinct.value_count", metric: valueCounts.TotalCount);
+                yield return ExploreMetric.Create(MetricDefinitions.CategoricalValues, new CategoricalValuesList(toPublish));
+                yield return ExploreMetric.Create(MetricDefinitions.CategoricalValueCounts, valueCounts);
             }
         }
 
