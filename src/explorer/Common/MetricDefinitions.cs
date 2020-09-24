@@ -12,6 +12,7 @@ namespace Explorer.Common
         public static readonly MetricDefinition<decimal> Min = new MetricDefinition<decimal>("min");
         public static readonly MetricDefinition<decimal> Max = new MetricDefinition<decimal>("max");
         public static readonly MetricDefinition<decimal> AverageEstimate = new MetricDefinition<decimal>("average_estimate");
+        public static readonly MetricDefinition<IList<double>> QuartileEstimates = new MetricDefinition<IList<double>>("quartile_estimates");
         public static readonly MetricDefinition<NumericDistribution> NumericDescriptiveStats = new MetricDefinition<NumericDistribution>("descriptive_stats");
         public static readonly MetricDefinition<DatetimeDistribution> DateTimeDescriptiveStats = new MetricDefinition<DatetimeDistribution>("descriptive_stats");
         public static readonly MetricDefinition<Histogram> Histogram = new MetricDefinition<Histogram>("histogram");
