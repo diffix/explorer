@@ -360,41 +360,22 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  distinct__value_count:
+  categorical_value_counts:
     type: object
     properties:
       name:
-        const: distinct.value_count
+        const: categorical_value_counts
       value:
-        type: integer
+        type:
+          "$ref": "#/definitions/value_counts"
     additionalProperties: !!bool false
     required: [name, value]
 
-  distinct__null_count:
+  categorical_values__integer:
     type: object
     properties:
       name:
-        const: distinct.null_count
-      value:
-        type: integer
-    additionalProperties: !!bool false
-    required: [name, value]
-
-  distinct__suppressed_count:
-    type: object
-    properties:
-      name:
-        const: distinct.suppressed_count
-      value:
-        type: integer
-    additionalProperties: !!bool false
-    required: [name, value]
-
-  distinct__values__integer:
-    type: object
-    properties:
-      name:
-        const: distinct.values
+        const: categorical_values
       value:
         type: array
         items:
@@ -409,11 +390,11 @@ definitions:
           additionalProperties: !!bool false
           required: [value, count]
 
-  distinct__values__string:
+  categorical_values__string:
     type: object
     properties:
       name:
-        const: distinct.values
+        const: categorical_values
       value:
         type: array
         items:
@@ -430,11 +411,11 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  distinct__values__boolean:
+  categorical_values__boolean:
     type: object
     properties:
       name:
-        const: distinct.values
+        const: categorical_values
       value:
         type: array
         items:
@@ -818,10 +799,8 @@ definitions:
                   - contains: {"$ref": "#/definitions/is_categorical__true"}
                   - contains: {"$ref": "#/definitions/min__integer"}
                   - contains: {"$ref": "#/definitions/max__integer"}
-                  - contains: {"$ref": "#/definitions/distinct__values__integer"}
-                  - contains: {"$ref": "#/definitions/distinct__value_count"}
-                  - contains: {"$ref": "#/definitions/distinct__null_count"}
-                  - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
+                  - contains: {"$ref": "#/definitions/categorical_values__integer"}
+                  - contains: {"$ref": "#/definitions/categorical_value_counts"}
 
             - description: metrics for non-categorical integer columns
               properties:
@@ -850,10 +829,8 @@ definitions:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__string"}
                   - contains: {"$ref": "#/definitions/is_categorical__true"}
-                  - contains: {"$ref": "#/definitions/distinct__values__string"}
-                  - contains: {"$ref": "#/definitions/distinct__value_count"}
-                  - contains: {"$ref": "#/definitions/distinct__null_count"}
-                  - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
+                  - contains: {"$ref": "#/definitions/categorical_values__string"}
+                  - contains: {"$ref": "#/definitions/categorical_value_counts"}
                   - contains: {"$ref": "#/definitions/is_email"}
                   - contains: {"$ref": "#/definitions/text__length__counts"}
                   - contains: {"$ref": "#/definitions/text__length__values"}
@@ -948,7 +925,5 @@ definitions:
                 - contains: {"$ref": "#/definitions/exploration_info"}
                 - contains: {"$ref": "#/definitions/sample_values__boolean"}
                 - contains: {"$ref": "#/definitions/is_categorical__true"}
-                - contains: {"$ref": "#/definitions/distinct__values__boolean"}
-                - contains: {"$ref": "#/definitions/distinct__value_count"}
-                - contains: {"$ref": "#/definitions/distinct__null_count"}
-                - contains: {"$ref": "#/definitions/distinct__suppressed_count"}
+                - contains: {"$ref": "#/definitions/categorical_values__boolean"}
+                - contains: {"$ref": "#/definitions/categorical_value_counts"}
