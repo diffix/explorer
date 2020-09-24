@@ -21,12 +21,12 @@ namespace Explorer.Components
 
         private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
-        private readonly ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider;
+        private readonly ResultProvider<TextLengthDistributionComponent.Result> textLengthDistributionProvider;
 
         public TextGeneratorComponent(
             ResultProvider<EmailCheckComponent.Result> emailCheckProvider,
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
-            ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider)
+            ResultProvider<TextLengthDistributionComponent.Result> textLengthDistributionProvider)
         {
             this.emailCheckProvider = emailCheckProvider;
             this.distinctValuesProvider = distinctValuesProvider;

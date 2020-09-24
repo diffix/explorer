@@ -430,11 +430,11 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  text__length__values:
+  text_length_distribution:
     type: object
     properties:
       name:
-        const: text.length.values
+        const: text_length_distribution
       value:
         type: array
         items:
@@ -449,11 +449,11 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  text__length__counts:
+  text_length_counts:
     type: object
     properties:
       name:
-        const: text.length.counts
+        const: text_length_counts
       value:
         "$ref": "#/definitions/value_counts"
     additionalProperties: !!bool false
@@ -832,8 +832,8 @@ definitions:
                   - contains: {"$ref": "#/definitions/categorical_values__string"}
                   - contains: {"$ref": "#/definitions/categorical_value_counts"}
                   - contains: {"$ref": "#/definitions/is_email"}
-                  - contains: {"$ref": "#/definitions/text__length__counts"}
-                  - contains: {"$ref": "#/definitions/text__length__values"}
+                  - contains: {"$ref": "#/definitions/text_length_counts"}
+                  - contains: {"$ref": "#/definitions/text_length_distribution"}
 
             - description: metrics for non-categorical text columns
               properties:
@@ -844,8 +844,8 @@ definitions:
                   - contains: {"$ref": "#/definitions/sample_values__string"}
                   - contains: {"$ref": "#/definitions/is_categorical__false"}
                   - contains: {"$ref": "#/definitions/is_email"}
-                  - contains: {"$ref": "#/definitions/text__length__counts"}
-                  - contains: {"$ref": "#/definitions/text__length__values"}
+                  - contains: {"$ref": "#/definitions/text_length_counts"}
+                  - contains: {"$ref": "#/definitions/text_length_distribution"}
 
         - if: { properties: { columnType: { const: timestamp } } }
           then:

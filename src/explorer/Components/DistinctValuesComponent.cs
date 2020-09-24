@@ -32,7 +32,7 @@ namespace Explorer.Components
                     from row in result.DistinctRows
                     where row.HasValue
                     orderby row.Count descending
-                    select new CategoricalValueCount(row.Value, row.Count);
+                    select new ValueWithCount<JsonElement>(row.Value, row.Count);
 
                 var toPublish = distinctValues.Take(NumValuesToPublish);
                 var remaining = distinctValues.Skip(NumValuesToPublish);
@@ -40,7 +40,7 @@ namespace Explorer.Components
                 if (remaining.Any())
                 {
                     using var jdoc = JsonDocument.Parse("\"--OTHER--\"");
-                    toPublish = toPublish.Append(new CategoricalValueCount(
+                    toPublish = toPublish.Append(new ValueWithCount<JsonElement>(
                         jdoc.RootElement.Clone(),
                         remaining.Sum(distinct => distinct.Count)));
                 }

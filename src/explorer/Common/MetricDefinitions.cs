@@ -1,6 +1,7 @@
 namespace Explorer.Common
 {
     using System.Collections.Generic;
+    using System.Text.Json;
 
     using Explorer.Metrics;
 
@@ -20,6 +21,8 @@ namespace Explorer.Common
         public static readonly MetricDefinition<Histogram> Histogram = new MetricDefinition<Histogram>("histogram");
         public static readonly MetricDefinition<CategoricalValuesList> CategoricalValues = new MetricDefinition<CategoricalValuesList>("categorical_values");
         public static readonly MetricDefinition<ValueCounts> CategoricalValueCounts = new MetricDefinition<ValueCounts>("categorical_value_counts");
+        public static readonly MetricDefinition<TextLengthDistribution> TextLengthDistribution = new MetricDefinition<TextLengthDistribution>("text_length_distribution");
+        public static readonly MetricDefinition<ValueCounts> TextLengthCounts = new MetricDefinition<ValueCounts>("text_length_counts");
 
         public static MetricDefinition<T> SimpleStatsMin<T>()
         where T : unmanaged
