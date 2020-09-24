@@ -19,7 +19,7 @@ namespace Explorer.Api
 
         private static void CommonConfiguration(ExplorationScope scope)
         {
-            scope.AddPublisher<ExplorationInfo>();
+            scope.AddPublisher<ExplorationInfoComponent>();
             scope.AddPublisher<DistinctValuesComponent>();
             scope.AddPublisher<CategoricalSampleGenerator>();
         }
