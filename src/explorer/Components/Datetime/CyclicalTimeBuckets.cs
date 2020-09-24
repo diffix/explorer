@@ -6,6 +6,7 @@ namespace Explorer.Components
 
     using Explorer.Common;
     using Explorer.Common.Utils;
+    using Explorer.Metrics;
     using Explorer.Queries;
 
     public class CyclicalTimeBuckets : ExplorerComponent<CyclicalTimeBuckets.Result>, PublisherComponent

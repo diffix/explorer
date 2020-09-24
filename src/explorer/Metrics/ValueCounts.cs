@@ -1,8 +1,10 @@
-namespace Explorer.Common.Utils
+namespace Explorer.Metrics
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+
+    using Explorer.Common.Utils;
 
     public sealed class ValueCounts
     {
