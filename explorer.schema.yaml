@@ -353,8 +353,8 @@ definitions:
       value:
         type: object
         properties:
-          values: { type: { "$ref" : "#/definitions/categorical_values__integer" } }
-          value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
+          values: { "$ref" : "#/definitions/categorical_values__integer" }
+          value_counts: { "$ref" : "#/definitions/value_counts" }
         additionalProperties: !!bool false
         required: [values, value_counts]
     additionalProperties: !!bool false
@@ -382,8 +382,8 @@ definitions:
       value:
         type: object
         properties:
-          values: { type: { "$ref" : "#/definitions/categorical_values__string" } }
-          value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
+          values: { "$ref" : "#/definitions/categorical_values__string" }
+          value_counts: { "$ref" : "#/definitions/value_counts" }
         additionalProperties: !!bool false
         required: [values, value_counts]
     additionalProperties: !!bool false
@@ -411,8 +411,8 @@ definitions:
       value:
         type: object
         properties:
-          values: { type: { "$ref" : "#/definitions/categorical_values__boolean" } }
-          value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
+          values: { "$ref" : "#/definitions/categorical_values__boolean" }
+          value_counts: { "$ref" : "#/definitions/value_counts" }
         additionalProperties: !!bool false
         required: [values, value_counts]
     additionalProperties: !!bool false
@@ -431,7 +431,8 @@ definitions:
       required: [value, count]
 
   text_format:
-    type: enum
+    type: string
+    enum:
     - Unknown
     - Email
 
@@ -455,11 +456,11 @@ definitions:
       value:
         type: object
         properties:
-          lengths_distribution: { type: { "$ref" : "#/definitions/text_length_distribution" } }
-          length_value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
-          format: { type: { "$ref" : "#/definitions/text_format" } }
-      additionalProperties: !!bool false
-      required: [lengths_distribution, format]
+          lengths_distribution: { "$ref" : "#/definitions/text_length_distribution" }
+          length_value_counts: { "$ref" : "#/definitions/value_counts" }
+          format: { "$ref" : "#/definitions/text_format" }
+        additionalProperties: !!bool false
+        required: [lengths_distribution, format]
     additionalProperties: !!bool false
     required: [name, value]
 
