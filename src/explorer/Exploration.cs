@@ -99,16 +99,6 @@ namespace Explorer
             // Multi-column analyses
             // We have access to all the ColumnExplorations here, so we should be able to extract some
             // context around which column combinations are promising candidates for multi-column analysis.
-            await RunStage(
-                ExplorationStatus.Processing,
-                async () =>
-                {
-                    // start with column pairs
-                    var multiColumnExploration = new MultiColumnExploration(ColumnExplorations);
-
-                    await multiColumnExploration.Completion;
-                });
-
             // Completed successfully
             Status = ExplorationStatus.Complete;
         }
