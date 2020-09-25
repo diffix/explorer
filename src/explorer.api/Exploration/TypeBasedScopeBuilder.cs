@@ -62,9 +62,8 @@ namespace Explorer.Api
 
         private static void TextExploration(ExplorationScope scope)
         {
-            scope.AddPublisher<TextFormatDetectorComponent>();
             scope.AddPublisher<TextGeneratorComponent>();
-            scope.AddPublisher<TextLengthDistributionComponent>();
+            scope.AddPublisher<TextDataPublisherComponent>();
         }
 
         private static void DatetimeExploration(ExplorationScope scope)
