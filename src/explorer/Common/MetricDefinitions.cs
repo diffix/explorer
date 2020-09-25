@@ -19,9 +19,7 @@ namespace Explorer.Common
         public static readonly MetricDefinition<DatetimeDistribution> DateTimeDescriptiveStats = new MetricDefinition<DatetimeDistribution>("descriptive_stats");
         public static readonly MetricDefinition<Histogram> Histogram = new MetricDefinition<Histogram>("histogram");
         public static readonly MetricDefinition<CategoricalData> CategoricalData = new MetricDefinition<CategoricalData>("categorical_data");
-        public static readonly MetricDefinition<TextFormat> TextFormat = new MetricDefinition<TextFormat>("text_format");
-        public static readonly MetricDefinition<TextLengthDistribution> TextLengthDistribution = new MetricDefinition<TextLengthDistribution>("text_length_distribution");
-        public static readonly MetricDefinition<ValueCounts> TextLengthCounts = new MetricDefinition<ValueCounts>("text_length_counts");
+        public static readonly MetricDefinition<TextData> TextData = new MetricDefinition<TextData>("text_data");
 
         public static MetricDefinition<T> SimpleStatsMin<T>()
         where T : unmanaged

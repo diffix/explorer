@@ -1,6 +1,8 @@
+#pragma warning disable CA1815 // ValueWithCount should override Equals
+
 namespace Explorer.Metrics
 {
-    public class ValueWithCount<T>
+    public struct ValueWithCount<T>
     {
         public ValueWithCount(T value, long count)
         {
@@ -13,3 +15,5 @@ namespace Explorer.Metrics
         public long Count { get; }
     }
 }
+
+#pragma warning restore CA1815 // ValueWithCount should override Equals
