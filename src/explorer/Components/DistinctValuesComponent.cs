@@ -45,10 +45,9 @@ namespace Explorer.Components
                         remaining.Sum(distinct => distinct.Count)));
                 }
 
-                var valueCounts = result.ValueCounts;
+                var categoricalData = new CategoricalData(new CategoricalData.ValuesListType(toPublish), result.ValueCounts);
+                yield return ExploreMetric.Create(MetricDefinitions.CategoricalData, categoricalData);
                 yield return ExploreMetric.Create(MetricDefinitions.IsCategorical, true);
-                yield return ExploreMetric.Create(MetricDefinitions.CategoricalValues, new CategoricalValuesList(toPublish));
-                yield return ExploreMetric.Create(MetricDefinitions.CategoricalValueCounts, valueCounts);
             }
         }
 
