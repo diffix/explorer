@@ -6,12 +6,13 @@ namespace Explorer.Components
 
     using Explorer.Common;
     using Explorer.Queries;
+    using TextFormat = Explorer.Metrics.TextFormat;
 
-    public class EmailCheckComponent : ExplorerComponent<EmailCheckComponent.Result>, PublisherComponent
+    public class TextFormatDetectorComponent : ExplorerComponent<TextFormatDetectorComponent.Result>, PublisherComponent
     {
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
-        public EmailCheckComponent(
+        public TextFormatDetectorComponent(
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
         {
             this.distinctValuesProvider = distinctValuesProvider;
@@ -25,7 +26,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric(name: "is_email", metric: result);
+            yield return ExploreMetric.Create(MetricDefinitions.TextFormat, metric: result.TextFormat);
         }
 
         protected override async Task<Result?> Explore()
@@ -38,18 +39,22 @@ namespace Explorer.Components
 
             var emailCheck = await Context.Exec(new EmailCheck());
             var emailCount = emailCheck.Rows.First();
-            var isEmail = emailCount >= distinctValuesResult.ValueCounts.NonSuppressedNonNullCount;
-            return new Result(isEmail);
+            if (emailCount >= distinctValuesResult.ValueCounts.NonSuppressedNonNullCount)
+            {
+                return new Result(TextFormat.Email);
+            }
+
+            return new Result(TextFormat.Unknonwn);
         }
 
         public class Result
         {
-            public Result(bool value)
+            public Result(TextFormat value)
             {
-                IsEmail = value;
+                TextFormat = value;
             }
 
-            public bool IsEmail { get; }
+            public TextFormat TextFormat { get; }
         }
     }
 }

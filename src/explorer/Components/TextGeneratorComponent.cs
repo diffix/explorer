@@ -19,12 +19,12 @@ namespace Explorer.Components
         public const int DefaultDistinctValuesBySamplesToPublishRatioThreshold = 5;
         public const int DefaultSubstringQueryColumnCount = 5;
 
-        private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
+        private readonly ResultProvider<TextFormatDetectorComponent.Result> emailCheckProvider;
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<TextLengthDistributionComponent.Result> textLengthDistributionProvider;
 
         public TextGeneratorComponent(
-            ResultProvider<EmailCheckComponent.Result> emailCheckProvider,
+            ResultProvider<TextFormatDetectorComponent.Result> emailCheckProvider,
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
             ResultProvider<TextLengthDistributionComponent.Result> textLengthDistributionProvider)
         {
@@ -76,7 +76,7 @@ namespace Explorer.Components
                 return null;
             }
 
-            var sampleValues = emailCheckerResult.IsEmail ?
+            var sampleValues = emailCheckerResult.TextFormat == Metrics.TextFormat.Email ?
                 await GenerateEmails(textLengthDistributionResult.Distribution) :
                 await GenerateStrings(textLengthDistributionResult.Distribution);
             return new Result(sampleValues.Cast<object>().ToList());

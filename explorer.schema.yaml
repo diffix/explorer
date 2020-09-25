@@ -325,18 +325,15 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  is_email:
+  text_format:
     type: object
     properties:
       name:
-        const: is_email
+        const: text_format
       value:
-        type: object
-        properties:
-          isEmail:
-            type: boolean
-        additionalProperties: !!bool false
-        required: [isEmail]
+        type: enum
+        - Unknown
+        - Email
     additionalProperties: !!bool false
     required: [name, value]
 
@@ -831,7 +828,7 @@ definitions:
                   - contains: {"$ref": "#/definitions/is_categorical__true"}
                   - contains: {"$ref": "#/definitions/categorical_values__string"}
                   - contains: {"$ref": "#/definitions/categorical_value_counts"}
-                  - contains: {"$ref": "#/definitions/is_email"}
+                  - contains: {"$ref": "#/definitions/text_format"}
                   - contains: {"$ref": "#/definitions/text_length_counts"}
                   - contains: {"$ref": "#/definitions/text_length_distribution"}
 
@@ -843,7 +840,7 @@ definitions:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__string"}
                   - contains: {"$ref": "#/definitions/is_categorical__false"}
-                  - contains: {"$ref": "#/definitions/is_email"}
+                  - contains: {"$ref": "#/definitions/text_format"}
                   - contains: {"$ref": "#/definitions/text_length_counts"}
                   - contains: {"$ref": "#/definitions/text_length_distribution"}
 
