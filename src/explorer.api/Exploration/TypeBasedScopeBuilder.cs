@@ -62,7 +62,7 @@ namespace Explorer.Api
 
         private static void TextExploration(ExplorationScope scope)
         {
-            scope.AddPublisher<EmailCheckComponent>();
+            scope.AddPublisher<TextFormatDetectorComponent>();
             scope.AddPublisher<TextGeneratorComponent>();
             scope.AddPublisher<TextLengthDistributionComponent>();
         }
