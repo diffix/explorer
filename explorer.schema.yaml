@@ -325,18 +325,6 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  text_format:
-    type: object
-    properties:
-      name:
-        const: text_format
-      value:
-        type: enum
-        - Unknown
-        - Email
-    additionalProperties: !!bool false
-    required: [name, value]
-
   is_categorical__true:
     type: object
     properties:
@@ -427,32 +415,36 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  text_length_distribution:
-    type: object
-    properties:
-      name:
-        const: text_length_distribution
-      value:
-        type: array
-        items:
-          type: object
-          properties:
-            value:
-              type: integer
-            count:
-              type: integer
-          additionalProperties: !!bool false
-          required: [value, count]
-    additionalProperties: !!bool false
-    required: [name, value]
+  text_format:
+    type: enum
+    - Unknown
+    - Email
 
-  text_length_counts:
+  text_length_distribution:
+    type: array
+    items:
+      type: object
+      properties:
+        value:
+          type: integer
+        count:
+          type: integer
+      additionalProperties: !!bool false
+      required: [value, count]
+
+  text_data:
     type: object
     properties:
       name:
-        const: text_length_counts
+        const: text_data
       value:
-        "$ref": "#/definitions/value_counts"
+        type: object
+        properties:
+          lengths_distribution: { type: { "$ref" : "#/definitions/text_length_distribution" } }
+          length_value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
+          format: { type: { "$ref" : "#/definitions/text_format" } }
+      additionalProperties: !!bool false
+      required: [lengths_distribution, format]
     additionalProperties: !!bool false
     required: [name, value]
 
@@ -828,9 +820,7 @@ definitions:
                   - contains: {"$ref": "#/definitions/is_categorical__true"}
                   - contains: {"$ref": "#/definitions/categorical_values__string"}
                   - contains: {"$ref": "#/definitions/categorical_value_counts"}
-                  - contains: {"$ref": "#/definitions/text_format"}
-                  - contains: {"$ref": "#/definitions/text_length_counts"}
-                  - contains: {"$ref": "#/definitions/text_length_distribution"}
+                  - contains: {"$ref": "#/definitions/text_data"}
 
             - description: metrics for non-categorical text columns
               properties:
@@ -840,9 +830,7 @@ definitions:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__string"}
                   - contains: {"$ref": "#/definitions/is_categorical__false"}
-                  - contains: {"$ref": "#/definitions/text_format"}
-                  - contains: {"$ref": "#/definitions/text_length_counts"}
-                  - contains: {"$ref": "#/definitions/text_length_distribution"}
+                  - contains: {"$ref": "#/definitions/text_data"}
 
         - if: { properties: { columnType: { const: timestamp } } }
           then:

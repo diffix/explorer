@@ -8,25 +8,13 @@ namespace Explorer.Components
     using Explorer.Queries;
     using TextFormat = Explorer.Metrics.TextFormat;
 
-    public class TextFormatDetectorComponent : ExplorerComponent<TextFormatDetectorComponent.Result>, PublisherComponent
+    public class TextFormatDetectorComponent : ExplorerComponent<TextFormatDetectorComponent.Result>
     {
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
-        public TextFormatDetectorComponent(
-            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
+        public TextFormatDetectorComponent(ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
         {
             this.distinctValuesProvider = distinctValuesProvider;
-        }
-
-        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
-        {
-            var result = await ResultAsync;
-            if (result == null)
-            {
-                yield break;
-            }
-
-            yield return ExploreMetric.Create(MetricDefinitions.TextFormat, metric: result.TextFormat);
         }
 
         protected override async Task<Result?> Explore()

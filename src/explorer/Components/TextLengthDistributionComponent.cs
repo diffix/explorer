@@ -10,29 +10,11 @@ namespace Explorer.Components
     using Explorer.Metrics;
     using Explorer.Queries;
 
-    public class TextLengthDistributionComponent
-        : ExplorerComponent<TextLengthDistributionComponent.Result>, PublisherComponent
+    public class TextLengthDistributionComponent : ExplorerComponent<TextLengthDistributionComponent.Result>
     {
         private const int DefaultSubstringQueryColumnCount = 5;
 
         public int SubstringQueryColumnCount { get; set; } = DefaultSubstringQueryColumnCount;
-
-        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
-        {
-            var result = await ResultAsync;
-            if (result == null)
-            {
-                yield break;
-            }
-
-            var distribution = result.Distribution.Select(item => new ValueWithCount<long>(item.Value, item.Count));
-            yield return ExploreMetric.Create(MetricDefinitions.TextLengthDistribution, new TextLengthDistribution(distribution));
-
-            if (result.ValueCounts != null)
-            {
-                yield return ExploreMetric.Create(MetricDefinitions.TextLengthCounts, result.ValueCounts);
-            }
-        }
 
         internal async Task<Result> ComputeIsolatorLengthDistribution()
         {
@@ -87,7 +69,7 @@ namespace Explorer.Components
                 ValueCounts = ValueCounts.Compute(distinctRows);
                 Distribution = ValueWithCountList<long>.FromTupleEnum(distinctRows
                     .Where(r => r.HasValue)
-                    .OrderBy(r => r.Value.GetInt32())
+                    .OrderBy(r => r.Value.GetInt64())
                     .Select(r => (r.Value.GetInt64(), r.Count)));
             }
 
