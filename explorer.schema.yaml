@@ -345,75 +345,90 @@ definitions:
     additionalProperties: !!bool false
     required: [name, value]
 
-  categorical_value_counts:
+  categorical_data__integer:
     type: object
     properties:
       name:
-        const: categorical_value_counts
+        const: categorical_data
       value:
-        type:
-          "$ref": "#/definitions/value_counts"
+        type: object
+        properties:
+          values: { type: { "$ref" : "#/definitions/categorical_values__integer" } }
+          value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
+        additionalProperties: !!bool false
+        required: [values, value_counts]
     additionalProperties: !!bool false
     required: [name, value]
 
   categorical_values__integer:
+    type: array
+    items:
+      type: object
+      properties:
+        value:
+          oneOf:
+          - type: integer
+          - const: "--OTHER--"
+        count:
+          type: integer
+      additionalProperties: !!bool false
+      required: [value, count]
+
+  categorical_data__string:
     type: object
     properties:
       name:
-        const: categorical_values
+        const: categorical_data
       value:
-        type: array
-        items:
-          type: object
-          properties:
-            value:
-              oneOf:
-              - type: integer
-              - const: "--OTHER--"
-            count:
-              type: integer
-          additionalProperties: !!bool false
-          required: [value, count]
+        type: object
+        properties:
+          values: { type: { "$ref" : "#/definitions/categorical_values__string" } }
+          value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
+        additionalProperties: !!bool false
+        required: [values, value_counts]
+    additionalProperties: !!bool false
+    required: [name, value]
 
   categorical_values__string:
+    type: array
+    items:
+      type: object
+      properties:
+        value:
+          oneOf:
+          - type: string
+          - const: "--OTHER--"
+        count:
+          type: integer
+      additionalProperties: !!bool false
+      required: [value, count]
+
+  categorical_data__boolean:
     type: object
     properties:
       name:
-        const: categorical_values
+        const: categorical_data
       value:
-        type: array
-        items:
-          type: object
-          properties:
-            value:
-              oneOf:
-              - type: string
-              - const: "--OTHER--"
-            count:
-              type: integer
-          additionalProperties: !!bool false
-          required: [value, count]
+        type: object
+        properties:
+          values: { type: { "$ref" : "#/definitions/categorical_values__boolean" } }
+          value_counts: { type: { "$ref" : "#/definitions/value_counts" } }
+        additionalProperties: !!bool false
+        required: [values, value_counts]
     additionalProperties: !!bool false
     required: [name, value]
 
   categorical_values__boolean:
-    type: object
-    properties:
-      name:
-        const: categorical_values
-      value:
-        type: array
-        items:
-          type: object
-          properties:
-            value:
-              type: boolean
-            count:
-              type: integer
-          additionalProperties: !!bool false
-          required: [value, count]
-    additionalProperties: !!bool false
-    required: [name, value]
+    type: array
+    items:
+      type: object
+      properties:
+        value:
+          type: boolean
+        count:
+          type: integer
+      additionalProperties: !!bool false
+      required: [value, count]
 
   text_format:
     type: enum
@@ -786,10 +801,9 @@ definitions:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__integer"}
                   - contains: {"$ref": "#/definitions/is_categorical__true"}
+                  - contains: {"$ref": "#/definitions/categorical_data__integer"}
                   - contains: {"$ref": "#/definitions/min__integer"}
                   - contains: {"$ref": "#/definitions/max__integer"}
-                  - contains: {"$ref": "#/definitions/categorical_values__integer"}
-                  - contains: {"$ref": "#/definitions/categorical_value_counts"}
 
             - description: metrics for non-categorical integer columns
               properties:
@@ -818,8 +832,7 @@ definitions:
                   - contains: {"$ref": "#/definitions/exploration_info"}
                   - contains: {"$ref": "#/definitions/sample_values__string"}
                   - contains: {"$ref": "#/definitions/is_categorical__true"}
-                  - contains: {"$ref": "#/definitions/categorical_values__string"}
-                  - contains: {"$ref": "#/definitions/categorical_value_counts"}
+                  - contains: {"$ref": "#/definitions/categorical_data__string"}
                   - contains: {"$ref": "#/definitions/text_data"}
 
             - description: metrics for non-categorical text columns
@@ -831,6 +844,18 @@ definitions:
                   - contains: {"$ref": "#/definitions/sample_values__string"}
                   - contains: {"$ref": "#/definitions/is_categorical__false"}
                   - contains: {"$ref": "#/definitions/text_data"}
+
+        - if: { properties: { columnType: { const: bool } } }
+          then:
+            description: metrics for boolean columns
+            properties:
+              metrics:
+                type: array
+                allOf:
+                - contains: {"$ref": "#/definitions/exploration_info"}
+                - contains: {"$ref": "#/definitions/sample_values__boolean"}
+                - contains: {"$ref": "#/definitions/is_categorical__true"}
+                - contains: {"$ref": "#/definitions/categorical_data__boolean"}
 
         - if: { properties: { columnType: { const: timestamp } } }
           then:
@@ -899,16 +924,3 @@ definitions:
                 - contains: {"$ref": "#/definitions/dates_linear__day"}
                 - contains: {"$ref": "#/definitions/dates_linear__month"}
                 - contains: {"$ref": "#/definitions/dates_linear__year"}
-
-        - if: { properties: { columnType: { const: bool } } }
-          then:
-            description: metrics for boolean columns
-            properties:
-              metrics:
-                type: array
-                allOf:
-                - contains: {"$ref": "#/definitions/exploration_info"}
-                - contains: {"$ref": "#/definitions/sample_values__boolean"}
-                - contains: {"$ref": "#/definitions/is_categorical__true"}
-                - contains: {"$ref": "#/definitions/categorical_values__boolean"}
-                - contains: {"$ref": "#/definitions/categorical_value_counts"}
