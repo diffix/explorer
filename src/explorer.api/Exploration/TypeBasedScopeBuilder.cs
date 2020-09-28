@@ -1,6 +1,7 @@
 namespace Explorer.Api
 {
     using System;
+
     using Diffix;
     using Explorer.Components;
 
@@ -8,11 +9,6 @@ namespace Explorer.Api
     {
         protected override void Configure(ExplorationScope scope, ExplorerContext context)
         {
-            if (context.Columns.Length != 1)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(TypeBasedScopeBuilder)} expects a single-column context, got {context.Columns.Length} columns.");
-            }
             CommonConfiguration(scope);
             ColumnConfiguration(scope, context);
         }

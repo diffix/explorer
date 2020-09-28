@@ -1,7 +1,5 @@
 namespace Explorer
 {
-    using System.Collections.Immutable;
-    using System.Linq;
     using System.Threading.Tasks;
 
     using Diffix;
@@ -12,13 +10,9 @@ namespace Explorer
 
         public string Table { get; }
 
-        public virtual string Column { get => Columns.Single(); }
+        public string Column { get; }
 
-        public virtual DColumnInfo ColumnInfo { get => ColumnInfos.Single(); }
-
-        public ImmutableArray<string> Columns { get; }
-
-        public ImmutableArray<DColumnInfo> ColumnInfos { get; }
+        public DColumnInfo ColumnInfo { get; }
 
         public Task<DResult<TRow>> Exec<TQuery, TRow>(TQuery query)
             where TQuery : DQueryStatement, DResultParser<TRow>;

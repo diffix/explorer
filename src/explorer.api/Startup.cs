@@ -2,7 +2,6 @@ namespace Explorer.Api
 {
     using Aircloak.JsonApi;
     using Explorer.Api.Authentication;
-    using Explorer.Api.Models;
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
@@ -48,11 +47,14 @@ namespace Explorer.Api
 
             // Scoped services
             services
-                .AddScoped<MetricsPublisher, SimpleMetricsPublisher>();
+                .AddScoped<MetricsPublisher, SimpleMetricsPublisher>()
+                .AddScoped<ContextBuilder>()
+                .AddScoped<AircloakConnectionBuilder>();
 
             // Transient Services
             services
-                .AddTransient<ExplorationScopeBuilder, TypeBasedScopeBuilder>();
+                .AddTransient<ExplorationScopeBuilder, TypeBasedScopeBuilder>()
+                .AddTransient<ExplorationLauncher>();
 
             // Register Explorer Components
             services.IncludeRegistry<ComponentRegistry>();

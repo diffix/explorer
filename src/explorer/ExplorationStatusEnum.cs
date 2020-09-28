@@ -30,7 +30,7 @@
             Complete,
 
             /// <summary>
-            /// Completed due to cancellation.
+            /// Completed due due cancellation.
             /// </summary>
             Canceled,
 

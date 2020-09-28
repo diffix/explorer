@@ -4,6 +4,7 @@ namespace Explorer.Api
     using System.Threading;
 
     using Aircloak.JsonApi;
+    using Diffix;
 
     public class AircloakConnectionBuilder
     {
