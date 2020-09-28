@@ -5,22 +5,14 @@ namespace Explorer.Metrics
 
     public class CategoricalData
     {
-        public CategoricalData(ValuesListType values, ValueCounts valueCounts)
+        public CategoricalData(IReadOnlyList<ValueWithCount<JsonElement>> values, ValueCounts valueCounts)
         {
             Values = values;
             ValueCounts = valueCounts;
         }
 
-        public ValuesListType Values { get; }
+        public IReadOnlyList<ValueWithCount<JsonElement>> Values { get; }
 
         public ValueCounts ValueCounts { get; }
-
-        public class ValuesListType : List<ValueWithCount<JsonElement>>
-        {
-            public ValuesListType(IEnumerable<ValueWithCount<JsonElement>> items)
-                : base(items)
-            {
-            }
-        }
     }
 }

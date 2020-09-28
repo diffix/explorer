@@ -45,7 +45,7 @@ namespace Explorer.Components
                         remaining.Sum(distinct => distinct.Count)));
                 }
 
-                var categoricalData = new CategoricalData(new CategoricalData.ValuesListType(toPublish), result.ValueCounts);
+                var categoricalData = new CategoricalData(toPublish.ToList(), result.ValueCounts);
                 yield return ExploreMetric.Create(MetricDefinitions.CategoricalData, categoricalData);
                 yield return ExploreMetric.Create(MetricDefinitions.IsCategorical, true);
             }
