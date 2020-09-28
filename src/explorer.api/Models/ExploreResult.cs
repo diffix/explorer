@@ -65,7 +65,7 @@ namespace Explorer.Api.Models
                 Column = column;
                 ColumnType = DValueType.Unknown;
                 Status = ExplorationStatus.New;
-                Metrics = new List<ExploreMetric>(0);
+                Metrics = new Dictionary<string, object>(0);
             }
 
             public ColumnMetricsType(ColumnExploration columnExploration)
@@ -73,7 +73,7 @@ namespace Explorer.Api.Models
                 Column = columnExploration.Column;
                 ColumnType = columnExploration.ColumnInfo.Type;
                 Status = columnExploration.Status;
-                Metrics = columnExploration.PublishedMetrics.ToList();
+                Metrics = columnExploration.PublishedMetrics.ToDictionary(item => item.Name, item => item.Metric);
             }
 
             public string Column { get; }
@@ -82,7 +82,7 @@ namespace Explorer.Api.Models
 
             public ExplorationStatus Status { get; }
 
-            public IList<ExploreMetric> Metrics { get; }
+            public IDictionary<string, object> Metrics { get; }
         }
     }
 }
