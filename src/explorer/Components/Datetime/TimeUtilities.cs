@@ -26,7 +26,7 @@ namespace Explorer.Components
             foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
             {
                 yield return new UntypedMetric(
-                    name: $"{metricName}.{row.Key}",
+                    name: $"{metricName}_{row.Key}",
                     metric: MetricBlob(
                         valueCount.TotalCount,
                         valueCount.SuppressedCount,
