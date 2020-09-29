@@ -68,9 +68,8 @@ namespace Explorer.Tests
 
             await scope.MetricsTest<DistinctValuesComponent>(metrics =>
             {
-                Assert.Single(metrics, m => m.Name == "distinct.values");
-                dynamic valuesMetric = metrics.Single(m => m.Name == "distinct.values").Metric;
-                Assert.True(valuesMetric.Count == 2);
+                var valuesMetric = metrics.FindMetric(MetricDefinitions.CategoricalData);
+                Assert.True(valuesMetric.Values.Count == 2);
             });
         }
 

@@ -18,8 +18,14 @@ namespace Explorer.Components
 
         public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
 
-        public IEnumerable<ExploreMetric> YieldMetrics(Result result)
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
+            var result = await ResultAsync;
+            if (result == null)
+            {
+                yield break;
+            }
+
             if (!result.IsCategorical)
             {
                 yield return ExploreMetric.Create(MetricDefinitions.IsCategorical, false);
@@ -48,20 +54,6 @@ namespace Explorer.Components
                 var categoricalData = new CategoricalData(toPublish.ToList(), result.ValueCounts);
                 yield return ExploreMetric.Create(MetricDefinitions.CategoricalData, categoricalData);
                 yield return ExploreMetric.Create(MetricDefinitions.IsCategorical, true);
-            }
-        }
-
-        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
-        {
-            var result = await ResultAsync;
-            if (result == null)
-            {
-                yield break;
-            }
-
-            foreach (var m in YieldMetrics(result))
-            {
-                yield return m;
             }
         }
 

@@ -3,6 +3,7 @@ namespace Explorer.Tests
     using System;
     using System.Linq;
 
+    using Explorer.Common;
     using Explorer.Components;
     using Xunit;
 
@@ -69,11 +70,12 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "clients", "email", this);
 
-            await scope.ResultTest<TextFormatDetectorComponent, TextFormatDetectorComponent.Result>(r => Assert.True(r?.TextFormat == Metrics.TextFormat.Email));
+            await scope.ResultTest<TextFormatDetectorComponent, TextFormatDetectorComponent.Result>(r =>
+                Assert.True(r?.TextFormat == Metrics.TextFormat.Email));
 
-            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
+            await scope.MetricsTest<TextGeneratorComponent>(result =>
             {
-                var sampleValues = result?.SampleValues.Cast<string>();
+                var sampleValues = result.FindMetric(MetricDefinitions.SampleValuesString);
                 Assert.True(sampleValues.All(v => v.Length >= 3));
                 Assert.True(sampleValues.All(v => v.Count(c => c == '@') == 1));
                 Assert.True(sampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
@@ -86,11 +88,12 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "email", this);
 
-            await scope.ResultTest<TextFormatDetectorComponent, TextFormatDetectorComponent.Result>(r => Assert.True(r?.TextFormat == Metrics.TextFormat.Email));
+            await scope.ResultTest<TextFormatDetectorComponent, TextFormatDetectorComponent.Result>(r =>
+                Assert.True(r?.TextFormat == Metrics.TextFormat.Email));
 
-            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
+            await scope.MetricsTest<TextGeneratorComponent>(result =>
             {
-                var sampleValues = result?.SampleValues.Cast<string>();
+                var sampleValues = result.FindMetric(MetricDefinitions.SampleValuesString);
                 Assert.True(sampleValues.All(v => v.Length >= 3));
                 Assert.True(sampleValues.All(v => v.Count(c => c == '@') == 1));
                 Assert.True(sampleValues.All(v => v.Contains('.', StringComparison.InvariantCulture)));
@@ -105,9 +108,9 @@ namespace Explorer.Tests
 
             await scope.ResultTest<TextFormatDetectorComponent, TextFormatDetectorComponent.Result>(r => Assert.False(r?.TextFormat == Metrics.TextFormat.Email));
 
-            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
+            await scope.MetricsTest<TextGeneratorComponent>(result =>
             {
-                var sampleValues = result?.SampleValues.Cast<string>();
+                var sampleValues = result.FindMetric(MetricDefinitions.SampleValuesString);
                 Assert.True(sampleValues.All(v => v.Length >= 3));
             });
         }
@@ -119,9 +122,9 @@ namespace Explorer.Tests
 
             await scope.ResultTest<TextFormatDetectorComponent, TextFormatDetectorComponent.Result>(r => Assert.False(r?.TextFormat == Metrics.TextFormat.Email));
 
-            await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
+            await scope.MetricsTest<TextGeneratorComponent>(result =>
             {
-                var sampleValues = result?.SampleValues.Cast<string>();
+                var sampleValues = result.FindMetric(MetricDefinitions.SampleValuesString);
                 Assert.True(sampleValues.All(v => v.Length >= 3));
             });
         }

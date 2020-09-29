@@ -7,7 +7,7 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class TextDataPublisherComponent : ExplorerComponent<TextData>, PublisherComponent
+    public class TextDataPublisherComponent : PublisherComponent
     {
         private readonly ResultProvider<TextFormatDetectorComponent.Result> textFormatProvider;
         private readonly ResultProvider<TextLengthDistributionComponent.Result> textLengthDistributionProvider;
@@ -22,31 +22,24 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var result = await ResultAsync;
-            if (result == null)
-            {
-                yield break;
-            }
-            yield return ExploreMetric.Create(MetricDefinitions.TextData, result);
-        }
-
-        protected async override Task<TextData?> Explore()
-        {
             var textFormatResult = await textFormatProvider.ResultAsync;
             if (textFormatResult == null)
             {
-                return null;
+                yield break;
             }
 
             var lengthDistributionResult = await textLengthDistributionProvider.ResultAsync;
             if (lengthDistributionResult == null)
             {
-                return null;
+                yield break;
             }
 
             var lengthDistribution = new TextData.LengthsDistributionType(
                     lengthDistributionResult.Distribution.Select(item => new ValueWithCount<long>(item.Value, item.Count)));
-            return new TextData(textFormatResult.TextFormat, lengthDistribution, lengthDistributionResult.ValueCounts);
+
+            var textData = new TextData(textFormatResult.TextFormat, lengthDistribution, lengthDistributionResult.ValueCounts);
+
+            yield return ExploreMetric.Create(MetricDefinitions.TextData, textData);
         }
     }
 }

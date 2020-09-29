@@ -7,9 +7,10 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class AverageEstimator :
-        ExplorerComponent<AverageEstimator.Result>, PublisherComponent
+    public class AverageEstimator : ExplorerComponentBase, PublisherComponent
     {
+        private const int Precision = 6;
+
         private readonly ResultProvider<Histogram> histogramResultProvider;
 
         public AverageEstimator(ResultProvider<Histogram> histogramResultProvider)
@@ -30,39 +31,14 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            const int Precision = 6;
-            var result = await ResultAsync;
-            if (result == null)
+            var histogramResult = await histogramResultProvider.ResultAsync;
+            if (histogramResult == null)
             {
                 yield break;
             }
 
-            yield return ExploreMetric.Create(MetricDefinitions.AverageEstimate, decimal.Round(result.Value, Precision));
-
-            // alternative syntax:
-            // yield return AverageEstimate.Create(decimal.Round(result.Value, Precision));
-        }
-
-        protected override async Task<Result?> Explore()
-        {
-            var histogramResult = await histogramResultProvider.ResultAsync;
-            if (histogramResult == null)
-            {
-                return null;
-            }
-
             var average = await EstimateAverage(histogramResult);
-            return new Result(average);
-        }
-
-        public class Result
-        {
-            public Result(decimal value)
-            {
-                Value = value;
-            }
-
-            public decimal Value { get; }
+            yield return ExploreMetric.Create(MetricDefinitions.AverageEstimate, decimal.Round(average, Precision));
         }
     }
 }
