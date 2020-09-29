@@ -107,7 +107,7 @@
             new ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("amount"), });
 
         [Fact]
-        public async Task SuccessWithResultIntRealCategorical() => await SuccessWithResult(
+        public async Task SuccessWithResultRealCategorical() => await SuccessWithResult(
             new ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("payments"), });
 
         [Fact]
@@ -212,15 +212,6 @@
                         Assert.Contains(column, data.Columns);
 
                         Assert.True(item.ContainsKey("metrics"));
-                        var metrics = (JArray)item["metrics"];
-                        Assert.True(metrics.Count > 0, $"Metrics for column {column} are empty!");
-                        Assert.All(metrics, jmetric =>
-                        {
-                            Assert.Equal(JTokenType.Object, jmetric.Type);
-                            var metric = (JObject)jmetric;
-                            Assert.True(metric.ContainsKey("name"));
-                            Assert.True(metric.ContainsKey("value"));
-                        });
                     }
 
                     if (data.Columns.Length > 0)

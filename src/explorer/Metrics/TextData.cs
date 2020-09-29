@@ -10,7 +10,7 @@ namespace Explorer.Metrics
         /// <summary>
         /// Text data has an unknown format.
         /// </summary>
-        Unknonwn,
+        Unknown,
 
         /// <summary>
         /// Text data has email format.

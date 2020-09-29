@@ -78,7 +78,7 @@ definitions:
     additionalProperties: !!bool false
     required: [dataSource, table, column, columnType]
 
-  value_counts:
+  valueCounts:
     type: object
     properties:
       totalCount:
@@ -101,10 +101,8 @@ definitions:
         type: integer
       suppressedCountRatio:
         type: number
-      isCategorical:
-        type: boolean
     additionalItems: !!bool false
-    required: [totalCount, suppressedCount, nullCount, totalRows, suppressedRows, nullRows, nonSuppressedRows, nonSuppressedCount, nonSuppressedNonNullCount, suppressedCountRatio, isCategorical]
+    required: [totalCount, suppressedCount, nullCount, totalRows, suppressedRows, nullRows, nonSuppressedRows, nonSuppressedCount, nonSuppressedNonNullCount, suppressedCountRatio]
 
   histogram_bucket:
     type: object
@@ -126,16 +124,16 @@ definitions:
         type: array
         items:
           "$ref": "#/definitions/histogram_bucket"
-      value_counts:
-        "$ref": "#/definitions/value_counts"
-      suppressed_ratio:
+      valueCounts:
+        "$ref": "#/definitions/valueCounts"
+      suppressedCountRatio:
         type: number
-      suppressed_count:
+      suppressedCount:
         type: integer
     additionalProperties: !!bool false
-    required: [buckets, value_counts, suppressed_ratio, suppressed_count]
+    required: [buckets, valueCounts, suppressedCountRatio, suppressedCount]
 
-  descriptive_stats__integer:
+  descriptive_stats:
     properties:
       entropy:
         type: number
@@ -223,6 +221,13 @@ definitions:
       - type: integer
       - const: null
 
+  sample_values__real:
+    type: array
+    items:
+      oneOf:
+      - type: number
+      - const: null
+
   sample_values__string:
     type: array
     items:
@@ -251,6 +256,12 @@ definitions:
   max__integer:
     type: integer
 
+  min__real:
+    type: number
+
+  max__real:
+    type: number
+
   average_estimate:
     type: number
 
@@ -267,9 +278,9 @@ definitions:
     type: object
     properties:
       values: { "$ref" : "#/definitions/categorical_values__integer" }
-      valueCounts: { "$ref" : "#/definitions/value_counts" }
+      valueCounts: { "$ref" : "#/definitions/valueCounts" }
     additionalProperties: !!bool false
-    required: [values, value_counts]
+    required: [values, valueCounts]
 
   categorical_values__integer:
     type: array
@@ -285,13 +296,35 @@ definitions:
       additionalProperties: !!bool false
       required: [value, count]
 
+  categorical_data__real:
+    type: object
+    properties:
+      values: { "$ref" : "#/definitions/categorical_values__real" }
+      valueCounts: { "$ref" : "#/definitions/valueCounts" }
+    additionalProperties: !!bool false
+    required: [values, valueCounts]
+
+  categorical_values__real:
+    type: array
+    items:
+      type: object
+      properties:
+        value:
+          oneOf:
+          - type: number
+          - const: "--OTHER--"
+        count:
+          type: integer
+      additionalProperties: !!bool false
+      required: [value, count]
+
   categorical_data__string:
     type: object
     properties:
       values: { "$ref" : "#/definitions/categorical_values__string" }
-      value_counts: { "$ref" : "#/definitions/value_counts" }
+      valueCounts: { "$ref" : "#/definitions/valueCounts" }
     additionalProperties: !!bool false
-    required: [values, value_counts]
+    required: [values, valueCounts]
 
   categorical_values__string:
     type: array
@@ -311,9 +344,9 @@ definitions:
     type: object
     properties:
       values: { "$ref" : "#/definitions/categorical_values__boolean" }
-      value_counts: { "$ref" : "#/definitions/value_counts" }
+      valueCounts: { "$ref" : "#/definitions/valueCounts" }
     additionalProperties: !!bool false
-    required: [values, value_counts]
+    required: [values, valueCounts]
 
   categorical_values__boolean:
     type: array
@@ -348,11 +381,34 @@ definitions:
   text_data:
     type: object
     properties:
-      lengths_distribution: { "$ref" : "#/definitions/text_length_distribution" }
-      length_value_counts: { "$ref" : "#/definitions/value_counts" }
+      lengthsDistribution: { "$ref" : "#/definitions/text_length_distribution" }
+      lengthValueCounts: { "$ref" : "#/definitions/valueCounts" }
       format: { "$ref" : "#/definitions/text_format" }
     additionalProperties: !!bool false
-    required: [lengths_distribution, format]
+    required: [lengthsDistribution, format]
+
+  categorical_data__datetime:
+    type: object
+    properties:
+      values: { "$ref" : "#/definitions/categorical_values__datetime" }
+      valueCounts: { "$ref" : "#/definitions/valueCounts" }
+    additionalProperties: !!bool false
+    required: [values, valueCounts]
+
+  categorical_values__datetime:
+    type: array
+    items:
+      type: object
+      properties:
+        value:
+          oneOf:
+          - type: string
+            format: date-time
+          - const: "--OTHER--"
+        count:
+          type: integer
+      additionalProperties: !!bool false
+      required: [value, count]
 
   dates_cyclical__second:
     type: object
@@ -504,6 +560,31 @@ definitions:
     additionalProperties: !!bool false
     required: [total, suppressed, counts]
 
+  dates_cyclical__quarter:
+    type: object
+    properties:
+      total:
+        type: integer
+      suppressed:
+        type: integer
+      counts:
+        type: array
+        items:
+        - type: object
+          properties:
+            value:
+              type: integer
+              minimum: !!int 1
+              maximum: !!int 4
+            count:
+              type: integer
+            countNoise:
+              type: integer
+          additionalProperties: !!bool false
+          required: [value, count, countNoise]
+    additionalProperties: !!bool false
+    required: [total, suppressed, counts]
+
   dates_cyclical__year:
     type: object
     properties:
@@ -566,10 +647,13 @@ definitions:
   dates_linear__month:
     "$ref": "#/definitions/dates_linear__value"
 
+  dates_linear__quarter:
+    "$ref": "#/definitions/dates_linear__value"
+
   dates_linear__year:
     "$ref": "#/definitions/dates_linear__value"
 
-  categorical_numeric_metrics:
+  categorical_integer_metrics:
     type: object
     properties:
       exploration_info: {"$ref": "#/definitions/exploration_info"}
@@ -581,16 +665,44 @@ definitions:
     additionalProperties: !!bool false
     required: [exploration_info, sample_values, is_categorical, categorical_data, min, max]
 
-  noncategorical_numeric_metrics:
+  noncategorical_integer_metrics:
     type: object
     properties:
       exploration_info: {"$ref": "#/definitions/exploration_info"}
       sample_values: {"$ref": "#/definitions/sample_values__integer"}
       is_categorical: {"$ref": "#/definitions/is_categorical__false"}
-      descriptive_stats: {"$ref": "#/definitions/descriptive_stats__integer"}
+      descriptive_stats: {"$ref": "#/definitions/descriptive_stats"}
       histogram: {"$ref": "#/definitions/histogram"}
       min: {"$ref": "#/definitions/min__integer"}
       max: {"$ref": "#/definitions/max__integer"}
+      average_estimate: {"$ref": "#/definitions/average_estimate"}
+      quartile_estimates: {"$ref": "#/definitions/quartile_estimates"}
+      distribution_estimates: {"$ref": "#/definitions/distribution_estimates"}
+    additionalProperties: !!bool false
+    required: [exploration_info, sample_values, is_categorical, descriptive_stats, histogram, min, max, average_estimate, quartile_estimates, distribution_estimates]
+
+  categorical_real_metrics:
+    type: object
+    properties:
+      exploration_info: {"$ref": "#/definitions/exploration_info"}
+      sample_values: {"$ref": "#/definitions/sample_values__real"}
+      is_categorical: {"$ref": "#/definitions/is_categorical__true"}
+      categorical_data: {"$ref": "#/definitions/categorical_data__real"}
+      min: {"$ref": "#/definitions/min__real"}
+      max: {"$ref": "#/definitions/max__real"}
+    additionalProperties: !!bool false
+    required: [exploration_info, sample_values, is_categorical, categorical_data, min, max]
+
+  noncategorical_real_metrics:
+    type: object
+    properties:
+      exploration_info: {"$ref": "#/definitions/exploration_info"}
+      sample_values: {"$ref": "#/definitions/sample_values__real"}
+      is_categorical: {"$ref": "#/definitions/is_categorical__false"}
+      descriptive_stats: {"$ref": "#/definitions/descriptive_stats"}
+      histogram: {"$ref": "#/definitions/histogram"}
+      min: {"$ref": "#/definitions/min__real"}
+      max: {"$ref": "#/definitions/max__real"}
       average_estimate: {"$ref": "#/definitions/average_estimate"}
       quartile_estimates: {"$ref": "#/definitions/quartile_estimates"}
       distribution_estimates: {"$ref": "#/definitions/distribution_estimates"}
@@ -634,6 +746,7 @@ definitions:
       exploration_info: {"$ref": "#/definitions/exploration_info"}
       sample_values: {"$ref": "#/definitions/sample_values__datetime"}
       is_categorical: {"$ref": "#/definitions/is_categorical"}
+      categorical_data: {"$ref": "#/definitions/categorical_data__datetime"}
       descriptive_stats: {"$ref": "#/definitions/descriptive_stats__datetime"}
       dates_cyclical_second: {"$ref": "#/definitions/dates_cyclical__second"}
       dates_cyclical_minute: {"$ref": "#/definitions/dates_cyclical__minute"}
@@ -650,13 +763,16 @@ definitions:
       exploration_info: {"$ref": "#/definitions/exploration_info"}
       sample_values: {"$ref": "#/definitions/sample_values__datetime"}
       is_categorical: {"$ref": "#/definitions/is_categorical"}
+      categorical_data: {"$ref": "#/definitions/categorical_data__datetime"}
       descriptive_stats: {"$ref": "#/definitions/descriptive_stats__datetime"}
       dates_cyclical_weekday: {"$ref": "#/definitions/dates_cyclical__weekday"}
       dates_cyclical_day: {"$ref": "#/definitions/dates_cyclical__day"}
       dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__month"}
+      dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__quarter"}
       dates_cyclical_year: {"$ref": "#/definitions/dates_cyclical__year"}
       dates_linear_day: {"$ref": "#/definitions/dates_linear__day"}
       dates_linear_month: {"$ref": "#/definitions/dates_linear__month"}
+      dates_linear_quarter: {"$ref": "#/definitions/dates_linear__quarter"}
       dates_linear_year: {"$ref": "#/definitions/dates_linear__year"}
     additionalProperties: !!bool false
     required: [exploration_info, sample_values]
@@ -667,6 +783,7 @@ definitions:
       exploration_info: {"$ref": "#/definitions/exploration_info"}
       sample_values: {"$ref": "#/definitions/sample_values__datetime"}
       is_categorical: {"$ref": "#/definitions/is_categorical"}
+      categorical_data: {"$ref": "#/definitions/categorical_data__datetime"}
       descriptive_stats: {"$ref": "#/definitions/descriptive_stats__datetime"}
       dates_cyclical_second: {"$ref": "#/definitions/dates_cyclical__second"}
       dates_cyclical_minute: {"$ref": "#/definitions/dates_cyclical__minute"}
@@ -674,12 +791,14 @@ definitions:
       dates_cyclical_weekday: {"$ref": "#/definitions/dates_cyclical__weekday"}
       dates_cyclical_day: {"$ref": "#/definitions/dates_cyclical__day"}
       dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__month"}
+      dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__quarter"}
       dates_cyclical_year: {"$ref": "#/definitions/dates_cyclical__year"}
       dates_linear_second: {"$ref": "#/definitions/dates_linear__second"}
       dates_linear_minute: {"$ref": "#/definitions/dates_linear__minute"}
       dates_linear_hour: {"$ref": "#/definitions/dates_linear__hour"}
       dates_linear_day: {"$ref": "#/definitions/dates_linear__day"}
       dates_linear_month: {"$ref": "#/definitions/dates_linear__month"}
+      dates_linear_quarter: {"$ref": "#/definitions/dates_linear__quarter"}
       dates_linear_year: {"$ref": "#/definitions/dates_linear__year"}
     additionalProperties: !!bool false
     required: [exploration_info, sample_values]
@@ -700,11 +819,17 @@ definitions:
     if: { properties: { status: { const: Complete } } }
     then:
       allOf:
-      - if: { properties: { columnType: { oneOf: [ { const: integer }, { const: real } ] } } }
+      - if: { properties: { columnType: { const: integer } } }
         then:
           oneOf:
-          - properties: { metrics: { "$ref" : "#/definitions/categorical_numeric_metrics"} }
-          - properties: { metrics: { "$ref" : "#/definitions/noncategorical_numeric_metrics"} }
+          - properties: { metrics: { "$ref" : "#/definitions/categorical_integer_metrics"} }
+          - properties: { metrics: { "$ref" : "#/definitions/noncategorical_integer_metrics"} }
+
+      - if: { properties: { columnType: { const: real } } }
+        then:
+          oneOf:
+          - properties: { metrics: { "$ref" : "#/definitions/categorical_real_metrics"} }
+          - properties: { metrics: { "$ref" : "#/definitions/noncategorical_real_metrics"} }
 
       - if: { properties: { columnType: { const: text } } }
         then:
@@ -712,10 +837,9 @@ definitions:
           - properties: { metrics: { "$ref" : "#/definitions/categorical_text_metrics"} }
           - properties: { metrics: { "$ref" : "#/definitions/noncategorical_text_metrics"} }
 
-      - if: { properties: { columnType: { const: bool } } }
+      - if: { properties: { columnType: { const: boolean } } }
         then:
-          oneOf:
-          - properties: { metrics: { "$ref" : "#/definitions/categorical_bool_metrics"} }
+          properties: { metrics: { "$ref" : "#/definitions/categorical_bool_metrics"} }
 
       - if: { properties: { columnType: { const: timestamp } } }
         then:

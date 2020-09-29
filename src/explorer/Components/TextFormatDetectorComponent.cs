@@ -32,7 +32,7 @@ namespace Explorer.Components
                 return new Result(TextFormat.Email);
             }
 
-            return new Result(TextFormat.Unknonwn);
+            return new Result(TextFormat.Unknown);
         }
 
         public class Result
