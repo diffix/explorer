@@ -44,11 +44,9 @@ namespace Explorer.Components
             var sampleValues = distribution
                     .Generate(SamplesToPublish)
                     .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
-                    .OrderBy(_ => _)
-                    .Cast<object>()
-                    .ToList();
+                    .OrderBy(_ => _);
 
-            yield return ExploreMetric.Create(MetricDefinitions.SampleValues, sampleValues);
+            yield return ExploreMetric.Create(MetricDefinitions.SampleValuesDouble, sampleValues.ToList());
         }
     }
 }

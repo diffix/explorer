@@ -116,15 +116,15 @@ namespace Explorer.Tests
             test(result);
         }
 
-        public async Task MetricsTest<T>(Action<IEnumerable<ExploreMetric>> test)
+        public async Task MetricsTest<T>(Action<MetricsDictionary> test)
         where T : PublisherComponent
         {
             var publisher = Scope.ResolvePublisherComponent<T>();
 
-            var metrics = new List<ExploreMetric>();
+            var metrics = new MetricsDictionary();
             await foreach (var m in publisher.YieldMetrics())
             {
-                metrics.Add(m);
+                metrics[m.Name] = m;
             }
 
             test(metrics);
@@ -154,6 +154,23 @@ namespace Explorer.Tests
                 }
 
                 disposedValue = true;
+            }
+        }
+
+        public class MetricsDictionary : Dictionary<string, ExploreMetric>
+        {
+            public T FindMetric<T>(MetricDefinition<T> metricInfo)
+            where T : notnull
+            {
+                if (!TryGetValue(metricInfo.Name, out var metric))
+                {
+                    throw new ArgumentException($"Value was not found for metric '{metricInfo.Name}`.");
+                }
+                if (!(metric.Metric is T metricValue))
+                {
+                    throw new ArgumentException($"Incorrect type specified for metric '{metricInfo.Name}`.");
+                }
+                return metricValue;
             }
         }
     }

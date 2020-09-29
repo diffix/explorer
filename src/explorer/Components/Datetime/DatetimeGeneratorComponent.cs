@@ -30,10 +30,9 @@ namespace Explorer.Components
             var sampleValues = distribution
                     .Generate(SamplesToPublish)
                     .OrderBy(_ => _)
-                    .Cast<object>()
                     .ToList();
 
-            yield return ExploreMetric.Create(MetricDefinitions.SampleValues, sampleValues);
+            yield return ExploreMetric.Create(MetricDefinitions.SampleValuesDateTime, sampleValues);
         }
     }
 }

@@ -2,13 +2,12 @@ namespace Explorer.Components
 {
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     using Accord.Statistics.Analysis;
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class DistributionAnalysisComponent : ExplorerComponent<GoodnessOfFitCollection>, PublisherComponent
+    public class DistributionAnalysisComponent : PublisherComponent
     {
         private readonly ResultProvider<NumericDistribution> distributionProvider;
 
@@ -19,7 +18,14 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var fits = await ResultAsync;
+            var distribution = await distributionProvider.ResultAsync;
+            if (distribution == null)
+            {
+                yield break;
+            }
+
+            var analysis = new DistributionAnalysis();
+            var fits = analysis.Learn(distribution.Generate(10_000).ToArray());
             if (fits == null)
             {
                 yield break;
@@ -57,18 +63,6 @@ namespace Explorer.Components
             });
 
             yield return ExploreMetric.Create(MetricDefinitions.DistributionEstimates, estimates.ToList());
-        }
-
-        protected override async Task<GoodnessOfFitCollection?> Explore()
-        {
-            var distribution = await distributionProvider.ResultAsync;
-            if (distribution == null)
-            {
-                return null;
-            }
-
-            var analysis = new DistributionAnalysis();
-            return analysis.Learn(distribution.Generate(10_000).ToArray());
         }
     }
 }

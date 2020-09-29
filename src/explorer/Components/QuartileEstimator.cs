@@ -7,8 +7,7 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Metrics;
 
-    public class QuartileEstimator :
-        ExplorerComponent<QuartileEstimator.Result>, PublisherComponent
+    public class QuartileEstimator : PublisherComponent
     {
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<Histogram> histogramResultProvider;
@@ -77,55 +76,24 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var result = await ResultAsync;
-            if (result == null)
-            {
-                yield break;
-            }
-
-            yield return ExploreMetric.Create(MetricDefinitions.QuartileEstimates, result.AsList);
-        }
-
-        protected override async Task<Result?> Explore()
-        {
             var distinctValues = await distinctValuesProvider.ResultAsync;
             if (distinctValues == null)
             {
-                return null;
+                yield break;
             }
             if (distinctValues.IsCategorical)
             {
-                return null;
+                yield break;
             }
 
             var histogramResult = await histogramResultProvider.ResultAsync;
             if (histogramResult == null)
             {
-                return null;
+                yield break;
             }
-            return new Result(await EstimateQuartiles(histogramResult));
-        }
-
-        public class Result
-        {
-            public Result(List<double> quartiles)
-            {
-                if (quartiles.Count != 3)
-                {
-                    throw new System.Exception($"Expected three quartile values, got {quartiles.Count}.");
-                }
-
-                AsList = quartiles;
-                AsList.Sort();
-            }
-
-            public List<double> AsList { get; }
-
-            public double Q1 { get => AsList[0]; }
-
-            public double Q2 { get => AsList[1]; }
-
-            public double Q3 { get => AsList[2]; }
+            var quartiles = await EstimateQuartiles(histogramResult);
+            quartiles.Sort();
+            yield return ExploreMetric.Create(MetricDefinitions.QuartileEstimates, quartiles);
         }
     }
 }

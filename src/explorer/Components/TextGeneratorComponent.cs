@@ -13,7 +13,7 @@ namespace Explorer.Components
     using LengthDistribution = Explorer.Common.Utils.ValueWithCountList<long>;
     using SubstringWithCountList = Explorer.Common.Utils.ValueWithCountList<string>;
 
-    public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
+    public class TextGeneratorComponent : ExplorerComponentBase, PublisherComponent
     {
         public const int DefaultSamplesToPublish = 20;
         public const int DefaultDistinctValuesBySamplesToPublishRatioThreshold = 5;
@@ -41,19 +41,10 @@ namespace Explorer.Components
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
-            var result = await ResultAsync;
-            if (result?.SampleValues.Count > 0)
-            {
-                yield return ExploreMetric.Create(MetricDefinitions.SampleValues, result.SampleValues);
-            }
-        }
-
-        protected override async Task<Result?> Explore()
-        {
             var distinctValuesResult = await distinctValuesProvider.ResultAsync;
             if (distinctValuesResult == null)
             {
-                return null;
+                yield break;
             }
 
             // the sample data generation algorithm involving substrings is quite imprecise
@@ -61,25 +52,26 @@ namespace Explorer.Components
             // (the default value for the ratio is intentionally quite small)
             if (distinctValuesResult.ValueCounts.NonSuppressedRows > DistinctValuesBySamplesToPublishRatioThreshold * SamplesToPublish)
             {
-                return null;
+                yield break;
             }
 
             var emailCheckerResult = await emailCheckProvider.ResultAsync;
             if (emailCheckerResult == null)
             {
-                return null;
+                yield break;
             }
 
             var textLengthDistributionResult = await textLengthDistributionProvider.ResultAsync;
             if (textLengthDistributionResult == null)
             {
-                return null;
+                yield break;
             }
 
             var sampleValues = emailCheckerResult.TextFormat == Metrics.TextFormat.Email ?
                 await GenerateEmails(textLengthDistributionResult.Distribution) :
                 await GenerateStrings(textLengthDistributionResult.Distribution);
-            return new Result(sampleValues.Cast<object>().ToList());
+
+            yield return ExploreMetric.Create(MetricDefinitions.SampleValuesString, sampleValues.ToList());
         }
 
         private static string GenerateString(
@@ -246,16 +238,6 @@ namespace Explorer.Components
             var rand = new Random(Environment.TickCount);
             return Enumerable.Range(0, SamplesToPublish).Select(_
                 => GenerateString(substrings, lengthDistribution, minLength: 1, rand));
-        }
-
-        public class Result
-        {
-            public Result(IList<object> sampleValues)
-            {
-                SampleValues = sampleValues;
-            }
-
-            public IList<object> SampleValues { get; }
         }
     }
 }
