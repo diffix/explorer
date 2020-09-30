@@ -5,8 +5,6 @@ mono: none
 cache:
   directories:
     - $HOME/.nuget/packages
-    - tests/explorer.api.tests/.vcr
-    - tests/explorer.tests/.vcr
 install:
   - dotnet restore explorer.sln
 script:
