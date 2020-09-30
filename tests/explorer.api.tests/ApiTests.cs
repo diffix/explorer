@@ -130,105 +130,6 @@
         public async Task SuccessWithResultMultiColumns() => await SuccessWithResult(
             new ExploreParams { DataSource = "cov_clear", Table = "survey", Columns = ImmutableArray.Create("test_date", "fever", "how_anxious", "lat", "email") });
 
-        public async Task SuccessWithResult(ExploreParams pdata, [CallerMemberName] string vcrSessionName = "")
-        {
-            var data = new ExploreParams
-            {
-                ApiKey = ValidData.ApiKey,
-                ApiUrl = ValidData.ApiUrl,
-                DataSource = pdata.DataSource,
-                Table = pdata.Table,
-                Columns = pdata.Columns,
-            };
-
-            // The vcr cache has to be cleared when there are schema changes.
-            var explorerGuid = await TestApi(
-                HttpMethod.Post,
-                ExploreEndpoint,
-                data,
-                ReadExplorationGuid,
-                vcrSessionName,
-                VcrSharp.VCRMode.Cache);
-
-            var testConfig = factory.GetTestConfig(nameof(ApiTests), vcrSessionName);
-            await TestExploreResult(
-                HttpMethod.Get,
-                explorerGuid,
-                testConfig.PollFrequency,
-                CheckExploreResult,
-                vcrSessionName,
-                VcrSharp.VCRMode.Cache);
-
-            Guid ReadExplorationGuid(HttpResponseMessage response, string content)
-            {
-                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
-
-                var jsonContent = JObject.Parse(content);
-                var errorMessages = new List<string>() as IList<string>;
-                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
-                Assert.True(isValidContent, string.Join('\n', errorMessages));
-
-                Assert.True(
-                    jsonContent.Type == JTokenType.Object,
-                    $"Expected a JSON object in the response:\n{content}");
-
-                Assert.True(
-                    jsonContent.TryGetValue("id", out var id),
-                    $"Expected an 'id' property in:\n{content}");
-                Assert.True(Guid.TryParse(id.Value<string>(), out var explorerGuid));
-
-                return explorerGuid;
-            }
-
-            void CheckExploreResult(HttpResponseMessage response, string content)
-            {
-                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
-
-                var jsonContent = JObject.Parse(content);
-                var errorMessages = new List<string>() as IList<string>;
-                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
-                Assert.True(isValidContent, string.Join('\n', errorMessages));
-
-                Assert.Contains("status", jsonContent);
-                var status = (string)jsonContent["status"];
-
-                Assert.Contains("columns", jsonContent);
-                var columns = (JArray)jsonContent["columns"];
-                Assert.NotNull(columns);
-
-                Assert.Contains("sampleData", jsonContent);
-                var sampleData = (JArray)jsonContent["sampleData"];
-                Assert.NotNull(sampleData);
-
-                if (status == "Complete")
-                {
-                    Assert.Equal(data.Columns.Length, columns.Count);
-                    foreach (var jitem in columns)
-                    {
-                        Assert.Equal(JTokenType.Object, jitem.Type);
-                        var item = (JObject)jitem;
-                        Assert.True(item.ContainsKey("column"));
-                        var column = (string)item["column"];
-                        Assert.Contains(column, data.Columns);
-
-                        Assert.True(item.ContainsKey("metrics"));
-                    }
-
-                    if (data.Columns.Length > 0)
-                    {
-                        Assert.True(sampleData.Count > 0, "SampleData is empty!");
-                        foreach (var row in sampleData)
-                        {
-                            Assert.True(
-                                row.Type == JTokenType.Array,
-                                $"Expected 'sampleData' property to contain array elements:\n{content}");
-                            Assert.Equal(data.Columns.Length, row.Count());
-                        }
-                    }
-                }
-            }
-        }
-
         [Theory]
         [InlineData("")]
         [InlineData("/")]
@@ -356,6 +257,105 @@
                 $"{ResultEndpoint}/11111111-1111-1111-1111-111111111111",
                 null,
                 test: (response, content) => Assert.True(response.StatusCode == HttpStatusCode.NotFound, content));
+        }
+
+        private async Task SuccessWithResult(ExploreParams pdata, [CallerMemberName] string vcrSessionName = "")
+        {
+            var data = new ExploreParams
+            {
+                ApiKey = ValidData.ApiKey,
+                ApiUrl = ValidData.ApiUrl,
+                DataSource = pdata.DataSource,
+                Table = pdata.Table,
+                Columns = pdata.Columns,
+            };
+
+            // The vcr cache has to be cleared when there are schema changes.
+            var explorerGuid = await TestApi(
+                HttpMethod.Post,
+                ExploreEndpoint,
+                data,
+                ReadExplorationGuid,
+                vcrSessionName,
+                VcrSharp.VCRMode.Cache);
+
+            var testConfig = factory.GetTestConfig(nameof(ApiTests), vcrSessionName);
+            await TestExploreResult(
+                HttpMethod.Get,
+                explorerGuid,
+                testConfig.PollFrequency,
+                CheckExploreResult,
+                vcrSessionName,
+                VcrSharp.VCRMode.Cache);
+
+            Guid ReadExplorationGuid(HttpResponseMessage response, string content)
+            {
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
+                var jsonContent = JObject.Parse(content);
+                var errorMessages = new List<string>() as IList<string>;
+                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
+                Assert.True(isValidContent, string.Join('\n', errorMessages));
+
+                Assert.True(
+                    jsonContent.Type == JTokenType.Object,
+                    $"Expected a JSON object in the response:\n{content}");
+
+                Assert.True(
+                    jsonContent.TryGetValue("id", out var id),
+                    $"Expected an 'id' property in:\n{content}");
+                Assert.True(Guid.TryParse(id.Value<string>(), out var explorerGuid));
+
+                return explorerGuid;
+            }
+
+            void CheckExploreResult(HttpResponseMessage response, string content)
+            {
+                Assert.True(response.IsSuccessStatusCode, $"Response code {response.StatusCode}.");
+
+                var jsonContent = JObject.Parse(content);
+                var errorMessages = new List<string>() as IList<string>;
+                var isValidContent = jsonContent.IsValid(explorerSchema, out errorMessages);
+                Assert.True(isValidContent, string.Join('\n', errorMessages));
+
+                Assert.Contains("status", jsonContent);
+                var status = (string)jsonContent["status"];
+
+                Assert.Contains("columns", jsonContent);
+                var columns = (JArray)jsonContent["columns"];
+                Assert.NotNull(columns);
+
+                Assert.Contains("sampleData", jsonContent);
+                var sampleData = (JArray)jsonContent["sampleData"];
+                Assert.NotNull(sampleData);
+
+                if (status == "Complete")
+                {
+                    Assert.Equal(data.Columns.Length, columns.Count);
+                    foreach (var jitem in columns)
+                    {
+                        Assert.Equal(JTokenType.Object, jitem.Type);
+                        var item = (JObject)jitem;
+                        Assert.True(item.ContainsKey("column"));
+                        var column = (string)item["column"];
+                        Assert.Contains(column, data.Columns);
+
+                        Assert.True(item.ContainsKey("metrics"));
+                    }
+
+                    if (data.Columns.Length > 0)
+                    {
+                        Assert.True(sampleData.Count > 0, "SampleData is empty!");
+                        foreach (var row in sampleData)
+                        {
+                            Assert.True(
+                                row.Type == JTokenType.Array,
+                                $"Expected 'sampleData' property to contain array elements:\n{content}");
+                            Assert.Equal(data.Columns.Length, row.Count());
+                        }
+                    }
+                }
+            }
         }
 
         private async Task TestExploreResult(
