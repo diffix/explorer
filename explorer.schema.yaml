@@ -126,12 +126,8 @@ definitions:
           "$ref": "#/definitions/histogram_bucket"
       valueCounts:
         "$ref": "#/definitions/valueCounts"
-      suppressedCountRatio:
-        type: number
-      suppressedCount:
-        type: integer
     additionalProperties: !!bool false
-    required: [buckets, valueCounts, suppressedCountRatio, suppressedCount]
+    required: [buckets, valueCounts]
 
   descriptive_stats:
     properties:

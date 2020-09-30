@@ -29,10 +29,6 @@ namespace Explorer.Metrics
 
         public ValueCounts ValueCounts { get; }
 
-        public long SuppressedCount => ValueCounts.SuppressedCount;
-
-        public double SuppressedCountRatio => ValueCounts.SuppressedCountRatio;
-
         public (decimal, decimal) GetBounds() => (lowerBound, upperBound);
 
         public decimal GetSnappedBucketSize() => bucketSize.SnappedSize;
