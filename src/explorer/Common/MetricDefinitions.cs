@@ -1,6 +1,7 @@
 namespace Explorer.Common
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Text.Json;
 
@@ -9,7 +10,8 @@ namespace Explorer.Common
     public static class MetricDefinitions
     {
         public static readonly MetricDefinition<ExplorationInfo> ExplorationInfo = new MetricDefinition<ExplorationInfo>("exploration_info");
-        public static readonly MetricDefinition<IList<JsonElement>> SampleValues = new MetricDefinition<IList<JsonElement>>("sample_values");
+        public static readonly MetricDefinition<IEnumerable> SampleValues = new MetricDefinition<IEnumerable>("sample_values");
+        public static readonly MetricDefinition<IList<JsonElement>> SampleValuesJsonElement = new MetricDefinition<IList<JsonElement>>("sample_values");
         public static readonly MetricDefinition<IList<double>> SampleValuesDouble = new MetricDefinition<IList<double>>("sample_values");
         public static readonly MetricDefinition<IList<string>> SampleValuesString = new MetricDefinition<IList<string>>("sample_values");
         public static readonly MetricDefinition<IList<DateTime>> SampleValuesDateTime = new MetricDefinition<IList<DateTime>>("sample_values");

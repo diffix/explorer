@@ -4,7 +4,6 @@ namespace Explorer.Components
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json;
-    using System.Threading.Tasks;
 
     using Explorer.Common;
     using Explorer.Common.Utils;
@@ -54,7 +53,7 @@ namespace Explorer.Components
             }
 
             var sampleValues = GenerateSampleData(distinctValuesResult, NumValuesToPublish);
-            yield return ExploreMetric.Create(MetricDefinitions.SampleValues, sampleValues);
+            yield return ExploreMetric.Create(MetricDefinitions.SampleValuesJsonElement, sampleValues);
         }
     }
 }
