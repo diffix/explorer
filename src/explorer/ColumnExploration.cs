@@ -2,6 +2,7 @@ namespace Explorer
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -62,6 +63,12 @@ namespace Explorer
         public override ExplorationStatus Status { get; protected set; }
 
         private MetricsPublisher MetricsPublisher { get; }
+
+        public bool TryFindMetric<T>(MetricDefinition<T> metricInfo, [MaybeNull] out T ret)
+        where T : notnull
+        {
+            return MetricsPublisher.TryFindMetric(metricInfo, out ret);
+        }
 
         public T FindMetric<T>(MetricDefinition<T> metricInfo)
         where T : notnull
