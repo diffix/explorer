@@ -33,7 +33,7 @@ namespace Explorer.Metrics
 
         public double SuppressedCountRatio => ValueCounts.SuppressedCountRatio;
 
-        public (decimal, decimal) GetBounds() => (upperBound, lowerBound);
+        public (decimal, decimal) GetBounds() => (lowerBound, upperBound);
 
         public decimal GetSnappedBucketSize() => bucketSize.SnappedSize;
     }
