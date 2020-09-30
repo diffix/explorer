@@ -4,18 +4,18 @@ namespace Explorer.Metrics
 {
     public struct ValueWithCountAndNoise<T>
     {
-        public ValueWithCountAndNoise(T value, long count, double? noise)
+        public ValueWithCountAndNoise(T value, long count, double? countNoise)
         {
             Value = value;
             Count = count;
-            Noise = noise;
+            CountNoise = countNoise;
         }
 
         public T Value { get; }
 
         public long Count { get; }
 
-        public double? Noise { get; }
+        public double? CountNoise { get; }
     }
 }
 
