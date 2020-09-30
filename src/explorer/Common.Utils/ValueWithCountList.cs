@@ -33,6 +33,8 @@ namespace Explorer.Common.Utils
             Add((value, TotalCount + count));
         }
 
+        // TODO: replace MaybeNull with nullable type when C# 9 will be available
+#pragma warning disable CS8653 // A default expression introduces a null value when 'T' is a non-nullable reference type.
         [return: MaybeNull]
         public T GetRandomValue(Random rand)
         {
@@ -44,6 +46,7 @@ namespace Explorer.Common.Utils
             var rcount = rand.NextLong(TotalCount);
             return FindValue(rcount);
         }
+#pragma warning restore CS8653 // A default expression introduces a null value when 'T' is a non-nullable reference type.
 
         public T FindValue(long count)
         {

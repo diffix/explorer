@@ -28,6 +28,8 @@ namespace Explorer.Common
                 (_, old) => metric.Priority >= old.Priority ? metric : old);
         }
 
+        // TODO: replace MaybeNull with nullable type when C# 9 will be available
+#pragma warning disable CS8653 // A default expression introduces a null value when 'T' is a non-nullable reference type.
         public bool TryFindMetric<T>(MetricDefinition<T> metricInfo, [MaybeNull] out T ret)
         where T : notnull
         {
@@ -44,6 +46,7 @@ namespace Explorer.Common
             ret = metricValue;
             return true;
         }
+#pragma warning restore CS8653 // A default expression introduces a null value when 'T' is a non-nullable reference type.
 
         public T FindMetric<T>(MetricDefinition<T> metricInfo)
         where T : notnull
