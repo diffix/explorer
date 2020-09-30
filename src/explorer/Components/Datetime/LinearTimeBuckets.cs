@@ -20,7 +20,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            foreach (var m in TimeUtilities.YieldMetrics<Result, DateTime>("dates_linear", result))
+            foreach (var m in TimeUtilities.YieldMetrics<Result, DateTime>("datesLinear", result))
             {
                 yield return m;
             }

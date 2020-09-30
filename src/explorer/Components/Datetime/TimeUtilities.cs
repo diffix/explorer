@@ -25,8 +25,9 @@ namespace Explorer.Components
         {
             foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
             {
+                var titleCaseKey = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(row.Key);
                 yield return new UntypedMetric(
-                    name: $"{metricName}_{row.Key}",
+                    name: $"{metricName}{titleCaseKey}",
                     metric: MetricBlob(
                         valueCount.TotalCount,
                         valueCount.SuppressedCount,

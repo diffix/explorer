@@ -19,7 +19,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            foreach (var m in TimeUtilities.YieldMetrics<Result, int>("dates_cyclical", result))
+            foreach (var m in TimeUtilities.YieldMetrics<Result, int>("datesCyclical", result))
             {
                 yield return m;
             }

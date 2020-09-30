@@ -656,152 +656,152 @@ definitions:
   categorical_integer_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__integer"}
-      is_categorical: {"$ref": "#/definitions/is_categorical__true"}
-      categorical_data: {"$ref": "#/definitions/categorical_data__integer"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__integer"}
+      isCategorical: {"$ref": "#/definitions/is_categorical__true"}
+      categoricalData: {"$ref": "#/definitions/categorical_data__integer"}
       min: {"$ref": "#/definitions/min__integer"}
       max: {"$ref": "#/definitions/max__integer"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values, is_categorical, categorical_data, min, max]
+    required: [explorationInfo, sampleValues, isCategorical, categoricalData, min, max]
 
   noncategorical_integer_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__integer"}
-      is_categorical: {"$ref": "#/definitions/is_categorical__false"}
-      descriptive_stats: {"$ref": "#/definitions/descriptive_stats"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__integer"}
+      isCategorical: {"$ref": "#/definitions/is_categorical__false"}
+      descriptiveStats: {"$ref": "#/definitions/descriptive_stats"}
       histogram: {"$ref": "#/definitions/histogram"}
       min: {"$ref": "#/definitions/min__integer"}
       max: {"$ref": "#/definitions/max__integer"}
-      average_estimate: {"$ref": "#/definitions/average_estimate"}
-      quartile_estimates: {"$ref": "#/definitions/quartile_estimates"}
-      distribution_estimates: {"$ref": "#/definitions/distribution_estimates"}
+      averageEstimate: {"$ref": "#/definitions/average_estimate"}
+      quartileEstimates: {"$ref": "#/definitions/quartile_estimates"}
+      distributionEstimates: {"$ref": "#/definitions/distribution_estimates"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values, is_categorical, descriptive_stats, histogram, min, max, average_estimate, quartile_estimates, distribution_estimates]
+    required: [explorationInfo, sampleValues, isCategorical, descriptiveStats, histogram, min, max, averageEstimate, quartileEstimates, distributionEstimates]
 
   categorical_real_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__real"}
-      is_categorical: {"$ref": "#/definitions/is_categorical__true"}
-      categorical_data: {"$ref": "#/definitions/categorical_data__real"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__real"}
+      isCategorical: {"$ref": "#/definitions/is_categorical__true"}
+      categoricalData: {"$ref": "#/definitions/categorical_data__real"}
       min: {"$ref": "#/definitions/min__real"}
       max: {"$ref": "#/definitions/max__real"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values, is_categorical, categorical_data, min, max]
+    required: [explorationInfo, sampleValues, isCategorical, categoricalData, min, max]
 
   noncategorical_real_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__real"}
-      is_categorical: {"$ref": "#/definitions/is_categorical__false"}
-      descriptive_stats: {"$ref": "#/definitions/descriptive_stats"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__real"}
+      isCategorical: {"$ref": "#/definitions/is_categorical__false"}
+      descriptiveStats: {"$ref": "#/definitions/descriptive_stats"}
       histogram: {"$ref": "#/definitions/histogram"}
       min: {"$ref": "#/definitions/min__real"}
       max: {"$ref": "#/definitions/max__real"}
-      average_estimate: {"$ref": "#/definitions/average_estimate"}
-      quartile_estimates: {"$ref": "#/definitions/quartile_estimates"}
-      distribution_estimates: {"$ref": "#/definitions/distribution_estimates"}
+      averageEstimate: {"$ref": "#/definitions/average_estimate"}
+      quartileEstimates: {"$ref": "#/definitions/quartile_estimates"}
+      distributionEstimates: {"$ref": "#/definitions/distribution_estimates"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values, is_categorical, descriptive_stats, histogram, min, max, average_estimate, quartile_estimates, distribution_estimates]
+    required: [explorationInfo, sampleValues, isCategorical, descriptiveStats, histogram, min, max, averageEstimate, quartileEstimates, distributionEstimates]
 
   categorical_text_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__string"}
-      is_categorical: {"$ref": "#/definitions/is_categorical__true"}
-      categorical_data: {"$ref": "#/definitions/categorical_data__string"}
-      text_data: {"$ref": "#/definitions/text_data"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__string"}
+      isCategorical: {"$ref": "#/definitions/is_categorical__true"}
+      categoricalData: {"$ref": "#/definitions/categorical_data__string"}
+      textData: {"$ref": "#/definitions/text_data"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values, is_categorical, categorical_data, text_data]
+    required: [explorationInfo, sampleValues, isCategorical, categoricalData, textData]
 
   noncategorical_text_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__string"}
-      is_categorical: {"$ref": "#/definitions/is_categorical__false"}
-      text_data: {"$ref": "#/definitions/text_data"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__string"}
+      isCategorical: {"$ref": "#/definitions/is_categorical__false"}
+      textData: {"$ref": "#/definitions/text_data"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values, is_categorical, text_data]
+    required: [explorationInfo, sampleValues, isCategorical, textData]
 
   categorical_bool_metrics:
     type: object
     properties:
-      exploration_info: {"#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__boolean"}
-      is_categorical: {"$ref": "#/definitions/is_categorical__true"}
-      categorical_data: {"$ref": "#/definitions/categorical_data__boolean"}
+      explorationInfo: {"#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__boolean"}
+      isCategorical: {"$ref": "#/definitions/is_categorical__true"}
+      categoricalData: {"$ref": "#/definitions/categorical_data__boolean"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values, is_categorical, categorical_data]
+    required: [explorationInfo, sampleValues, isCategorical, categoricalData]
 
   timestamp_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__datetime"}
-      is_categorical: {"$ref": "#/definitions/is_categorical"}
-      categorical_data: {"$ref": "#/definitions/categorical_data__datetime"}
-      descriptive_stats: {"$ref": "#/definitions/descriptive_stats__datetime"}
-      dates_cyclical_second: {"$ref": "#/definitions/dates_cyclical__second"}
-      dates_cyclical_minute: {"$ref": "#/definitions/dates_cyclical__minute"}
-      dates_cyclical_hour: {"$ref": "#/definitions/dates_cyclical__hour"}
-      dates_linear_second: {"$ref": "#/definitions/dates_linear__second"}
-      dates_linear_minute: {"$ref": "#/definitions/dates_linear__minute"}
-      dates_linear_hour: {"$ref": "#/definitions/dates_linear__hour"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__datetime"}
+      isCategorical: {"$ref": "#/definitions/is_categorical"}
+      categoricalData: {"$ref": "#/definitions/categorical_data__datetime"}
+      descriptiveStats: {"$ref": "#/definitions/descriptive_stats__datetime"}
+      datesCyclicalSecond: {"$ref": "#/definitions/dates_cyclical__second"}
+      datesCyclicalMinute: {"$ref": "#/definitions/dates_cyclical__minute"}
+      datesCyclicalHour: {"$ref": "#/definitions/dates_cyclical__hour"}
+      datesLinearSecond: {"$ref": "#/definitions/dates_linear__second"}
+      datesLinearMinute: {"$ref": "#/definitions/dates_linear__minute"}
+      datesLinearHour: {"$ref": "#/definitions/dates_linear__hour"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values]
+    required: [explorationInfo, sampleValues]
 
   date_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__datetime"}
-      is_categorical: {"$ref": "#/definitions/is_categorical"}
-      categorical_data: {"$ref": "#/definitions/categorical_data__datetime"}
-      descriptive_stats: {"$ref": "#/definitions/descriptive_stats__datetime"}
-      dates_cyclical_weekday: {"$ref": "#/definitions/dates_cyclical__weekday"}
-      dates_cyclical_day: {"$ref": "#/definitions/dates_cyclical__day"}
-      dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__month"}
-      dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__quarter"}
-      dates_cyclical_year: {"$ref": "#/definitions/dates_cyclical__year"}
-      dates_linear_day: {"$ref": "#/definitions/dates_linear__day"}
-      dates_linear_month: {"$ref": "#/definitions/dates_linear__month"}
-      dates_linear_quarter: {"$ref": "#/definitions/dates_linear__quarter"}
-      dates_linear_year: {"$ref": "#/definitions/dates_linear__year"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__datetime"}
+      isCategorical: {"$ref": "#/definitions/is_categorical"}
+      categoricalData: {"$ref": "#/definitions/categorical_data__datetime"}
+      descriptiveStats: {"$ref": "#/definitions/descriptive_stats__datetime"}
+      datesCyclicalWeekday: {"$ref": "#/definitions/dates_cyclical__weekday"}
+      datesCyclicalDay: {"$ref": "#/definitions/dates_cyclical__day"}
+      datesCyclicalMonth: {"$ref": "#/definitions/dates_cyclical__month"}
+      datesCyclicalQuarter: {"$ref": "#/definitions/dates_cyclical__quarter"}
+      datesCyclicalYear: {"$ref": "#/definitions/dates_cyclical__year"}
+      datesLinearDay: {"$ref": "#/definitions/dates_linear__day"}
+      datesLinearMonth: {"$ref": "#/definitions/dates_linear__month"}
+      datesLinearQuarter: {"$ref": "#/definitions/dates_linear__quarter"}
+      datesLinearYear: {"$ref": "#/definitions/dates_linear__year"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values]
+    required: [explorationInfo, sampleValues]
 
   datetime_metrics:
     type: object
     properties:
-      exploration_info: {"$ref": "#/definitions/exploration_info"}
-      sample_values: {"$ref": "#/definitions/sample_values__datetime"}
-      is_categorical: {"$ref": "#/definitions/is_categorical"}
-      categorical_data: {"$ref": "#/definitions/categorical_data__datetime"}
-      descriptive_stats: {"$ref": "#/definitions/descriptive_stats__datetime"}
-      dates_cyclical_second: {"$ref": "#/definitions/dates_cyclical__second"}
-      dates_cyclical_minute: {"$ref": "#/definitions/dates_cyclical__minute"}
-      dates_cyclical_hour: {"$ref": "#/definitions/dates_cyclical__hour"}
-      dates_cyclical_weekday: {"$ref": "#/definitions/dates_cyclical__weekday"}
-      dates_cyclical_day: {"$ref": "#/definitions/dates_cyclical__day"}
-      dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__month"}
-      dates_cyclical_month: {"$ref": "#/definitions/dates_cyclical__quarter"}
-      dates_cyclical_year: {"$ref": "#/definitions/dates_cyclical__year"}
-      dates_linear_second: {"$ref": "#/definitions/dates_linear__second"}
-      dates_linear_minute: {"$ref": "#/definitions/dates_linear__minute"}
-      dates_linear_hour: {"$ref": "#/definitions/dates_linear__hour"}
-      dates_linear_day: {"$ref": "#/definitions/dates_linear__day"}
-      dates_linear_month: {"$ref": "#/definitions/dates_linear__month"}
-      dates_linear_quarter: {"$ref": "#/definitions/dates_linear__quarter"}
-      dates_linear_year: {"$ref": "#/definitions/dates_linear__year"}
+      explorationInfo: {"$ref": "#/definitions/exploration_info"}
+      sampleValues: {"$ref": "#/definitions/sample_values__datetime"}
+      isCategorical: {"$ref": "#/definitions/is_categorical"}
+      categoricalData: {"$ref": "#/definitions/categorical_data__datetime"}
+      descriptiveStats: {"$ref": "#/definitions/descriptive_stats__datetime"}
+      datesCyclicalSecond: {"$ref": "#/definitions/dates_cyclical__second"}
+      datesCyclicalMinute: {"$ref": "#/definitions/dates_cyclical__minute"}
+      datesCyclicalHour: {"$ref": "#/definitions/dates_cyclical__hour"}
+      datesCyclicalWeekday: {"$ref": "#/definitions/dates_cyclical__weekday"}
+      datesCyclicalDay: {"$ref": "#/definitions/dates_cyclical__day"}
+      datesCyclicalMonth: {"$ref": "#/definitions/dates_cyclical__month"}
+      datesCyclicalQuarter: {"$ref": "#/definitions/dates_cyclical__quarter"}
+      datesCyclicalYear: {"$ref": "#/definitions/dates_cyclical__year"}
+      datesLinearSecond: {"$ref": "#/definitions/dates_linear__second"}
+      datesLinearMinute: {"$ref": "#/definitions/dates_linear__minute"}
+      datesLinearHour: {"$ref": "#/definitions/dates_linear__hour"}
+      datesLinearDay: {"$ref": "#/definitions/dates_linear__day"}
+      datesLinearMonth: {"$ref": "#/definitions/dates_linear__month"}
+      datesLinearQuarter: {"$ref": "#/definitions/dates_linear__quarter"}
+      datesLinearYear: {"$ref": "#/definitions/dates_linear__year"}
     additionalProperties: !!bool false
-    required: [exploration_info, sample_values]
+    required: [explorationInfo, sampleValues]
 
   column_metrics:
     type: object
