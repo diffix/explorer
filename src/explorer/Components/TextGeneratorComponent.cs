@@ -47,31 +47,40 @@ namespace Explorer.Components
                 yield break;
             }
 
+            if (distinctValuesResult.IsCategorical)
+            {
+                yield break; // sample data is generated from categorical values
+            }
+
             // the sample data generation algorithm involving substrings is quite imprecise
             // so we use a relaxed condition for when to do sampling directly from the available values
             // (the default value for the ratio is intentionally quite small)
             if (distinctValuesResult.ValueCounts.NonSuppressedRows > DistinctValuesBySamplesToPublishRatioThreshold * SamplesToPublish)
             {
-                yield break;
+                var sampleValues = CategoricalSampleGenerator.GenerateSampleData(distinctValuesResult, SamplesToPublish)
+                    .Select(jelem => jelem.GetString());
+                yield return ExploreMetric.Create(MetricDefinitions.SampleValuesString, sampleValues.ToList());
             }
-
-            var emailCheckerResult = await emailCheckProvider.ResultAsync;
-            if (emailCheckerResult == null)
+            else
             {
-                yield break;
+                var emailCheckerResult = await emailCheckProvider.ResultAsync;
+                if (emailCheckerResult == null)
+                {
+                    yield break;
+                }
+
+                var textLengthDistributionResult = await textLengthDistributionProvider.ResultAsync;
+                if (textLengthDistributionResult == null)
+                {
+                    yield break;
+                }
+
+                var sampleValues = emailCheckerResult.TextFormat == Metrics.TextFormat.Email ?
+                    await GenerateEmails(textLengthDistributionResult.Distribution) :
+                    await GenerateStrings(textLengthDistributionResult.Distribution);
+
+                yield return ExploreMetric.Create(MetricDefinitions.SampleValuesString, sampleValues.ToList());
             }
-
-            var textLengthDistributionResult = await textLengthDistributionProvider.ResultAsync;
-            if (textLengthDistributionResult == null)
-            {
-                yield break;
-            }
-
-            var sampleValues = emailCheckerResult.TextFormat == Metrics.TextFormat.Email ?
-                await GenerateEmails(textLengthDistributionResult.Distribution) :
-                await GenerateStrings(textLengthDistributionResult.Distribution);
-
-            yield return ExploreMetric.Create(MetricDefinitions.SampleValuesString, sampleValues.ToList());
         }
 
         private static string GenerateString(

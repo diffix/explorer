@@ -24,6 +24,23 @@ namespace Explorer.Components
 
         public int NumValuesToPublish { get; set; } = DefaultSamplesToPublish;
 
+        public static IList<JsonElement> GenerateSampleData(DistinctValuesComponent.Result distinctValuesResult, int count)
+        {
+            var allValues = ValueWithCountList<JsonElement>.FromValueWithCountEnum(
+                distinctValuesResult
+                    .DistinctRows
+                    .Where(r => !r.IsSuppressed)
+                    .Select(r => r.IsNull
+                        ? ValueWithCountRow<JsonElement>.ValueCount(JsonNull, r.Count, r.CountNoise)
+                        : r));
+
+            var rand = new Random(Environment.TickCount);
+            return Enumerable
+                .Range(0, count)
+                .Select(_ => allValues.GetRandomValue(rand))
+                .ToList();
+        }
+
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var distinctValuesResult = await distinctValuesProvider.ResultAsync;
@@ -36,20 +53,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            var rand = new Random(Environment.TickCount);
-            var allValues = ValueWithCountList<JsonElement>.FromValueWithCountEnum(
-                distinctValuesResult
-                    .DistinctRows
-                    .Where(r => !r.IsSuppressed)
-                    .Select(r => r.IsNull
-                        ? ValueWithCountRow<JsonElement>.ValueCount(JsonNull, r.Count, r.CountNoise)
-                        : r));
-
-            var sampleValues = Enumerable
-                .Range(0, NumValuesToPublish)
-                .Select(_ => allValues.GetRandomValue(rand))
-                .ToList();
-
+            var sampleValues = GenerateSampleData(distinctValuesResult, NumValuesToPublish);
             yield return ExploreMetric.Create(MetricDefinitions.SampleValues, sampleValues);
         }
     }

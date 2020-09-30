@@ -41,7 +41,7 @@ namespace Explorer
                     yield break;
                 }
                 var valuesList = ColumnExplorations
-                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == MetricDefinitions.SampleValues.Name)?.Metric as IEnumerable)
+                    .Select(ce => ce.TryFindMetric(MetricDefinitions.SampleValues, out var sampleValues) ? sampleValues : null)
                     .Select(metric => metric?.Cast<object?>());
                 var numSamples = valuesList.DefaultIfEmpty().Max(col => col?.Count() ?? 0);
                 for (var i = 0; i < numSamples; i++)
