@@ -36,9 +36,9 @@ namespace Explorer.Components
 
             return histograms?
                 .Where(r => r.ValueCounts.SuppressedCount == 0)
-                .OrderBy(r => r.GetSnappedBucketSize())
+                .OrderBy(r => r.SnappedBucketSize)
                 .Take(1)
-                .Select(r => new Result(r.GetBounds()))
+                .Select(r => new Result(r.Bounds))
                 .SingleOrDefault();
         }
 

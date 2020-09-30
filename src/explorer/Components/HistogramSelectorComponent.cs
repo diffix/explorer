@@ -46,7 +46,7 @@ namespace Explorer.Components
             var histograms = await histogramsProvider.ResultAsync;
 
             return histograms?
-                .OrderBy(h => h.GetSnappedBucketSize())
+                .OrderBy(h => h.SnappedBucketSize)
                 .ThenBy(h => h.ValueCounts.SuppressedCount)
                 .First();
         }

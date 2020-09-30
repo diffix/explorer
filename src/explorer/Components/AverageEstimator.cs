@@ -20,7 +20,7 @@ namespace Explorer.Components
 
         public static Task<decimal> EstimateAverage(Histogram histogram) => Task.Run(() =>
         {
-            var halfBucketSize = histogram.GetSnappedBucketSize() / 2;
+            var halfBucketSize = histogram.SnappedBucketSize / 2;
             var (sum, total) = histogram.Buckets.Aggregate(
                     (Sum: 0M, Total: 0L),
                     (sums, bucket) => (

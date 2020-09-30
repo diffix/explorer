@@ -29,8 +29,10 @@ namespace Explorer.Metrics
 
         public ValueCounts ValueCounts { get; }
 
-        public (decimal, decimal) GetBounds() => (lowerBound, upperBound);
+        [System.Text.Json.Serialization.JsonIgnore]
+        public (decimal, decimal) Bounds => (lowerBound, upperBound);
 
-        public decimal GetSnappedBucketSize() => bucketSize.SnappedSize;
+        [System.Text.Json.Serialization.JsonIgnore]
+        public decimal SnappedBucketSize => bucketSize.SnappedSize;
     }
 }
