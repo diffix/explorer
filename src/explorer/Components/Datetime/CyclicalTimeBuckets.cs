@@ -11,6 +11,20 @@ namespace Explorer.Components
 
     public class CyclicalTimeBuckets : ExplorerComponent<CyclicalTimeBuckets.Result>, PublisherComponent
     {
+        private static readonly Dictionary<string, MetricDefinition<DateTimeMetric<int>>> DatesCyclicalMetrics =
+            new List<MetricDefinition<DateTimeMetric<int>>>
+            {
+                MetricDefinitions.DatesCyclicalSecond,
+                MetricDefinitions.DatesCyclicalMinute,
+                MetricDefinitions.DatesCyclicalHour,
+                MetricDefinitions.DatesCyclicalWeekday,
+                MetricDefinitions.DatesCyclicalDay,
+                MetricDefinitions.DatesCyclicalMonth,
+                MetricDefinitions.DatesCyclicalQuarter,
+                MetricDefinitions.DatesCyclicalYear,
+            }
+            .ToDictionary(item => item.Name);
+
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
@@ -19,7 +33,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            foreach (var m in TimeUtilities.YieldMetrics<Result, int>("datesCyclical", result))
+            foreach (var m in TimeUtilities.YieldMetrics("datesCyclical", result, DatesCyclicalMetrics))
             {
                 yield return m;
             }

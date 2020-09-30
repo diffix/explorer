@@ -1,6 +1,7 @@
 namespace Explorer.Components
 {
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
 
     using Explorer.Common;
@@ -20,41 +21,24 @@ namespace Explorer.Components
         internal static bool TooManySuppressedValues(ValueCounts counts)
             => counts.SuppressedCountRatio > SuppressedRatioThreshold;
 
-        internal static IEnumerable<ExploreMetric> YieldMetrics<TResult, T>(string metricName, TResult result)
+        internal static IEnumerable<ExploreMetric> YieldMetrics<TResult, T>(
+            string metricNamePrefix,
+            TResult result,
+            Dictionary<string, MetricDefinition<DateTimeMetric<T>>> metricDefinitions)
         where TResult : GenericResult<T>
         {
             foreach (var (valueCount, row) in result.ValueCounts.Zip(result.Rows))
             {
-                var titleCaseKey = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(row.Key);
-                yield return new UntypedMetric(
-                    name: $"{metricName}{titleCaseKey}",
-                    metric: MetricBlob(
-                        valueCount.TotalCount,
-                        valueCount.SuppressedCount,
-                        row.Select(_ => _)));
+                var counts = row
+                        .Where(item => item.HasValue)
+                        .OrderBy(item => item.GroupingIndex)
+                        .Select(item => new ValueWithCountAndNoise<T>(item.Value, item.Count, item.CountNoise))
+                        .ToList();
+                var metricName = metricNamePrefix + CultureInfo.InvariantCulture.TextInfo.ToTitleCase(row.Key);
+                yield return ExploreMetric.Create(
+                    metricDefinitions[metricName],
+                    new DateTimeMetric<T>(valueCount.TotalCount, valueCount.SuppressedCount, counts));
             }
-        }
-
-        private static object MetricBlob<T>(
-            long total,
-            long suppressed,
-            IEnumerable<GroupingSetsResult<T>> valueCounts)
-        {
-            return new
-            {
-                Total = total,
-                Suppressed = suppressed,
-                Counts = valueCounts
-                    .Where(row => row.HasValue)
-                    .OrderBy(row => row.GroupingIndex)
-                    .Select(row => new
-                    {
-                        row.Value,
-                        row.Count,
-                        row.CountNoise,
-                    })
-                    .ToList(),
-            };
         }
 
         public class GenericResult<T>

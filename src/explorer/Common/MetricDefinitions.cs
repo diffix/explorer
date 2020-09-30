@@ -28,6 +28,23 @@ namespace Explorer.Common
         public static readonly MetricDefinition<CategoricalData> CategoricalData = new MetricDefinition<CategoricalData>("categoricalData");
         public static readonly MetricDefinition<TextData> TextData = new MetricDefinition<TextData>("textData");
 
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalSecond = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalSecond");
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalMinute = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalMinute");
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalHour = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalHour");
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalWeekday = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalWeekday");
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalDay = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalDay");
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalMonth = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalMonth");
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalQuarter = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalQuarter");
+        public static readonly MetricDefinition<DateTimeMetric<int>> DatesCyclicalYear = new MetricDefinition<DateTimeMetric<int>>("datesCyclicalYear");
+
+        public static readonly MetricDefinition<DateTimeMetric<DateTime>> DatesLinearSecond = new MetricDefinition<DateTimeMetric<DateTime>>("datesLinearSecond");
+        public static readonly MetricDefinition<DateTimeMetric<DateTime>> DatesLinearMinute = new MetricDefinition<DateTimeMetric<DateTime>>("datesLinearMinute");
+        public static readonly MetricDefinition<DateTimeMetric<DateTime>> DatesLinearHour = new MetricDefinition<DateTimeMetric<DateTime>>("datesLinearHour");
+        public static readonly MetricDefinition<DateTimeMetric<DateTime>> DatesLinearDay = new MetricDefinition<DateTimeMetric<DateTime>>("datesLinearDay");
+        public static readonly MetricDefinition<DateTimeMetric<DateTime>> DatesLinearMonth = new MetricDefinition<DateTimeMetric<DateTime>>("datesLinearMonth");
+        public static readonly MetricDefinition<DateTimeMetric<DateTime>> DatesLinearQuarter = new MetricDefinition<DateTimeMetric<DateTime>>("datesLinearQuarter");
+        public static readonly MetricDefinition<DateTimeMetric<DateTime>> DatesLinearYear = new MetricDefinition<DateTimeMetric<DateTime>>("datesLinearYear");
+
         public static MetricDefinition<T> SimpleStatsMin<T>()
         where T : unmanaged
         {

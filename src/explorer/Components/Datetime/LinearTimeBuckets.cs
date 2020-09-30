@@ -12,6 +12,19 @@ namespace Explorer.Components
 
     public class LinearTimeBuckets : ExplorerComponent<LinearTimeBuckets.Result>, PublisherComponent
     {
+        private static readonly Dictionary<string, MetricDefinition<DateTimeMetric<DateTime>>> DatesLinearMetrics =
+            new List<MetricDefinition<DateTimeMetric<DateTime>>>
+            {
+                MetricDefinitions.DatesLinearSecond,
+                MetricDefinitions.DatesLinearMinute,
+                MetricDefinitions.DatesLinearHour,
+                MetricDefinitions.DatesLinearDay,
+                MetricDefinitions.DatesLinearMonth,
+                MetricDefinitions.DatesLinearQuarter,
+                MetricDefinitions.DatesLinearYear,
+            }
+            .ToDictionary(item => item.Name);
+
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
             var result = await ResultAsync;
@@ -20,7 +33,7 @@ namespace Explorer.Components
                 yield break;
             }
 
-            foreach (var m in TimeUtilities.YieldMetrics<Result, DateTime>("datesLinear", result))
+            foreach (var m in TimeUtilities.YieldMetrics("datesLinear", result, DatesLinearMetrics))
             {
                 yield return m;
             }
