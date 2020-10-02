@@ -12,42 +12,76 @@
         label {
             font-weight: bold;
         }
+
+        html {
+            overflow-y: scroll;
+        }
     </style>
 </head>
 
-<body>
-    <div class="w3-container">
-        <div class="w3-third w3-padding">
-            <label class="w3-text-blue-grey">Data Source</label>
-            <input type="text" id="txt_data_source" name="data_source" value="gda_banking"
-                class="w3-input w3-sand w3-round w3-border-1" />
+<body class="w3-theme-l5">
+    <div class="w3-cell-row w3-card w3-theme-l4" style="position: sticky; top: 0;">
+        <div class="w3-cell w3-padding w3-cell-bottom w3-mobile">
+            <label class="w3-text-grey">Data Source</label>
+            <input type="text" id="txt_data_source" name="data_source" value="gda_banking" class="w3-input w3-round w3-border-1" />
         </div>
 
-        <div class="w3-third w3-padding">
-            <label class="w3-text-blue-grey">Table</label>
-            <input type="text" id="txt_table" name="table_name" value="loans"
-                class="w3-input w3-sand w3-round w3-border-0" />
+        <div class="w3-cell w3-padding w3-cell-bottom w3-mobile">
+            <label class="w3-text-grey">Table</label>
+            <input type="text" id="txt_table" name="table_name" value="loans" class="w3-input w3-round w3-border-1" />
         </div>
 
-
-        <div class="w3-third w3-padding">
-            <label class="w3-text-blue-grey">Columns</label>
-            <input type="text" id="txt_column" name="column_name" value="amount, duration"
-                class="w3-input w3-sand w3-round w3-border-0" />
+        <div class="w3-cell w3-padding w3-cell-bottom w3-mobile" style="width:32%">
+            <label class="w3-text-grey">Columns</label>
+            <input type="text" id="txt_column" name="column_name" value="amount, duration" class="w3-input w3-round w3-border-1" />
         </div>
-    </div>
 
-    <div class="w3-container">
-        <div class="w3-third w3-padding">
-            <input type="button" id="btn_explore" value="Explore" onclick="explore()"
-                class="w3-button w3-blue-grey w3-hover-dark-blue w3-wide" />
-            <input type="button" id="btn_cancel" value="Cancel" onclick="cancel()"
-                class="w3-button w3-blue-grey w3-hover-dark-blue w3-wide" />
+        <div class="w3-cell w3-padding w3-cell-bottom w3-mobile" style="white-space:nowrap">
+            <input type="button" id="btn_explore" value="Explore" onclick="exploreClick()" class="w3-button w3-theme-l2 w3-hover-theme w3-wide w3-round" />
+            <input type="button" id="btn_cancel" value="Cancel" onclick="cancelClick()" class="w3-button w3-theme-l2 w3-hover-theme w3-wide w3-round " />
         </div>
     </div>
 
-    <pre id="result" class="w3-code w3-sand w3-border-0 w3-margin">
+
+    <pre id="result" class="w3-code w3-theme-l5 w3-border-0 w3-padding" style="">
     </pre>
+
+    <script>
+        let state = {};
+
+        async function exploreClick() {
+            const dataSource = document.getElementById("txt_data_source").value;
+            const table = document.getElementById("txt_table").value;
+            const columns = document.getElementById("txt_column").value;
+
+            try {
+                showResult('\n');
+                const exploreParams = explorerParams(dataSource, table, columns, AIRCLOAK_API_URL, AIRCLOAK_API_KEY);
+                await explorerRun(exploreParams, EXPLORER_BASE_URL, state, showResult);
+            }
+            catch (ex) {
+                showError(ex);
+            }
+        }
+
+        async function cancelClick() {
+            try {
+                await explorerCancel(state, EXPLORER_BASE_URL);
+                showResult('\n');
+            }
+            catch (ex) {
+                showError(ex);
+            }
+        }
+
+        function showError(error, details) {
+            document.getElementById("result").innerHTML = `<div class='w3-text-dark-red'>${error}<br />${details || ""}</div>`;
+        }
+
+        function showResult(result) {
+            document.getElementById("result").innerText = result;
+        }
+    </script>
 </body>
 
 </html>
