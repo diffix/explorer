@@ -1,9 +1,7 @@
 ﻿namespace Explorer
 {
-    using System.Collections.Generic;
+    using System;
     using System.Threading.Tasks;
-
-    using Explorer.Metrics;
 
     using static ExplorationStatusEnum;
 
@@ -34,5 +32,19 @@
         }
 
         protected abstract Task RunTask();
+
+        protected async Task RunStage(ExplorationStatus initialStatus, Func<Task> t)
+        {
+            Status = initialStatus;
+            try
+            {
+                await t();
+            }
+            catch
+            {
+                Status = ExplorationStatus.Error;
+                throw;
+            }
+        }
     }
 }
