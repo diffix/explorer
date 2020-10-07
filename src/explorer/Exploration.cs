@@ -7,6 +7,7 @@ namespace Explorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Explorer.Metrics;
     using Lamar;
     using static Explorer.ExplorationStatusEnum;
 
@@ -26,7 +27,7 @@ namespace Explorer
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public ImmutableArray<ColumnExploration> ColumnExplorations { get; set; }
+        public ImmutableArray<ColumnExploration> ColumnExplorations { get; private set; }
             = ImmutableArray<ColumnExploration>.Empty;
 
         public IEnumerable<IEnumerable<object?>> SampleData
@@ -37,18 +38,43 @@ namespace Explorer
                 {
                     yield break;
                 }
-                var valuesList = ColumnExplorations
-                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
+
+                var multiColumnMetrics = MultiColumnExploration?.MultiColumnMetrics
+                    ?? throw new InvalidOperationException("Expected correlated sample data metric to be available.");
+
+                var correlatedSamples = (CorrelatedSamples)multiColumnMetrics
+                    .SingleOrDefault(m => m.Name == "correlated_samples");
+
+                var uncorrelatedSamples = ColumnExplorations
+                    .Select(ce => ce.PublishedMetrics
+                                    .SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
                     .Select(metric => metric?.Cast<object?>());
-                var numSamples = valuesList.DefaultIfEmpty().Max(col => col?.Count() ?? 0);
-                for (var i = 0; i < numSamples; i++)
+
+                var r = 0;
+                foreach (var indexedCorrelatedSamples in correlatedSamples.ByIndex)
                 {
-                    yield return valuesList.Select(sampleColumn => sampleColumn?.ElementAtOrDefault(i));
+                    // use uncorrelated samples as the default
+                    var samples = uncorrelatedSamples.Select(
+                            sampleColumn => sampleColumn?.ElementAtOrDefault(r)).ToList();
+
+                    // replace with correlated samples where avilable
+                    foreach (var (i, v) in indexedCorrelatedSamples)
+                    {
+                        samples[i] = v;
+                    }
+
+                    yield return samples;
+                    r++;
                 }
             }
         }
 
+        public object? Correlations => MultiColumnExploration?.MultiColumnMetrics
+                                        .SingleOrDefault(m => m.Name == "correlation_factors");
+
         public override ExplorationStatus Status { get; protected set; }
+
+        public MultiColumnExploration? MultiColumnExploration { get; private set; }
 
         private Func<Task<IEnumerable<ExplorerContext>>>? ValidationTask { get; set; }
 
@@ -86,24 +112,18 @@ namespace Explorer
                             return new ColumnExploration(scope);
                         })
                         .ToImmutableArray();
+
+                    MultiColumnExploration = new MultiColumnExploration(ColumnExplorations);
                 });
 
-            // Single-column analyses
+            // Analyses
             await RunStage(
                 ExplorationStatus.Processing,
-                async () => await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion)));
-
-            // Multi-column analyses
-            // We have access to all the ColumnExplorations here, so we should be able to extract some
-            // context around which column combinations are promising candidates for multi-column analysis.
-            // await RunStage(
-            //     ExplorationStatus.Processing,
-            //     async () =>
-            //     {
-            //         var multiColumnExploration = new MultiColumnExploration(ColumnExplorations);
-            //
-            //         await multiColumnExploration.Completion;
-            //     });
+                async () =>
+                {
+                    await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+                    await (MultiColumnExploration?.Completion ?? Task.CompletedTask);
+                });
 
             // Completed successfully
             Status = ExplorationStatus.Complete;

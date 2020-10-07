@@ -1,0 +1,85 @@
+namespace Explorer.Components
+{
+    using System.Collections.Generic;
+    using System.Linq;
+    using Explorer.Common;
+    using Explorer.Metrics;
+
+    public class CorrelatedSampleGenerator : PublisherComponent
+    {
+        private const int DefaultSamplesToPublish = 20;
+
+        private readonly ResultProvider<ColumnCorrelationComponent.Result> correlationProvider;
+
+        public CorrelatedSampleGenerator(ResultProvider<ColumnCorrelationComponent.Result> correlationProvider)
+        {
+            this.correlationProvider = correlationProvider;
+        }
+
+        public int SamplesToPublish { get; } = DefaultSamplesToPublish;
+
+        public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
+        {
+            var correlationResult = await correlationProvider.ResultAsync;
+            if (correlationResult == null)
+            {
+                yield break;
+            }
+
+            // Add combinations greedily until we have joint probs for all columns
+            // TODO:
+            //   - improve on greedy algorithm. Eg. Optimize for highest sum of correlations.
+            //   - decide how to include single-column probabilities (what is the correlation value?).
+            var numColumns = correlationResult.Projections.Length;
+            var includedColumns = new List<int>(numColumns);
+            var samplePredictionSet = correlationResult
+                .Probabilities
+                .OrderByDescending(p => p.Value.CorrelationFactor)
+                .Where(candidate =>
+                {
+                    // If we are within 1 column of the total, break since there are no single-column correlations.
+                    // TODO: indlude single-column values (need to decide what correlation value to give them).
+                    if (includedColumns.Count >= numColumns - 1)
+                    {
+                        return false;
+                    }
+
+                    // Only consider a candidate if its columns are not already included.
+                    if (!DoSetsOverlap(includedColumns, candidate.Key))
+                    {
+                        includedColumns.AddRange(candidate.Key);
+                        return true;
+                    }
+
+                    return false;
+                })
+                .ToList();
+
+            // Generate samples based on the joint probabilities
+            var samples = new List<List<object?>>(SamplesToPublish);
+
+            for (var s = 0; s < SamplesToPublish; s++)
+            {
+                var sampleRow = new List<object?>(Enumerable.Repeat<object?>(null, numColumns));
+                foreach (var (columnIndices, probMatrix) in samplePredictionSet)
+                {
+                    var projections = columnIndices.Select(i => correlationResult.Projections[i]);
+                    var bucketValues = probMatrix.GetSample();
+
+                    foreach (var (i, value, projection) in columnIndices.Zip2(bucketValues, projections))
+                    {
+                        sampleRow[i] = projection.Invert(value);
+                    }
+                }
+                samples.Add(sampleRow);
+            }
+
+            yield return new CorrelatedSamples(
+                    correlationResult.Projections,
+                    samples);
+
+            static bool DoSetsOverlap<T>(IEnumerable<T> left, IEnumerable<T> right)
+                => left.Union(right).Count() < left.Count() * right.Count();
+        }
+    }
+}
