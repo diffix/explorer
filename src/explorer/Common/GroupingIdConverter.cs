@@ -1,5 +1,6 @@
 ﻿namespace Explorer.Common
 {
+    using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
@@ -27,9 +28,10 @@
 
         private GroupingIdConverter(int groupSizeMax)
         {
-            Debug.Assert(
-                groupSizeMax >= 1 && groupSizeMax < sizeof(int) * 8,
-                $"Group size must be in range [1 {sizeof(int) * 8}].");
+            if (groupSizeMax < 1 || groupSizeMax >= sizeof(int) * 8)
+            {
+                throw new ArgumentOutOfRangeException($"Group size must be in range [1 {sizeof(int) * 8}].");
+            }
 
             var mask = 0;
             for (var i = 0; i < groupSizeMax; i++)

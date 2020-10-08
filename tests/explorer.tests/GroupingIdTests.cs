@@ -17,15 +17,6 @@ namespace Explorer.Queries.Tests
         }
 
         [Theory]
-        [InlineData(4, -1)] // negative index
-        [InlineData(4, 4)] // out of bounds
-        public void FailsWithOutOfBoundsIndices(int groupSize, int invalidValue)
-        {
-            var converter = GroupingIdConverter.GetConverter(groupSize);
-            Assert.Throws<ArgumentOutOfRangeException>(() => converter.GroupingIdFromIndex(invalidValue));
-        }
-
-        [Theory]
         [InlineData(4, 0b1111)] // no value included in group
         [InlineData(4, 0b0101)] // multiple values in group
         [InlineData(4, 0b0000)] // all values in group
@@ -33,16 +24,6 @@ namespace Explorer.Queries.Tests
         {
             var converter = GroupingIdConverter.GetConverter(groupSize);
             Assert.Throws<InvalidOperationException>(() => converter.SingleIndexFromGroupingId(invalidValue));
-        }
-
-        [Theory]
-        [InlineData(4, 0b101111)] // out of bounds grouping id, index also out of bounds
-        [InlineData(4, 0b111110)] // out of bounds grouping id, index in bounds
-        [InlineData(4, -1)] // out of bounds grouping id, index in bounds
-        public void FailsWithOutOfBoundsGroupingId(int groupSize, int invalidValue)
-        {
-            var converter = GroupingIdConverter.GetConverter(groupSize);
-            Assert.Throws<ArgumentOutOfRangeException>(() => converter.SingleIndexFromGroupingId(invalidValue));
         }
 
         [Theory]
