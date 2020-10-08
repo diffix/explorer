@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
 
     /// <summary>
@@ -22,6 +23,11 @@
         public static IEnumerable<(T, T)> EnumeratePairs<T>(this IEnumerable<T> values)
         {
             ThrowArgumentExceptionIfNull(values);
+
+            if (values.Count() < 2)
+            {
+                yield break;
+            }
 
             foreach (var i in Enumerable.Range(1, values.Count() - 1))
             {
@@ -44,6 +50,20 @@
                 {
                     yield return v;
                 }
+            }
+        }
+
+        public static IEnumerable<IEnumerable<T>> Transpose<T>(this IEnumerable<IEnumerable<T>> values)
+        {
+            ThrowArgumentExceptionIfNull(values);
+            var lists = values.Select(v => v.ToList());
+            var len = lists.First().Count;
+
+            Debug.Assert(lists.All(list => list.Count == len), "Cannot transpose unequal lists.");
+
+            for (var i = 0; i < len; i++)
+            {
+                yield return lists.Select(list => list[i]);
             }
         }
 

@@ -7,6 +7,7 @@ namespace Explorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Explorer.Common;
     using Explorer.Metrics;
     using Lamar;
     using static Explorer.ExplorationStatusEnum;
@@ -42,35 +43,35 @@ namespace Explorer
                 var multiColumnMetrics = MultiColumnExploration?.MultiColumnMetrics
                     ?? throw new InvalidOperationException("Expected correlated sample data metric to be available.");
 
-                var correlatedSamples = (CorrelatedSamples)multiColumnMetrics
-                    .SingleOrDefault(m => m.Name == "correlated_samples");
+                var correlatedSamplesByIndex = ((CorrelatedSamples?)multiColumnMetrics
+                    .SingleOrDefault(m => m.Name == "correlated_samples"))
+                    ?.ByIndex
+                    ?? Utilities.RepeatForever(Array.Empty<(int, object?)>());
 
                 var uncorrelatedSamples = ColumnExplorations
-                    .Select(ce => ce.PublishedMetrics
-                                    .SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
-                    .Select(metric => metric?.Cast<object?>());
+                    .Select(ce => (IEnumerable?)ce.PublishedMetrics
+                                    .SingleOrDefault(m => m.Name == "sample_values")?.Metric)
+                    .Select(metric => metric?.Cast<object?>() ?? Utilities.RepeatForever<object?>(null))
+                    .Transpose();
 
-                var r = 0;
-                foreach (var indexedCorrelatedSamples in correlatedSamples.ByIndex)
+                foreach (var (row, toInsert) in uncorrelatedSamples.Zip(correlatedSamplesByIndex))
                 {
-                    // use uncorrelated samples as the default
-                    var samples = uncorrelatedSamples.Select(
-                            sampleColumn => sampleColumn?.ElementAtOrDefault(r)).ToList();
+                    var samples = row.ToList();
 
-                    // replace with correlated samples where avilable
-                    foreach (var (i, v) in indexedCorrelatedSamples)
+                    // replace with correlated samples where available
+                    foreach (var (i, v) in toInsert)
                     {
                         samples[i] = v;
                     }
 
                     yield return samples;
-                    r++;
                 }
             }
         }
 
-        public object? Correlations => MultiColumnExploration?.MultiColumnMetrics
-                                        .SingleOrDefault(m => m.Name == "correlation_factors");
+        public List<Correlation> Correlations => (List<Correlation>?)MultiColumnExploration?.MultiColumnMetrics
+                                                    .SingleOrDefault(m => m.Name == "correlations")?.Metric
+                                                    ?? new List<Correlation>();
 
         public override ExplorationStatus Status { get; protected set; }
 

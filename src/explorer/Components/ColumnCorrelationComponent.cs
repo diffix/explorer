@@ -33,18 +33,21 @@
             }
 
             yield return new UntypedMetric(
-                name: "correlation_factors",
+                name: "correlations",
                 metric: correlationResult.Probabilities
-                    .Select(kv => new
-                    {
-                        Column = kv.Key.Select(i => correlationResult.Projections[i].Column).ToArray(),
-                        kv.Value.CorrelationFactor,
-                    })
+                    .Select(kv => new Correlation(
+                        kv.Key.Select(i => correlationResult.Projections[i].Column).ToArray(),
+                        kv.Value.CorrelationFactor))
                     .ToList());
         }
 
         protected async override Task<Result?> Explore()
         {
+            if (Projections.IsEmpty)
+            {
+                return null;
+            }
+
             var multiColumnCounts = await Context.Exec(new MultiColumnCounts(Projections));
 
             var groups = multiColumnCounts.Rows.GroupBy(row => row.GroupingId);

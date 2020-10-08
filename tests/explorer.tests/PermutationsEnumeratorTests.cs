@@ -12,9 +12,9 @@ namespace Explorer.Common.Tests
         {
             var empty = Array.Empty<int>();
 
-            var emptyPairs = empty.EnumeratePairs();
+            var result = empty.EnumeratePermutations(10);
 
-            Assert.Empty(emptyPairs);
+            Assert.Empty(result);
         }
 
         [Fact]

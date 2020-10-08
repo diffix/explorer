@@ -24,7 +24,6 @@ namespace Explorer.Api.Models
             Table = exploreParams.Table;
             ColumnMetrics = exploreParams.Columns.Select(c => new ColumnMetricsType(c)).ToList();
             SampleData = new List<List<object?>>();
-            Correlations = new { };
         }
 
         public ExploreResult(Guid explorationId, Exploration exploration, ExploreParams exploreParams)
@@ -35,7 +34,6 @@ namespace Explorer.Api.Models
             Table = exploreParams.Table;
             SampleData = exploration.SampleData.Select(col => col.ToList()).ToList();
             ColumnMetrics = exploration.ColumnExplorations.Select(ce => new ColumnMetricsType(ce)).ToList();
-            Correlations = exploration.Correlations ?? new { };
         }
 
         public Guid Id { get; }
@@ -54,8 +52,6 @@ namespace Explorer.Api.Models
         public List<List<object?>> SampleData { get; }
 
         public HashSet<string> Errors { get; } = new HashSet<string>();
-
-        public object Correlations { get; }
 
         public void AddErrorMessage(string message)
         {

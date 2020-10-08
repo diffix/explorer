@@ -1,5 +1,6 @@
 namespace Explorer.Common
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
 
     public static class Utilities
@@ -9,6 +10,14 @@ namespace Explorer.Common
             await Task.WhenAll(task1, task2, task3);
 
             return (task1.Result, task2.Result, task3.Result);
+        }
+
+        internal static IEnumerable<T> RepeatForever<T>(T value)
+        {
+            while (true)
+            {
+                yield return value;
+            }
         }
     }
 }
