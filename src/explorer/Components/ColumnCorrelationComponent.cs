@@ -1,10 +1,11 @@
-﻿namespace Explorer.Components
+namespace Explorer.Components
 {
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Explorer.Common;
@@ -65,10 +66,10 @@
             var rootLevel = await context.Exec(new MultiColumnCountsPartial(projections));
             allLevels.Add(rootLevel.Rows);
 
-            foreach (var level in Enumerable.Range(0, numLevels - 1))
+            foreach (var depth in Enumerable.Range(1, numLevels - 1))
             {
-                var currentLevel = allLevels[level];
-                var nextLevel = await DrillDownNextLevel(context, projections, currentLevel);
+                var currentLevel = allLevels[depth - 1];
+                var nextLevel = await DrillDownNextLevel(context, projections, currentLevel, depth);
                 if (!nextLevel.Any())
                 {
                     break;
@@ -105,13 +106,27 @@
         /// A list of <see cref="ColumnProjection" />s defining how to segment the columns into buckets.
         /// </param>
         /// <param name="root">A list of results to be used as the root (see explanation above).</param>
+        /// <param name="depth">The current depth, meaning the number of fixed indices.</param>
         /// <returns>A list of results at the next level above the provided root.</returns>
         public static async Task<IEnumerable<MultiColumnCounts.Result>> DrillDownNextLevel(
             ExplorerContext context,
             IEnumerable<ColumnProjection> projections,
-            IEnumerable<MultiColumnCounts.Result> root)
+            IEnumerable<MultiColumnCounts.Result> root,
+            int depth)
         {
             var nextLevel = new ConcurrentDictionary<ColumnGrouping, IEnumerable<MultiColumnCounts.Result>>();
+
+            // Limit the number of concurrent queries:
+            // If we are at depth `d`, then if there are `n` columns, each query will contain `(n - d)` grouping sets
+            // each of size (d + 1), so assume complexity is proportional to `(n - d) * (d + 1)` and scale the
+            // maximum number of concurrent queries linearly according to this.
+            // Note this means that if n is greater than the maximum concurrency level, queries will be run one
+            // at a time. This may be too conservative.
+            const int concurrencyBase = 10;
+            var scaleFactor = (projections.Count() - depth) * (depth + 1);
+            var maxConcurrentQueries = Math.Max(1, concurrencyBase / Math.Max(1, scaleFactor));
+            using var semaphore = new SemaphoreSlim(maxConcurrentQueries);
+
             await Task.WhenAll(
                 root.GroupBy(_ => _.ColumnGrouping).Select(async grouping =>
                 {
@@ -121,8 +136,18 @@
                     }
 
                     var indices = grouping.Key.Indices;
-                    var partialResult = await context.Exec(
-                        new MultiColumnCountsPartial(projections, indices));
+
+                    await semaphore.WaitAsync();
+
+                    Diffix.DResult<MultiColumnCounts.Result> partialResult;
+                    try
+                    {
+                        partialResult = await context.Exec(new MultiColumnCountsPartial(projections, indices));
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
 
                     foreach (var newGrouping in partialResult.Rows.GroupBy(_ => _.ColumnGrouping))
                     {
