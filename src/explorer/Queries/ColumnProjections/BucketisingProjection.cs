@@ -2,6 +2,7 @@ namespace Explorer.Queries
 {
     using System;
     using System.Text.Json;
+    using Diffix;
     using Explorer.Common;
     using Explorer.Components;
 
@@ -11,13 +12,20 @@ namespace Explorer.Queries
         private const double BucketsWithinIRQ = 10;
         private readonly Random rng = new Random();
 
-        public BucketisingProjection(string column, int index, NumericDistribution distribution)
+        public BucketisingProjection(
+            string column,
+            DValueType columnType,
+            int index,
+            NumericDistribution distribution)
         : base(column, index)
         {
             BucketSize = ComputeBucketSize(distribution.Quartiles.Item1, distribution.Quartiles.Item3);
+            ColumnType = columnType;
         }
 
         public BucketSize BucketSize { get; }
+
+        public DValueType ColumnType { get; }
 
         public override string Project() => $"bucket (\"{Column}\" by {BucketSize.SnappedSize})";
 
@@ -37,7 +45,11 @@ namespace Explorer.Queries
             var lowerBound = value.GetDouble();
             var offset = rng.NextDouble() * Convert.ToDouble(BucketSize.SnappedSize);
 
-            return lowerBound + offset;
+            var result = lowerBound + offset;
+
+            return ColumnType == DValueType.Integer
+                ? Convert.ToInt64(result)
+                : result;
         }
 
         /// <summary>

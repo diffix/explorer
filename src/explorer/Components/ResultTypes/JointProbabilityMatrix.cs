@@ -1,4 +1,4 @@
-namespace Explorer.Components.ResultTypes
+﻿namespace Explorer.Components.ResultTypes
 {
     using System;
     using System.Collections.Generic;
@@ -26,22 +26,22 @@ namespace Explorer.Components.ResultTypes
 
         private NoisyCount suppressedCount = NoisyCount.Zero;
 
-        public JointProbabilityMatrix(IEnumerable<string> columns, IEnumerable<int> cardinalities)
+        public JointProbabilityMatrix(IEnumerable<int> cardinalities)
         {
-            Columns = columns.ToArray();
             Cardinalities = cardinalities.ToArray();
+            Dimensions = Cardinalities.Count;
             TotalAvailableBuckets = Cardinalities.Aggregate(1, (a, b) => a * b);
 
             // The Nth root of the sum of non-zero buckets where N is the number of columns in the group.
             // This approximates the number of buckets along the diagonal of the n-dimensional hypercube.
-            DiagonalCount = Math.Pow(TotalAvailableBuckets, 1.0 / Cardinalities.Count);
+            DiagonalCount = Math.Pow(TotalAvailableBuckets, 1.0 / Dimensions);
         }
 
         public int NonZeroBucketCount { get => counts.Count; }
 
         public IList<int> Cardinalities { get; }
 
-        public IEnumerable<string> Columns { get; }
+        public int Dimensions { get; }
 
         /// <summary>
         /// Gets a measure of how correlated the columns are based on their joint probabilities.
@@ -50,14 +50,12 @@ namespace Explorer.Components.ResultTypes
         {
             get
             {
-                if (NonZeroBucketCountEstimate < DiagonalCount)
+                if (Dimensions == 1)
                 {
-                    // Fewer buckets than this, values are concentrated, good correlation.
-                    // (But maybe poor bucket choice?)
-                    return 1.0;
+                    return 0.0;
                 }
 
-                return Math.Pow(DiagonalCount / NonZeroBucketCountEstimate, 1 / Cardinalities.Count);
+                return Math.Pow(DiagonalCount / NonZeroBucketCountEstimate, 1 / Dimensions);
             }
         }
 

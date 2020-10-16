@@ -39,15 +39,15 @@ namespace Explorer.Components
                 {
                     // If we are within 1 column of the total, break since there are no single-column correlations.
                     // TODO: indlude single-column values (need to decide what correlation value to give them).
-                    if (includedColumns.Count >= numColumns - 1)
-                    {
-                        return false;
-                    }
+                    // if (includedColumns.Count >= numColumns - 1)
+                    // {
+                    //     return false;
+                    // }
 
                     // Only consider a candidate if its columns are not already included.
-                    if (!DoSetsOverlap(includedColumns, candidate.Key))
+                    if (!DoSetsOverlap(includedColumns, candidate.Key.Indices))
                     {
-                        includedColumns.AddRange(candidate.Key);
+                        includedColumns.AddRange(candidate.Key.Indices);
                         return true;
                     }
 
@@ -61,12 +61,12 @@ namespace Explorer.Components
             for (var s = 0; s < SamplesToPublish; s++)
             {
                 var sampleRow = new List<object?>(Enumerable.Repeat<object?>(null, numColumns));
-                foreach (var (columnIndices, probMatrix) in samplePredictionSet)
+                foreach (var (columnGrouping, probMatrix) in samplePredictionSet)
                 {
-                    var projections = columnIndices.Select(i => correlationResult.Projections[i]);
+                    var projections = columnGrouping.Indices.Select(i => correlationResult.Projections[i]);
                     var bucketValues = probMatrix.GetSample();
 
-                    foreach (var (i, value, projection) in columnIndices.Zip2(bucketValues, projections))
+                    foreach (var (i, value, projection) in columnGrouping.Indices.Zip2(bucketValues, projections))
                     {
                         sampleRow[i] = projection.Invert(value);
                     }
@@ -79,7 +79,7 @@ namespace Explorer.Components
                     samples);
 
             static bool DoSetsOverlap<T>(IEnumerable<T> left, IEnumerable<T> right)
-                => left.Union(right).Count() < left.Count() * right.Count();
+                => left.Union(right).Count() < left.Count() + right.Count();
         }
     }
 }

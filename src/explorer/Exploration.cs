@@ -7,7 +7,6 @@ namespace Explorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Explorer.Common;
     using Explorer.Metrics;
     using Lamar;
     using static Explorer.ExplorationStatusEnum;
@@ -46,15 +45,26 @@ namespace Explorer
                 var correlatedSamplesByIndex = ((CorrelatedSamples?)multiColumnMetrics
                     .SingleOrDefault(m => m.Name == "correlated_samples"))
                     ?.ByIndex
-                    ?? Utilities.RepeatForever(Array.Empty<(int, object?)>());
+                    ?? Array.Empty<IEnumerable<(int, object?)>>();
 
-                var uncorrelatedSamples = ColumnExplorations
+                // TODO: rowCount should be a shared configuration item or request parameter.
+                var rowCount = correlatedSamplesByIndex.Count();
+
+                var uncorrelatedSampleRows = new List<List<object?>>(
+                    Enumerable.Range(0, rowCount).Select(_ => new List<object?>()));
+
+                foreach (var uncorrelatedSampleColumn in ColumnExplorations
                     .Select(ce => (IEnumerable?)ce.PublishedMetrics
                                     .SingleOrDefault(m => m.Name == "sample_values")?.Metric)
-                    .Select(metric => metric?.Cast<object?>() ?? Utilities.RepeatForever<object?>(null))
-                    .Transpose();
+                    .Select(metric => metric?.Cast<object?>() ?? Array.Empty<object?>()))
+                {
+                    for (var i = 0; i < rowCount; i++)
+                    {
+                        uncorrelatedSampleRows[i].Add(uncorrelatedSampleColumn.ElementAtOrDefault(i));
+                    }
+                }
 
-                foreach (var (row, toInsert) in uncorrelatedSamples.Zip(correlatedSamplesByIndex))
+                foreach (var (row, toInsert) in uncorrelatedSampleRows.Zip(correlatedSamplesByIndex))
                 {
                     var samples = row.ToList();
 

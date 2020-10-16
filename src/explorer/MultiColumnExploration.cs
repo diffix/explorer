@@ -48,12 +48,12 @@
 
             var projections = columnExplorations
                 .Select((c, i) => GetProjection(c, i))
-                .Where(p => !(p is IgnoredColumnProjection))
-                .ToImmutableArray();
+                .Where(p => !(p is IgnoredColumnProjection));
 
-            var correlationComponent = new ColumnCorrelationComponent(
-                Context,
-                projections);
+            var correlationComponent = new ColumnCorrelationComponent(projections)
+            {
+                Context = Context,
+            };
 
             await foreach (var metric in correlationComponent.YieldMetrics())
             {
@@ -95,7 +95,8 @@
 
                 var distribution = TryGetMetric<NumericDistribution>(columnExploration, "descriptive_stats");
 
-                return new BucketisingProjection(columnExploration.Column, index, distribution);
+                return new BucketisingProjection(
+                    columnExploration.Column, columnExploration.ColumnInfo.Type, index, distribution);
             }
 
             static ColumnProjection TextProjection(ColumnExploration columnExploration, int index)
