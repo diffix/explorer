@@ -1,4 +1,4 @@
-﻿namespace Explorer.Components.ResultTypes
+namespace Explorer.Components.ResultTypes
 {
     using System;
     using System.Collections.Generic;
@@ -17,7 +17,7 @@
 
         private readonly Random rng = new Random();
 
-        private readonly Dictionary<JsonElement[], NoisyCount> counts = new Dictionary<JsonElement[], NoisyCount>();
+        private readonly Dictionary<Index, NoisyCount> counts = new Dictionary<Index, NoisyCount>();
 
         // A reverse lookup table mapping cumulative sample count to a combination of values.
         private ImmutableList<NoisyCount> cdfReverseLookup = ImmutableList<NoisyCount>.Empty;
@@ -67,7 +67,7 @@
 
         public double NonZeroBucketRatio => NonZeroBucketCountEstimate / TotalAvailableBuckets;
 
-        private NoisyCount TotalSampleCount => counts.Aggregate(NoisyCount.Zero, (sum, kv) => sum + kv.Value);
+        private NoisyCount TotalSampleCount { get; set; }
 
         private double DiagonalCount { get; }
 
@@ -81,17 +81,20 @@
                 return;
             }
 
-            var key = igsrm.Values.Select(v => v.IsNull ? NullElement.Clone() : v.Value).ToArray();
+            var key = new Index(igsrm.Values.Select(v => v.IsNull ? NullElement.Clone() : v.Value.Clone()));
             var value = NoisyCount.FromCountableRow(igsrm);
 
             counts[key] = value + counts.GetValueOrDefault(key, NoisyCount.Zero);
         }
 
-        public JsonElement[] GetSample()
+        public IEnumerable<JsonElement> GetSample()
         {
             if (cdfIsStale)
             {
                 RefreshCdfReverseLookup();
+                TotalSampleCount = counts.Aggregate(NoisyCount.Zero, (sum, kv) => sum + kv.Value);
+
+                cdfIsStale = false;
             }
 
             var randomCount = NoisyCount.Noiseless(rng.NextLong(TotalSampleCount.Count));
@@ -99,7 +102,7 @@
             var searchResult = cdfReverseLookup.BinarySearch(randomCount, NoisyCountComparerInstance);
             var index = searchResult > 0 ? searchResult : ~searchResult;
 
-            return counts.Keys.ElementAt(index);
+            return counts.Keys.ElementAt(index).Values;
         }
 
         private void RefreshCdfReverseLookup()
@@ -112,8 +115,6 @@
                     var newRunningTotal = cdf.LastOrDefault() + count;
                     return cdf.Add(newRunningTotal);
                 });
-
-            cdfIsStale = false;
         }
 
         private class NoisyCountComparer : IComparer<NoisyCount>
@@ -122,6 +123,26 @@
             {
                 return left.Count.CompareTo(right.Count);
             }
+        }
+
+        private class Index : IEquatable<Index>
+        {
+            public Index(IEnumerable<JsonElement> values)
+            {
+                Values = values.ToImmutableArray();
+            }
+
+            public ImmutableArray<JsonElement> Values { get; }
+
+            public override int GetHashCode()
+                => Values.Aggregate(0, (total, next) => HashCode.Combine(total, next));
+
+            public bool Equals(Index? other) =>
+                other is Index index &&
+                Values.Length == index.Values.Length &&
+                Values.Zip(index.Values).All(_ => _.First.Equals(_.Second));
+
+            public override bool Equals(object? obj) => Equals(obj);
         }
     }
 }
