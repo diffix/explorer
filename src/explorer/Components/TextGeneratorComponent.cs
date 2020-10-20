@@ -15,27 +15,24 @@ namespace Explorer.Components
 
     public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
     {
-        public const int DefaultSamplesToPublish = 20;
-        public const int DefaultDistinctValuesBySamplesToPublishRatioThreshold = 5;
         public const int DefaultSubstringQueryColumnCount = 5;
 
         private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider;
+        private readonly ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider;
 
         public TextGeneratorComponent(
             ResultProvider<EmailCheckComponent.Result> emailCheckProvider,
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
-            ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider)
+            ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider,
+            ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider)
         {
             this.emailCheckProvider = emailCheckProvider;
             this.distinctValuesProvider = distinctValuesProvider;
             this.textLengthDistributionProvider = textLengthDistributionProvider;
+            this.sampleValuesGeneratorConfigProvider = sampleValuesGeneratorConfigProvider;
         }
-
-        public int SamplesToPublish { get; set; } = DefaultSamplesToPublish;
-
-        public int DistinctValuesBySamplesToPublishRatioThreshold { get; set; } = DefaultDistinctValuesBySamplesToPublishRatioThreshold;
 
         public int SubstringQueryColumnCount { get; set; } = DefaultSubstringQueryColumnCount;
 
@@ -56,10 +53,13 @@ namespace Explorer.Components
                 return null;
             }
 
-            // the sample data generation algorithm involving substrings is quite imprecise
-            // so we use a relaxed condition for when to do sampling directly from the available values
-            // (the default value for the ratio is intentionally quite small)
-            if (distinctValuesResult.ValueCounts.NonSuppressedRows > DistinctValuesBySamplesToPublishRatioThreshold * SamplesToPublish)
+            var config = await sampleValuesGeneratorConfigProvider.ResultAsync;
+            if (config == null)
+            {
+                return null;
+            }
+
+            if (config.CategoricalSampling)
             {
                 return null;
             }
@@ -77,8 +77,8 @@ namespace Explorer.Components
             }
 
             var sampleValues = emailCheckerResult.IsEmail ?
-                await GenerateEmails(textLengthDistributionResult.Distribution) :
-                await GenerateStrings(textLengthDistributionResult.Distribution);
+                await GenerateEmails(textLengthDistributionResult.Distribution, config) :
+                await GenerateStrings(textLengthDistributionResult.Distribution, config);
             return new Result(sampleValues.ToList());
         }
 
@@ -99,11 +99,12 @@ namespace Explorer.Components
             return sb.ToString();
         }
 
-        private string GenerateEmail(
+        private static string GenerateEmail(
             SubstringsData substrings,
             SubstringWithCountList domains,
             SubstringWithCountList tlds,
             LengthDistribution lengthDistribution,
+            SampleValuesGeneratorConfig.Result config,
             Random rand)
         {
             // create local-part section
@@ -127,7 +128,7 @@ namespace Explorer.Components
             {
                 return string.Empty;
             }
-            if (domains.Count > DistinctValuesBySamplesToPublishRatioThreshold * SamplesToPublish)
+            if (domains.Count > config.MinRowsForCategoricalSampling)
             {
                 // if the number of distinct domains is big enough we select one from the extracted list
                 return localPart + domains.GetRandomValue(rand);
@@ -153,17 +154,18 @@ namespace Explorer.Components
             return localPart + "@" + domain + tlds.GetRandomValue(rand);
         }
 
-        private IEnumerable<string> GenerateEmails(
+        private static IEnumerable<string> GenerateEmails(
             SubstringsData substrings,
             SubstringWithCountList domains,
             SubstringWithCountList tlds,
-            LengthDistribution lengthDistribution)
+            LengthDistribution lengthDistribution,
+            SampleValuesGeneratorConfig.Result config)
         {
             var rand = new Random(Environment.TickCount);
-            var emails = new List<string>(SamplesToPublish);
-            for (var i = 0; emails.Count < SamplesToPublish && i < SamplesToPublish * 100; i++)
+            var emails = new List<string>(config.NumValuesToPublish);
+            for (var i = 0; emails.Count < config.NumValuesToPublish && i < config.NumValuesToPublish * 100; i++)
             {
-                var email = GenerateEmail(substrings, domains, tlds, lengthDistribution, rand);
+                var email = GenerateEmail(substrings, domains, tlds, lengthDistribution, config, rand);
                 if (!string.IsNullOrEmpty(email))
                 {
                     emails.Add(email);
@@ -221,7 +223,9 @@ namespace Explorer.Components
             return substrings;
         }
 
-        private async Task<IEnumerable<string>> GenerateEmails(LengthDistribution lengthDistribution)
+        private async Task<IEnumerable<string>> GenerateEmails(
+            LengthDistribution lengthDistribution,
+            SampleValuesGeneratorConfig.Result config)
         {
             var (substrings, domains, tlds) = await Utilities.WhenAll(
                 ExploreSubstrings(SubstringQueryColumnCount, substringLengths: new int[] { 3, 4 }),
@@ -231,10 +235,12 @@ namespace Explorer.Components
             {
                 return Enumerable.Empty<string>();
             }
-            return GenerateEmails(substrings, domains, tlds, lengthDistribution);
+            return GenerateEmails(substrings, domains, tlds, lengthDistribution, config);
         }
 
-        private async Task<IEnumerable<string>> GenerateStrings(LengthDistribution lengthDistribution)
+        private async Task<IEnumerable<string>> GenerateStrings(
+            LengthDistribution lengthDistribution,
+            SampleValuesGeneratorConfig.Result config)
         {
             // the substring lengths 3 and 4 were determined empirically to work for column containing names
             var substrings = await ExploreSubstrings(
@@ -244,7 +250,7 @@ namespace Explorer.Components
                 return Enumerable.Empty<string>();
             }
             var rand = new Random(Environment.TickCount);
-            return Enumerable.Range(0, SamplesToPublish).Select(_
+            return Enumerable.Range(0, config.NumValuesToPublish).Select(_
                 => GenerateString(substrings, lengthDistribution, minLength: 1, rand));
         }
 

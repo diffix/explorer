@@ -97,7 +97,7 @@ namespace Explorer.Components
             {
                 return null;
             }
-            if (distinctValues.IsCategorical)
+            if (distinctValues.ValueCounts.IsCategorical)
             {
                 return null;
             }
