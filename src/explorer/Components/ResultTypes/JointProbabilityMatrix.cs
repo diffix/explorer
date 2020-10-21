@@ -20,7 +20,9 @@
         private readonly Dictionary<Index, NoisyCount> counts = new Dictionary<Index, NoisyCount>();
 
         // A reverse lookup table mapping cumulative sample count to a combination of values.
-        private ImmutableList<NoisyCount> cdfReverseLookup = ImmutableList<NoisyCount>.Empty;
+        private ImmutableList<NoisyCount> cdf = ImmutableList<NoisyCount>.Empty;
+
+        private ImmutableArray<Index> cdfReverseLookup = ImmutableArray<Index>.Empty;
 
         private bool cdfIsStale;
 
@@ -55,7 +57,7 @@
                     return 0.0;
                 }
 
-                return Math.Pow(DiagonalCount / NonZeroBucketCountEstimate, 1 / Dimensions);
+                return Math.Pow(DiagonalCount / NonZeroBucketCountEstimate, 1.0 / Dimensions);
             }
         }
 
@@ -97,22 +99,24 @@
 
             var randomCount = NoisyCount.Noiseless(rng.NextLong(TotalSampleCount.Count));
 
-            var searchResult = cdfReverseLookup.BinarySearch(randomCount, NoisyCountComparerInstance);
+            var searchResult = cdf.BinarySearch(randomCount, NoisyCountComparerInstance);
             var index = searchResult > 0 ? searchResult : ~searchResult;
 
-            return counts.Keys.ElementAt(index).Values;
+            return cdfReverseLookup[index].Values;
         }
 
         private void RefreshCdfReverseLookup()
         {
             // Note: The cdf currently ignores the probability of suppressed values.
-            cdfReverseLookup = counts.Values.Aggregate(
+            cdf = counts.Values.Aggregate(
                 ImmutableList<NoisyCount>.Empty,
                 (cdf, count) =>
                 {
                     var newRunningTotal = cdf.LastOrDefault() + count;
                     return cdf.Add(newRunningTotal);
                 });
+
+            cdfReverseLookup = counts.Keys.ToImmutableArray();
         }
 
         private class NoisyCountComparer : IComparer<NoisyCount>

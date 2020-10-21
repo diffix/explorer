@@ -74,9 +74,7 @@ namespace Explorer.Components
                 samples.Add(sampleRow);
             }
 
-            yield return new CorrelatedSamples(
-                    correlationResult.Projections,
-                    samples);
+            yield return new CorrelatedSamples(correlationResult.Projections, samples).AsMetric();
 
             static bool DoSetsOverlap<T>(IEnumerable<T> left, IEnumerable<T> right)
                 => left.Union(right).Count() < left.Count() + right.Count();

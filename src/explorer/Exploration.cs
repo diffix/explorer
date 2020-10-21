@@ -42,13 +42,18 @@ namespace Explorer
                 var multiColumnMetrics = MultiColumnExploration?.MultiColumnMetrics
                     ?? throw new InvalidOperationException("Expected correlated sample data metric to be available.");
 
-                var correlatedSamplesByIndex = ((CorrelatedSamples?)multiColumnMetrics
-                    .SingleOrDefault(m => m.Name == "correlated_samples"))
-                    ?.ByIndex
-                    ?? Array.Empty<IEnumerable<(int, object?)>>();
+                var metric = multiColumnMetrics
+                    .SingleOrDefault(m => m.Name == CorrelatedSamples.MetricName)?.Metric;
+
+                var correlatedSamplesByIndex = Array.Empty<IEnumerable<(int, object?)>>();
+
+                if (metric is CorrelatedSamples correlatedSamples)
+                {
+                    correlatedSamplesByIndex = correlatedSamples.ByIndex.ToArray();
+                }
 
                 // TODO: rowCount should be a shared configuration item or request parameter.
-                var rowCount = correlatedSamplesByIndex.Count();
+                var rowCount = correlatedSamplesByIndex.Length;
 
                 var uncorrelatedSampleRows = new List<List<object?>>(
                     Enumerable.Range(0, rowCount).Select(_ => new List<object?>()));
@@ -78,10 +83,6 @@ namespace Explorer
                 }
             }
         }
-
-        public List<Correlation> Correlations => (List<Correlation>?)MultiColumnExploration?.MultiColumnMetrics
-                                                    .SingleOrDefault(m => m.Name == "correlations")?.Metric
-                                                    ?? new List<Correlation>();
 
         public override ExplorationStatus Status { get; protected set; }
 
@@ -116,15 +117,21 @@ namespace Explorer
                     var contexts = await (ValidationTask?.Invoke()
                         ?? throw new InvalidOperationException("No validation task specified."));
 
-                    ColumnExplorations = contexts
-                        .Select(context =>
-                        {
-                            var scope = scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context);
-                            return new ColumnExploration(scope);
-                        })
+                    var singleColumnScopes = contexts
+                        .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
+                        .ToList();
+
+                    ColumnExplorations = singleColumnScopes
+                        .Select(scope => new ColumnExploration(scope))
                         .ToImmutableArray();
 
-                    MultiColumnExploration = new MultiColumnExploration(ColumnExplorations);
+                    var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
+                        singleColumnScopes.Select(_ => _.MetricsPublisher));
+
+                    MultiColumnExploration = new MultiColumnExploration(
+                        multiColumnScopeBuilder.Build(
+                            explorationRootContainer.GetNestedContainer(),
+                            contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
                 });
 
             // Analyses

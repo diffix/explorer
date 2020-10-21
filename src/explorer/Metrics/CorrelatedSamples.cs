@@ -4,20 +4,16 @@ namespace Explorer.Metrics
     using System.Linq;
     using Explorer.Queries;
 
-    public class CorrelatedSamples : ExploreMetric
+    public class CorrelatedSamples
     {
+        public static readonly string MetricName = "correlated_samples";
+
         public CorrelatedSamples(IEnumerable<ColumnProjection> projections, List<List<object?>> samples)
         {
             SourceIndices = projections.Select(p => p.SourceIndex).ToList();
             Columns = projections.Select(p => p.Column).ToList();
             Samples = samples;
         }
-
-        public string Name => "correlated_samples";
-
-        public object Metric => this;
-
-        public int Priority => 0;
 
         public List<List<object?>> Samples { get; }
 
@@ -46,5 +42,7 @@ namespace Explorer.Metrics
                 }
             }
         }
+
+        public ExploreMetric AsMetric() => new UntypedMetric(MetricName, this);
     }
 }

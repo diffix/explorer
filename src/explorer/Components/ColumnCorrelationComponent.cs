@@ -1,4 +1,4 @@
-namespace Explorer.Components
+﻿namespace Explorer.Components
 {
     using System;
     using System.Collections.Concurrent;
@@ -12,22 +12,17 @@ namespace Explorer.Components
     using Explorer.Components.ResultTypes;
     using Explorer.Metrics;
     using Explorer.Queries;
+    using Microsoft.Extensions.Logging;
 
     public class ColumnCorrelationComponent :
         ExplorerComponent<ColumnCorrelationComponent.Result>,
         PublisherComponent
     {
-        public const int DefaultMaxCorrelationDepth = 2;
-
-        public ColumnCorrelationComponent(
-            IEnumerable<ColumnProjection> projections)
-        {
-            Projections = projections.ToImmutableArray();
-        }
+        public const int DefaultMaxCorrelationDepth = 4;
 
         public int MaxCorrelationDepth { get; set; } = DefaultMaxCorrelationDepth;
 
-        public ImmutableArray<ColumnProjection> Projections { get; }
+        public ImmutableArray<ColumnProjection> Projections { get; set; } = ImmutableArray<ColumnProjection>.Empty;
 
         /// <summary>
         /// Drills down into succesive column combinations, combining the results.
@@ -183,6 +178,7 @@ namespace Explorer.Components
                     .Select(kv => new Correlation(
                         kv.Key.Indices.Select(i => correlationResult.Projections[i].Column).ToArray(),
                         kv.Value.CorrelationFactor))
+                    .OrderByDescending(_ => _.CorrelationFactor)
                     .ToList());
         }
 
@@ -193,7 +189,26 @@ namespace Explorer.Components
                 return null;
             }
 
-            var queryResults = await DrillDown(Context, Projections, MaxCorrelationDepth);
+            IEnumerable<MultiColumnCounts.Result>? queryResults = default;
+            try
+            {
+                queryResults = await DrillDown(Context, Projections, MaxCorrelationDepth);
+            }
+            catch (Exception ex)
+            {
+                if (ex is AggregateException agg)
+                {
+                    foreach (var innerEx in agg.Flatten().InnerExceptions)
+                    {
+                        Logger?.LogWarning(innerEx, "Drill-down query error.");
+                    }
+                }
+
+                if (queryResults?.Any() ?? false)
+                {
+                    throw;
+                }
+            }
 
             var groups = queryResults.GroupBy(row => row.ColumnGrouping);
 

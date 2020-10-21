@@ -23,7 +23,7 @@
             logger = scope.GetInstance<ILogger<ExplorationScope>>();
         }
 
-        public List<Task> Tasks { get; } = new List<Task>();
+        public List<Func<Task>> Tasks { get; } = new List<Func<Task>>();
 
         public MetricsPublisher MetricsPublisher { get => scope.GetInstance<MetricsPublisher>(); }
 
@@ -31,14 +31,25 @@
 
         public ILogger Logger { get => logger; }
 
-        public void AddPublisher<T>(Action<T>? configure = null)
+        /// <summary>
+        /// Register a publisher component.
+        /// </summary>
+        /// <param name="configure">A configuration action to be run after the component is created.</param>
+        /// <param name="initialise">An initialisation action to be run before the component is run.</param>
+        /// <typeparam name="T">Must be a component that implements <see cref="PublisherComponent" />.</typeparam>
+        public void AddPublisher<T>(Action<T>? configure = null, Action<T>? initialise = null)
             where T : PublisherComponent
         {
             var component = scope.ResolvePublisherComponent<T>();
+            var publisher = MetricsPublisher;
 
             configure?.Invoke(component);
 
-            Tasks.Add(component.PublishMetrics(MetricsPublisher));
+            Tasks.Add(async () =>
+            {
+                initialise?.Invoke(component);
+                await component.PublishMetrics(publisher);
+            });
         }
 
         public void UseContext(ExplorerContext context) => scope.Inject(context);

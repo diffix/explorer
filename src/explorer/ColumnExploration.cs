@@ -57,12 +57,12 @@ namespace Explorer
             GC.SuppressFinalize(this);
         }
 
-        protected override Task RunTask() => Task.WhenAll(scope.Tasks.Select(async t =>
+        protected override Task RunTask() => Task.WhenAll(scope.Tasks.Select(async explore =>
         {
             try
             {
                 Status = ExplorationStatus.Processing;
-                await t;
+                await explore();
                 Status = ExplorationStatus.Complete;
             }
             catch (Exception ex)
