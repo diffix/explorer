@@ -35,7 +35,7 @@ namespace Explorer.Api.Models
             Table = exploreParams.Table;
             SampleData = exploration.SampleData.Select(col => col.ToList()).ToList();
             ColumnMetrics = exploration.ColumnExplorations.Select(ce => new ColumnMetricsType(ce)).ToList();
-            Correlations = exploration.MultiColumnExploration?.MultiColumnMetrics
+            Correlations = exploration.MultiColumnExploration?.PublishedMetrics
                 .Where(m => m.Name != CorrelatedSamples.MetricName)
                 .ToList()
                 ?? new List<ExploreMetric>();

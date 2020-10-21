@@ -11,7 +11,7 @@ namespace Explorer
     using Lamar;
     using static Explorer.ExplorationStatusEnum;
 
-    public sealed class Exploration : AbstractExploration, IDisposable
+    public sealed class Exploration : IDisposable
     {
         private readonly IContainer explorationRootContainer;
         private readonly ExplorationScopeBuilder scopeBuilder;
@@ -34,12 +34,12 @@ namespace Explorer
         {
             get
             {
-                if (!Completion.IsCompletedSuccessfully)
+                if (Status != ExplorationStatus.Complete)
                 {
                     yield break;
                 }
 
-                var multiColumnMetrics = MultiColumnExploration?.MultiColumnMetrics
+                var multiColumnMetrics = MultiColumnExploration?.PublishedMetrics
                     ?? throw new InvalidOperationException("Expected correlated sample data metric to be available.");
 
                 var metric = multiColumnMetrics
@@ -84,16 +84,14 @@ namespace Explorer
             }
         }
 
-        public override ExplorationStatus Status { get; protected set; }
+        public ExplorationStatus Status { get; private set; }
+
+        public Task Completion => MainTask
+            ?? Task.FromException(new InvalidOperationException("Exploration not started."));
 
         public MultiColumnExploration? MultiColumnExploration { get; private set; }
 
-        private Func<Task<IEnumerable<ExplorerContext>>>? ValidationTask { get; set; }
-
-        public void Initialise<TBuilderArgs>(
-                ExplorerContextBuilder<TBuilderArgs> contextBuilder,
-                TBuilderArgs builderArgs)
-            => ValidationTask = async () => await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
+        private Task? MainTask { get; set; }
 
         public void CancelExploration()
         {
@@ -107,44 +105,62 @@ namespace Explorer
             GC.SuppressFinalize(this);
         }
 
-        protected override async Task RunTask()
+        public void Explore<TBuilderArgs>(
+                ExplorerContextBuilder<TBuilderArgs> contextBuilder,
+                TBuilderArgs builderArgs)
         {
-            // Validation
-            await RunStage(
-                ExplorationStatus.Validating,
-                async () =>
-                {
-                    var contexts = await (ValidationTask?.Invoke()
-                        ?? throw new InvalidOperationException("No validation task specified."));
+            MainTask = Task.Run(async () =>
+            {
+                // Validation
+                await RunStage(
+                    ExplorationStatus.Validating,
+                    async () =>
+                    {
+                        var contexts = await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
 
-                    var singleColumnScopes = contexts
-                        .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
-                        .ToList();
+                        var singleColumnScopes = contexts
+                            .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
+                            .ToList();
 
-                    ColumnExplorations = singleColumnScopes
-                        .Select(scope => new ColumnExploration(scope))
-                        .ToImmutableArray();
+                        ColumnExplorations = singleColumnScopes
+                            .Select(scope => new ColumnExploration(scope))
+                            .ToImmutableArray();
 
-                    var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
-                        singleColumnScopes.Select(_ => _.MetricsPublisher));
+                        var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
+                            singleColumnScopes.Select(_ => _.MetricsPublisher));
 
-                    MultiColumnExploration = new MultiColumnExploration(
-                        multiColumnScopeBuilder.Build(
-                            explorationRootContainer.GetNestedContainer(),
-                            contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
-                });
+                        MultiColumnExploration = new MultiColumnExploration(
+                            multiColumnScopeBuilder.Build(
+                                explorationRootContainer.GetNestedContainer(),
+                                contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
+                    });
 
-            // Analyses
-            await RunStage(
-                ExplorationStatus.Processing,
-                async () =>
-                {
-                    await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
-                    await (MultiColumnExploration?.Completion ?? Task.CompletedTask);
-                });
+                // Analyses
+                await RunStage(
+                    ExplorationStatus.Processing,
+                    async () =>
+                    {
+                        await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+                        await (MultiColumnExploration?.Completion ?? Task.CompletedTask);
+                    });
 
-            // Completed successfully
-            Status = ExplorationStatus.Complete;
+                // Completed successfully
+                Status = ExplorationStatus.Complete;
+            });
+        }
+
+        private async Task RunStage(ExplorationStatus initialStatus, Func<Task> t)
+        {
+            Status = initialStatus;
+            try
+            {
+                await t();
+            }
+            catch
+            {
+                Status = ExplorationStatus.Error;
+                throw;
+            }
         }
 
         private void Dispose(bool disposing)

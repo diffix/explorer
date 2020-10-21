@@ -35,7 +35,7 @@ namespace Explorer.Api.Tests
             return this;
         }
 
-        public Exploration PrepareExploration(
+        public Exploration RunExploration(
             string dataSource,
             string table,
             IEnumerable<string> columns,
@@ -62,7 +62,7 @@ namespace Explorer.Api.Tests
             };
 
             var exploration = new Exploration(rootContainer, new TypeBasedScopeBuilder());
-            exploration.Initialise(rootContainer.GetInstance<JsonApiContextBuilder>(), testParams);
+            exploration.Explore(rootContainer.GetInstance<JsonApiContextBuilder>(), testParams);
 
             return exploration;
         }
@@ -84,7 +84,7 @@ namespace Explorer.Api.Tests
             IEnumerable<string> columns,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
-            using var exploration = PrepareExploration(dataSourceName, table, columns);
+            using var exploration = RunExploration(dataSourceName, table, columns);
 
             await exploration.Completion;
             Assert.True(exploration.Completion.IsCompletedSuccessfully);
