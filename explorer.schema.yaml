@@ -27,7 +27,7 @@ properties:
     type: array
     items:
       type: string
-additionalProperties: !!bool false
+additionalProperties: !!bool true
 required: [id, status, versionInfo, dataSource, table, columns, sampleData, errors]
 
 definitions:
