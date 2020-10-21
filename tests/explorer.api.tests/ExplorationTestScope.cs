@@ -16,21 +16,19 @@ namespace Explorer.Api.Tests
     public class ExplorationTestScope
     {
         private static readonly Uri TestApiUri = new Uri("https://attack.aircloak.com/api/");
-        private readonly Container rootContainer;
+        private readonly INestedContainer scopedContainer;
 
         public ExplorationTestScope(Container rootContainer)
         {
-            this.rootContainer = rootContainer;
+            scopedContainer = rootContainer.GetNestedContainer();
         }
 
         public Cassette? LoadedCassette { get; private set; }
 
         public ExplorationTestScope LoadCassette(string testFileName)
         {
-            LoadedCassette?.Dispose();
-            LoadedCassette = null;
-
             LoadedCassette = new Cassette($"../../../.vcr/{testFileName}.yaml");
+            scopedContainer.InjectDisposable(LoadedCassette, replace: true);
 
             return this;
         }
@@ -48,7 +46,7 @@ namespace Explorer.Api.Tests
             // Register the authentication token for this scope.
             // Note that in most test cases the api key will not be needed as it will be provided from
             // the environment (via a `StaticApiKeyAuthProvider`)
-            if (rootContainer.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
+            if (scopedContainer.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
             {
                 auth.RegisterApiKey(apiKey);
             }
@@ -61,8 +59,8 @@ namespace Explorer.Api.Tests
                 Columns = ImmutableArray.Create(columns.ToArray()),
             };
 
-            var exploration = new Exploration(rootContainer, new TypeBasedScopeBuilder());
-            exploration.Explore(rootContainer.GetInstance<JsonApiContextBuilder>(), testParams);
+            var exploration = new Exploration((IContainer)scopedContainer, new TypeBasedScopeBuilder());
+            exploration.Explore(scopedContainer.GetInstance<JsonApiContextBuilder>(), testParams);
 
             return exploration;
         }

@@ -1,5 +1,6 @@
 namespace Explorer.Api.Tests
 {
+    using System;
     using Lamar;
     using Lamar.IoC;
 
@@ -11,6 +12,10 @@ namespace Explorer.Api.Tests
     {
         public static void InjectDisposable<T>(this INestedContainer nc, T instance, bool replace = false)
         {
+            if (replace && nc.GetInstance<T>() is IDisposable old)
+            {
+                old.Dispose();
+            }
             nc.Inject(instance, replace);
             ((Scope)nc).TryAddDisposable(instance);
         }
