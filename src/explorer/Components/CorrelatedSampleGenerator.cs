@@ -55,6 +55,15 @@ namespace Explorer.Components
                 })
                 .ToList();
 
+            yield return new UntypedMetric(
+                name: "sampled_correlations",
+                metric: samplePredictionSet
+                            .Select(kv => new Correlation(
+                                kv.Key.Indices.Select(i => correlationResult.Projections[i].Column).ToArray(),
+                                kv.Value.CorrelationFactor))
+                            .OrderByDescending(_ => _.CorrelationFactor)
+                            .ToList());
+
             // Generate samples based on the joint probabilities
             var samples = new List<List<object?>>(SamplesToPublish);
 

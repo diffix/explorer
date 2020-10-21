@@ -18,7 +18,7 @@
         ExplorerComponent<ColumnCorrelationComponent.Result>,
         PublisherComponent
     {
-        public const int DefaultMaxCorrelationDepth = 4;
+        public const int DefaultMaxCorrelationDepth = 2;
 
         public int MaxCorrelationDepth { get; set; } = DefaultMaxCorrelationDepth;
 
