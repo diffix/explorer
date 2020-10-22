@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Diagnostics;
     using System.Linq;
     using System.Text.Json;
     using Explorer.Common;
@@ -102,6 +103,11 @@
             var searchResult = cdf.BinarySearch(randomCount, NoisyCountComparerInstance);
             var index = searchResult > 0 ? searchResult : ~searchResult;
 
+            if (index >= cdfReverseLookup.Length)
+            {
+                index = cdfReverseLookup.Length - 1;
+            }
+
             return cdfReverseLookup[index].Values;
         }
 
@@ -117,6 +123,8 @@
                 });
 
             cdfReverseLookup = counts.Keys.ToImmutableArray();
+
+            Debug.Assert(cdf.Count == cdfReverseLookup.Length, "cdf and reverseLookup are out of sync.");
         }
 
         private class NoisyCountComparer : IComparer<NoisyCount>
