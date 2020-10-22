@@ -13,7 +13,7 @@ namespace Explorer.Api.Tests
     using VcrSharp;
     using Xunit;
 
-    public class ExplorationTestScope
+    public sealed class ExplorationTestScope : IDisposable
     {
         private static readonly Uri TestApiUri = new Uri("https://attack.aircloak.com/api/");
         private readonly INestedContainer scopedContainer;
@@ -23,7 +23,7 @@ namespace Explorer.Api.Tests
             scopedContainer = rootContainer.GetNestedContainer();
         }
 
-        public Cassette? LoadedCassette { get; private set; }
+        private Cassette? LoadedCassette { get; set; }
 
         public ExplorationTestScope LoadCassette(string testFileName)
         {
@@ -89,6 +89,11 @@ namespace Explorer.Api.Tests
             Assert.True(exploration.ColumnExplorations.All(ce => ce.Completion.IsCompletedSuccessfully));
 
             CheckMetrics(exploration, check);
+        }
+
+        public void Dispose()
+        {
+            scopedContainer.Dispose();
         }
 
         private static void CheckMetrics(

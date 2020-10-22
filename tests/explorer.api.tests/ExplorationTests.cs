@@ -18,10 +18,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestIntegerColumn()
         {
-            await fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this))
-                .RunAndCheckMetrics(
+            using var testScope = fixture.PrepareExplorationTestScope(Cassette.GenerateVcrFilename(this));
+
+            await testScope.RunAndCheckMetrics(
                     "gda_banking",
                     "loans",
                     "duration",
@@ -31,10 +30,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestRealColumn()
         {
-            await fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this))
-                .RunAndCheckMetrics(
+            using var testScope = fixture.PrepareExplorationTestScope(Cassette.GenerateVcrFilename(this));
+
+            await testScope.RunAndCheckMetrics(
                     "gda_banking",
                     "loans",
                     "payments",
@@ -44,10 +42,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestBooleanColumn()
         {
-            await fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this))
-                .RunAndCheckMetrics(
+            using var testScope = fixture.PrepareExplorationTestScope(Cassette.GenerateVcrFilename(this));
+
+            await testScope.RunAndCheckMetrics(
                     "GiveMeSomeCredit",
                     "loans",
                     "SeriousDlqin2yrs",
@@ -57,10 +54,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestTextColumn()
         {
-            await fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this))
-                .RunAndCheckMetrics(
+            using var testScope = fixture.PrepareExplorationTestScope(Cassette.GenerateVcrFilename(this));
+
+            await testScope.RunAndCheckMetrics(
                     "gda_banking",
                     "loans",
                     "firstname",
@@ -76,10 +72,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestDateColumn()
         {
-            await fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this))
-                .RunAndCheckMetrics(
+            using var testScope = fixture.PrepareExplorationTestScope(Cassette.GenerateVcrFilename(this));
+
+            await testScope.RunAndCheckMetrics(
                     "gda_banking",
                     "loans",
                     "birthdate",
@@ -89,10 +84,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestDatetimeColumn()
         {
-            await fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this))
-                .RunAndCheckMetrics(
+            using var testScope = fixture.PrepareExplorationTestScope(Cassette.GenerateVcrFilename(this));
+
+            await testScope.RunAndCheckMetrics(
                     "gda_taxi",
                     "rides",
                     "pickup_datetime",
@@ -102,10 +96,9 @@ namespace Explorer.Api.Tests
         [Fact]
         public async Task TestMultiColumn()
         {
-            await fixture
-                .PrepareExplorationTestScope()
-                .LoadCassette(Cassette.GenerateVcrFilename(this))
-                .RunAndCheckMetrics(
+            using var testScope = fixture.PrepareExplorationTestScope(Cassette.GenerateVcrFilename(this));
+
+            await testScope.RunAndCheckMetrics(
                     "gda_banking",
                     "loans",
                     new[] { "firstname", "duration" },

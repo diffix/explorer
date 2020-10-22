@@ -48,6 +48,9 @@
 
         public ExplorationTestScope PrepareExplorationTestScope() => new ExplorationTestScope(RootContainer);
 
+        public ExplorationTestScope PrepareExplorationTestScope(string cassetteFilename) =>
+            PrepareExplorationTestScope().LoadCassette(cassetteFilename);
+
         public void Dispose()
         {
             RootContainer.Dispose();
