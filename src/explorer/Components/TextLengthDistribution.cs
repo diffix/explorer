@@ -24,7 +24,10 @@ namespace Explorer.Components
                 yield break;
             }
 
-            yield return new UntypedMetric("text.length.values", result.Distribution);
+            yield return new UntypedMetric("text.length.values", result.Distribution
+                .Select(item => new { item.Value, item.Count })
+                .ToList());
+
             if (result.ValueCounts != null)
             {
                 yield return new UntypedMetric("text.length.counts", result.ValueCounts);
