@@ -5,7 +5,6 @@ namespace Explorer.Components
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    using Diffix;
     using Explorer.Common;
     using Explorer.Metrics;
     using Explorer.Queries;
@@ -19,7 +18,7 @@ namespace Explorer.Components
 
         public IEnumerable<ExploreMetric> YieldMetrics(Result result)
         {
-            if (!result.IsCategorical)
+            if (!result.ValueCounts.IsCategorical)
             {
                 yield return new UntypedMetric(name: "distinct.is_categorical", metric: false);
             }
@@ -89,14 +88,11 @@ namespace Explorer.Components
             {
                 DistinctRows = distinctRows.ToList();
                 ValueCounts = ValueCounts.Compute(DistinctRows);
-                IsCategorical = ValueCounts.IsCategorical;
             }
 
             public List<ValueWithCount<JsonElement>> DistinctRows { get; }
 
             public ValueCounts ValueCounts { get; }
-
-            public bool IsCategorical { get; }
         }
     }
 }

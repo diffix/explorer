@@ -12,18 +12,18 @@ namespace Explorer.Components
     public class CategoricalSampleGenerator
         : ExplorerComponent<CategoricalSampleGenerator.Result>, PublisherComponent
     {
-        public const int DefaultSamplesToPublish = 20;
-
         private static readonly JsonElement JsonNull = JsonDocument.Parse("null").RootElement;
 
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
+        private readonly ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider;
 
-        public CategoricalSampleGenerator(ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
+        public CategoricalSampleGenerator(
+            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
+            ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider)
         {
             this.distinctValuesProvider = distinctValuesProvider;
+            this.sampleValuesGeneratorConfigProvider = sampleValuesGeneratorConfigProvider;
         }
-
-        public int NumValuesToPublish { get; set; } = DefaultSamplesToPublish;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
@@ -42,8 +42,14 @@ namespace Explorer.Components
                 return null;
             }
 
+            var config = await sampleValuesGeneratorConfigProvider.ResultAsync;
+            if (config == null)
+            {
+                return null;
+            }
+
             var sampleValues = Enumerable.Empty<JsonElement>();
-            if (distinctValuesResult.IsCategorical)
+            if (config.CategoricalSampling)
             {
                 var rand = new Random(Environment.TickCount);
                 var allValues = ValueWithCountList<JsonElement>.FromValueWithCountEnum(
@@ -55,7 +61,7 @@ namespace Explorer.Components
                             : r));
 
                 sampleValues = Enumerable
-                    .Range(0, NumValuesToPublish)
+                    .Range(0, config.NumValuesToPublish)
                     .Select(_ => allValues.GetRandomValue(rand));
             }
             return new Result(sampleValues.ToList());

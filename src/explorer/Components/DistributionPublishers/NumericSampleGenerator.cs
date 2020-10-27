@@ -4,24 +4,23 @@ namespace Explorer.Components
     using System.Collections.Generic;
     using System.Linq;
 
-    using Explorer.Common;
     using Explorer.Metrics;
 
     public class NumericSampleGenerator : ExplorerComponentBase, PublisherComponent
     {
-        public const int DefaultSamplesToPublish = 20;
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
+        private readonly ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider;
         private readonly ResultProvider<NumericDistribution> distributionProvider;
 
         public NumericSampleGenerator(
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
+            ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider,
             ResultProvider<NumericDistribution> distributionProvider)
         {
             this.distinctValuesProvider = distinctValuesProvider;
+            this.sampleValuesGeneratorConfigProvider = sampleValuesGeneratorConfigProvider;
             this.distributionProvider = distributionProvider;
         }
-
-        public int SamplesToPublish { get; set; } = DefaultSamplesToPublish;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
@@ -30,7 +29,14 @@ namespace Explorer.Components
             {
                 yield break;
             }
-            if (distinctValues.IsCategorical)
+
+            var config = await sampleValuesGeneratorConfigProvider.ResultAsync;
+            if (config == null)
+            {
+                yield break;
+            }
+
+            if (config.CategoricalSampling)
             {
                 yield break;
             }
@@ -44,7 +50,7 @@ namespace Explorer.Components
             yield return new UntypedMetric(
                 name: "sample_values",
                 metric: distribution
-                        .Generate(SamplesToPublish)
+                        .Generate(config.NumValuesToPublish)
                         .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
                         .OrderBy(_ => _)
                         .ToList());
