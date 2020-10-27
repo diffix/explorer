@@ -128,7 +128,7 @@ namespace Explorer.Components
             {
                 return string.Empty;
             }
-            if (domains.Count > config.MinRowsForCategoricalSampling)
+            if (domains.TotalCount > config.MinValuesForCategoricalSampling)
             {
                 // if the number of distinct domains is big enough we select one from the extracted list
                 return localPart + domains.GetRandomValue(rand);

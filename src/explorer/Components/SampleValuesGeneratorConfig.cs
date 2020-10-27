@@ -7,7 +7,7 @@ namespace Explorer.Components
     public class SampleValuesGeneratorConfig : ExplorerComponent<SampleValuesGeneratorConfig.Result>
     {
         public const int DefaultNumValuesToPublish = 20;
-        public const int DefaultDistinctValuesBySamplesToPublishRatioThreshold = 5;
+        public const double DefaultTextColumnMinFactorForCategoricalSampling = 0.95;
 
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
@@ -18,7 +18,7 @@ namespace Explorer.Components
 
         public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
 
-        public int DistinctValuesBySamplesToPublishRatioThreshold { get; set; } = DefaultDistinctValuesBySamplesToPublishRatioThreshold;
+        public double TextColumnMinFactorForCategoricalSampling { get; set; } = DefaultTextColumnMinFactorForCategoricalSampling;
 
         protected override async Task<Result?> Explore()
         {
@@ -30,32 +30,32 @@ namespace Explorer.Components
 
             var valueCounts = distinctValuesResult.ValueCounts;
             var categoricalSampling = valueCounts.IsCategorical;
-            var minRowsForCategoricalSampling = DistinctValuesBySamplesToPublishRatioThreshold * NumValuesToPublish;
+            var minValuesForCategoricalSampling = (long)(valueCounts.TotalCount * TextColumnMinFactorForCategoricalSampling);
 
             // for the case of text columns
             // the sample data generation algorithm involving substrings is quite imprecise
             // so we use a relaxed condition for when to do sampling directly from the available values
             // (the default value for the ratio is intentionally quite small)
-            if (Context.ColumnInfo.Type == DValueType.Text && valueCounts.NonSuppressedRows > minRowsForCategoricalSampling)
+            if (Context.ColumnInfo.Type == DValueType.Text && valueCounts.NonSuppressedCount > minValuesForCategoricalSampling)
             {
                 categoricalSampling = true;
             }
 
-            return new Result(categoricalSampling, minRowsForCategoricalSampling, NumValuesToPublish);
+            return new Result(categoricalSampling, minValuesForCategoricalSampling, NumValuesToPublish);
         }
 
         public class Result
         {
-            public Result(bool categoricalSampling, int minRowsForCategoricalSampling, int numValuesToPublish)
+            public Result(bool categoricalSampling, long minValuesForCategoricalSampling, int numValuesToPublish)
             {
                 CategoricalSampling = categoricalSampling;
-                MinRowsForCategoricalSampling = minRowsForCategoricalSampling;
+                MinValuesForCategoricalSampling = minValuesForCategoricalSampling;
                 NumValuesToPublish = numValuesToPublish;
             }
 
             public bool CategoricalSampling { get; }
 
-            public int MinRowsForCategoricalSampling { get; }
+            public long MinValuesForCategoricalSampling { get; }
 
             public int NumValuesToPublish { get; }
         }
