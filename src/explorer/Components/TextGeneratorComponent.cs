@@ -9,32 +9,33 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Metrics;
     using Explorer.Queries;
-
+    using Microsoft.Extensions.Options;
     using LengthDistribution = Explorer.Common.ValueWithCountList<long>;
     using SubstringWithCountList = Explorer.Common.ValueWithCountList<string>;
 
     public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
     {
-        public const int DefaultSubstringQueryColumnCount = 5;
-
         private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider;
         private readonly ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider;
+        private readonly ExplorerOptions options;
 
         public TextGeneratorComponent(
             ResultProvider<EmailCheckComponent.Result> emailCheckProvider,
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
             ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider,
-            ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider)
+            ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider,
+            IOptions<ExplorerOptions> options)
         {
             this.emailCheckProvider = emailCheckProvider;
             this.distinctValuesProvider = distinctValuesProvider;
             this.textLengthDistributionProvider = textLengthDistributionProvider;
             this.sampleValuesGeneratorConfigProvider = sampleValuesGeneratorConfigProvider;
+            this.options = options.Value;
         }
 
-        public int SubstringQueryColumnCount { get; set; } = DefaultSubstringQueryColumnCount;
+        private int SubstringQueryColumnCount => options.SubstringQueryColumnCount;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
@@ -162,8 +163,8 @@ namespace Explorer.Components
             SampleValuesGeneratorConfig.Result config)
         {
             var rand = new Random(Environment.TickCount);
-            var emails = new List<string>(config.NumValuesToPublish);
-            for (var i = 0; emails.Count < config.NumValuesToPublish && i < config.NumValuesToPublish * 100; i++)
+            var emails = new List<string>(config.SamplesToPublish);
+            for (var i = 0; emails.Count < config.SamplesToPublish && i < config.SamplesToPublish * 100; i++)
             {
                 var email = GenerateEmail(substrings, domains, tlds, lengthDistribution, config, rand);
                 if (!string.IsNullOrEmpty(email))
@@ -250,7 +251,7 @@ namespace Explorer.Components
                 return Enumerable.Empty<string>();
             }
             var rand = new Random(Environment.TickCount);
-            return Enumerable.Range(0, config.NumValuesToPublish).Select(_
+            return Enumerable.Range(0, config.SamplesToPublish).Select(_
                 => GenerateString(substrings, lengthDistribution, minLength: 1, rand));
         }
 

@@ -13,16 +13,22 @@
     using Explorer.Metrics;
     using Explorer.Queries;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
 
     public class ColumnCorrelationComponent :
         ExplorerComponent<ColumnCorrelationComponent.Result>,
         PublisherComponent
     {
-        public const int DefaultMaxCorrelationDepth = 2;
+        private readonly ExplorerOptions options;
 
-        public int MaxCorrelationDepth { get; set; } = DefaultMaxCorrelationDepth;
+        public ColumnCorrelationComponent(IOptions<ExplorerOptions> options)
+        {
+            this.options = options.Value;
+        }
 
         public ImmutableArray<ColumnProjection> Projections { get; set; } = ImmutableArray<ColumnProjection>.Empty;
+
+        private int MaxCorrelationDepth => options.MaxCorrelationDepth;
 
         /// <summary>
         /// Drills down into succesive column combinations, combining the results.

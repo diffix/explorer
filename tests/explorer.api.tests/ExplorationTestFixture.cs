@@ -17,12 +17,17 @@
         {
             RootContainer = new Container(registry =>
             {
+                // Configure options
+                registry.Configure<ExplorerOptions>(Config);
+                registry.Configure<ConnectionOptions>(Config);
+                registry.Configure<VcrOptions>(Config);
+
                 // VCR setup
-                registry.For<IHttpClientFactory>().Use<VcrApiHttpClientFactory>().Scoped();
                 registry.Injectable<Cassette>();
+                registry.For<IHttpClientFactory>().Use<VcrApiHttpClientFactory>();
 
                 // Configure Authentication
-                registry.For<IAircloakAuthenticationProvider>().Use(Config);
+                registry.For<IAircloakAuthenticationProvider>().Use(Config.Get<TestConfig>());
 
                 // Singleton services
                 registry.AddLogging();
@@ -37,14 +42,13 @@
             });
         }
 
-        public static ExplorerConfig Config { get; } = new ConfigurationBuilder()
+        public Container RootContainer { get; }
+
+        internal static IConfiguration Config { get; } = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Development.json")
             .AddEnvironmentVariables()
             .Build()
-            .GetSection("Explorer")
-            .Get<ExplorerConfig>();
-
-        public Container RootContainer { get; }
+            .GetSection("Explorer");
 
         public ExplorationTestScope PrepareExplorationTestScope() => new ExplorationTestScope(RootContainer);
 

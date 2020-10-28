@@ -1,33 +1,24 @@
 #nullable enable
 namespace VcrSharp
 {
-    using System;
     using System.Net.Http;
+    using Microsoft.Extensions.Options;
 
     public class VcrApiHttpClientFactory : IHttpClientFactory
     {
-        private const string UrlEnvironmentVariable = "AIRCLOAK_API_URL";
-        private const string DefaultTestUrl = "https://attack.aircloak.com/api/";
-        private const VCRMode DefaultVcrMode = VCRMode.Cache;
-        private const RecordingOptions DefaultRecordingOptions = RecordingOptions.SuccessOnly;
+        private readonly VcrOptions vcrOptions;
 
-        public VcrApiHttpClientFactory(Cassette cassette)
+        public VcrApiHttpClientFactory(Cassette cassette, IOptions<VcrOptions> vcrOptions)
         {
             Cassette = cassette;
-            VcrMode = DefaultVcrMode;
-            RecordingOptions = DefaultRecordingOptions;
-            var urlString = Environment.GetEnvironmentVariable(UrlEnvironmentVariable)
-                    ?? DefaultTestUrl;
-            ApiBaseAddress = new Uri(urlString);
+            this.vcrOptions = vcrOptions.Value;
         }
 
         public Cassette Cassette { get; }
 
-        public VCRMode VcrMode { get; set; }
+        public VCRMode VcrMode => vcrOptions.VcrMode;
 
-        public RecordingOptions RecordingOptions { get; set; }
-
-        public Uri ApiBaseAddress { get; set; }
+        public RecordingOptions RecordingOptions => vcrOptions.RecordingOptions;
 
         public HttpClient? HttpClient { get; private set; }
 
@@ -48,7 +39,7 @@ namespace VcrSharp
             {
                 return new HttpClient()
                 {
-                    BaseAddress = ApiBaseAddress,
+                    BaseAddress = vcrOptions.HttpClientBaseAddress,
                 };
             }
             else
@@ -59,7 +50,7 @@ namespace VcrSharp
 #pragma warning restore CA2000 // Call System.IDisposable.Dispose on object
                 return new HttpClient(vcr)
                 {
-                    BaseAddress = ApiBaseAddress,
+                    BaseAddress = vcrOptions.HttpClientBaseAddress,
                 };
             }
         }

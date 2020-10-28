@@ -3,22 +3,24 @@ namespace Explorer.Components
     using System.Threading.Tasks;
 
     using Diffix;
+    using Microsoft.Extensions.Options;
 
     public class SampleValuesGeneratorConfig : ExplorerComponent<SampleValuesGeneratorConfig.Result>
     {
-        public const int DefaultNumValuesToPublish = 20;
-        public const double DefaultTextColumnMinFactorForCategoricalSampling = 0.95;
-
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
+        private readonly ExplorerOptions options;
 
-        public SampleValuesGeneratorConfig(ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider)
+        public SampleValuesGeneratorConfig(
+            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
+            IOptions<ExplorerOptions> options)
         {
             this.distinctValuesProvider = distinctValuesProvider;
+            this.options = options.Value;
         }
 
-        public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
+        public int SamplesToPublish => options.SamplesToPublish;
 
-        public double TextColumnMinFactorForCategoricalSampling { get; set; } = DefaultTextColumnMinFactorForCategoricalSampling;
+        public double TextColumnMinFactorForCategoricalSampling => options.TextColumnMinFactorForCategoricalSampling;
 
         protected override async Task<Result?> Explore()
         {
@@ -41,7 +43,7 @@ namespace Explorer.Components
                 categoricalSampling = true;
             }
 
-            return new Result(categoricalSampling, minValuesForCategoricalSampling, NumValuesToPublish);
+            return new Result(categoricalSampling, minValuesForCategoricalSampling, SamplesToPublish);
         }
 
         public class Result
@@ -50,14 +52,14 @@ namespace Explorer.Components
             {
                 CategoricalSampling = categoricalSampling;
                 MinValuesForCategoricalSampling = minValuesForCategoricalSampling;
-                NumValuesToPublish = numValuesToPublish;
+                SamplesToPublish = numValuesToPublish;
             }
 
             public bool CategoricalSampling { get; }
 
             public long MinValuesForCategoricalSampling { get; }
 
-            public int NumValuesToPublish { get; }
+            public int SamplesToPublish { get; }
         }
     }
 }

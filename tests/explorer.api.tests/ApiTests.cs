@@ -370,7 +370,7 @@
         private async Task TestExploreResult(
             HttpMethod method,
             Guid explorerGuid,
-            TimeSpan pollFrequency,
+            int pollFrequency,
             ApiTestActionWithContent test,
             [CallerMemberName] string vcrSessionName = "",
             VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Record)

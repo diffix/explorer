@@ -9,6 +9,7 @@ namespace Explorer
     using System.Threading.Tasks;
     using Explorer.Metrics;
     using Lamar;
+    using Microsoft.Extensions.Options;
     using static Explorer.ExplorationStatusEnum;
 
     public sealed class Exploration : IDisposable
@@ -16,7 +17,7 @@ namespace Explorer
         private readonly IContainer explorationRootContainer;
         private readonly ExplorationScopeBuilder scopeBuilder;
         private readonly CancellationTokenSource cancellationTokenSource;
-        private bool disposedValue;
+        private readonly ExplorerOptions options;
 
         public Exploration(
             IContainer rootContainer,
@@ -25,64 +26,12 @@ namespace Explorer
             explorationRootContainer = (IContainer)rootContainer.GetNestedContainer();
             this.scopeBuilder = scopeBuilder;
             cancellationTokenSource = new CancellationTokenSource();
+
+            options = explorationRootContainer.GetInstance<IOptions<ExplorerOptions>>().Value;
         }
 
         public ImmutableArray<ColumnExploration> ColumnExplorations { get; private set; }
             = ImmutableArray<ColumnExploration>.Empty;
-
-        public IEnumerable<IEnumerable<object?>> SampleData
-        {
-            get
-            {
-                if (Status != ExplorationStatus.Complete)
-                {
-                    yield break;
-                }
-
-                var multiColumnMetrics = MultiColumnExploration?.PublishedMetrics
-                    ?? throw new InvalidOperationException("Expected correlated sample data metric to be available.");
-
-                var metric = multiColumnMetrics
-                    .SingleOrDefault(m => m.Name == CorrelatedSamples.MetricName)?.Metric;
-
-                var correlatedSamplesByIndex = Array.Empty<IEnumerable<(int, object?)>>();
-
-                if (metric is CorrelatedSamples correlatedSamples)
-                {
-                    correlatedSamplesByIndex = correlatedSamples.ByIndex.ToArray();
-                }
-
-                // TODO: rowCount should be a shared configuration item or request parameter.
-                var rowCount = correlatedSamplesByIndex.Length;
-
-                var uncorrelatedSampleRows = new List<List<object?>>(
-                    Enumerable.Range(0, rowCount).Select(_ => new List<object?>()));
-
-                foreach (var uncorrelatedSampleColumn in ColumnExplorations
-                    .Select(ce => (IEnumerable?)ce.PublishedMetrics
-                                    .SingleOrDefault(m => m.Name == "sample_values")?.Metric)
-                    .Select(metric => metric?.Cast<object?>() ?? Array.Empty<object?>()))
-                {
-                    for (var i = 0; i < rowCount; i++)
-                    {
-                        uncorrelatedSampleRows[i].Add(uncorrelatedSampleColumn.ElementAtOrDefault(i));
-                    }
-                }
-
-                foreach (var (row, toInsert) in uncorrelatedSampleRows.Zip(correlatedSamplesByIndex))
-                {
-                    var samples = row.ToList();
-
-                    // replace with correlated samples where available
-                    foreach (var (i, v) in toInsert)
-                    {
-                        samples[i] = v;
-                    }
-
-                    yield return samples;
-                }
-            }
-        }
 
         public ExplorationStatus Status { get; private set; }
 
@@ -91,7 +40,54 @@ namespace Explorer
 
         public MultiColumnExploration? MultiColumnExploration { get; private set; }
 
+        public bool MultiColumnEnabled => options.MultiColumnEnabled;
+
+        public int SamplesToPublish => options.SamplesToPublish;
+
         private Task? MainTask { get; set; }
+
+        public IEnumerable<IEnumerable<object?>> GetSampleData()
+        {
+            if (Status != ExplorationStatus.Complete)
+            {
+                yield break;
+            }
+
+            var uncorrelatedSampleRows = UncorrelatedSampleRows(SamplesToPublish);
+
+            if (!MultiColumnEnabled)
+            {
+                foreach (var row in uncorrelatedSampleRows)
+                {
+                    yield return row;
+                }
+                yield break;
+            }
+
+            var multiColumnMetrics = MultiColumnExploration?.PublishedMetrics
+                ?? throw new InvalidOperationException("Expected correlated sample data metric to be available.");
+
+            var metric = multiColumnMetrics
+                .SingleOrDefault(m => m.Name == CorrelatedSamples.MetricName)?.Metric;
+
+            var correlatedSamplesByIndex = Array.Empty<IEnumerable<(int, object?)>>();
+
+            if (metric is CorrelatedSamples correlatedSamples)
+            {
+                correlatedSamplesByIndex = correlatedSamples.ByIndex.ToArray();
+            }
+
+            foreach (var (row, toInsert) in uncorrelatedSampleRows.Zip(correlatedSamplesByIndex))
+            {
+                // replace uncorrelated with correlated samples where available
+                foreach (var (i, v) in toInsert)
+                {
+                    row[i] = v;
+                }
+
+                yield return row;
+            }
+        }
 
         public void CancelExploration()
         {
@@ -101,8 +97,12 @@ namespace Explorer
 
         public void Dispose()
         {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            foreach (var item in ColumnExplorations)
+            {
+                item.Dispose();
+            }
+            explorationRootContainer.Dispose();
+            cancellationTokenSource.Dispose();
         }
 
         public void Explore<TBuilderArgs>(
@@ -126,13 +126,16 @@ namespace Explorer
                             .Select(scope => new ColumnExploration(scope))
                             .ToImmutableArray();
 
-                        var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
+                        if (MultiColumnEnabled)
+                        {
+                            var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
                             singleColumnScopes.Select(_ => _.MetricsPublisher));
 
-                        MultiColumnExploration = new MultiColumnExploration(
-                            multiColumnScopeBuilder.Build(
-                                explorationRootContainer.GetNestedContainer(),
-                                contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
+                            MultiColumnExploration = new MultiColumnExploration(
+                                multiColumnScopeBuilder.Build(
+                                    explorationRootContainer.GetNestedContainer(),
+                                    contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
+                        }
                     });
 
                 // Analyses
@@ -149,6 +152,25 @@ namespace Explorer
             });
         }
 
+        private List<List<object?>> UncorrelatedSampleRows(int rowCount)
+        {
+            var uncorrelatedSampleRows = new List<List<object?>>(
+                Enumerable.Range(0, rowCount).Select(_ => new List<object?>()));
+
+            foreach (var uncorrelatedSampleColumn in ColumnExplorations
+                .Select(ce => (IEnumerable?)ce.PublishedMetrics
+                                .SingleOrDefault(m => m.Name == "sample_values")?.Metric)
+                .Select(metric => metric?.Cast<object?>() ?? Array.Empty<object?>()))
+            {
+                for (var i = 0; i < rowCount; i++)
+                {
+                    uncorrelatedSampleRows[i].Add(uncorrelatedSampleColumn.ElementAtOrDefault(i));
+                }
+            }
+
+            return uncorrelatedSampleRows;
+        }
+
         private async Task RunStage(ExplorationStatus initialStatus, Func<Task> t)
         {
             Status = initialStatus;
@@ -160,23 +182,6 @@ namespace Explorer
             {
                 Status = ExplorationStatus.Error;
                 throw;
-            }
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    foreach (var item in ColumnExplorations)
-                    {
-                        item.Dispose();
-                    }
-                    explorationRootContainer.Dispose();
-                    cancellationTokenSource.Dispose();
-                }
-                disposedValue = true;
             }
         }
     }

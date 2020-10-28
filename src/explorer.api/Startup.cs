@@ -34,8 +34,9 @@ namespace Explorer.Api
             services.AddControllers();
             services.AddApiVersioning();
 
-            var config = Configuration.GetSection("Explorer").Get<ExplorerConfig>();
-            services.AddSingleton(config);
+            const string ConfigSection = "Explorer";
+            services.Configure<ExplorerOptions>(Configuration.GetSection(ConfigSection));
+            services.Configure<ConnectionOptions>(Configuration.GetSection(ConfigSection));
 
             services.AddAircloakJsonApiServices<ExplorerApiAuthProvider>();
 

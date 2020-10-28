@@ -5,16 +5,24 @@ namespace Explorer.Components
     using System.Text.Json;
     using System.Threading.Tasks;
 
+    using Explorer;
     using Explorer.Common;
     using Explorer.Metrics;
     using Explorer.Queries;
 
+    using Microsoft.Extensions.Options;
+
     public class DistinctValuesComponent
         : ExplorerComponent<DistinctValuesComponent.Result>, PublisherComponent
     {
-        private const int DefaultNumValuesToPublish = 10;
+        private readonly ExplorerOptions options;
 
-        public int NumValuesToPublish { get; set; } = DefaultNumValuesToPublish;
+        public DistinctValuesComponent(IOptions<ExplorerOptions> options)
+        {
+            this.options = options.Value;
+        }
+
+        private int NumValuesToPublish => options.DistinctValuesToPublish;
 
         public IEnumerable<ExploreMetric> YieldMetrics(Result result)
         {
