@@ -7,10 +7,11 @@ namespace Explorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Explorer.Metrics;
     using Lamar;
     using static Explorer.ExplorationStatusEnum;
 
-    public sealed class Exploration : AbstractExploration, IDisposable
+    public sealed class Exploration : IDisposable
     {
         private readonly IContainer explorationRootContainer;
         private readonly ExplorationScopeBuilder scopeBuilder;
@@ -26,36 +27,71 @@ namespace Explorer
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public ImmutableArray<ColumnExploration> ColumnExplorations { get; set; }
+        public ImmutableArray<ColumnExploration> ColumnExplorations { get; private set; }
             = ImmutableArray<ColumnExploration>.Empty;
 
         public IEnumerable<IEnumerable<object?>> SampleData
         {
             get
             {
-                if (!Completion.IsCompletedSuccessfully)
+                if (Status != ExplorationStatus.Complete)
                 {
                     yield break;
                 }
-                var valuesList = ColumnExplorations
-                    .Select(ce => ce.PublishedMetrics.SingleOrDefault(m => m.Name == "sample_values")?.Metric as IEnumerable)
-                    .Select(metric => metric?.Cast<object?>());
-                var numSamples = valuesList.DefaultIfEmpty().Max(col => col?.Count() ?? 0);
-                for (var i = 0; i < numSamples; i++)
+
+                var multiColumnMetrics = MultiColumnExploration?.PublishedMetrics
+                    ?? throw new InvalidOperationException("Expected correlated sample data metric to be available.");
+
+                var metric = multiColumnMetrics
+                    .SingleOrDefault(m => m.Name == CorrelatedSamples.MetricName)?.Metric;
+
+                var correlatedSamplesByIndex = Array.Empty<IEnumerable<(int, object?)>>();
+
+                if (metric is CorrelatedSamples correlatedSamples)
                 {
-                    yield return valuesList.Select(sampleColumn => sampleColumn?.ElementAtOrDefault(i));
+                    correlatedSamplesByIndex = correlatedSamples.ByIndex.ToArray();
+                }
+
+                // TODO: rowCount should be a shared configuration item or request parameter.
+                var rowCount = correlatedSamplesByIndex.Length;
+
+                var uncorrelatedSampleRows = new List<List<object?>>(
+                    Enumerable.Range(0, rowCount).Select(_ => new List<object?>()));
+
+                foreach (var uncorrelatedSampleColumn in ColumnExplorations
+                    .Select(ce => (IEnumerable?)ce.PublishedMetrics
+                                    .SingleOrDefault(m => m.Name == "sample_values")?.Metric)
+                    .Select(metric => metric?.Cast<object?>() ?? Array.Empty<object?>()))
+                {
+                    for (var i = 0; i < rowCount; i++)
+                    {
+                        uncorrelatedSampleRows[i].Add(uncorrelatedSampleColumn.ElementAtOrDefault(i));
+                    }
+                }
+
+                foreach (var (row, toInsert) in uncorrelatedSampleRows.Zip(correlatedSamplesByIndex))
+                {
+                    var samples = row.ToList();
+
+                    // replace with correlated samples where available
+                    foreach (var (i, v) in toInsert)
+                    {
+                        samples[i] = v;
+                    }
+
+                    yield return samples;
                 }
             }
         }
 
-        public override ExplorationStatus Status { get; protected set; }
+        public ExplorationStatus Status { get; private set; }
 
-        private Func<Task<IEnumerable<ExplorerContext>>>? ValidationTask { get; set; }
+        public Task Completion => MainTask
+            ?? Task.FromException(new InvalidOperationException("Exploration not started."));
 
-        public void Initialise<TBuilderArgs>(
-                ExplorerContextBuilder<TBuilderArgs> contextBuilder,
-                TBuilderArgs builderArgs)
-            => ValidationTask = async () => await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
+        public MultiColumnExploration? MultiColumnExploration { get; private set; }
+
+        private Task? MainTask { get; set; }
 
         public void CancelExploration()
         {
@@ -69,44 +105,62 @@ namespace Explorer
             GC.SuppressFinalize(this);
         }
 
-        protected override async Task RunTask()
+        public void Explore<TBuilderArgs>(
+                ExplorerContextBuilder<TBuilderArgs> contextBuilder,
+                TBuilderArgs builderArgs)
         {
-            // Validation
-            await RunStage(
-                ExplorationStatus.Validating,
-                async () =>
-                {
-                    var contexts = await (ValidationTask?.Invoke()
-                        ?? throw new InvalidOperationException("No validation task specified."));
+            MainTask = Task.Run(async () =>
+            {
+                // Validation
+                await RunStage(
+                    ExplorationStatus.Validating,
+                    async () =>
+                    {
+                        var contexts = await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
 
-                    ColumnExplorations = contexts
-                        .Select(context =>
-                        {
-                            var scope = scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context);
-                            return new ColumnExploration(scope);
-                        })
-                        .ToImmutableArray();
-                });
+                        var singleColumnScopes = contexts
+                            .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
+                            .ToList();
 
-            // Single-column analyses
-            await RunStage(
-                ExplorationStatus.Processing,
-                async () => await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion)));
+                        ColumnExplorations = singleColumnScopes
+                            .Select(scope => new ColumnExploration(scope))
+                            .ToImmutableArray();
 
-            // Multi-column analyses
-            // We have access to all the ColumnExplorations here, so we should be able to extract some
-            // context around which column combinations are promising candidates for multi-column analysis.
-            // await RunStage(
-            //     ExplorationStatus.Processing,
-            //     async () =>
-            //     {
-            //         var multiColumnExploration = new MultiColumnExploration(ColumnExplorations);
-            //
-            //         await multiColumnExploration.Completion;
-            //     });
+                        var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
+                            singleColumnScopes.Select(_ => _.MetricsPublisher));
 
-            // Completed successfully
-            Status = ExplorationStatus.Complete;
+                        MultiColumnExploration = new MultiColumnExploration(
+                            multiColumnScopeBuilder.Build(
+                                explorationRootContainer.GetNestedContainer(),
+                                contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
+                    });
+
+                // Analyses
+                await RunStage(
+                    ExplorationStatus.Processing,
+                    async () =>
+                    {
+                        await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+                        await (MultiColumnExploration?.Completion ?? Task.CompletedTask);
+                    });
+
+                // Completed successfully
+                Status = ExplorationStatus.Complete;
+            });
+        }
+
+        private async Task RunStage(ExplorationStatus initialStatus, Func<Task> t)
+        {
+            Status = initialStatus;
+            try
+            {
+                await t();
+            }
+            catch
+            {
+                Status = ExplorationStatus.Error;
+                throw;
+            }
         }
 
         private void Dispose(bool disposing)

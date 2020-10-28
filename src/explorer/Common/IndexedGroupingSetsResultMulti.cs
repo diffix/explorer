@@ -12,13 +12,16 @@ namespace Explorer.Common
     {
         internal IndexedGroupingSetsResultMulti(ref Utf8JsonReader reader, ImmutableArray<TIndex> groupingLabels)
         {
-            AllGroupingLabels = groupingLabels;
-            (GroupingId, Values) = reader.ParseMultiGroupingSet(groupingLabels.Length);
+            int groupingId;
+            (groupingId, Values) = reader.ParseMultiGroupingSet(groupingLabels.Length);
             Count = reader.ParseCount();
             CountNoise = reader.ParseCountNoise();
+
+            AllGroupingLabels = groupingLabels;
+            ColumnGrouping = new ColumnGrouping(groupingLabels.Length, groupingId);
         }
 
-        public int GroupingId { get; }
+        public int GroupingId => ColumnGrouping.GroupingId;
 
         public ImmutableArray<DValue<JsonElement>> Values { get; }
 
@@ -26,11 +29,11 @@ namespace Explorer.Common
 
         public double? CountNoise { get; }
 
-        public IEnumerable<TIndex> GroupingLabels
-            => AllGroupingLabels.Where((_, index) => GroupingIndices.Contains(index));
+        public IEnumerable<TIndex> GroupingLabels => ColumnGrouping.Indices.Select(i => AllGroupingLabels[i]);
 
-        public IEnumerable<int> GroupingIndices =>
-            GroupingIdConverter.GetConverter(AllGroupingLabels.Length).IndicesFromGroupingId(GroupingId);
+        public ImmutableArray<int> GroupingIndices => ColumnGrouping.Indices;
+
+        public ColumnGrouping ColumnGrouping { get; }
 
         /// <summary>
         /// Gets a value indicating whether the row should be considered `null`. The row is considered null if *all*

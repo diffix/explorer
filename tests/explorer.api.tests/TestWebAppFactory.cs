@@ -53,7 +53,6 @@
             // For the explorer interactions, most of the times, we don't want to use the cache
             // So we set the default vcr mode to always record.
             var testConfig = GetTestConfig(testClassName, vcrSessionName, vcrMode);
-            var cassette = LoadCassette(testConfig.VcrCassettePath);
 
             using var request = new HttpRequestMessage(method, endpoint);
             if (data != null)
@@ -62,13 +61,13 @@
                 request.Content.Headers.ContentType = new MediaTypeHeaderValue(System.Net.Mime.MediaTypeNames.Application.Json);
             }
 
-#pragma warning disable CA2000 // call IDisposable.Dispose on handler object
-            var handler = new VcrSharp.ReplayingHandler(
-                new HttpClientHandler(),
+            using var clientHandler = new HttpClientHandler();
+            using var cassette = new VcrSharp.Cassette(testConfig.VcrCassettePath);
+            using var handler = new VcrSharp.ReplayingHandler(
+                clientHandler,
                 testConfig.VcrMode,
                 cassette,
                 VcrSharp.RecordingOptions.RecordAll);
-#pragma warning restore CA2000 // call IDisposable.Dispose on handler object
 
             using var client = CreateDefaultClient(handler);
 
@@ -106,28 +105,9 @@
                     .AddAircloakJsonApiServices<ExplorerApiAuthProvider>()
                     .AddHttpMessageHandler(_ => new VcrSharp.ReplayingHandler(
                             testConfig.VcrMode,
-                            LoadCassette(testConfig.VcrCassettePath),
+                             new VcrSharp.Cassette(testConfig.VcrCassettePath),
                             VcrSharp.RecordingOptions.RecordAll));
             });
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            foreach (var cassette in cassettes.Values)
-            {
-                cassette.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
-        private VcrSharp.Cassette LoadCassette(string path)
-        {
-            if (!cassettes.ContainsKey(path))
-            {
-                cassettes[path] = new VcrSharp.Cassette(path);
-            }
-
-            return cassettes[path];
         }
 
         internal class TestConfig

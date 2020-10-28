@@ -50,8 +50,7 @@ namespace Explorer.Api.Controllers
 
             // Launch and register the exploration.
             var exploration = new Exploration(rootContainer, scopeBuilder);
-            exploration.Initialise(contextBuilder, data);
-            exploration.Run();
+            exploration.Explore(contextBuilder, data);
 
             var id = explorationRegistry.Register(data, exploration);
 

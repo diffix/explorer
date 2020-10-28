@@ -13,29 +13,27 @@ namespace Explorer.Api.Tests
     using VcrSharp;
     using Xunit;
 
-    public class ExplorationTestScope
+    public sealed class ExplorationTestScope : IDisposable
     {
         private static readonly Uri TestApiUri = new Uri("https://attack.aircloak.com/api/");
-        private readonly Container rootContainer;
+        private readonly INestedContainer scopedContainer;
 
         public ExplorationTestScope(Container rootContainer)
         {
-            this.rootContainer = rootContainer;
+            scopedContainer = rootContainer.GetNestedContainer();
         }
 
-        public Cassette? LoadedCassette { get; private set; }
+        private Cassette? LoadedCassette { get; set; }
 
         public ExplorationTestScope LoadCassette(string testFileName)
         {
-            LoadedCassette?.Dispose();
-            LoadedCassette = null;
-
             LoadedCassette = new Cassette($"../../../.vcr/{testFileName}.yaml");
+            scopedContainer.InjectDisposable(LoadedCassette, replace: true);
 
             return this;
         }
 
-        public Exploration PrepareExploration(
+        public Exploration RunExploration(
             string dataSource,
             string table,
             IEnumerable<string> columns,
@@ -48,7 +46,7 @@ namespace Explorer.Api.Tests
             // Register the authentication token for this scope.
             // Note that in most test cases the api key will not be needed as it will be provided from
             // the environment (via a `StaticApiKeyAuthProvider`)
-            if (rootContainer.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
+            if (scopedContainer.GetInstance<IAircloakAuthenticationProvider>() is ExplorerApiAuthProvider auth)
             {
                 auth.RegisterApiKey(apiKey);
             }
@@ -61,8 +59,8 @@ namespace Explorer.Api.Tests
                 Columns = ImmutableArray.Create(columns.ToArray()),
             };
 
-            var exploration = new Exploration(rootContainer, new TypeBasedScopeBuilder());
-            exploration.Initialise(rootContainer.GetInstance<JsonApiContextBuilder>(), testParams);
+            var exploration = new Exploration((IContainer)scopedContainer, new TypeBasedScopeBuilder());
+            exploration.Explore(scopedContainer.GetInstance<JsonApiContextBuilder>(), testParams);
 
             return exploration;
         }
@@ -84,13 +82,18 @@ namespace Explorer.Api.Tests
             IEnumerable<string> columns,
             Action<Dictionary<string, IEnumerable<ExploreMetric>>> check)
         {
-            using var exploration = PrepareExploration(dataSourceName, table, columns);
+            using var exploration = RunExploration(dataSourceName, table, columns);
 
             await exploration.Completion;
             Assert.True(exploration.Completion.IsCompletedSuccessfully);
             Assert.True(exploration.ColumnExplorations.All(ce => ce.Completion.IsCompletedSuccessfully));
 
             CheckMetrics(exploration, check);
+        }
+
+        public void Dispose()
+        {
+            scopedContainer.Dispose();
         }
 
         private static void CheckMetrics(

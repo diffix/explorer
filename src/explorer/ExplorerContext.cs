@@ -1,5 +1,6 @@
 namespace Explorer
 {
+    using System;
     using System.Collections.Immutable;
     using System.Linq;
     using System.Threading.Tasks;
@@ -24,5 +25,7 @@ namespace Explorer
             where TQuery : DQueryStatement, DResultParser<TRow>;
 
         public Task<DResult<TRow>> Exec<TRow>(DQuery<TRow> query);
+
+        public ExplorerContext Merge(ExplorerContext other);
     }
 }

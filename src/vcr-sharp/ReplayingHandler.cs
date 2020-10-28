@@ -79,5 +79,11 @@
 
             return freshResponse;
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            cassette.Dispose();
+            base.Dispose(disposing);
+        }
     }
 }

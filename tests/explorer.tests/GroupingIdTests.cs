@@ -17,15 +17,6 @@ namespace Explorer.Queries.Tests
         }
 
         [Theory]
-        [InlineData(4, -1)] // negative index
-        [InlineData(4, 4)] // out of bounds
-        public void FailsWithOutOfBoundsIndices(int groupSize, int invalidValue)
-        {
-            var converter = GroupingIdConverter.GetConverter(groupSize);
-            Assert.Throws<ArgumentOutOfRangeException>(() => converter.GroupingIdFromIndex(invalidValue));
-        }
-
-        [Theory]
         [InlineData(4, 0b1111)] // no value included in group
         [InlineData(4, 0b0101)] // multiple values in group
         [InlineData(4, 0b0000)] // all values in group
@@ -33,16 +24,6 @@ namespace Explorer.Queries.Tests
         {
             var converter = GroupingIdConverter.GetConverter(groupSize);
             Assert.Throws<InvalidOperationException>(() => converter.SingleIndexFromGroupingId(invalidValue));
-        }
-
-        [Theory]
-        [InlineData(4, 0b101111)] // out of bounds grouping id, index also out of bounds
-        [InlineData(4, 0b111110)] // out of bounds grouping id, index in bounds
-        [InlineData(4, -1)] // out of bounds grouping id, index in bounds
-        public void FailsWithOutOfBoundsGroupingId(int groupSize, int invalidValue)
-        {
-            var converter = GroupingIdConverter.GetConverter(groupSize);
-            Assert.Throws<ArgumentOutOfRangeException>(() => converter.SingleIndexFromGroupingId(invalidValue));
         }
 
         [Theory]
@@ -71,6 +52,30 @@ namespace Explorer.Queries.Tests
             var converter = GroupingIdConverter.GetConverter(groupSize);
 
             Assert.Equal(expectedIndices, converter.IndicesFromGroupingId(groupingId).ToArray());
+        }
+
+        [Theory]
+        [InlineData(4, 0b1111, new int[] { })]
+        [InlineData(4, 0b0000, new int[] { 0, 1, 2, 3 })]
+        [InlineData(4, 0b0101, new int[] { 0, 2 })]
+        [InlineData(4, 0b0110, new int[] { 0, 3 })]
+        [InlineData(4, 0b0111, new int[] { 0 })]
+        public void ReturnsCorrectMultiGroupingId(int groupSize, int expectedGroupingId, int[] indices)
+        {
+            var converter = GroupingIdConverter.GetConverter(groupSize);
+
+            Assert.Equal(expectedGroupingId, converter.GroupingIdFromIndices(indices));
+        }
+
+        [Theory]
+        [InlineData(4, 0b1111, 0)] // no value included in group
+        [InlineData(4, 0b0101, 2)] // multiple values in group
+        [InlineData(4, 0b0000, 4)] // all values in group
+        public void ReturnsCorrectSubGroupSize(int groupSize, int groupingId, int subGroupSize)
+        {
+            var converter = GroupingIdConverter.GetConverter(groupSize);
+
+            Assert.Equal(subGroupSize, converter.SubGroupSize(groupingId));
         }
     }
 }
