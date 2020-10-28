@@ -25,7 +25,7 @@
             .Build()
             .GetSection("Explorer");
 
-        private TestConfig TestConfig => Config.Get<TestConfig>();
+        private static TestConfig TestConfig => Config.Get<TestConfig>();
 
         public static string GetAircloakApiKeyFromEnvironment()
         {

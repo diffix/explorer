@@ -70,22 +70,25 @@ namespace Explorer
             var metric = multiColumnMetrics
                 .SingleOrDefault(m => m.Name == CorrelatedSamples.MetricName)?.Metric;
 
-            var correlatedSamplesByIndex = Array.Empty<IEnumerable<(int, object?)>>();
-
             if (metric is CorrelatedSamples correlatedSamples)
             {
-                correlatedSamplesByIndex = correlatedSamples.ByIndex.ToArray();
-            }
-
-            foreach (var (row, toInsert) in uncorrelatedSampleRows.Zip(correlatedSamplesByIndex))
-            {
-                // replace uncorrelated with correlated samples where available
-                foreach (var (i, v) in toInsert)
+                foreach (var (row, toInsert) in uncorrelatedSampleRows.Zip(correlatedSamples.ByIndex))
                 {
-                    row[i] = v;
-                }
+                    // replace uncorrelated with correlated samples where available
+                    foreach (var (i, v) in toInsert)
+                    {
+                        row[i] = v;
+                    }
 
-                yield return row;
+                    yield return row;
+                }
+            }
+            else
+            {
+                foreach (var row in uncorrelatedSampleRows)
+                {
+                    yield return row;
+                }
             }
         }
 
