@@ -7,7 +7,7 @@ namespace Explorer.Components
     public class SampleValuesGeneratorConfig : ExplorerComponent<SampleValuesGeneratorConfig.Result>
     {
         public const int DefaultNumValuesToPublish = 20;
-        public const double DefaultTextColumnMinFactorForCategoricalSampling = 0.95;
+        public const double DefaultTextColumnMinFactorForCategoricalSampling = 0.05;
 
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
