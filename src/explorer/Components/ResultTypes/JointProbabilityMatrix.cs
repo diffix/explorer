@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Text.Json;
     using Explorer.Common;
@@ -101,7 +102,7 @@
             var randomCount = NoisyCount.Noiseless(rng.NextLong(TotalSampleCount.Count));
 
             var searchResult = cdf.BinarySearch(randomCount, NoisyCountComparerInstance);
-            var index = searchResult > 0 ? searchResult : ~searchResult;
+            var index = searchResult < 0 ? ~searchResult : searchResult;
 
             if (index >= cdfReverseLookup.Length)
             {
@@ -127,12 +128,10 @@
             Debug.Assert(cdf.Count == cdfReverseLookup.Length, "cdf and reverseLookup are out of sync.");
         }
 
-        private class NoisyCountComparer : IComparer<NoisyCount>
+        private class NoisyCountComparer : Comparer<NoisyCount>
         {
-            public int Compare(NoisyCount left, NoisyCount right)
-            {
-                return left.Count.CompareTo(right.Count);
-            }
+            public override int Compare([AllowNull] NoisyCount left, [AllowNull] NoisyCount right)
+                => left.Count.CompareTo(right.Count);
         }
 
         private class Index : IEquatable<Index>
