@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Text.Json;
     using Explorer.Common;
@@ -35,9 +36,9 @@
             Dimensions = Cardinalities.Count;
             TotalAvailableBuckets = Cardinalities.Aggregate(1, (a, b) => a * b);
 
-            // The Nth root of the sum of non-zero buckets where N is the number of columns in the group.
+            // The square root of the sum-of-squares of the cardinalities.
             // This approximates the number of buckets along the diagonal of the n-dimensional hypercube.
-            DiagonalCount = Math.Pow(TotalAvailableBuckets, 1.0 / Dimensions);
+            DiagonalCount = Math.Sqrt(Cardinalities.Select(x => x * x).Sum());
         }
 
         public int NonZeroBucketCount { get => counts.Count; }
@@ -101,7 +102,7 @@
             var randomCount = NoisyCount.Noiseless(rng.NextLong(TotalSampleCount.Count));
 
             var searchResult = cdf.BinarySearch(randomCount, NoisyCountComparerInstance);
-            var index = searchResult > 0 ? searchResult : ~searchResult;
+            var index = searchResult < 0 ? ~searchResult : searchResult;
 
             if (index >= cdfReverseLookup.Length)
             {
@@ -127,12 +128,10 @@
             Debug.Assert(cdf.Count == cdfReverseLookup.Length, "cdf and reverseLookup are out of sync.");
         }
 
-        private class NoisyCountComparer : IComparer<NoisyCount>
+        private class NoisyCountComparer : Comparer<NoisyCount>
         {
-            public int Compare(NoisyCount left, NoisyCount right)
-            {
-                return left.Count.CompareTo(right.Count);
-            }
+            public override int Compare([AllowNull] NoisyCount left, [AllowNull] NoisyCount right)
+                => left.Count.CompareTo(right.Count);
         }
 
         private class Index : IEquatable<Index>
