@@ -35,9 +35,9 @@
             Dimensions = Cardinalities.Count;
             TotalAvailableBuckets = Cardinalities.Aggregate(1, (a, b) => a * b);
 
-            // The Nth root of the sum of non-zero buckets where N is the number of columns in the group.
+            // The square root of the sum-of-squares of the cardinalities.
             // This approximates the number of buckets along the diagonal of the n-dimensional hypercube.
-            DiagonalCount = Math.Pow(TotalAvailableBuckets, 1.0 / Dimensions);
+            DiagonalCount = Math.Sqrt(Cardinalities.Select(x => x * x).Sum());
         }
 
         public int NonZeroBucketCount { get => counts.Count; }
