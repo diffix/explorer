@@ -25,13 +25,6 @@
             .GetSection("Explorer")
             .Get<ExplorerConfig>();
 
-        private readonly Dictionary<string, VcrSharp.Cassette> cassettes;
-
-        public TestWebAppFactory()
-        {
-            cassettes = new Dictionary<string, VcrSharp.Cassette>();
-        }
-
         public static string GetAircloakApiKeyFromEnvironment()
         {
             if (string.IsNullOrEmpty(Config.AircloakApiKey))
@@ -105,7 +98,7 @@
                     .AddAircloakJsonApiServices<ExplorerApiAuthProvider>()
                     .AddHttpMessageHandler(_ => new VcrSharp.ReplayingHandler(
                             testConfig.VcrMode,
-                             new VcrSharp.Cassette(testConfig.VcrCassettePath),
+                            new VcrSharp.Cassette(testConfig.VcrCassettePath),
                             VcrSharp.RecordingOptions.RecordAll));
             });
         }
