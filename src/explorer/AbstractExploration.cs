@@ -60,7 +60,8 @@
             {
                 Status = ExplorationStatus.Error;
 
-                var msg = $"Error in {GetType().Name} for `{Context.DataSource}` / `{Context.Table}` / `{Columns}`.";
+                var columns = string.Join(",", Columns);
+                var msg = $"Error in {GetType().Name} for {Context.DataSource}/{Context.Table}/{columns}.";
                 var wrappedEx = new ExplorerException(msg, ex).WithExtraContext(Context);
                 Scope.Logger?.LogError(ex, msg, wrappedEx.ExtraContext);
 
