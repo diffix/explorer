@@ -50,7 +50,7 @@ namespace Explorer.Components
             yield return new UntypedMetric(
                 name: "sample_values",
                 metric: distribution
-                        .Generate(config.NumValuesToPublish)
+                        .Generate(config.SamplesToPublish)
                         .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
                         .OrderBy(_ => _)
                         .ToList());

@@ -10,6 +10,7 @@ namespace Explorer.Tests
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
+    using Microsoft.Extensions.Options;
     using VcrSharp;
     using Xunit;
 
@@ -25,8 +26,6 @@ namespace Explorer.Tests
             string column,
             DColumnInfo columnInfo,
             string vcrFileName,
-            VCRMode vcrMode = VCRMode.Cache,
-            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
             int pollFrequencySecs = 2)
         : this(
             rootContainer,
@@ -36,8 +35,6 @@ namespace Explorer.Tests
             new[] { column },
             new[] { columnInfo },
             vcrFileName,
-            vcrMode,
-            recordingOptions,
             pollFrequencySecs)
         {
         }
@@ -50,8 +47,6 @@ namespace Explorer.Tests
             IEnumerable<string> columns,
             IEnumerable<DColumnInfo> columnInfo,
             string vcrFileName,
-            VCRMode vcrMode = VCRMode.Cache,
-            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
             int pollFrequencySecs = 2)
         {
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (lifetime is managed by container.)
@@ -64,19 +59,20 @@ namespace Explorer.Tests
             Scope.InjectDisposable(cts);
             Scope.InjectDisposable(cassette);
 
+            var opts = Options.Create(new ConnectionOptions
+            {
+                PollingInterval = pollFrequencySecs * 1000,
+            });
+
             Connection = new AircloakConnection(
                 Scope.GetInstance<JsonApiClient>(),
                 apiUri,
                 dataSource,
-                TimeSpan.FromSeconds(pollFrequencySecs),
+                opts,
                 cts.Token);
 
             Context = new ExplorerTestContext(Connection, dataSource, table, columns, columnInfo);
             Scope.Inject<ExplorerContext>(Context);
-
-            var vcrFactory = Scope.GetInstance<VcrApiHttpClientFactory>();
-            vcrFactory.VcrMode = vcrMode;
-            vcrFactory.RecordingOptions = recordingOptions;
         }
 
         public ExplorerTestContext Context { get; }
@@ -84,6 +80,12 @@ namespace Explorer.Tests
         private INestedContainer Scope { get; }
 
         private AircloakConnection Connection { get; }
+
+        public void SetOptions<T>(Action<T> action)
+        where T : class, new()
+        {
+            action(Scope.GetInstance<IOptions<T>>().Value);
+        }
 
         public async Task<IEnumerable<TRow>> QueryRows<TQuery, TRow>(TQuery query)
         where TQuery : DQueryStatement, DResultParser<TRow>

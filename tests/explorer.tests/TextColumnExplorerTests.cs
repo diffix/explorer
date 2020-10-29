@@ -101,10 +101,13 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "firstname", this);
 
+            // Make sure we use text generation
+            scope.SetOptions<ExplorerOptions>(_ => _.TextColumnMinFactorForCategoricalSampling = 1.0);
+
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r?.IsEmail));
 
             await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
-                Assert.True(result?.SampleValues.All(v => v.Length >= 3)));
+                Assert.All(result?.SampleValues, v => Assert.True(v.Length >= 3)));
         }
 
         [Fact]
@@ -112,10 +115,13 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "cards", "lastname", this);
 
+            // Make sure we use text generation
+            scope.SetOptions<ExplorerOptions>(_ => _.TextColumnMinFactorForCategoricalSampling = 1.0);
+
             await scope.ResultTest<EmailCheckComponent, EmailCheckComponent.Result>(r => Assert.False(r?.IsEmail));
 
             await scope.ResultTest<TextGeneratorComponent, TextGeneratorComponent.Result>(result =>
-                Assert.True(result?.SampleValues.All(v => v.Length >= 3)));
+                Assert.All(result?.SampleValues, v => Assert.True(v.Length >= 3)));
         }
     }
 }

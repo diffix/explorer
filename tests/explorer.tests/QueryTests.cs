@@ -155,7 +155,8 @@
         [Fact]
         public async void TestCancelQuery()
         {
-            using var queryScope = await testFixture.CreateTestScope("gda_taxi", "rides", "pickup_datetime", this, VcrSharp.RecordingOptions.FailureOnly);
+            using var queryScope = await testFixture.CreateTestScope("gda_taxi", "rides", "pickup_datetime", this);
+            queryScope.SetOptions<VcrSharp.VcrOptions>(_ => _.RecordingOptions = VcrSharp.RecordingOptions.FailureOnly);
 
             var queryTask = Task.Run(() => queryScope.QueryRows(new LongRunningQuery()));
 

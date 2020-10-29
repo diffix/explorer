@@ -5,8 +5,10 @@ namespace Aircloak.JsonApi
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
+
     using Aircloak.JsonApi.ResponseTypes;
     using Diffix;
+    using Microsoft.Extensions.Options;
 
     /// <summary>
     /// Parses a row instance.
@@ -21,8 +23,6 @@ namespace Aircloak.JsonApi
     /// </summary>
     public class AircloakConnection
     {
-        private const int MaxConcurrentRequests = 10;
-
         private static readonly ConcurrentDictionary<Uri, SemaphoreSlim> Semaphores =
             new ConcurrentDictionary<Uri, SemaphoreSlim>();
 
@@ -39,21 +39,22 @@ namespace Aircloak.JsonApi
         /// <param name="apiClient">The helper API client object which will be used to make HTTP requests to the Aircloak system.</param>
         /// <param name="apiUrl">The base url of the Aircloak Api.</param>
         /// <param name="dataSourceName">The data source to run the queries against.</param>
-        /// <param name="pollFrequency">The interval to be used for polling query results.</param>
+        /// <param name="options">The connection options.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> that signals the query to abort.</param>
         public AircloakConnection(
             JsonApiClient apiClient,
             Uri apiUrl,
             string dataSourceName,
-            TimeSpan pollFrequency,
+            IOptions<ConnectionOptions> options,
             CancellationToken cancellationToken)
         {
             this.apiUrl = apiUrl;
             this.apiClient = apiClient;
             this.dataSourceName = dataSourceName;
-            this.pollFrequency = pollFrequency;
             this.cancellationToken = cancellationToken;
-            semaphore = Semaphores.GetOrAdd(apiUrl, _ => new SemaphoreSlim(MaxConcurrentRequests));
+
+            pollFrequency = TimeSpan.FromMilliseconds(options.Value.PollingInterval);
+            semaphore = Semaphores.GetOrAdd(apiUrl, _ => new SemaphoreSlim(options.Value.MaxConcurrentQueries));
         }
 
         /// <summary>

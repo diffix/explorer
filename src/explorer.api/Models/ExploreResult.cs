@@ -33,7 +33,7 @@ namespace Explorer.Api.Models
             Status = exploration.Status;
             DataSource = exploreParams.DataSource;
             Table = exploreParams.Table;
-            SampleData = exploration.SampleData.Select(col => col.ToList()).ToList();
+            SampleData = exploration.GetSampleData().Select(col => col.ToList()).ToList();
             ColumnMetrics = exploration.ColumnExplorations.Select(ce => new ColumnMetricsType(ce)).ToList();
             Correlations = exploration.MultiColumnExploration?.PublishedMetrics
                 .Where(m => m.Name != CorrelatedSamples.MetricName)

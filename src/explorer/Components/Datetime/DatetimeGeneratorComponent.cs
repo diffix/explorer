@@ -1,23 +1,25 @@
 namespace Explorer.Components
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
 
     using Explorer.Metrics;
+    using Microsoft.Extensions.Options;
 
     public class DatetimeGeneratorComponent : PublisherComponent
     {
-        public const int DefaultSamplesToPublish = 20;
-
         private readonly ResultProvider<DatetimeDistribution> distributionProvider;
+        private readonly ExplorerOptions options;
 
-        public DatetimeGeneratorComponent(ResultProvider<DatetimeDistribution> distributionProvider)
+        public DatetimeGeneratorComponent(
+            ResultProvider<DatetimeDistribution> distributionProvider,
+            IOptions<ExplorerOptions> options)
         {
             this.distributionProvider = distributionProvider;
+            this.options = options.Value;
         }
 
-        public int SamplesToPublish { get; set; } = DefaultSamplesToPublish;
+        private int SamplesToPublish => options.SamplesToPublish;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {

@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="../appsettings.Test.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/explorer.api/explorer.api.csproj" />
     <ProjectReference Include="../../src/vcr-sharp/vcr-sharp.csproj" />
   </ItemGroup>

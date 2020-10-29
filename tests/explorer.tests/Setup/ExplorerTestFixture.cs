@@ -15,29 +15,36 @@ namespace Explorer.Tests
     using Explorer.Metrics;
     using Lamar;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using VcrSharp;
 
     public sealed class ExplorerTestFixture : IDisposable
     {
-        private static readonly TestConfig Config = new ConfigurationBuilder()
-            .AddJsonFile($"{Environment.CurrentDirectory}/../../../../appsettings.Test.json")
+        private static readonly IConfiguration Config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.Test.json")
             .AddEnvironmentVariables()
             .Build()
-            .GetSection("Explorer")
-            .Get<TestConfig>();
+            .GetSection("Explorer");
 
         private static DataSourceCollection? dataSources;
 
         public ExplorerTestFixture()
         {
+            ApiUri = new Uri(Config.Get<TestConfig>().DefaultApiUrl);
+
             Container = new Container(registry =>
             {
+                // Configure options
+                registry.Configure<ExplorerOptions>(Config);
+                registry.Configure<ConnectionOptions>(Config);
+                registry.Configure<VcrOptions>(Config);
+
                 // VCR setup
-                registry.For<IHttpClientFactory>().Use<VcrApiHttpClientFactory>().Scoped();
                 registry.Injectable<Cassette>();
+                registry.For<IHttpClientFactory>().Use<VcrApiHttpClientFactory>();
 
                 // Configure Authentication
-                registry.For<IAircloakAuthenticationProvider>().Use(Config).Singleton();
+                registry.For<IAircloakAuthenticationProvider>().Use(Config.Get<TestConfig>()).Singleton();
 
                 // Cancellation
                 registry.Injectable<CancellationTokenSource>();
@@ -47,8 +54,6 @@ namespace Explorer.Tests
 
                 registry.IncludeRegistry<ComponentRegistry>();
             });
-
-            ApiUri = new Uri(Config.DefaultApiUrl);
         }
 
         public Uri ApiUri { get; }
@@ -60,13 +65,11 @@ namespace Explorer.Tests
             string table,
             string column,
             object caller,
-            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
-            VCRMode vcrMode = VCRMode.Cache,
             [CallerMemberName] string callerMemberName = "")
         {
             var vcrFileName = Cassette.GenerateVcrFilename(caller, callerMemberName);
             var columnInfo = await GetColumnInfo(dataSource, table, column);
-            return new TestScope(Container, ApiUri, dataSource, table, column, columnInfo, vcrFileName, vcrMode, recordingOptions);
+            return new TestScope(Container, ApiUri, dataSource, table, column, columnInfo, vcrFileName);
         }
 
         public async Task<TestScope> CreateTestScope(
@@ -74,13 +77,11 @@ namespace Explorer.Tests
             string table,
             IEnumerable<string> columns,
             object caller,
-            RecordingOptions recordingOptions = RecordingOptions.SuccessOnly,
-            VCRMode vcrMode = VCRMode.Cache,
             [CallerMemberName] string callerMemberName = "")
         {
             var vcrFileName = Cassette.GenerateVcrFilename(caller, callerMemberName);
             var columnInfo = await GetColumnInfo(dataSource, table, columns).Collect();
-            return new TestScope(Container, ApiUri, dataSource, table, columns, columnInfo, vcrFileName, vcrMode, recordingOptions);
+            return new TestScope(Container, ApiUri, dataSource, table, columns, columnInfo, vcrFileName);
         }
 
         public void Dispose()

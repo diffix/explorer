@@ -1,7 +1,6 @@
 ﻿namespace Explorer.Api.Tests
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -15,24 +14,27 @@
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Options;
+    using VcrSharp;
 
-    public class TestWebAppFactory : WebApplicationFactory<Startup>
+    public sealed class TestWebAppFactory : WebApplicationFactory<Startup>
     {
-        public static readonly ExplorerConfig Config = new ConfigurationBuilder()
-            .AddJsonFile($"{Environment.CurrentDirectory}/../../../../appsettings.Test.json")
+        private static readonly IConfiguration Config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.Test.json")
             .AddEnvironmentVariables()
             .Build()
-            .GetSection("Explorer")
-            .Get<ExplorerConfig>();
+            .GetSection("Explorer");
+
+        private static TestConfig TestConfig => Config.Get<TestConfig>();
 
         public static string GetAircloakApiKeyFromEnvironment()
         {
-            if (string.IsNullOrEmpty(Config.AircloakApiKey))
+            if (string.IsNullOrEmpty(Config.Get<TestConfig>().AircloakApiKey))
             {
                 throw new Exception("ApiKey needs to be set in environment or in config.");
             }
 
-            return Config.AircloakApiKey;
+            return Config.Get<TestConfig>().AircloakApiKey;
         }
 
         public async Task<HttpResponseMessage> SendExplorerApiRequest(
@@ -41,7 +43,7 @@
             object? data,
             string testClassName,
             string vcrSessionName,
-            VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Record)
+            VCRMode vcrMode = VCRMode.Record)
         {
             // For the explorer interactions, most of the times, we don't want to use the cache
             // So we set the default vcr mode to always record.
@@ -55,12 +57,12 @@
             }
 
             using var clientHandler = new HttpClientHandler();
-            using var cassette = new VcrSharp.Cassette(testConfig.VcrCassettePath);
-            using var handler = new VcrSharp.ReplayingHandler(
+            using var cassette = new Cassette(testConfig.VcrCassettePath);
+            using var handler = new ReplayingHandler(
                 clientHandler,
                 testConfig.VcrMode,
                 cassette,
-                VcrSharp.RecordingOptions.RecordAll);
+                RecordingOptions.RecordAll);
 
             using var client = CreateDefaultClient(handler);
 
@@ -73,18 +75,25 @@
         }
 
 #pragma warning disable CA1822 // method should be made static
-        internal TestConfig GetTestConfig(string testClassName, string vcrSessionName, VcrSharp.VCRMode vcrMode = VcrSharp.VCRMode.Cache)
+        internal TestConfig GetTestConfig(string testClassName, string vcrSessionName, VCRMode vcrMode = VCRMode.Cache)
         {
-            var vcrCassette = new FileInfo($"../../../.vcr/{testClassName}.{vcrSessionName}.yaml");
+            var vcrCassetteFile = new FileInfo($"../../../.vcr/{testClassName}.{vcrSessionName}.yaml");
 
             // take care to use a small polling interval only when VCR is allowed to playback and we have a non-empty cassette
             // (i.e. when in Record only mode, the polling interval will be large)
-            var vcrPlayback = vcrMode == VcrSharp.VCRMode.Playback || vcrMode == VcrSharp.VCRMode.Cache;
-            var pollFrequency = (vcrCassette.Exists && vcrCassette.Length > 0 && vcrPlayback) ?
-                    TimeSpan.FromMilliseconds(1) :
-                    Config.PollFrequencyTimeSpan;
+            var vcrPlayback = vcrMode == VCRMode.Playback || vcrMode == VCRMode.Cache;
+            var pollFrequency = (vcrCassetteFile.Exists && vcrCassetteFile.Length > 0 && vcrPlayback) ?
+                    1 :
+                    TestConfig.PollFrequency;
 
-            return new TestConfig(vcrCassette.FullName, pollFrequency, vcrMode);
+            return new TestConfig
+            {
+                AircloakApiKey = TestConfig.AircloakApiKey,
+                DefaultApiUrl = TestConfig.DefaultApiUrl,
+                PollFrequency = pollFrequency,
+                VcrCassettePath = vcrCassetteFile.FullName,
+                VcrMode = vcrMode,
+            };
         }
 #pragma warning restore CA1822 // method should be made static
 
@@ -96,27 +105,13 @@
             {
                 services
                     .AddAircloakJsonApiServices<ExplorerApiAuthProvider>()
-                    .AddHttpMessageHandler(_ => new VcrSharp.ReplayingHandler(
+                    .AddHttpMessageHandler(_ => new ReplayingHandler(
                             testConfig.VcrMode,
-                            new VcrSharp.Cassette(testConfig.VcrCassettePath),
-                            VcrSharp.RecordingOptions.RecordAll));
+                            new Cassette(testConfig.VcrCassettePath),
+                            RecordingOptions.RecordAll));
+
+                services.Configure<VcrOptions>(Config);
             });
-        }
-
-        internal class TestConfig
-        {
-            public TestConfig(string vcrCassettePath, TimeSpan pollFrequency, VcrSharp.VCRMode vcrMode)
-            {
-                VcrCassettePath = vcrCassettePath;
-                PollFrequency = pollFrequency;
-                VcrMode = vcrMode;
-            }
-
-            public string VcrCassettePath { get; }
-
-            public TimeSpan PollFrequency { get; }
-
-            public VcrSharp.VCRMode VcrMode { get; }
         }
     }
 }

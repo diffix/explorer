@@ -63,7 +63,7 @@ namespace Explorer.Tests
         {
             using var scope = await testFixture.CreateTestScope("gda_banking", "loans", "duration", this);
 
-            scope.ConfigurePublisher<DistinctValuesComponent>(c => c.NumValuesToPublish = 1);
+            scope.SetOptions<ExplorerOptions>(_ => _.DistinctValuesToPublish = 1);
 
             await scope.MetricsTest<DistinctValuesComponent>(metrics =>
             {

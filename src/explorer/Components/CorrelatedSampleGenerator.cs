@@ -2,21 +2,26 @@ namespace Explorer.Components
 {
     using System.Collections.Generic;
     using System.Linq;
+
     using Explorer.Common;
     using Explorer.Metrics;
+    using Microsoft.Extensions.Options;
 
     public class CorrelatedSampleGenerator : PublisherComponent
     {
-        private const int DefaultSamplesToPublish = 20;
-
         private readonly ResultProvider<ColumnCorrelationComponent.Result> correlationProvider;
+        private readonly ExplorerOptions options;
 
-        public CorrelatedSampleGenerator(ResultProvider<ColumnCorrelationComponent.Result> correlationProvider)
+        public CorrelatedSampleGenerator(
+            ResultProvider<ColumnCorrelationComponent.Result> correlationProvider,
+            IOptions<ExplorerOptions> options)
         {
             this.correlationProvider = correlationProvider;
+
+            this.options = options.Value;
         }
 
-        public int SamplesToPublish { get; } = DefaultSamplesToPublish;
+        private int SamplesToPublish => options.SamplesToPublish;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {

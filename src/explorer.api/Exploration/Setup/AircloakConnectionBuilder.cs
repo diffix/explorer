@@ -4,15 +4,18 @@ namespace Explorer.Api
     using System.Threading;
 
     using Aircloak.JsonApi;
+    using Microsoft.Extensions.Options;
 
     public class AircloakConnectionBuilder
     {
         private readonly JsonApiClient apiClient;
-        private readonly ExplorerConfig explorerConfig;
+        private readonly IOptions<ConnectionOptions> options;
 
-        public AircloakConnectionBuilder(JsonApiClient apiClient, ExplorerConfig explorerConfig)
+        public AircloakConnectionBuilder(
+            JsonApiClient apiClient,
+            IOptions<ConnectionOptions> options)
         {
-            this.explorerConfig = explorerConfig;
+            this.options = options;
             this.apiClient = apiClient;
         }
 
@@ -22,7 +25,7 @@ namespace Explorer.Api
                 apiClient,
                 apiUri,
                 dataSource,
-                explorerConfig.PollFrequencyTimeSpan,
+                options,
                 token);
         }
     }
