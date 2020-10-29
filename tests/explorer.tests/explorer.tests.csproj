@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="../appsettings.Test.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/aircloak/aircloak.csproj" />
     <ProjectReference Include="../../src/explorer/explorer.csproj" />
     <ProjectReference Include="../../src/vcr-sharp/vcr-sharp.csproj" />
