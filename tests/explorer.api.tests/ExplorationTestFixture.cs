@@ -45,7 +45,7 @@
         public Container RootContainer { get; }
 
         internal static IConfiguration Config { get; } = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.Development.json")
+            .AddJsonFile("appsettings.Test.json")
             .AddEnvironmentVariables()
             .Build()
             .GetSection("Explorer");
