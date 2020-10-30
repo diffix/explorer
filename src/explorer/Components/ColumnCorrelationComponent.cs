@@ -195,6 +195,11 @@
                 return null;
             }
 
+            // Aircloak back-end queries add an extra member to the grouping query, so we can group at most
+            // (GroupSizeLimit - 1) columns.
+            // TODO: Find a way to include all columns and recombine the results instead of truncating the list.
+            Projections = Projections.Take(GroupingIdConverter.GroupSizeLimit - 1).ToImmutableArray();
+
             IEnumerable<MultiColumnCounts.Result>? queryResults = default;
             try
             {

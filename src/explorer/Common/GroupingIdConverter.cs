@@ -19,6 +19,12 @@
     /// </remarks>
     internal sealed class GroupingIdConverter
     {
+        /// <summary>
+        /// This is the maximum number of columns that can be included in a grouping statement. For most DBs this is
+        /// 32 (the number of bits in an int).
+        /// </summary>
+        public const int GroupSizeLimit = 32;
+
         private static ImmutableDictionary<int, GroupingIdConverter> converters =
             ImmutableDictionary.Create<int, GroupingIdConverter>();
 
@@ -28,9 +34,9 @@
 
         private GroupingIdConverter(int groupSizeMax)
         {
-            if (groupSizeMax < 1 || groupSizeMax >= sizeof(int) * 8)
+            if (groupSizeMax < 1 || groupSizeMax >= GroupSizeLimit)
             {
-                throw new ArgumentOutOfRangeException($"Group size must be in range [1 {sizeof(int) * 8}].");
+                throw new ArgumentOutOfRangeException($"Group size must be in range [1 {GroupSizeLimit}].");
             }
 
             var mask = 0;
