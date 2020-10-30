@@ -38,7 +38,7 @@ namespace Explorer.Components
 
             var emailCheck = await Context.Exec(new EmailCheck());
             var emailCount = emailCheck.Rows.First();
-            var isEmail = emailCount >= distinctValuesResult.ValueCounts.NonSuppressedNonNullCount;
+            var isEmail = emailCount > 0L && emailCount >= distinctValuesResult.ValueCounts.NonSuppressedNonNullCount;
             return new Result(isEmail);
         }
 
