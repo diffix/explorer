@@ -15,6 +15,8 @@ namespace Explorer.Components
     public class DistinctValuesComponent
         : ExplorerComponent<DistinctValuesComponent.Result>, PublisherComponent
     {
+        private static readonly JsonElement JsonNull = Utilities.MakeJsonNull();
+
         private readonly ExplorerOptions options;
 
         public DistinctValuesComponent(IOptions<ExplorerOptions> options)
@@ -36,11 +38,11 @@ namespace Explorer.Components
                 // considered categorical or quasi-categorical.
                 var distinctValues =
                     from row in result.DistinctRows
-                    where row.HasValue
+                    where !row.IsSuppressed
                     orderby row.Count descending
                     select new
                     {
-                        row.Value,
+                        Value = row.IsNull ? JsonNull : row.Value,
                         row.Count,
                     };
 

@@ -1,5 +1,6 @@
 namespace Explorer.Common
 {
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     public static class Utilities
@@ -9,6 +10,12 @@ namespace Explorer.Common
             await Task.WhenAll(task1, task2, task3);
 
             return (task1.Result, task2.Result, task3.Result);
+        }
+
+        internal static JsonElement MakeJsonNull()
+        {
+            using var jdoc = JsonDocument.Parse("null");
+            return jdoc.RootElement.Clone();
         }
     }
 }
