@@ -39,6 +39,16 @@
         {
             var columnType = metadata.ColumnInfo.Type;
 
+            if (metadata.IsCategoricalColumn)
+            {
+                if (metadata.IsInvariantColumn)
+                {
+                    return new IgnoredColumnProjection(metadata.Column, metadata.Index);
+                }
+
+                return new IdentityProjection(metadata.Column, metadata.Index, metadata.ColumnInfo.Type);
+            }
+
             return columnType switch
             {
                 DValueType.Date => DateTimeProjection(metadata),
@@ -48,16 +58,11 @@
                 DValueType.Integer => NumericProjection(metadata),
                 DValueType.Real => NumericProjection(metadata),
                 DValueType.Text => TextProjection(metadata),
-                _ => new IdentityProjection(metadata.Column, metadata.Index, columnType),
+                _ => new IgnoredColumnProjection(metadata.Column, metadata.Index),
             };
 
             static ColumnProjection NumericProjection(SingleColumnMetadata metadata)
             {
-                if (metadata.IsCategoricalColumn)
-                {
-                    return new IdentityProjection(metadata.Column, metadata.Index, metadata.ColumnInfo.Type);
-                }
-
                 var distribution = metadata.TryGetMetric<NumericDistribution>("descriptive_stats");
 
                 return new BucketisingProjection(
@@ -66,22 +71,12 @@
 
             static ColumnProjection TextProjection(SingleColumnMetadata metadata)
             {
-                if (metadata.IsCategoricalColumn)
-                {
-                    return new IdentityProjection(metadata.Column, metadata.Index, metadata.ColumnInfo.Type);
-                }
-
                 // TODO: somehow use string patterns.
                 return new IgnoredColumnProjection(metadata.Column, metadata.Index);
             }
 
             static ColumnProjection DateTimeProjection(SingleColumnMetadata metadata)
             {
-                if (metadata.IsCategoricalColumn)
-                {
-                    return new IdentityProjection(metadata.Column, metadata.Index, metadata.ColumnInfo.Type);
-                }
-
                 // TODO: bucketing of time values.
                 return new IgnoredColumnProjection(metadata.Column, metadata.Index);
             }
@@ -113,6 +108,19 @@
             public IEnumerable<ExploreMetric> Metrics => metricsPublisher.PublishedMetrics;
 
             public bool IsCategoricalColumn => TryGetMetric<bool>("distinct.is_categorical");
+
+            public bool IsInvariantColumn
+            {
+                get
+                {
+                    if (!IsCategoricalColumn)
+                    {
+                        return false;
+                    }
+
+                    return TryGetMetric<IEnumerable<object>>("distinct.values").Count() <= 1;
+                }
+            }
 
             public T TryGetMetric<T>(string metricName)
             {
