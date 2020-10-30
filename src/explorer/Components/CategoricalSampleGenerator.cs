@@ -12,7 +12,7 @@ namespace Explorer.Components
     public class CategoricalSampleGenerator
         : ExplorerComponent<CategoricalSampleGenerator.Result>, PublisherComponent
     {
-        private static readonly JsonElement JsonNull = JsonDocument.Parse("null").RootElement;
+        private static readonly JsonElement JsonNull = Utilities.MakeJsonNull();
 
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<SampleValuesGeneratorConfig.Result> sampleValuesGeneratorConfigProvider;
