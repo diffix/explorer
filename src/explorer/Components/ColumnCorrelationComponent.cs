@@ -215,10 +215,7 @@
                     }
                 }
 
-                if (queryResults?.Any() ?? false)
-                {
-                    throw;
-                }
+                throw;
             }
 
             var groups = queryResults.GroupBy(row => row.ColumnGrouping);
