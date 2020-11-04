@@ -21,12 +21,17 @@
     {
         private readonly ExplorerOptions options;
 
-        public ColumnCorrelationComponent(IOptions<ExplorerOptions> options)
+        public ColumnCorrelationComponent(
+            IOptions<ExplorerOptions> options,
+            Logger<ColumnCorrelationComponent> logger)
         {
+            Logger = logger;
             this.options = options.Value;
         }
 
         public ImmutableArray<ColumnProjection> Projections { get; set; } = ImmutableArray<ColumnProjection>.Empty;
+
+        private Logger<ColumnCorrelationComponent> Logger { get; }
 
         private int MaxCorrelationDepth => options.MaxCorrelationDepth;
 
@@ -211,7 +216,7 @@
                 {
                     foreach (var innerEx in agg.Flatten().InnerExceptions)
                     {
-                        Logger?.LogWarning(innerEx, "Drill-down query error.");
+                        Logger.LogWarning(innerEx, "Drill-down query error.");
                     }
                 }
 

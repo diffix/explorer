@@ -44,7 +44,7 @@ namespace Explorer.Components
             {
                 return null;
             }
-            if (stats.Min == null || stats.Max == null)
+            if (stats.Min == null || stats.Max == null || stats.Min == stats.Max)
             {
                 return null;
             }
