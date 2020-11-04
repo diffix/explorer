@@ -140,7 +140,7 @@
                 catch (InvalidOperationException)
                 {
                     throw new InvalidOperationException(
-                        $"Expected <{metricName}> metric of type {typeof(T)} for column '{Column}' but none was found.");
+                        $"Expected '{metricName}' metric of type '{typeof(T)}' for column '{Column}' but none was found.");
                 }
             }
         }
