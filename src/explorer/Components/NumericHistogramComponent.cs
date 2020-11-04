@@ -21,14 +21,14 @@ namespace Explorer.Components
         public NumericHistogramComponent(
             ResultProvider<SimpleStats<double>.Result> statsResultProvider,
             ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
-            Logger<NumericHistogramComponent> logger)
+            ILogger<NumericHistogramComponent> logger)
         {
             this.statsResultProvider = statsResultProvider;
             this.distinctValuesProvider = distinctValuesProvider;
             Logger = logger;
         }
 
-        private Logger<NumericHistogramComponent> Logger { get; }
+        private ILogger<NumericHistogramComponent> Logger { get; }
 
         protected async override Task<List<HistogramWithCounts>?> Explore()
         {

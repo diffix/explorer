@@ -23,7 +23,7 @@
 
         public ColumnCorrelationComponent(
             IOptions<ExplorerOptions> options,
-            Logger<ColumnCorrelationComponent> logger)
+            ILogger<ColumnCorrelationComponent> logger)
         {
             Logger = logger;
             this.options = options.Value;
@@ -31,7 +31,7 @@
 
         public ImmutableArray<ColumnProjection> Projections { get; set; } = ImmutableArray<ColumnProjection>.Empty;
 
-        private Logger<ColumnCorrelationComponent> Logger { get; }
+        private ILogger<ColumnCorrelationComponent> Logger { get; }
 
         private int MaxCorrelationDepth => options.MaxCorrelationDepth;
 
