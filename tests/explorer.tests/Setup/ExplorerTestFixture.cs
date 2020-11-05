@@ -39,6 +39,9 @@ namespace Explorer.Tests
                 registry.Configure<ConnectionOptions>(Config);
                 registry.Configure<VcrOptions>(Config);
 
+                // Logging
+                registry.AddLogging();
+
                 // VCR setup
                 registry.Injectable<Cassette>();
                 registry.For<IHttpClientFactory>().Use<VcrApiHttpClientFactory>();

@@ -8,6 +8,7 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Components.ResultTypes;
     using Explorer.Queries;
+    using Microsoft.Extensions.Logging;
 
     public class NumericHistogramComponent :
         ExplorerComponent<List<HistogramWithCounts>>
@@ -15,11 +16,19 @@ namespace Explorer.Components
         private const long ValuesPerBucketTarget = 20;
 
         private readonly ResultProvider<SimpleStats<double>.Result> statsResultProvider;
+        private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
 
-        public NumericHistogramComponent(ResultProvider<SimpleStats<double>.Result> statsResultProvider)
+        public NumericHistogramComponent(
+            ResultProvider<SimpleStats<double>.Result> statsResultProvider,
+            ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider,
+            ILogger<NumericHistogramComponent> logger)
         {
             this.statsResultProvider = statsResultProvider;
+            this.distinctValuesProvider = distinctValuesProvider;
+            Logger = logger;
         }
+
+        private ILogger<NumericHistogramComponent> Logger { get; }
 
         protected async override Task<List<HistogramWithCounts>?> Explore()
         {
@@ -28,15 +37,32 @@ namespace Explorer.Components
             {
                 return null;
             }
-            if (stats.Min == null || stats.Max == null)
+
+            var (minBound, maxBound) = (stats.Min, stats.Max);
+            if (!minBound.HasValue || !maxBound.HasValue)
             {
+                var distincts = await distinctValuesProvider.ResultAsync;
+                if (distincts == null || distincts.ValueCounts.NonSuppressedNonNullCount == 0)
+                {
+                    return null;
+                }
+
+                var values = distincts.DistinctRows.Where(row => row.HasValue).Select(row => row.Value.GetDouble());
+                minBound ??= values.Min();
+                maxBound ??= values.Max();
+            }
+
+            if (!minBound.HasValue || !maxBound.HasValue || minBound == maxBound)
+            {
+                Logger.LogWarning("Unable to calculate suitable bounds for numerical column {Context.Column}.");
+
                 return null;
             }
 
             var bucketsToSample = BucketUtils.EstimateBucketResolutions(
                 stats.Count,
-                stats.Min.Value,
-                stats.Max.Value,
+                (double)minBound,
+                (double)maxBound,
                 ValuesPerBucketTarget,
                 isIntegerColumn: Context.ColumnInfo.Type == DValueType.Integer);
 
