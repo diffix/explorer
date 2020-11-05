@@ -13,3 +13,8 @@ Probably in most of the cases the clients will be loaded directly from the local
 ```dotnetcli
 dotnet run --environment Development --project .\src\explorer.api\explorer.api.csproj
 ```
+
+Or if using docker, add `-e "ASPNETCORE_ENVIRONMENT=Development"` to your `run` command, e.g.:
+```
+docker run -e "ASPNETCORE_ENVIRONMENT=Development" -it --rm -p 5000:80 explorer
+```
