@@ -15,6 +15,9 @@ namespace Explorer.Components
 
     public class TextGeneratorComponent : ExplorerComponent<TextGeneratorComponent.Result>, PublisherComponent
     {
+        private static readonly HashSet<string> BannedWords = new HashSet<string>(System.IO.File.Exists("bannedwords.txt") ?
+            System.IO.File.ReadAllLines("bannedwords.txt").Select(s => s.ToUpperInvariant()) : Array.Empty<string>());
+
         private readonly ResultProvider<EmailCheckComponent.Result> emailCheckProvider;
         private readonly ResultProvider<DistinctValuesComponent.Result> distinctValuesProvider;
         private readonly ResultProvider<TextLengthDistribution.Result> textLengthDistributionProvider;
@@ -97,7 +100,8 @@ namespace Explorer.Components
                 sb.Append(str);
                 pos += str.Length;
             }
-            return sb.ToString();
+            var ret = sb.ToString();
+            return BannedWords.Contains(ret.ToUpperInvariant()) ? string.Empty : ret;
         }
 
         private static string GenerateEmail(
@@ -110,6 +114,10 @@ namespace Explorer.Components
         {
             // create local-part section
             var str = GenerateString(substrings, lengthDistribution, minLength: 6, rand);
+            if (string.IsNullOrEmpty(str))
+            {
+                return string.Empty;
+            }
             var allParts = str.Split('@', StringSplitOptions.RemoveEmptyEntries);
             var sb = new StringBuilder();
             var partIndex = 0;
@@ -122,10 +130,9 @@ namespace Explorer.Components
             }
             var localParts = sb.ToString()
                 .Split('.', StringSplitOptions.RemoveEmptyEntries)
-                .Where(s => s.Length == 1 || s.Length > 3)
-                .Take(rand.Next(1, 3));
+                .Where(s => (s.Length == 1 || s.Length > 3) && !BannedWords.Contains(s.ToUpperInvariant()));
             var localPart = string.Join('.', localParts);
-            if (string.IsNullOrEmpty(localPart))
+            if (string.IsNullOrEmpty(localPart) || BannedWords.Contains(localPart.ToUpperInvariant()))
             {
                 return string.Empty;
             }
@@ -144,11 +151,11 @@ namespace Explorer.Components
             }
             var domainParts = sb.ToString()
                 .Split('.', StringSplitOptions.RemoveEmptyEntries)
-                .Where(p => p.Length > 3);
+                .Where(p => p.Length > 3 && !BannedWords.Contains(p.ToUpperInvariant()));
             var domain = rand.NextDouble() > 0.15 ?
                 domainParts.Aggregate(string.Empty, (max, cur) => max.Length > cur.Length ? max : cur) :
                 string.Join('.', domainParts);
-            if (string.IsNullOrEmpty(domain) || domain.Length < 4)
+            if (string.IsNullOrEmpty(domain) || domain.Length < 4 || BannedWords.Contains(domain.ToUpperInvariant()))
             {
                 return string.Empty;
             }
@@ -163,25 +170,20 @@ namespace Explorer.Components
             SampleValuesGeneratorConfig.Result config)
         {
             var rand = new Random(Environment.TickCount);
-            var emails = new List<string>(config.SamplesToPublish);
-            for (var i = 0; emails.Count < config.SamplesToPublish && i < config.SamplesToPublish * 100; i++)
-            {
-                var email = GenerateEmail(substrings, domains, tlds, lengthDistribution, config, rand);
-                if (!string.IsNullOrEmpty(email))
-                {
-                    emails.Add(email);
-                }
-            }
-            return emails;
+            return Enumerable.Range(0, 100 * config.SamplesToPublish)
+                .Select(_ => GenerateEmail(substrings, domains, tlds, lengthDistribution, config, rand))
+                .Where(email => !string.IsNullOrEmpty(email))
+                .Take(config.SamplesToPublish);
         }
 
         private async Task<SubstringWithCountList> ExploreEmailDomains()
         {
-            var domains = await Context.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
-
-            return SubstringWithCountList.FromValueWithCountEnum(
-                domains.Rows
-                    .Where(r => r.HasValue && r.Value.StartsWith("@", StringComparison.InvariantCulture)));
+            var domainsResult = await Context.Exec(new TextColumnTrim(TextColumnTrimType.Leading, Constants.EmailAddressChars));
+            var domains = domainsResult.Rows.Where(r =>
+                    r.HasValue &&
+                    r.Value.StartsWith("@", StringComparison.InvariantCulture) &&
+                    !BannedWords.Contains(r.Value[1..].ToUpperInvariant()));
+            return SubstringWithCountList.FromValueWithCountEnum(domains);
         }
 
         private async Task<SubstringWithCountList> ExploreEmailTopLevelDomains()
@@ -213,7 +215,7 @@ namespace Explorer.Components
                     hasRows = false;
                     foreach (var row in sstrResult.Rows)
                     {
-                        if (row.HasValue)
+                        if (row.HasValue && !BannedWords.Contains(row.Value.ToUpperInvariant()))
                         {
                             hasRows = true;
                             substrings.Add(pos + row.Index, row.Value, row.Count);
@@ -251,8 +253,10 @@ namespace Explorer.Components
                 return Enumerable.Empty<string>();
             }
             var rand = new Random(Environment.TickCount);
-            return Enumerable.Range(0, config.SamplesToPublish).Select(_
-                => GenerateString(substrings, lengthDistribution, minLength: 1, rand));
+            return Enumerable.Range(0, 100 * config.SamplesToPublish)
+                .Select(_ => GenerateString(substrings, lengthDistribution, minLength: 1, rand))
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Take(config.SamplesToPublish);
         }
 
         public class Result
