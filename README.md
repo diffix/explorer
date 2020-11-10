@@ -134,28 +134,54 @@ and authentication token, and the dataset, table and column to analyse. Assuming
 
 ```bash
 curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/api/v1/explore \
-  -d "{
-   \"ApiUrl\":\"https://attack.aircloak.com/api/\"
-   \"ApiKey\":\"my_secret_key\",
-   \"DataSource\": \"gda_banking\",
-   \"Table\":\"loans\",
-   \"Columns\":[\"amount\", \"firstname\"]
-   }"
+  -d '{
+   "ApiUrl":"https://attack.aircloak.com/api/",
+   "ApiKey":"my_secret_key",
+   "DataSource": "gda_banking",
+   "Table":"loans",
+   "Columns":["amount", "firstname"]
+   }'
 ```
 
 This launches the column exploration and, if all goes well, returns a http 200 reponse with a json payload containing a unique `id`:
 ```json
 {
-    "id": "e55a1a4a-a0e4-4673-9ecf-fae66a704d7d",
+    "id": "e8b48ad3-846c-42da-89a9-d0cff9f86b10",
     "status": "New",
     "versionInfo": {
         "commitRef": "master",
-        "commitHash": "7a35d2c8cd661947a6916179b49e6381f4878268"
+        "commitHash": "1004ee1d86d4565889997d40ec4b05f90c83d078"
     },
     "dataSource": "gda_banking",
     "table": "loans",
-    "columns": [],
+    "columns": [
+        {
+            "column": "amount",
+            "columnType": "unknown",
+            "status": "New",
+            "metrics": []
+        },
+        {
+            "column": "duration",
+            "columnType": "unknown",
+            "status": "New",
+            "metrics": []
+        },
+        {
+            "column": "status",
+            "columnType": "unknown",
+            "status": "New",
+            "metrics": []
+        },
+        {
+            "column": "firstname",
+            "columnType": "unknown",
+            "status": "New",
+            "metrics": []
+        }
+    ],
     "sampleData": [],
+    "correlations": [],
     "errors": []
 }
 ```
@@ -168,107 +194,477 @@ You can use the exploration `id` to poll for results on the `/result` endpoint:
 curl -k http://localhost:5000/api/v1/result/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
 
-The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics, e.g. for integer and text columns:
+The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics, e.g.:
 
 ```json
 {
-  "versionInfo": {
-    "commitHash": "7a35d2c8cd661947a6916179b49e6381f4878268",
-    "commitRef": "master"
-  },
-  "id":"204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf",
-  "status":"Processing",
-  "dataSource": "gda_banking",
-  "table":"loans",
-  "columns":[
-    {
-      "column":"amount",
-      "metrics":[
-        {
-          "name": "exploration_info",
-          "value": {
-            "dataSource": "gda_banking",
-            "table": "loans",
-            "column": "amount",
-            "columnType": "integer"
-          }
-        },
-        {
-          "name": "distinct.is_categorical",
-          "value": false
-        },
-        {
-          "name": "refined_min",
-          "value": 3303
-        },
-        {
-          "name": "refined_max",
-          "value": 495103
-        },
-        {
-          "name": "average_estimate",
-          "value": 113750.413223
-        },
-        {
-          "name": "quartile_estimates",
-          "value": [ 58000, 90181.81818181818, 161000 ]
-        },
-        {
-          "name": "sample_values",
-          "value": [ 11000, 37000, 47000, 57000, 61000, 95000, 95000, 101000, 117000, 137000, 141000, 159000, 171000, 185000, 203000, 271000, 285000, 309000, 309000, 369000 ]
-        }
-      ],
-      "status":"Processing"
+    "id": "e8b48ad3-846c-42da-89a9-d0cff9f86b10",
+    "status": "Complete",
+    "versionInfo": {
+        "commitRef": "master",
+        "commitHash": "1004ee1d86d4565889997d40ec4b05f90c83d078"
     },
-    {
-      "column": "firstname",
-      "metrics": [
+    "dataSource": "gda_banking",
+    "table": "loans",
+    "columns": [
         {
-          "name": "exploration_info",
-          "value": {
-            "dataSource": "gda_banking",
-            "table": "loans",
-            "column": "firstname"
-          }
+            "column": "amount",
+            "columnType": "integer",
+            "status": "Complete",
+            "metrics": [
+                {
+                    "name": "histogram.suppressed_ratio",
+                    "value": 0.22535211267605634
+                },
+                {
+                    "name": "histogram.value_counts",
+                    "value": {
+                        "totalCount": 781,
+                        "suppressedCount": 176,
+                        "nullCount": 0,
+                        "totalRows": 98,
+                        "suppressedRows": 1,
+                        "nullRows": 0,
+                        "nonSuppressedRows": 97,
+                        "nonSuppressedCount": 605,
+                        "nonSuppressedNonNullCount": 605,
+                        "suppressedCountRatio": 0.22535211267605634,
+                        "isCategorical": false
+                    }
+                },
+                {
+                    "name": "histogram.buckets",
+                    "value": [
+                        {
+                            "bucketSize": 2000.0,
+                            "lowerBound": 10000,
+                            "count": 2,
+                            "countNoise": 0
+                        },
+                        {
+                            "bucketSize": 2000.0,
+                            "lowerBound": 14000,
+                            "count": 4,
+                            "countNoise": 1.8
+                        },
+                        {
+                            "bucketSize": 2000.0,
+                            "lowerBound": 16000,
+                            "count": 4,
+                            "countNoise": 1.8
+                        },
+                        [...]
+                    ]
+                },
+                {
+                    "name": "distinct.is_categorical",
+                    "value": false
+                },
+                {
+                    "name": "histogram.suppressed_count",
+                    "value": 176
+                },
+                {
+                    "name": "quartile_estimates",
+                    "value": [
+                        58000,
+                        90181.81818181818,
+                        161000
+                    ]
+                },
+                {
+                    "name": "max",
+                    "value": 550000.0
+                },
+                {
+                    "name": "descriptive_stats",
+                    "value": {
+                        "entropy": -0.03264893260839615,
+                        "mean": 113750.4132231405,
+                        "mode": 89000,
+                        "quartiles": [
+                            58999.99999945224,
+                            90999.99999925024,
+                            161000.0000001889
+                        ],
+                        "standardDeviation": 77110.21732916344,
+                        "variance": 5945985616.550817
+                    }
+                },
+                {
+                    "name": "sample_values",
+                    "value": [
+                        29000,
+                        33000,
+                        43000,
+                        [...]
+                    ]
+                },
+                {
+                    "name": "distinct.values",
+                    "value": [
+                        {
+                            "value": 140688,
+                            "count": 4
+                        },
+                        {
+                            "value": 192744,
+                            "count": 4
+                        },
+                        [...]
+                    ]
+                },
+                {
+                    "name": "exploration_info",
+                    "value": {
+                        "dataSource": "gda_banking",
+                        "table": "loans",
+                        "column": "amount",
+                        "columnType": "integer"
+                    }
+                },
+                {
+                    "name": "distinct.value_count",
+                    "value": 818
+                },
+                {
+                    "name": "distinct.suppressed_count",
+                    "value": 788
+                },
+                {
+                    "name": "distribution_estimates",
+                    "value": [
+                        {
+                            "name": "Gamma",
+                            "distribution": "Γ(x; k = 2.0619445291126066, θ = 64214.336579162664)",
+                            "goodness": [
+                                {
+                                    "method": "ChiSquare",
+                                    "pValue": 8.368612181206357E-66,
+                                    "significant": true,
+                                    "rank": 0
+                                },
+                                {
+                                    "method": "KolmogorovSmirnov",
+                                    "pValue": 8.1579303259962E-41,
+                                    "significant": true,
+                                    "rank": 0
+                                }
+                            ]
+                        },
+                        [...]
+                    ]
+                },
+                {
+                    "name": "average_estimate",
+                    "value": 113750.413223
+                },
+                {
+                    "name": "min",
+                    "value": 0
+                },
+                {
+                    "name": "distinct.null_count",
+                    "value": 0
+                }
+            ]
         },
         {
-          "name": "is_email",
-          "value": false
+            "column": "duration",
+            "columnType": "integer",
+            "status": "Complete",
+            "metrics": [
+                {
+                    "name": "distinct.is_categorical",
+                    "value": true
+                },
+                {
+                    "name": "max",
+                    "value": 61.0
+                },
+                {
+                    "name": "sample_values",
+                    "value": [
+                        24,
+                        24,
+                        60,
+                        [...]
+                    ]
+                },
+                {
+                    "name": "distinct.values",
+                    "value": [
+                        {
+                            "value": 60,
+                            "count": 175
+                        },
+                        {
+                            "value": 48,
+                            "count": 167
+                        },
+                        [...]
+                    ]
+                },
+                {
+                    "name": "exploration_info",
+                    "value": {
+                        "dataSource": "gda_banking",
+                        "table": "loans",
+                        "column": "duration",
+                        "columnType": "integer"
+                    }
+                },
+                {
+                    "name": "distinct.value_count",
+                    "value": 828
+                },
+                {
+                    "name": "distinct.suppressed_count",
+                    "value": 0
+                },
+                {
+                    "name": "min",
+                    "value": 12
+                },
+                {
+                    "name": "distinct.null_count",
+                    "value": 0
+                }
+            ]
         },
         {
-          "name": "distinct.is_categorical",
-          "value": false
+            "column": "status",
+            "columnType": "text",
+            "status": "Complete",
+            "metrics": [
+                {
+                    "name": "distinct.is_categorical",
+                    "value": true
+                },
+                {
+                    "name": "sample_values",
+                    "value": [
+                        "C",
+                        "A",
+                        "A",
+                        [...]
+                    ]
+                },
+                {
+                    "name": "distinct.values",
+                    "value": [
+                        {
+                            "value": "C",
+                            "count": 491
+                        },
+                        {
+                            "value": "A",
+                            "count": 258
+                        },
+                        {
+                            "value": "D",
+                            "count": 45
+                        },
+                        {
+                            "value": "B",
+                            "count": 30
+                        }
+                    ]
+                },
+                {
+                    "name": "exploration_info",
+                    "value": {
+                        "dataSource": "gda_banking",
+                        "table": "loans",
+                        "column": "status",
+                        "columnType": "text"
+                    }
+                },
+                {
+                    "name": "distinct.value_count",
+                    "value": 824
+                },
+                {
+                    "name": "distinct.suppressed_count",
+                    "value": 0
+                },
+                {
+                    "name": "text.length.values",
+                    "value": [
+                        {
+                            "value": 1,
+                            "count": 825
+                        }
+                    ]
+                },
+                {
+                    "name": "text.length.counts",
+                    "value": {
+                        "totalCount": 825,
+                        "suppressedCount": 0,
+                        "nullCount": 0,
+                        "totalRows": 1,
+                        "suppressedRows": 0,
+                        "nullRows": 0,
+                        "nonSuppressedRows": 1,
+                        "nonSuppressedCount": 825,
+                        "nonSuppressedNonNullCount": 825,
+                        "suppressedCountRatio": 0,
+                        "isCategorical": true
+                    }
+                },
+                {
+                    "name": "distinct.null_count",
+                    "value": 0
+                },
+                {
+                    "name": "is_email",
+                    "value": {
+                        "isEmail": false
+                    }
+                }
+            ]
         },
         {
-          "name": "sample_values",
-          "value": [ "Stenor", "Brad", "Ele", "Abrley", "Chritia", "Brieine", "Wynley", "Cam", "Jusson", "Sam" ]
+            "column": "firstname",
+            "columnType": "text",
+            "status": "Complete",
+            "metrics": [
+                {
+                    "name": "distinct.is_categorical",
+                    "value": false
+                },
+                {
+                    "name": "sample_values",
+                    "value": [
+                        "Brasti",
+                        "Bristi",
+                        "Chalyn",
+                        [...]
+                    ]
+                },
+                {
+                    "name": "distinct.values",
+                    "value": [
+                        {
+                            "value": "Dara",
+                            "count": 5
+                        },
+                        {
+                            "value": "Otto",
+                            "count": 3
+                        },
+                        [...]
+                    ]
+                },
+                {
+                    "name": "exploration_info",
+                    "value": {
+                        "dataSource": "gda_banking",
+                        "table": "loans",
+                        "column": "firstname",
+                        "columnType": "text"
+                    }
+                },
+                {
+                    "name": "distinct.value_count",
+                    "value": 814
+                },
+                {
+                    "name": "distinct.suppressed_count",
+                    "value": 780
+                },
+                {
+                    "name": "text.length.values",
+                    "value": [
+                        {
+                            "value": 3,
+                            "count": 24
+                        },
+                        {
+                            "value": 4,
+                            "count": 173
+                        },
+                        {
+                            "value": 5,
+                            "count": 397
+                        },
+                        [...]
+                    ]
+                },
+                {
+                    "name": "text.length.counts",
+                    "value": {
+                        "totalCount": 830,
+                        "suppressedCount": 0,
+                        "nullCount": 0,
+                        "totalRows": 8,
+                        "suppressedRows": 0,
+                        "nullRows": 0,
+                        "nonSuppressedRows": 8,
+                        "nonSuppressedCount": 830,
+                        "nonSuppressedNonNullCount": 830,
+                        "suppressedCountRatio": 0,
+                        "isCategorical": true
+                    }
+                },
+                {
+                    "name": "distinct.null_count",
+                    "value": 0
+                },
+                {
+                    "name": "is_email",
+                    "value": {
+                        "isEmail": false
+                    }
+                }
+            ]
         }
-      ],
-      "status":"Processing"
-    }
-  ],
-  "sampleData": [
-    [ 17000, "Clatau" ],
-    [ 39000, "Bryina" ],
-    [ 45000, "Ale" ],
-    [ 67000, "Zen" ],
-    [ 73000, "Jorlle" ],
-    [ 91000, "Cole" ],
-    [ 103000, "Jessti" ],
-    [ 117000, "Abra" ],
-    [ 123000, "Pric" ],
-    [ 137000, "Karlie" ],
-    [ 149000, "Just" ],
-    [ 259000, "Quison" ],
-    [ 309000, "Madlle" ],
-    [ null, "Abra" ],
-    [ null, "Darson" ],
-  ],
-  "errors": []
+    ],
+    "sampleData": [
+        [
+            89408,
+            24,
+            "C",
+            "Brasti"
+        ],
+        [
+            162204,
+            24,
+            "C",
+            "Bristi"
+        ],
+        [
+            270754,
+            12,
+            "C",
+            "Chalyn"
+        ],
+        [...]
+    ],
+    "correlations": [
+        {
+            "name": "correlations",
+            "value": [
+                {
+                    "columns": [
+                        "amount",
+                        "status"
+                    ],
+                    "correlationFactor": 0.6973433065710264
+                },
+                [...]
+            ]
+        },
+        {
+            "name": "sampled_correlations",
+            "value": [...]
+        }
+    ],
+    "errors": []
 }
 ```
 
-When exploration is complete, this is indicated with `"status": "Complete"`.
 
 ### Cancellation
 
@@ -277,6 +673,12 @@ You can cancel an ongoing exploration using the (you guessed it) `/cancel` endpo
 ```bash
 curl -k http://localhost:5000/api/v1/cancel/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
+
+### Limitations
+
+Correlation analysis only works for 31 or fewer columns. This total does not include invariant columns, which are
+pre-filtered by before correlation analysis. If the filtered list of columns contains more than 31 members, correlation
+analysis is performed for the first 31 columns in the list only.
 
 ### More examples
 
