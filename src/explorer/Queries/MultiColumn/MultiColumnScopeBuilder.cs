@@ -77,8 +77,55 @@
 
             static ColumnProjection DateTimeProjection(SingleColumnMetadata metadata)
             {
-                // TODO: bucketing of time values.
-                return new IgnoredColumnProjection(metadata.Column, metadata.Index);
+                // Select an appropriate bucket for time values. From the metrics we can get lists of buckets at
+                // various time intervals (year, quarter, month, day, etc.).
+                var datetimeMetrics = metadata
+                    .TryGetMetrics<dynamic>("dates_linear.")
+
+                    // Filter out any results with more than 10% suppressed values.
+                    .Where(m => ((double)m.Metric.Suppressed / m.Metric.Total) < 0.1)
+
+                    // Only keep an interval if the buckets it contains are not too noisy.
+                    .Where(m =>
+                    {
+                        var noiseSum = 0.0;
+                        var count = 0;
+                        if (m.Metric.Counts is IEnumerable<dynamic> list)
+                        {
+                            count = list.Count();
+                            noiseSum = list.Sum(_ =>
+                            {
+                                double noise = Convert.ToDouble(_.CountNoise ?? 0);
+                                return noise * noise;
+                            });
+                        }
+
+                        var countsAvg = (double)m.Metric.Total / count;
+                        var noiseAvg = Math.Sqrt((double)noiseSum / count);
+
+                        var threshold = noiseAvg * 5;
+
+                        return countsAvg > threshold;
+                    });
+
+                if (!datetimeMetrics.Any())
+                {
+                    return new IgnoredColumnProjection(metadata.Column, metadata.Index);
+                }
+
+                var dateInterval = datetimeMetrics.OrderByDescending(m =>
+                {
+                    var count = 0;
+                    if (m.Metric.Counts is IEnumerable<dynamic> list)
+                    {
+                        count = list.Count();
+                    }
+                    return count;
+                })
+                .Select(_ => _.Name.Split('.', 2)[^1])
+                .First();
+
+                return new DatetimeProjection(metadata.Column, metadata.Index, dateInterval);
             }
         }
 
@@ -141,6 +188,23 @@
                 {
                     throw new InvalidOperationException(
                         $"Expected '{metricName}' metric of type '{typeof(T)}' for column '{Column}' but none was found.");
+                }
+            }
+
+            public IEnumerable<(string Name, T Metric)> TryGetMetrics<T>(string metricRoot)
+            {
+                foreach (var value in Metrics
+                    .Where(metric => metric.Name.StartsWith(metricRoot, StringComparison.OrdinalIgnoreCase)))
+                {
+                    if (value.Metric is T typedValue)
+                    {
+                        yield return (value.Name, typedValue);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            $"Expected '{metricRoot}*' metrics of type '{typeof(T)}' for column '{Column}' but none were found.");
+                    }
                 }
             }
         }
