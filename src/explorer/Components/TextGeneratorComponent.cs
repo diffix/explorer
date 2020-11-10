@@ -132,7 +132,7 @@ namespace Explorer.Components
                 .Split('.', StringSplitOptions.RemoveEmptyEntries)
                 .Where(s => (s.Length == 1 || s.Length > 3) && !BannedWords.Contains(s.ToUpperInvariant()));
             var localPart = string.Join('.', localParts);
-            if (string.IsNullOrEmpty(localPart) || BannedWords.Contains(localPart.ToUpperInvariant()))
+            if (string.IsNullOrEmpty(localPart))
             {
                 return string.Empty;
             }
@@ -155,7 +155,7 @@ namespace Explorer.Components
             var domain = rand.NextDouble() > 0.15 ?
                 domainParts.Aggregate(string.Empty, (max, cur) => max.Length > cur.Length ? max : cur) :
                 string.Join('.', domainParts);
-            if (string.IsNullOrEmpty(domain) || domain.Length < 4 || BannedWords.Contains(domain.ToUpperInvariant()))
+            if (string.IsNullOrEmpty(domain) || domain.Length < 4)
             {
                 return string.Empty;
             }
