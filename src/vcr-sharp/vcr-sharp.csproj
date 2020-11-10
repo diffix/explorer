@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="YamlDotNet" Version="8.1.2" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.8" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
   </ItemGroup>
 
   <!-- <ItemGroup>
