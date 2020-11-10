@@ -56,6 +56,11 @@
                 await explore();
                 Status = ExplorationStatus.Complete;
             }
+            catch (OperationCanceledException)
+            {
+                Status = ExplorationStatus.Canceled;
+                throw;
+            }
             catch (Exception ex)
             {
                 Status = ExplorationStatus.Error;

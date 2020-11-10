@@ -56,6 +56,6 @@
         public static bool IsComplete(this ExplorationStatus explorationStatus)
                 => explorationStatus == ExplorationStatus.Complete ||
                     explorationStatus == ExplorationStatus.Error ||
-                    explorationStatus == ExplorationStatus.Complete;
+                    explorationStatus == ExplorationStatus.Canceled;
     }
 }
