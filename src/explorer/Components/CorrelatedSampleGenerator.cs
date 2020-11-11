@@ -2,13 +2,14 @@ namespace Explorer.Components
 {
     using System.Collections.Generic;
     using System.Linq;
-
+    using System.Text.Json;
     using Explorer.Common;
     using Explorer.Metrics;
     using Microsoft.Extensions.Options;
 
     public class CorrelatedSampleGenerator : PublisherComponent
     {
+        private static readonly JsonElement JsonNull = Utilities.MakeJsonNull();
         private readonly ResultProvider<ColumnCorrelationComponent.Result> correlationProvider;
         private readonly ExplorerOptions options;
 
@@ -78,7 +79,21 @@ namespace Explorer.Components
                 foreach (var (columnGrouping, probMatrix) in samplePredictionSet)
                 {
                     var projections = columnGrouping.Indices.Select(i => correlationResult.Projections[i]);
-                    var bucketValues = probMatrix.GetSample();
+                    var bucketValues = probMatrix.GetSample().ToList();
+
+                    // If the returned sample contains no values, it was a suppressed bucket. Instead of returning
+                    // nothing, generate a sample from each of the individual uncorrelated buckets.
+                    if (bucketValues.Count == 0)
+                    {
+                        foreach (var grouping in columnGrouping.SingleColumnSubGroupings())
+                        {
+                            if (correlationResult.Probabilities.TryGetValue(grouping, out var probabilityMatrix))
+                            {
+                                var sample = probabilityMatrix.GetSampleUnsuppressed();
+                                bucketValues.Add(sample.Any() ? sample.Single() : JsonNull);
+                            }
+                        }
+                    }
 
                     foreach (var (i, value, projection) in columnGrouping.Indices.Zip2(bucketValues, projections))
                     {

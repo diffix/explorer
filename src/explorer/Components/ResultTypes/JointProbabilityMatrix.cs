@@ -89,7 +89,41 @@
             counts[key] = value + counts.GetValueOrDefault(key, NoisyCount.Zero);
         }
 
+        /// <summary>
+        /// Generates a random sample of values based on the joint probabilities, *including* the possibility of a set
+        /// of suppressed values.
+        /// </summary>
+        /// <returns>An IEnumerable of samples, or an empty IEnumerable if the values are suppressed. </returns>
         public IEnumerable<JsonElement> GetSample()
+        {
+            var index = RandomSampleIndex(suppressedCount);
+
+            if (index >= cdfReverseLookup.Length)
+            {
+                return ImmutableArray<JsonElement>.Empty;
+            }
+
+            return cdfReverseLookup[index].Values;
+        }
+
+        /// <summary>
+        /// Generates a random sample of values based on the joint probabilities, *excluding* the possibility of a set
+        /// of suppressed values.
+        /// </summary>
+        /// <returns>An IEnumerable of samples. </returns>
+        public IEnumerable<JsonElement> GetSampleUnsuppressed()
+        {
+            var index = RandomSampleIndex();
+
+            if (index >= cdfReverseLookup.Length)
+            {
+                return cdfReverseLookup.Last().Values;
+            }
+
+            return cdfReverseLookup[index].Values;
+        }
+
+        private int RandomSampleIndex(NoisyCount? suppressedCount = null)
         {
             if (cdfIsStale)
             {
@@ -99,17 +133,11 @@
                 cdfIsStale = false;
             }
 
-            var randomCount = NoisyCount.Noiseless(rng.NextLong(TotalSampleCount.Count));
+            var range = TotalSampleCount + (suppressedCount ?? NoisyCount.Zero);
+            var randomCount = NoisyCount.Noiseless(rng.NextLong(range.Count));
 
             var searchResult = cdf.BinarySearch(randomCount, NoisyCountComparerInstance);
-            var index = searchResult < 0 ? ~searchResult : searchResult;
-
-            if (index >= cdfReverseLookup.Length)
-            {
-                index = cdfReverseLookup.Length - 1;
-            }
-
-            return cdfReverseLookup[index].Values;
+            return searchResult < 0 ? ~searchResult : searchResult;
         }
 
         private void RefreshCdfReverseLookup()
