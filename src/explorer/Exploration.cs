@@ -112,47 +112,50 @@ namespace Explorer
                 ExplorerContextBuilder<TBuilderArgs> contextBuilder,
                 TBuilderArgs builderArgs)
         {
-            MainTask = Task.Run(async () =>
-            {
-                // Validation
-                await RunStage(
-                    ExplorationStatus.Validating,
-                    async () =>
-                    {
-                        var contexts = await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
-
-                        var singleColumnScopes = contexts
-                            .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
-                            .ToList();
-
-                        ColumnExplorations = singleColumnScopes
-                            .Select(scope => new ColumnExploration(scope))
-                            .ToImmutableArray();
-
-                        if (MultiColumnEnabled)
+            MainTask = Task.Run(
+                async () =>
+                {
+                    // Validation
+                    await RunStage(
+                        ExplorationStatus.Validating,
+                        async () =>
                         {
-                            var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
-                            singleColumnScopes.Select(_ => _.MetricsPublisher));
+                            var contexts = await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
 
-                            MultiColumnExploration = new MultiColumnExploration(
-                                multiColumnScopeBuilder.Build(
-                                    explorationRootContainer.GetNestedContainer(),
-                                    contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
-                        }
-                    });
+                            var singleColumnScopes = contexts
+                                .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
+                                .ToList();
 
-                // Analyses
-                await RunStage(
-                    ExplorationStatus.Processing,
-                    async () =>
-                    {
-                        await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
-                        await (MultiColumnExploration?.Completion ?? Task.CompletedTask);
-                    });
+                            ColumnExplorations = singleColumnScopes
+                                .Select(scope => new ColumnExploration(scope))
+                                .ToImmutableArray();
 
-                // Completed successfully
-                Status = ExplorationStatus.Complete;
-            });
+                            if (MultiColumnEnabled)
+                            {
+                                var multiColumnScopeBuilder = new MultiColumnScopeBuilder(
+                                singleColumnScopes.Select(_ => _.MetricsPublisher));
+
+                                MultiColumnExploration = new MultiColumnExploration(
+                                    multiColumnScopeBuilder.Build(
+                                        explorationRootContainer.GetNestedContainer(),
+                                        contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
+                            }
+                        });
+
+                    // Analyses
+                    await RunStage(
+                        ExplorationStatus.Processing,
+                        async () =>
+                        {
+                            await Task.WhenAll(ColumnExplorations.Select(ce => ce.Completion));
+                            cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                            await (MultiColumnExploration?.Completion ?? Task.CompletedTask);
+                        });
+
+                    // Completed successfully
+                    Status = ExplorationStatus.Complete;
+                },
+                cancellationTokenSource.Token);
         }
 
         private List<List<object?>> UncorrelatedSampleRows(int rowCount)
@@ -176,10 +179,16 @@ namespace Explorer
 
         private async Task RunStage(ExplorationStatus initialStatus, Func<Task> t)
         {
-            Status = initialStatus;
             try
             {
+                cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                Status = initialStatus;
                 await t();
+            }
+            catch (OperationCanceledException)
+            {
+                Status = ExplorationStatus.Canceled;
+                throw;
             }
             catch
             {
