@@ -144,6 +144,12 @@ curl -k -X POST -H "Content-Type: application/json" http://localhost:5000/api/v1
 ```
 
 This launches the column exploration and, if all goes well, returns a http 200 reponse with a json payload containing a unique `id`:
+
+<details>
+<summary><i>Expand/collapse example Json response.</i></summary>
+
+<p>
+
 ```json
 {
     "id": "e8b48ad3-846c-42da-89a9-d0cff9f86b10",
@@ -186,6 +192,8 @@ This launches the column exploration and, if all goes well, returns a http 200 r
 }
 ```
 
+</p>
+</details>
 
 ### Polling for results
 
@@ -195,6 +203,11 @@ curl -k http://localhost:5000/api/v1/result/204f47b4-9c9d-46d2-bdb0-95ef3d61f8cf
 ```
 
 The body of the response should again contain a json payload with an indication of the processing status as well as any computed metrics, e.g.:
+
+<details>
+<summary><i>Expand/collapse example Json response.</i></summary>
+
+<p>
 
 ```json
 {
@@ -665,6 +678,8 @@ The body of the response should again contain a json payload with an indication 
 }
 ```
 
+</p>
+</details>
 
 ### Cancellation
 

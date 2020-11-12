@@ -1,8 +1,10 @@
 namespace Explorer.Common
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics.CodeAnalysis;
+    using System.Linq;
 
     public struct ColumnGrouping : IEquatable<ColumnGrouping>
     {
@@ -13,6 +15,13 @@ namespace Explorer.Common
             this.numColumns = numColumns;
             GroupingId = groupingId;
             Indices = GroupingIdConverter.GetConverter(numColumns).IndicesFromGroupingId(GroupingId).ToImmutableArray();
+        }
+
+        private ColumnGrouping(int numColumns, IEnumerable<int> indices)
+        {
+            this.numColumns = numColumns;
+            GroupingId = GroupingIdConverter.GetConverter(numColumns).GroupingIdFromIndices(indices.ToArray());
+            Indices = indices.ToImmutableArray();
         }
 
         public int GroupingId { get; }
@@ -26,6 +35,16 @@ namespace Explorer.Common
         public override bool Equals(object? obj)
             => obj is ColumnGrouping other
             && other.Equals(this);
+
+        public ColumnGrouping SubGroup(IEnumerable<int> indices) => new ColumnGrouping(numColumns, indices);
+
+        public IEnumerable<ColumnGrouping> SingleColumnSubGroupings()
+        {
+            foreach (var i in Indices)
+            {
+                yield return SubGroup(new[] { i });
+            }
+        }
 
         public override int GetHashCode()
             => HashCode.Combine(numColumns, GroupingId);
