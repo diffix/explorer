@@ -216,10 +216,13 @@ namespace Explorer.Components
                     hasRows = false;
                     foreach (var row in sstrResult.Rows)
                     {
-                        if (row.HasValue && !BannedWords.Contains(row.Value.ToUpperInvariant()))
+                        if (row.HasValue)
                         {
                             hasRows = true;
-                            substrings.Add(pos + row.Index, row.Value, row.Count);
+                            if (!BannedWords.Contains(row.Value.ToUpperInvariant()))
+                            {
+                                substrings.Add(pos + row.Index, row.Value, row.Count);
+                            }
                         }
                     }
                 }
