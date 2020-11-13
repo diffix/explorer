@@ -28,6 +28,8 @@ namespace Explorer.Api.Models
 
         [Required]
         public ImmutableArray<string> Columns { get; set; } = ImmutableArray<string>.Empty;
+
+        public int? SamplesToPublish { get; set; }
     }
 }
 
