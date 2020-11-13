@@ -25,7 +25,7 @@ namespace Explorer.Components
             }
 
             yield return new UntypedMetric("text.length.values", result.Distribution
-                .Select(item => new { item.Value, item.Count })
+                .Select(item => new { Value = item.Length, item.Count })
                 .ToList());
 
             if (result.ValueCounts != null)
@@ -79,21 +79,22 @@ namespace Explorer.Components
         {
             internal Result(IList<(long, long)> distribution)
             {
-                Distribution = ValueWithCountList<long>.FromTupleEnum(distribution);
+                Distribution = distribution;
             }
 
             internal Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
             {
                 ValueCounts = ValueCounts.Compute(distinctRows);
-                Distribution = ValueWithCountList<long>.FromTupleEnum(distinctRows
+                Distribution = distinctRows
                     .Where(r => r.HasValue)
                     .OrderBy(r => r.Value.GetInt32())
-                    .Select(r => (r.Value.GetInt64(), r.Count)));
+                    .Select(r => (r.Value.GetInt64(), r.Count))
+                    .ToList();
             }
 
             internal ValueCounts? ValueCounts { get; }
 
-            internal ValueWithCountList<long> Distribution { get; }
+            internal IList<(long Length, long Count)> Distribution { get; }
         }
     }
 }

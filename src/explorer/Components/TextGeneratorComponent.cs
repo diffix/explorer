@@ -80,9 +80,10 @@ namespace Explorer.Components
                 return null;
             }
 
+            var lengthDistribution = LengthDistribution.FromTupleEnum(textLengthDistributionResult.Distribution);
             var sampleValues = emailCheckerResult.IsEmail ?
-                await GenerateEmails(textLengthDistributionResult.Distribution, config) :
-                await GenerateStrings(textLengthDistributionResult.Distribution, config);
+                await GenerateEmails(lengthDistribution, config) :
+                await GenerateStrings(lengthDistribution, config);
             return new Result(sampleValues.ToList());
         }
 
