@@ -209,8 +209,9 @@ namespace Explorer.Components
             foreach (var length in substringLengths)
             {
                 var hasRows = true;
-                for (var pos = 0; hasRows; pos += substringQueryColumnCount)
+                for (var pos = 0; hasRows && pos < options.TextColumnMaxExplorationLength; pos += substringQueryColumnCount)
                 {
+                    substringQueryColumnCount = Math.Min(substringQueryColumnCount, options.TextColumnMaxExplorationLength + 1 - pos);
                     var query = new TextColumnSubstring(pos, length, substringQueryColumnCount, length);
                     var sstrResult = await Context.Exec(query);
                     hasRows = false;

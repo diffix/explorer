@@ -1,5 +1,6 @@
 namespace Explorer.Components
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json;
@@ -8,13 +9,17 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Metrics;
     using Explorer.Queries;
+    using Microsoft.Extensions.Options;
 
     public class TextLengthDistribution
         : ExplorerComponent<TextLengthDistribution.Result>, PublisherComponent
     {
-        private const int DefaultSubstringQueryColumnCount = 5;
+        private readonly ExplorerOptions options;
 
-        public int SubstringQueryColumnCount { get; set; } = DefaultSubstringQueryColumnCount;
+        public TextLengthDistribution(IOptions<ExplorerOptions> options)
+        {
+            this.options = options.Value;
+        }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
@@ -39,9 +44,10 @@ namespace Explorer.Components
             var distribution = new List<(long Length, long Count)>();
             var pos = 0;
             var oldCount = 0L;
-            while (true)
+            while (pos <= options.TextColumnMaxExplorationLength)
             {
-                var query = new TextColumnSubstring(pos, 1, SubstringQueryColumnCount, 0);
+                var columnsCount = Math.Min(options.SubstringQueryColumnCount, options.TextColumnMaxExplorationLength + 1 - pos);
+                var query = new TextColumnSubstring(pos, 1, columnsCount, 0);
                 var qresult = await Context.Exec(query);
                 var rows = qresult.Rows.OrderBy(r => r.Index).ToList();
                 if (rows.Count > 0 && rows.All(r => r.Count == oldCount))
@@ -51,13 +57,13 @@ namespace Explorer.Components
 
                 foreach (var row in rows)
                 {
-                    if (row.Count != oldCount)
+                    if (row.Count > oldCount)
                     {
                         distribution.Add((Length: pos + row.Index, row.Count - oldCount));
                     }
                     oldCount = row.Count;
                 }
-                pos += SubstringQueryColumnCount;
+                pos += columnsCount;
             }
             return new Result(distribution);
         }

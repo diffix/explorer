@@ -3,11 +3,12 @@ namespace Explorer
     public class ExplorerOptions
     {
         public const int DefaultSamplesToPublish = 20;
-        public const int DefaultSubstringQueryColumnCount = 5;
+        public const int DefaultSubstringQueryColumnCount = 16;
         public const int DefaultMaxCorrelationDepth = 2;
         public const bool DefaultMultiColumnEnabled = true;
         public const int DefaultDistinctValuesToPublish = 10;
         public const double DefaultTextColumnMinFactorForCategoricalSampling = 0.05;
+        public const int DefaultTextColumnMaxExplorationLength = 100;
 
         /// <summary>
         /// Gets or sets a value indicating whether to enable multi-column correlation analysis.
@@ -50,5 +51,13 @@ namespace Explorer
         /// <see cref="DefaultTextColumnMinFactorForCategoricalSampling" />.</value>
         public double TextColumnMinFactorForCategoricalSampling { get; set; } =
             DefaultTextColumnMinFactorForCategoricalSampling;
+
+        /// <summary>
+        /// Gets or sets the maximum length limit for the exploration of substrings from non-categorical text columns.
+        /// </summary>
+        /// <value>The value should be bigger than 0.
+        /// Default value is <see cref="DefaultTextColumnMaxExplorationLength" />.
+        /// </value>
+        public int TextColumnMaxExplorationLength { get; set; } = DefaultTextColumnMaxExplorationLength;
     }
 }
