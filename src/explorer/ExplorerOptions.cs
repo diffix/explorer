@@ -2,7 +2,7 @@ namespace Explorer
 {
     public class ExplorerOptions
     {
-        public const int DefaultSamplesToPublish = 20;
+        public const int DefaultDefaultSamplesToPublish = 20;
         public const int DefaultSubstringQueryColumnCount = 16;
         public const int DefaultMaxCorrelationDepth = 2;
         public const bool DefaultMultiColumnEnabled = true;
@@ -27,7 +27,7 @@ namespace Explorer
         /// Gets or sets the number of sample data rows to publish.
         /// </summary>
         /// <value>Default value is <see cref="DefaultSamplesToPublish" />.</value>
-        public int SamplesToPublish { get; set; } = DefaultSamplesToPublish;
+        public int DefaultSamplesToPublish { get; set; } = DefaultDefaultSamplesToPublish;
 
         /// <summary>
         /// Gets or sets the batch size for substring queries.

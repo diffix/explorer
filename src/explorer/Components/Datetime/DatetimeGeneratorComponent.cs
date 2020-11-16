@@ -9,17 +9,17 @@ namespace Explorer.Components
     public class DatetimeGeneratorComponent : PublisherComponent
     {
         private readonly ResultProvider<DatetimeDistribution> distributionProvider;
-        private readonly ExplorerOptions options;
+        private readonly ExplorerContext context;
 
         public DatetimeGeneratorComponent(
             ResultProvider<DatetimeDistribution> distributionProvider,
-            IOptions<ExplorerOptions> options)
+            ExplorerContext context)
         {
             this.distributionProvider = distributionProvider;
-            this.options = options.Value;
+            this.context = context;
         }
 
-        private int SamplesToPublish => options.SamplesToPublish;
+        private int SamplesToPublish => context.SamplesToPublish;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {

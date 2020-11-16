@@ -16,13 +16,15 @@ namespace Explorer.Tests
             string dataSource,
             string table,
             string column,
-            DColumnInfo columnInfo)
+            DColumnInfo columnInfo,
+            int samplesToPublish)
         {
             Connection = connection;
             DataSource = dataSource;
             Table = table;
             Columns = ImmutableArray.Create(column);
             ColumnInfos = ImmutableArray.Create(columnInfo);
+            SamplesToPublish = samplesToPublish;
         }
 
         public ExplorerTestContext(
@@ -30,13 +32,15 @@ namespace Explorer.Tests
             string dataSource,
             string table,
             IEnumerable<string> columns,
-            IEnumerable<DColumnInfo> columnInfo)
+            IEnumerable<DColumnInfo> columnInfo,
+            int samplesToPublish)
         {
             Connection = connection;
             DataSource = dataSource;
             Table = table;
             Columns = ImmutableArray.CreateRange(columns);
             ColumnInfos = ImmutableArray.CreateRange(columnInfo);
+            SamplesToPublish = samplesToPublish;
         }
 
         public AircloakConnection Connection { get; }
@@ -44,6 +48,8 @@ namespace Explorer.Tests
         public string DataSource { get; set; }
 
         public string Table { get; set; }
+
+        public int SamplesToPublish { get; }
 
         public ImmutableArray<string> Columns { get; }
 
@@ -78,13 +84,18 @@ namespace Explorer.Tests
             {
                 throw new ArgumentException("Cannot merge two contexts with different Tables.");
             }
+            if (SamplesToPublish != other.SamplesToPublish)
+            {
+                throw new ArgumentException("Cannot merge two contexts with different SamplesToPublish.");
+            }
 
             return new ExplorerTestContext(
                 Connection,
                 DataSource,
                 Table,
                 Columns.AddRange(other.Columns).Distinct(),
-                ColumnInfos.AddRange(other.ColumnInfos).Distinct());
+                ColumnInfos.AddRange(other.ColumnInfos).Distinct(),
+                other.SamplesToPublish);
         }
     }
 }

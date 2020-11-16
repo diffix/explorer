@@ -18,7 +18,7 @@ namespace Explorer.Components
             this.options = options.Value;
         }
 
-        public int SamplesToPublish => options.SamplesToPublish;
+        public int SamplesToPublish => Context.SamplesToPublish;
 
         public double TextColumnMinFactorForCategoricalSampling => options.TextColumnMinFactorForCategoricalSampling;
 

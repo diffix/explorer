@@ -1,6 +1,5 @@
 namespace Explorer
 {
-    using System;
     using System.Collections.Immutable;
     using System.Linq;
     using System.Threading.Tasks;
@@ -20,6 +19,8 @@ namespace Explorer
         public ImmutableArray<string> Columns { get; }
 
         public ImmutableArray<DColumnInfo> ColumnInfos { get; }
+
+        public int SamplesToPublish { get; }
 
         public Task<DResult<TRow>> Exec<TQuery, TRow>(TQuery query)
             where TQuery : DQueryStatement, DResultParser<TRow>;

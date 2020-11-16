@@ -28,6 +28,9 @@ namespace Explorer.Api.Models
 
         [Required]
         public ImmutableArray<string> Columns { get; set; } = ImmutableArray<string>.Empty;
+
+        [Range(0, int.MaxValue, ErrorMessage = "Value for {0} must be greater or equal to {1}.")]
+        public int? SamplesToPublish { get; set; }
     }
 }
 

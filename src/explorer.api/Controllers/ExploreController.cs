@@ -12,6 +12,7 @@ namespace Explorer.Api.Controllers
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
 
     using static ExplorationStatusEnum;
 

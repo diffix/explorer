@@ -130,6 +130,15 @@
         public async Task SuccessWithResultMultiColumns() => await SuccessWithResult(
             new ExploreParams { DataSource = "cov_clear", Table = "survey", Columns = ImmutableArray.Create("test_date", "fever", "how_anxious", "lat", "email") });
 
+        [Fact]
+        public async Task SuccessWithResultCustomSamplesToPublish() => await SuccessWithResult(new ExploreParams
+        {
+            DataSource = "gda_banking",
+            Table = "loans",
+            Columns = ImmutableArray.Create("amount"),
+            SamplesToPublish = 5,
+        });
+
         public async Task SuccessWithResult(ExploreParams pdata, [CallerMemberName] string vcrSessionName = "")
         {
             var data = new ExploreParams
@@ -139,7 +148,10 @@
                 DataSource = pdata.DataSource,
                 Table = pdata.Table,
                 Columns = pdata.Columns,
+                SamplesToPublish = pdata.SamplesToPublish,
             };
+
+            var testConfig = factory.GetTestConfig(nameof(ApiTests), vcrSessionName);
 
             // The vcr cache has to be cleared when there are schema changes.
             var explorerGuid = await TestApi(
@@ -150,7 +162,6 @@
                 vcrSessionName,
                 VcrSharp.VCRMode.Cache);
 
-            var testConfig = factory.GetTestConfig(nameof(ApiTests), vcrSessionName);
             await TestExploreResult(
                 HttpMethod.Get,
                 explorerGuid,
@@ -199,6 +210,10 @@
                 Assert.Contains("sampleData", jsonContent);
                 var sampleData = (JArray)jsonContent["sampleData"];
                 Assert.NotNull(sampleData);
+                if (data.SamplesToPublish != null)
+                {
+                    Assert.True(sampleData.Count == data.SamplesToPublish, "Wrong number of samples generated.");
+                }
 
                 if (status == "Complete")
                 {
@@ -226,6 +241,10 @@
                     if (data.Columns.Length > 0)
                     {
                         Assert.True(sampleData.Count > 0, "SampleData is empty!");
+                        if (data.SamplesToPublish != null)
+                        {
+                            Assert.True(sampleData.Count == data.SamplesToPublish, "Wrong number of samples generated.");
+                        }
                         foreach (var row in sampleData)
                         {
                             Assert.True(

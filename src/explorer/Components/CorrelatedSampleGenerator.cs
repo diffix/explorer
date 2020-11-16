@@ -5,24 +5,23 @@ namespace Explorer.Components
     using System.Text.Json;
     using Explorer.Common;
     using Explorer.Metrics;
-    using Microsoft.Extensions.Options;
 
     public class CorrelatedSampleGenerator : PublisherComponent
     {
         private static readonly JsonElement JsonNull = Utilities.MakeJsonNull();
         private readonly ResultProvider<ColumnCorrelationComponent.Result> correlationProvider;
-        private readonly ExplorerOptions options;
+        private readonly ExplorerContext context;
 
         public CorrelatedSampleGenerator(
             ResultProvider<ColumnCorrelationComponent.Result> correlationProvider,
-            IOptions<ExplorerOptions> options)
+            ExplorerContext context)
         {
+            this.context = context;
             this.correlationProvider = correlationProvider;
-
-            this.options = options.Value;
+            this.context = context;
         }
 
-        private int SamplesToPublish => options.SamplesToPublish;
+        private int SamplesToPublish => context.SamplesToPublish;
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
