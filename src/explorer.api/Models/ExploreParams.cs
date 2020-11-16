@@ -2,9 +2,11 @@
 
 namespace Explorer.Api.Models
 {
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.ComponentModel.DataAnnotations;
     using System.Globalization;
+    using System.Linq;
 
     public class ExploreParams
     {
@@ -26,8 +28,25 @@ namespace Explorer.Api.Models
         [Required]
         public string Table { get; set; } = string.Empty;
 
-        [Required]
+        [NonEmpty]
         public ImmutableArray<string> Columns { get; set; } = ImmutableArray<string>.Empty;
+
+        [System.AttributeUsage(System.AttributeTargets.Property, AllowMultiple = false)]
+        private class NonEmptyAttribute : ValidationAttribute
+        {
+            public override object TypeId => base.TypeId;
+
+            public override bool RequiresValidationContext => base.RequiresValidationContext;
+
+            public override bool IsValid(object value) => value is IEnumerable<object> e && e.Any();
+
+            protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+            {
+                return IsValid(value)
+                    ? ValidationResult.Success
+                    : new ValidationResult($"Array '{validationContext.MemberName}' is required and cannot be empty.");
+            }
+        }
     }
 }
 
