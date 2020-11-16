@@ -95,10 +95,6 @@
         }
 
         [Fact]
-        public async Task SuccessWithResultNoColumns() => await SuccessWithResult(
-            new ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray<string>.Empty, });
-
-        [Fact]
         public async Task SuccessWithResultIntCategorical() => await SuccessWithResult(
             new ExploreParams { DataSource = "gda_banking", Table = "loans", Columns = ImmutableArray.Create("duration"), });
 
@@ -306,6 +302,7 @@
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The DataSource field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The Table field is required.", content, StringComparison.InvariantCulture);
+                Assert.Contains("Array 'Columns' is required and cannot be empty.", content, StringComparison.InvariantCulture);
             });
         }
 
@@ -319,6 +316,7 @@
                 Assert.Contains("The ApiKey field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The DataSource field is required.", content, StringComparison.InvariantCulture);
                 Assert.Contains("The Table field is required.", content, StringComparison.InvariantCulture);
+                Assert.Contains("Array 'Columns' is required and cannot be empty.", content, StringComparison.InvariantCulture);
             });
         }
 
