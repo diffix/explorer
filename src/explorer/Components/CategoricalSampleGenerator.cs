@@ -61,7 +61,7 @@ namespace Explorer.Components
                             : r));
 
                 sampleValues = Enumerable
-                    .Range(0, config.SamplesToPublish)
+                    .Range(0, Context.SamplesToPublish)
                     .Select(_ => allValues.GetRandomValue(rand));
             }
             return new Result(sampleValues.ToList());

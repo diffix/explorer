@@ -26,6 +26,7 @@ namespace Explorer.Tests
             string column,
             DColumnInfo columnInfo,
             string vcrFileName,
+            int samplesToPublish = 10,
             int pollFrequencySecs = 2)
         : this(
             rootContainer,
@@ -35,6 +36,7 @@ namespace Explorer.Tests
             new[] { column },
             new[] { columnInfo },
             vcrFileName,
+            samplesToPublish,
             pollFrequencySecs)
         {
         }
@@ -47,6 +49,7 @@ namespace Explorer.Tests
             IEnumerable<string> columns,
             IEnumerable<DColumnInfo> columnInfo,
             string vcrFileName,
+            int samplesToPublish = 10,
             int pollFrequencySecs = 2)
         {
 #pragma warning disable CA2000 // Call System.IDisposable.Dispose on object (lifetime is managed by container.)
@@ -71,7 +74,7 @@ namespace Explorer.Tests
                 opts,
                 cts.Token);
 
-            Context = new ExplorerTestContext(Connection, dataSource, table, columns, columnInfo);
+            Context = new ExplorerTestContext(Connection, dataSource, table, columns, columnInfo, samplesToPublish);
             Scope.Inject<ExplorerContext>(Context);
         }
 

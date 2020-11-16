@@ -88,10 +88,10 @@ There are some configuration items that can be used to tune performance or adjus
 using environment variables of the form `Explorer__{name}`. `__` is a double-underscore and {name} refers to one of the
 following items:
 
-#### **SamplesToPublish** _default = `20`_
+#### **DefaultSamplesToPublish** _default = `20`_
 
-  The number of rows of sample data to generate.
-  This value can be further customized using the `SamplesToPublish` querystring parameter (see [Launching an exploration](#launching-an-exploration)).
+  The number of rows of sample data to generate by default.
+  This value can be overridden using the `SamplesToPublish` querystring parameter (see [Launching an exploration](#launching-an-exploration)).
 
 #### **MaxConcurrentQueries** _default = `10`_
 

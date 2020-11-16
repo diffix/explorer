@@ -9,15 +9,19 @@
 
     using Aircloak.JsonApi;
     using Diffix;
+    using Microsoft.Extensions.Options;
 
     public class JsonApiContextBuilder : ExplorerContextBuilder<Models.ExploreParams>
     {
         private readonly AircloakConnectionBuilder connectionBuilder;
 
-        public JsonApiContextBuilder(AircloakConnectionBuilder connectionBuilder)
+        public JsonApiContextBuilder(AircloakConnectionBuilder connectionBuilder, IOptions<ExplorerOptions> options)
         {
+            this.Options = options.Value;
             this.connectionBuilder = connectionBuilder;
         }
+
+        private ExplorerOptions Options { get; }
 
         public async Task<IEnumerable<ExplorerContext>> Build(
             Models.ExploreParams requestData,
@@ -47,7 +51,13 @@
                     throw new MetaDataCheckException($"Could not find column '{dataSource}.{table}.{column}'.");
                 }
                 var ci = new DColumnInfo(columnInfo.Type, columnInfo.UserId, columnInfo.Isolating.IsIsolator);
-                return new CheckedContext(connection, dataSource, table, column, ci);
+                return new CheckedContext(
+                    connection,
+                    dataSource,
+                    table,
+                    column,
+                    ci,
+                    requestData.SamplesToPublish ?? Options.DefaultSamplesToPublish);
             });
         }
 
@@ -62,13 +72,15 @@
                 string dataSource,
                 string table,
                 string column,
-                DColumnInfo columnInfo)
+                DColumnInfo columnInfo,
+                int samplesToPublish)
             {
                 Connection = connection;
                 DataSource = dataSource;
                 Table = table;
                 Columns = ImmutableArray.Create(column);
                 ColumnInfos = ImmutableArray.Create(columnInfo);
+                SamplesToPublish = samplesToPublish;
             }
 
             internal CheckedContext(
@@ -76,13 +88,15 @@
                 string dataSource,
                 string table,
                 IEnumerable<string> columns,
-                IEnumerable<DColumnInfo> columnInfos)
+                IEnumerable<DColumnInfo> columnInfos,
+                int samplesToPublish)
             {
                 Connection = connection;
                 DataSource = dataSource;
                 Table = table;
                 Columns = ImmutableArray.CreateRange(columns);
                 ColumnInfos = ImmutableArray.CreateRange(columnInfos);
+                SamplesToPublish = samplesToPublish;
             }
 
             public AircloakConnection Connection { get; }
@@ -94,6 +108,8 @@
             public ImmutableArray<string> Columns { get; }
 
             public ImmutableArray<DColumnInfo> ColumnInfos { get; }
+
+            public int SamplesToPublish { get; }
 
             public Task<DResult<TRow>> Exec<TQuery, TRow>(TQuery query)
             where TQuery : DQueryStatement, DResultParser<TRow> =>
@@ -120,13 +136,18 @@
                 {
                     throw new ArgumentException("Cannot merge two contexts with different Tables.");
                 }
+                if (SamplesToPublish != other.SamplesToPublish)
+                {
+                    throw new ArgumentException("Cannot merge two contexts with different SamplesToPublish.");
+                }
 
                 return new CheckedContext(
                     Connection,
                     DataSource,
                     Table,
                     Columns.AddRange(other.Columns).Distinct(),
-                    ColumnInfos.AddRange(other.ColumnInfos).Distinct());
+                    ColumnInfos.AddRange(other.ColumnInfos).Distinct(),
+                    SamplesToPublish);
             }
         }
     }

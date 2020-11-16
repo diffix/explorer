@@ -72,7 +72,8 @@ namespace Explorer.Tests
         {
             var vcrFileName = Cassette.GenerateVcrFilename(caller, callerMemberName);
             var columnInfo = await GetColumnInfo(dataSource, table, column);
-            return new TestScope(Container, ApiUri, dataSource, table, column, columnInfo, vcrFileName);
+            var samplesToPublish = Config.Get<ExplorerOptions>().DefaultSamplesToPublish;
+            return new TestScope(Container, ApiUri, dataSource, table, column, columnInfo, vcrFileName, samplesToPublish);
         }
 
         public async Task<TestScope> CreateTestScope(
@@ -84,7 +85,8 @@ namespace Explorer.Tests
         {
             var vcrFileName = Cassette.GenerateVcrFilename(caller, callerMemberName);
             var columnInfo = await GetColumnInfo(dataSource, table, columns).Collect();
-            return new TestScope(Container, ApiUri, dataSource, table, columns, columnInfo, vcrFileName);
+            var samplesToPublish = Config.Get<ExplorerOptions>().DefaultSamplesToPublish;
+            return new TestScope(Container, ApiUri, dataSource, table, columns, columnInfo, vcrFileName, samplesToPublish);
         }
 
         public void Dispose()

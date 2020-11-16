@@ -42,13 +42,13 @@ namespace Explorer
 
         public bool MultiColumnEnabled => options.MultiColumnEnabled;
 
-        public int SamplesToPublish => options.SamplesToPublish;
+        public int SamplesToPublish { get; set; }
 
         private Task? MainTask { get; set; }
 
         public IEnumerable<IEnumerable<object?>> GetSampleData()
         {
-            if (Status != ExplorationStatus.Complete)
+            if (Status != ExplorationStatus.Complete || SamplesToPublish == 0)
             {
                 yield break;
             }
@@ -122,9 +122,12 @@ namespace Explorer
                         {
                             var contexts = await contextBuilder.Build(builderArgs, cancellationTokenSource.Token);
 
+                            var mergedContext = contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2));
+                            SamplesToPublish = mergedContext.SamplesToPublish;
+
                             var singleColumnScopes = contexts
-                                .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
-                                .ToList();
+                                        .Select(context => scopeBuilder.Build(explorationRootContainer.GetNestedContainer(), context))
+                                        .ToList();
 
                             ColumnExplorations = singleColumnScopes
                                 .Select(scope => new ColumnExploration(scope))
@@ -138,7 +141,7 @@ namespace Explorer
                                 MultiColumnExploration = new MultiColumnExploration(
                                     multiColumnScopeBuilder.Build(
                                         explorationRootContainer.GetNestedContainer(),
-                                        contexts.Aggregate((ctx1, ctx2) => ctx1.Merge(ctx2))));
+                                        mergedContext));
                             }
                         });
 

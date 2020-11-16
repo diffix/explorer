@@ -49,10 +49,6 @@ namespace Explorer.Api.Controllers
                 auth.RegisterApiKey(data.ApiKey);
             }
 
-            var explorationRootContainer = (IContainer)rootContainer.GetNestedContainer();
-            var options = explorationRootContainer.GetInstance<IOptions<ExplorerOptions>>().Value;
-            options.SamplesToPublish = data.SamplesToPublish ?? options.SamplesToPublish;
-
             // Launch and register the exploration.
             var exploration = new Exploration(rootContainer, scopeBuilder);
             exploration.Explore(contextBuilder, data);
