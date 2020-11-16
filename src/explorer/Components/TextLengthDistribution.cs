@@ -1,5 +1,6 @@
 namespace Explorer.Components
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json;
@@ -8,13 +9,17 @@ namespace Explorer.Components
     using Explorer.Common;
     using Explorer.Metrics;
     using Explorer.Queries;
+    using Microsoft.Extensions.Options;
 
     public class TextLengthDistribution
         : ExplorerComponent<TextLengthDistribution.Result>, PublisherComponent
     {
-        private const int DefaultSubstringQueryColumnCount = 5;
+        private readonly ExplorerOptions options;
 
-        public int SubstringQueryColumnCount { get; set; } = DefaultSubstringQueryColumnCount;
+        public TextLengthDistribution(IOptions<ExplorerOptions> options)
+        {
+            this.options = options.Value;
+        }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
         {
@@ -25,7 +30,7 @@ namespace Explorer.Components
             }
 
             yield return new UntypedMetric("text.length.values", result.Distribution
-                .Select(item => new { item.Value, item.Count })
+                .Select(item => new { Value = item.Length, item.Count })
                 .ToList());
 
             if (result.ValueCounts != null)
@@ -39,9 +44,10 @@ namespace Explorer.Components
             var distribution = new List<(long Length, long Count)>();
             var pos = 0;
             var oldCount = 0L;
-            while (true)
+            while (pos <= options.TextColumnMaxExplorationLength)
             {
-                var query = new TextColumnSubstring(pos, 1, SubstringQueryColumnCount, 0);
+                var columnsCount = Math.Min(options.SubstringQueryColumnCount, options.TextColumnMaxExplorationLength + 1 - pos);
+                var query = new TextColumnSubstring(pos, 1, columnsCount, 0);
                 var qresult = await Context.Exec(query);
                 var rows = qresult.Rows.OrderBy(r => r.Index).ToList();
                 if (rows.Count > 0 && rows.All(r => r.Count == oldCount))
@@ -51,13 +57,13 @@ namespace Explorer.Components
 
                 foreach (var row in rows)
                 {
-                    if (row.Count != oldCount)
+                    if (row.Count > oldCount)
                     {
                         distribution.Add((Length: pos + row.Index, row.Count - oldCount));
                     }
                     oldCount = row.Count;
                 }
-                pos += SubstringQueryColumnCount;
+                pos += columnsCount;
             }
             return new Result(distribution);
         }
@@ -79,21 +85,22 @@ namespace Explorer.Components
         {
             internal Result(IList<(long, long)> distribution)
             {
-                Distribution = ValueWithCountList<long>.FromTupleEnum(distribution);
+                Distribution = distribution;
             }
 
             internal Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
             {
                 ValueCounts = ValueCounts.Compute(distinctRows);
-                Distribution = ValueWithCountList<long>.FromTupleEnum(distinctRows
+                Distribution = distinctRows
                     .Where(r => r.HasValue)
                     .OrderBy(r => r.Value.GetInt32())
-                    .Select(r => (r.Value.GetInt64(), r.Count)));
+                    .Select(r => (r.Value.GetInt64(), r.Count))
+                    .ToList();
             }
 
             internal ValueCounts? ValueCounts { get; }
 
-            internal ValueWithCountList<long> Distribution { get; }
+            internal IList<(long Length, long Count)> Distribution { get; }
         }
     }
 }

@@ -80,9 +80,10 @@ namespace Explorer.Components
                 return null;
             }
 
+            var lengthDistribution = LengthDistribution.FromTupleEnum(textLengthDistributionResult.Distribution);
             var sampleValues = emailCheckerResult.IsEmail ?
-                await GenerateEmails(textLengthDistributionResult.Distribution, config) :
-                await GenerateStrings(textLengthDistributionResult.Distribution, config);
+                await GenerateEmails(lengthDistribution, config) :
+                await GenerateStrings(lengthDistribution, config);
             return new Result(sampleValues.ToList());
         }
 
@@ -208,17 +209,21 @@ namespace Explorer.Components
             foreach (var length in substringLengths)
             {
                 var hasRows = true;
-                for (var pos = 0; hasRows; pos += substringQueryColumnCount)
+                for (var pos = 0; hasRows && pos < options.TextColumnMaxExplorationLength; pos += substringQueryColumnCount)
                 {
+                    substringQueryColumnCount = Math.Min(substringQueryColumnCount, options.TextColumnMaxExplorationLength + 1 - pos);
                     var query = new TextColumnSubstring(pos, length, substringQueryColumnCount, length);
                     var sstrResult = await Context.Exec(query);
                     hasRows = false;
                     foreach (var row in sstrResult.Rows)
                     {
-                        if (row.HasValue && !BannedWords.Contains(row.Value.ToUpperInvariant()))
+                        if (row.HasValue)
                         {
                             hasRows = true;
-                            substrings.Add(pos + row.Index, row.Value, row.Count);
+                            if (!BannedWords.Contains(row.Value.ToUpperInvariant()))
+                            {
+                                substrings.Add(pos + row.Index, row.Value, row.Count);
+                            }
                         }
                     }
                 }
