@@ -2,6 +2,7 @@ namespace Explorer.Queries
 {
     using System;
     using System.Text.Json;
+
     using Diffix;
     using Explorer.Common;
     using Explorer.Components;
@@ -16,16 +17,20 @@ namespace Explorer.Queries
             string column,
             DValueType columnType,
             int index,
-            NumericDistribution distribution)
+            NumericDistribution distribution,
+            NumericDistribution? decimalsCountDistribution)
         : base(column, index)
         {
             BucketSize = ComputeBucketSize(distribution.Quartiles.Item1, distribution.Quartiles.Item3);
             ColumnType = columnType;
+            DecimalsCountDistribution = decimalsCountDistribution;
         }
 
         public BucketSize BucketSize { get; }
 
         public DValueType ColumnType { get; }
+
+        public NumericDistribution? DecimalsCountDistribution { get; }
 
         public override string Project() => $"bucket (\"{Column}\" by {BucketSize.SnappedSize})";
 
@@ -41,15 +46,14 @@ namespace Explorer.Queries
             {
                 return null;
             }
-
             var lowerBound = value.GetDouble();
             var offset = rng.NextDouble() * Convert.ToDouble(BucketSize.SnappedSize);
-
             var result = lowerBound + offset;
-
+            var decimalsCount = DecimalsCountDistribution == null ?
+                    2 : (int)Math.Round(DecimalsCountDistribution.Generate(rng));
             return ColumnType == DValueType.Integer
                 ? Convert.ToInt64(result)
-                : result;
+                : Math.Round(result, decimalsCount);
         }
 
         /// <summary>

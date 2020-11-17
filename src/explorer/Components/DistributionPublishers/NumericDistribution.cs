@@ -46,5 +46,7 @@
         public double Variance => distribution.Variance;
 
         public IEnumerable<double> Generate(int numSamples) => distribution.Generate(numSamples);
+
+        public double Generate(Random source) => distribution.Generate(source);
     }
 }

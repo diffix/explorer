@@ -1,10 +1,12 @@
 namespace Explorer.Components
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
 
+    using Accord.Statistics.Distributions.Univariate;
     using Explorer;
     using Explorer.Common;
     using Explorer.Metrics;
@@ -51,6 +53,28 @@ namespace Explorer.Components
                     Value = jdoc.RootElement.Clone(),
                     Count = remaining.Sum(distinct => distinct.Count),
                 });
+            }
+
+            if (Context.ColumnInfo.Type == Diffix.DValueType.Real)
+            {
+                static int DecimalsCount(decimal val)
+                {
+                    val = Math.Abs(val);
+                    var i = 0;
+                    while (Math.Abs(Math.Round(val, i) - val) > 1e-8m)
+                    {
+                        i++;
+                    }
+                    return i;
+                }
+
+                var decimalCounts = result.DistinctRows
+                        .Where(r => r.HasValue)
+                        .Select(r => (double)DecimalsCount(r.Value.GetDecimal()))
+                        .DefaultIfEmpty(2);
+
+                var dist = new EmpiricalDistribution(decimalCounts.ToArray());
+                yield return new UntypedMetric(name: "distinct.decimals_count_distribution", metric: new NumericDistribution(dist));
             }
 
             var valueCounts = result.ValueCounts;

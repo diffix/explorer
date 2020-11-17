@@ -55,18 +55,20 @@
                 DValueType.Datetime => DateTimeProjection(metadata),
                 DValueType.Timestamp => DateTimeProjection(metadata),
                 DValueType.Bool => new IdentityProjection(metadata.Column, metadata.Index, columnType),
-                DValueType.Integer => NumericProjection(metadata),
-                DValueType.Real => NumericProjection(metadata),
+                DValueType.Integer => NumericProjection(metadata, columnType),
+                DValueType.Real => NumericProjection(metadata, columnType),
                 DValueType.Text => TextProjection(metadata),
                 _ => new IgnoredColumnProjection(metadata.Column, metadata.Index),
             };
 
-            static ColumnProjection NumericProjection(SingleColumnMetadata metadata)
+            static ColumnProjection NumericProjection(SingleColumnMetadata metadata, DValueType columnType)
             {
                 var distribution = metadata.TryGetMetric<NumericDistribution>("descriptive_stats");
+                var decimalsCountDistribution = (columnType != DValueType.Real) ?
+                        null : metadata.TryGetMetric<NumericDistribution>("distinct.decimals_count_distribution");
 
                 return new BucketisingProjection(
-                    metadata.Column, metadata.ColumnInfo.Type, metadata.Index, distribution);
+                    metadata.Column, metadata.ColumnInfo.Type, metadata.Index, distribution, decimalsCountDistribution);
             }
 
             static ColumnProjection TextProjection(SingleColumnMetadata metadata)
