@@ -48,5 +48,7 @@
         public IEnumerable<double> Generate(int numSamples) => distribution.Generate(numSamples);
 
         public double Generate(Random source) => distribution.Generate(source);
+
+        public int GenerateInt(Random source) => (int)Math.Round(distribution.Generate(source));
     }
 }

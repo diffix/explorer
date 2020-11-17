@@ -55,34 +55,16 @@ namespace Explorer.Components
                 });
             }
 
-            if (Context.ColumnInfo.Type == Diffix.DValueType.Real)
-            {
-                static int DecimalsCount(decimal val)
-                {
-                    val = Math.Abs(val);
-                    var i = 0;
-                    while (Math.Abs(Math.Round(val, i) - val) > 1e-8m)
-                    {
-                        i++;
-                    }
-                    return i;
-                }
-
-                var decimalCounts = result.DistinctRows
-                        .Where(r => r.HasValue)
-                        .Select(r => (double)DecimalsCount(r.Value.GetDecimal()))
-                        .DefaultIfEmpty(2);
-
-                var dist = new EmpiricalDistribution(decimalCounts.ToArray());
-                yield return new UntypedMetric(name: "distinct.decimals_count_distribution", metric: new NumericDistribution(dist));
-            }
-
             var valueCounts = result.ValueCounts;
             yield return new UntypedMetric(name: "distinct.is_categorical", metric: result.ValueCounts.IsCategorical);
             yield return new UntypedMetric(name: "distinct.values", metric: toPublish.ToList());
             yield return new UntypedMetric(name: "distinct.null_count", metric: valueCounts.NullCount);
             yield return new UntypedMetric(name: "distinct.suppressed_count", metric: valueCounts.SuppressedCount);
             yield return new UntypedMetric(name: "distinct.value_count", metric: valueCounts.TotalCount);
+            if (result.DecimalsCountDistribution != null)
+            {
+                yield return new UntypedMetric(name: "distinct.decimals_count_distribution", metric: result.DecimalsCountDistribution);
+            }
         }
 
         public async IAsyncEnumerable<ExploreMetric> YieldMetrics()
@@ -103,23 +85,54 @@ namespace Explorer.Components
         {
             if (Context.ColumnInfo.UserId)
             {
-                return new Result(Enumerable.Empty<ValueWithCount<JsonElement>>());
+                return new Result(Enumerable.Empty<ValueWithCount<JsonElement>>(), null);
             }
             var distinctValueResult = await Context.Exec(new DistinctColumnValues());
-            return new Result(distinctValueResult.Rows.OrderByDescending(r => r.Count));
+            var decimalsCountDistribution = GetDecimalsCountDistribution(distinctValueResult.Rows);
+            return new Result(distinctValueResult.Rows.OrderByDescending(r => r.Count), decimalsCountDistribution);
+        }
+
+        private NumericDistribution? GetDecimalsCountDistribution(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
+        {
+            if (Context.ColumnInfo.Type != Diffix.DValueType.Real)
+            {
+                return null;
+            }
+
+            static int DecimalsCount(decimal val)
+            {
+                val = Math.Abs(val);
+                var i = 0;
+                while (Math.Abs(Math.Round(val, i) - val) > 1e-8m)
+                {
+                    i++;
+                }
+                return i;
+            }
+
+            var decimalCounts = distinctRows
+                    .Where(r => r.HasValue)
+                    .Select(r => (double)DecimalsCount(r.Value.GetDecimal()))
+                    .DefaultIfEmpty(2)
+                    .ToArray();
+
+            return new NumericDistribution(new EmpiricalDistribution(decimalCounts));
         }
 
         public class Result
         {
-            public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows)
+            public Result(IEnumerable<ValueWithCount<JsonElement>> distinctRows, NumericDistribution? decimalsCountDistribution)
             {
                 DistinctRows = distinctRows.ToList();
                 ValueCounts = ValueCounts.Compute(DistinctRows);
+                DecimalsCountDistribution = decimalsCountDistribution;
             }
 
             public List<ValueWithCount<JsonElement>> DistinctRows { get; }
 
             public ValueCounts ValueCounts { get; }
+
+            public NumericDistribution? DecimalsCountDistribution { get; }
         }
     }
 }

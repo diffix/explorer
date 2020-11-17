@@ -49,8 +49,7 @@ namespace Explorer.Queries
             var lowerBound = value.GetDouble();
             var offset = rng.NextDouble() * Convert.ToDouble(BucketSize.SnappedSize);
             var result = lowerBound + offset;
-            var decimalsCount = DecimalsCountDistribution == null ?
-                    2 : (int)Math.Round(DecimalsCountDistribution.Generate(rng));
+            var decimalsCount = DecimalsCountDistribution?.GenerateInt(rng) ?? 2;
             return ColumnType == DValueType.Integer
                 ? Convert.ToInt64(result)
                 : Math.Round(result, decimalsCount);
