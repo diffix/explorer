@@ -5,6 +5,7 @@
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -223,9 +224,7 @@
                 throw;
             }
 
-            var groups = queryResults.GroupBy(row => row.ColumnGrouping);
-
-            var groupingIdConverter = GroupingIdConverter.GetConverter(Projections.Length);
+            var groups = queryResults.GroupBy(row => row.ColumnGrouping).ToList();
 
             var cardinalities = groups
                 .Where(grouping =>
@@ -237,16 +236,43 @@
             var matrices = groups
                 .Select(grouping =>
                 {
-                    var groupingIndices = grouping.Key.Indices;
-
-                    var matrix = new JointProbabilityMatrix(groupingIndices.Select(i => cardinalities[i]));
-
-                    foreach (var bucket in grouping)
+                    try
                     {
-                        matrix.AddBucket(bucket);
-                    }
+                        var matrix = new JointProbabilityMatrix(grouping.Key.Indices.Select(i => cardinalities[i]));
 
-                    return (grouping.Key, matrix);
+                        foreach (var bucket in grouping)
+                        {
+                            matrix.AddBucket(bucket);
+                        }
+
+                        return (grouping.Key, matrix);
+                    }
+                    catch (KeyNotFoundException ex)
+                    {
+                        const string pattern = @"^The given key '(\d*)' was not present in the dictionary.$";
+                        var missingKey = Regex.Match(ex.Message, pattern).Groups.GetValueOrDefault("1")?.Value;
+
+                        if (int.TryParse(missingKey, out var missingIndex))
+                        {
+                            var p = Projections[missingIndex];
+                            var projInfo = new
+                            {
+                                Index = missingIndex,
+                                p.SourceIndex,
+                                QueryIndex = missingIndex + 2,
+                                p.Column,
+                                ColumnExpr = p.Project(),
+                            };
+                            var groupStr = string.Join(",", grouping.Key.Indices);
+
+                            var msg = $"Error in exploration at grouping {grouping.Key.GroupingId} ({groupStr}).\n" +
+                                $"The following grouped column was missing from the result set:\n\t{projInfo}\n" +
+                                "This may mean that a grouping set was not included in the query results - see github issue #380";
+
+                            Logger.LogError(ex, msg);
+                        }
+                        throw;
+                    }
                 });
 
             return new Result(matrices, Projections);
