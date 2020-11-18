@@ -2,7 +2,6 @@ namespace Explorer.Api
 {
     using Aircloak.JsonApi;
     using Explorer.Api.Authentication;
-    using Explorer.Api.Models;
     using Explorer.Components;
     using Explorer.Metrics;
     using Lamar;
@@ -31,7 +30,8 @@ namespace Explorer.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureContainer(ServiceRegistry services)
         {
-            services.AddControllers();
+            services.AddControllers().AddJsonOptions(options =>
+                options.JsonSerializerOptions.Converters.Add(new ExploreMetricConverter()));
             services.AddApiVersioning();
 
             const string ConfigSection = "Explorer";

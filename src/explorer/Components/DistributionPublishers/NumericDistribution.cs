@@ -49,6 +49,15 @@
 
         public double Generate(Random source) => distribution.Generate(source);
 
-        public int GenerateInt(Random source) => (int)Math.Round(distribution.Generate(source));
+        public int? GenerateInt(Random source)
+        {
+            var d = distribution.Generate(source);
+            if (double.IsFinite(d))
+            {
+                return Convert.ToInt32(d);
+            }
+
+            return null;
+        }
     }
 }
