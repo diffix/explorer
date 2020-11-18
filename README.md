@@ -720,6 +720,12 @@ The short version:
 
 If you want to use an editor other than VS Code, you will need [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1) to compile the source files on your local machine.
 
+
+### Sentry
+
+Sentry can be used to track exceptions. To activate this, add an environement variable `Sentry__Dsn` containing the 
+DSN for your sentry account. More information [here](https://docs.sentry.io/platforms/dotnet/guides/).
+
 ### Testing
 
 Many of the tests run against data sources hosted at `https://attack.aircloak.com/api/`. To run the tests you will need to set the `AIRCLOAK_API_KEY` environment variable to a token that is valid for accessing this Aircloak instance. If you are using vs code remote containers, this environment variable will be propagated from your local environment to the development container.
