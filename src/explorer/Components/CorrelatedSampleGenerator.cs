@@ -18,7 +18,6 @@ namespace Explorer.Components
         {
             this.context = context;
             this.correlationProvider = correlationProvider;
-            this.context = context;
         }
 
         private int SamplesToPublish => context.SamplesToPublish;

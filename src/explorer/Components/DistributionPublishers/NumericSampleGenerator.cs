@@ -47,11 +47,15 @@ namespace Explorer.Components
                 yield break;
             }
 
+            var rng = new Random();
+
             yield return new UntypedMetric(
                 name: "sample_values",
                 metric: distribution
                         .Generate(config.SamplesToPublish)
-                        .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ? s : Convert.ToInt64(s))
+                        .Select(s => Context.ColumnInfo.Type == Diffix.DValueType.Real ?
+                            Math.Round(s, distinctValues.DecimalsCountDistribution?.GenerateInt(rng) ?? 2) :
+                            Convert.ToInt64(s))
                         .OrderBy(_ => _)
                         .ToList());
         }
