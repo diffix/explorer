@@ -9,7 +9,8 @@ namespace Explorer.Metrics
         [JsonPropertyName("value")]
         public object Metric { get; }
 
-        [JsonIgnore]
         public int Priority { get; }
+
+        public bool Invisible { get; }
     }
 }

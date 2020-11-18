@@ -63,7 +63,10 @@ namespace Explorer.Components
             yield return new UntypedMetric(name: "distinct.value_count", metric: valueCounts.TotalCount);
             if (result.DecimalsCountDistribution != null)
             {
-                yield return new UntypedMetric(name: "distinct.decimals_count_distribution", metric: result.DecimalsCountDistribution);
+                yield return new UntypedMetric(
+                    name: "distinct.decimals_count_distribution",
+                    metric: result.DecimalsCountDistribution,
+                    invisible: true);
             }
         }
 
