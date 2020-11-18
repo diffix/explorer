@@ -16,7 +16,7 @@ namespace Explorer.Queries
 
         public override string Project()
         {
-            return $"date_trunc('{dateInterval}', {Column})";
+            return $"date_trunc('{dateInterval}', \"{Column}\")";
         }
 
         public override object? Invert(JsonElement value)

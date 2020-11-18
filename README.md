@@ -85,7 +85,7 @@ docker run -it --rm -p 5000:80 explorer
 ## Configuration
 
 There are some configuration items that can be used to tune performance or adjust the query output. These can be set
-using environment variables of the form `Explorer__{name}`. `__` is a double-underscore and {name} refers to one of the
+using environment variables of the form `Explorer__{name}`. `__` is a double-underscore and `{name}` refers to one of the
 following items:
 
 #### **DefaultSamplesToPublish** _default = `20`_
@@ -720,9 +720,36 @@ The short version:
 
 If you want to use an editor other than VS Code, you will need [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1) to compile the source files on your local machine.
 
+
+### Sentry
+
+Sentry can be used to track exceptions. To activate this, add an environement variable `Sentry__Dsn` containing the 
+DSN for your sentry account. More information [here](https://docs.sentry.io/platforms/dotnet/guides/).
+
 ### Testing
 
 Many of the tests run against data sources hosted at `https://attack.aircloak.com/api/`. To run the tests you will need to set the `AIRCLOAK_API_KEY` environment variable to a token that is valid for accessing this Aircloak instance. If you are using vs code remote containers, this environment variable will be propagated from your local environment to the development container.
+
+### Publishing the docker image
+
+First, make sure you are a member of the Diffix org on [docker hub](https://hub.docker.com/orgs/diffix).
+
+You can now create an access token for docker hub and use this to authenticate if you have not already done so. Details
+[here](https://docs.docker.com/docker-hub/access-tokens/).
+
+Now, from the project root, build the image with the desired tags. Note the image name needs to match the repo path on 
+docker hub, which is `diffix/explorer`. For example:
+
+```
+docker build -t diffix/explorer:20.3 -t diffix/explorer:latest .
+```
+
+Finally, push the images to docker hub.
+```
+docker push diffix/explorer:20.3
+docker push diffix/explorer:latest
+```
+
 
 ## Additional reading
 
