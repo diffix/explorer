@@ -8,24 +8,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../diffix/diffix.csproj"/>
+    <ProjectReference Include="../diffix/diffix.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lamar" Version="4.3.1" />
+    <PackageReference Include="Lamar" Version="4.4.0" />
     <PackageReference Include="Accord.Statistics" Version="3.8.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1">
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="3.3.1">
+    <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="3.3.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NetCore.Analyzers" Version="3.3.1">
+    <PackageReference Include="Microsoft.NetCore.Analyzers" Version="3.3.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
