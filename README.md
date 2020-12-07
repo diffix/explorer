@@ -2,6 +2,7 @@
 
 # Diffix Explorer
 
+- [Current status](#current-status)
 - [What it does](#what-it-does)
 - [Getting started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -11,6 +12,11 @@
 - [Additional reading](#additional-reading)
 
 ----------------------
+
+## Current status
+
+This repo reflects the state of the version available on DockerHub under [diffix/explorer:buzz](https://hub.docker.com/r/diffix/explorer).
+It is stable and is not actively being developed.
 
 ## What it does
 

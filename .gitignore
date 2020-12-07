@@ -4,3 +4,4 @@ obj/
 tests/**/.vcr/
 
 src/clients/ExplorerWebClient/client_config.js
+.idea
